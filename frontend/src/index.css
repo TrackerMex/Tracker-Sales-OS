@@ -120,14 +120,76 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
   body {
     @apply bg-background text-foreground;
-    }
+  }
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
-    }
+  }
   html {
     @apply font-sans;
-    }
+  }
+}
+
+/* =============================================
+   Tracker Sales OS — Design System
+   ============================================= */
+
+:root {
+  --tracker-blue: #002B49;
+  --tracker-green: #82bc00;
+  --exec-purple: #5b21b6;
+  --warning-red: #dc2626;
+  --warning-amber: #f59e0b;
+}
+
+/* Utility classes que combinan con Tailwind */
+.card {
+  @apply rounded-3xl border border-slate-200 bg-white shadow-sm;
+}
+
+.input {
+  @apply w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold text-slate-900 transition-colors focus:border-[#82bc00] focus:bg-white focus:outline-none;
+}
+
+.btn-primary {
+  @apply rounded-2xl bg-[#002B49] px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-white transition-colors hover:bg-[#003a63];
+}
+
+.btn-green {
+  @apply rounded-2xl bg-[#82bc00] px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-[#002B49] transition-colors hover:bg-[#6fa000];
+}
+
+.tag {
+  @apply inline-flex items-center rounded-lg px-2 py-1 text-[9px] font-black uppercase tracking-wider;
+}
+
+.ai-box {
+  @apply rounded-2xl border border-purple-200 bg-purple-50 p-4 text-xs font-bold text-[#5b21b6];
+}
+
+.text-tracker-label {
+  @apply block text-[10px] font-black uppercase tracking-wider text-slate-400;
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--tracker-blue);
+  border-radius: 9999px;
+}
+
+/* Modal backdrop */
+.modal-blur {
+  backdrop-filter: blur(12px);
+  background-color: rgba(0, 43, 73, 0.82);
 }

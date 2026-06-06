@@ -11,3 +11,15 @@ Thumbs.db
 # Env files (root)
 .env
 .env.local
+.env.test
+.env.production
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Coverage
+coverage/

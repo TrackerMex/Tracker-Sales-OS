@@ -1,0 +1,152 @@
+[
+  {
+    "id": "01-infra-setup",
+    "name": "Infrastructure Setup",
+    "description": "Docker Compose, DB connection, TypeORM config, Swagger, CORS, ValidationPipe, health check endpoint",
+    "status": "pending",
+    "priority": 1,
+    "backend_modules": ["database", "health"],
+    "frontend_modules": [],
+    "notes": "Instalar @nestjs/throttler, winston. Configurar TypeORM con migrations."
+  },
+  {
+    "id": "02-auth",
+    "name": "Authentication",
+    "description": "Login/logout, JWT, JwtAuthGuard, RolesGuard, RBAC (Admin/Director/Seller), bcrypt",
+    "status": "pending",
+    "priority": 2,
+    "backend_modules": ["auth"],
+    "frontend_modules": ["auth"],
+    "notes": "Roles: Admin (todo), Director (equipo), Seller (solo sus datos). JWT payload: sub, username, role, sellerId."
+  },
+  {
+    "id": "03-users-sellers",
+    "name": "Users & Sellers",
+    "description": "CRUD usuarios, CRUD comerciales, asignar roles, bloquear/activar",
+    "status": "pending",
+    "priority": 3,
+    "backend_modules": ["users", "sellers"],
+    "frontend_modules": ["equipo"],
+    "notes": "User tiene sellerId opcional. Seller bloqueado no puede login."
+  },
+  {
+    "id": "04-clients",
+    "name": "Clients & Contacts",
+    "description": "CRUD clientes/prospectos, múltiples contactos por cliente, anti-duplicados por nombre/dominio/tel/email, 7 tipos de persona (Moral/Física)",
+    "status": "pending",
+    "priority": 4,
+    "backend_modules": ["clients"],
+    "frontend_modules": ["clients"],
+    "notes": "Anti-duplicados: buscar por nombre empresa, dominio, teléfono de cualquier contacto, email de cualquier contacto."
+  },
+  {
+    "id": "05-activities",
+    "name": "Activities",
+    "description": "Registro de actividades en tiempo real, sistema de puntos TASK_POINTS, cálculo automático de calidad (0-100%), campos: resumen/descubrimiento/acuerdo/siguiente paso",
+    "status": "pending",
+    "priority": 5,
+    "backend_modules": ["activities"],
+    "frontend_modules": ["activities"],
+    "notes": "TASK_POINTS: Chat/WA/Correo=1, Llamada=3, Videoconf/Reunión virtual=6, Visita/Reunión presencial=10, Propuesta=8, Seguimiento=3, Cierre=25. Calidad: suma de campos completados (5 campos × 20% cada uno)."
+  },
+  {
+    "id": "06-tasks",
+    "name": "Tasks & Agenda",
+    "description": "CRUD tareas con scheduledAt, listar agenda del día, completar tarea → derivar a formulario de actividad",
+    "status": "pending",
+    "priority": 6,
+    "backend_modules": ["tasks"],
+    "frontend_modules": ["tasks"],
+    "notes": "Meta: mínimo 5 tareas en agenda de mañana. Completar tarea pasa el contexto (cliente, tipo) al form de actividad."
+  },
+  {
+    "id": "07-pipeline",
+    "name": "Pipeline (Kanban)",
+    "description": "7 etapas: Prospecto→Contactado→Interesado→Propuesta→Negociación→Cierre→Perdido. Cambio de stage con historial JSONB. Probability automática por stage.",
+    "status": "pending",
+    "priority": 7,
+    "backend_modules": ["pipeline"],
+    "frontend_modules": ["pipeline"],
+    "notes": "Probability: Prospecto=5%, Contactado=15%, Interesado=30%, Propuesta=50%, Negociación=70%, Cierre=90%, Perdido=0%. Transiciones: avance secuencial + cualquier etapa → Perdido."
+  },
+  {
+    "id": "08-sales",
+    "name": "Sales",
+    "description": "3 tipos de cierre: Seller (prospección propia), ATC (clientes existentes), Dirección (cuentas estratégicas). Registro con producto, unidades, monto, forma de pago, origen.",
+    "status": "pending",
+    "priority": 8,
+    "backend_modules": ["sales"],
+    "frontend_modules": ["sales"],
+    "notes": "Origenes: Prospección propia, Cliente existente, Referido, Expo, Marketing, LinkedIn, Web, Dirección Comercial."
+  },
+  {
+    "id": "09-dashboard",
+    "name": "Dashboard & KPIs",
+    "description": "Semáforo comercial por vendedor (verde/ámbar/rojo), scoring 0-100%, KPIs globales (venta registrada, unidades, puntos, calidad), alertas de seguimientos vencidos",
+    "status": "pending",
+    "priority": 9,
+    "backend_modules": ["dashboard"],
+    "frontend_modules": ["dashboard"],
+    "notes": "Score = 45% esfuerzo (puntos vs mínimo) + 35% calidad promedio + 40% volumen (capped 50pts) - 10 por cada seguimiento vencido."
+  },
+  {
+    "id": "10-mi-dia",
+    "name": "Mi Día (Termómetro Operativo)",
+    "description": "Vista personal del vendedor: puntos del día vs meta (30), llamadas del día (meta 10), agenda de mañana (meta 5), prospectos nuevos (meta 2), seguimientos vencidos",
+    "status": "pending",
+    "priority": 10,
+    "backend_modules": ["dashboard"],
+    "frontend_modules": ["mi-dia"],
+    "notes": "Emojis de estado: verde=todo OK, ámbar=atención, rojo=urgente, morado=IA coach recomendación."
+  },
+  {
+    "id": "11-coaching",
+    "name": "Coaching Comercial",
+    "description": "Reporte diario por vendedor: progreso vs mínimo, mix de actividades, calidad promedio, vencidos, agenda de mañana. Director puede ver cualquier vendedor.",
+    "status": "pending",
+    "priority": 11,
+    "backend_modules": ["coaching"],
+    "frontend_modules": ["coaching"],
+    "notes": "Mix óptimo: detectar si hay muchos chats pero pocas llamadas, muchas llamadas pero sin reuniones, etc."
+  },
+  {
+    "id": "12-ai-coach",
+    "name": "IA Coach (Claude API)",
+    "description": "Sugerencias contextuales al crear tareas/actividades. Endpoint POST /api/coaching/suggestion llama Anthropic API (claude-sonnet-4-6) y retorna 2-3 tips.",
+    "status": "pending",
+    "priority": 12,
+    "backend_modules": ["coaching"],
+    "frontend_modules": ["activities", "tasks"],
+    "notes": "Prompt incluye: tipo actividad, objetivo, cliente, stage deal, nombre contacto. Max 300 tokens. Requiere ANTHROPIC_API_KEY en .env."
+  },
+  {
+    "id": "13-reports",
+    "name": "Executive Reports",
+    "description": "Reportes mensuales consolidados por: Dirección Comercial + ATC + Equipo vendedores. Metas vs logros, origen cuentas, análisis salud comercial 0-100.",
+    "status": "pending",
+    "priority": 13,
+    "backend_modules": ["reports"],
+    "frontend_modules": ["reports"],
+    "notes": "Solo Admin y Director. Descargar como PDF o JSON."
+  },
+  {
+    "id": "14-settings",
+    "name": "Settings",
+    "description": "Configuración del sistema: dailyMinPoints (30), monthlyAmountGoal ($600k), monthlyUnitGoal (150), sellerMonthlyAmountGoal ($150k).",
+    "status": "pending",
+    "priority": 14,
+    "backend_modules": ["settings"],
+    "frontend_modules": ["settings"],
+    "notes": "Solo Admin puede modificar. Settings se cachean en memoria (no hay DB round-trip por cada request)."
+  },
+  {
+    "id": "15-import-export",
+    "name": "Import/Export",
+    "description": "Exportar respaldo completo en JSON. Importar JSON con validación de schema y upsert (no duplica).",
+    "status": "pending",
+    "priority": 15,
+    "backend_modules": ["import-export"],
+    "frontend_modules": ["settings"],
+    "notes": "Solo Admin. Import valida schema antes de insertar. Útil para migración desde localStorage de la versión HTML."
+  }
+]
