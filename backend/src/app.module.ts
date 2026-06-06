@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
@@ -15,8 +18,23 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
-    // TODO (feature 01-infra-setup): add TypeOrmModule.forRootAsync with env config
-    // TODO (feature 01-infra-setup): add ThrottlerModule, ConfigModule
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get<string>('POSTGRES_HOST', 'localhost'),
+        port: config.get<number>('POSTGRES_PORT', 5432),
+        username: config.get<string>('POSTGRES_USER', 'tracker'),
+        password: config.get<string>('POSTGRES_PASSWORD', 'tracker123'),
+        database: config.get<string>('POSTGRES_DB', 'tracker_sales_os'),
+        autoLoadEntities: true,
+        synchronize: config.get<string>('TYPEORM_SYNCHRONIZE', 'true') === 'true',
+        logging: config.get<string>('TYPEORM_LOGGING', 'false') === 'true',
+      }),
+    }),
     AuthModule,
     SellersModule,
     ClientsModule,

@@ -1,5 +1,5 @@
 import { BaseEntity } from '../../../../core/domain/base.entity';
-import { PipelineStage } from '../../clients/domain/entities/client.entity';
+import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 
 export interface StageHistoryEntry {
   stage: PipelineStage;

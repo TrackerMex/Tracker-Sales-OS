@@ -25,7 +25,7 @@ export class UserTypeormEntity {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.Seller })
   role: UserRole;
 
-  @Column({ name: 'seller_id', nullable: true })
+  @Column({ name: 'seller_id', nullable: true, type: 'uuid' })
   sellerId: string | null;
 
   @Column({ default: true })

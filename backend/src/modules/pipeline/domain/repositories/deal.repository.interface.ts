@@ -1,6 +1,6 @@
 import { IRepository } from '../../../../core/domain/repository.interface';
 import { DealEntity } from '../entities/deal.entity';
-import { PipelineStage } from '../../clients/domain/entities/client.entity';
+import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 
 export const DEAL_REPOSITORY = 'DEAL_REPOSITORY';
 

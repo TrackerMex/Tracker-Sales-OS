@@ -1,5 +1,5 @@
 import { BaseEntity } from '../../../../core/domain/base.entity';
-import { ActivityType } from '../../activities/domain/entities/activity.entity';
+import { ActivityType } from '../../../activities/domain/entities/activity.entity';
 
 export class TaskEntity extends BaseEntity {
   sellerId: string;

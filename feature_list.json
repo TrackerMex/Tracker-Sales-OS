@@ -3,7 +3,7 @@
     "id": "01-infra-setup",
     "name": "Infrastructure Setup",
     "description": "Docker Compose, DB connection, TypeORM config, Swagger, CORS, ValidationPipe, health check endpoint",
-    "status": "pending",
+    "status": "done",
     "priority": 1,
     "backend_modules": ["database", "health"],
     "frontend_modules": [],
