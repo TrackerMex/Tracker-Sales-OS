@@ -73,7 +73,7 @@
     "id": "08-sales",
     "name": "Sales",
     "description": "3 tipos de cierre: Seller (prospección propia), ATC (clientes existentes), Dirección (cuentas estratégicas). Registro con producto, unidades, monto, forma de pago, origen.",
-    "status": "pending",
+    "status": "done",
     "priority": 8,
     "backend_modules": ["sales"],
     "frontend_modules": ["sales"],

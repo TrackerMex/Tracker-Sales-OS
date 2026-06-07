@@ -1,5 +1,27 @@
 # History — Tracker Sales OS
 
+## 2026-06-07 — 08-sales
+
+**Status**: done
+
+**Archivos creados:**
+- Backend (8): sale.repository.interface.ts, create-sale.dto.ts, sale-filters.dto.ts, sale-response.dto.ts, create-sale.use-case.ts, get-sales.use-case.ts, sale.typeorm.entity.ts, sale.repository.impl.ts
+- Backend (2 reemplazados): sales.controller.ts, sales.module.ts
+- Frontend (4 nuevos): sales.api.ts, useCreateSale.ts, useSales.ts, SaleFormBase.tsx, SalesPage.tsx
+- Frontend (2 modificados): sales.types.ts, routes/_app/ventas.tsx
+
+**CHECKPOINT**: PASSED — 4/4 criterios
+
+**Decisiones clave:**
+- SaleFormBase compartido entre los 3 tabs, recibe `type` como prop
+- `computeSummary` en GetSalesUseCase acumula Nuevo/Existente en buckets separados
+- `GetSalesInput`/`GetSalesOutput` exportadas para evitar TS4053
+- PaymentMethod del scaffold: Pagado | Crédito | 50% anticipo | Pendiente (difiere de architecture.md)
+
+**tsc --noEmit**: PASS backend y frontend
+
+---
+
 ## 2026-06-07 — 07-pipeline
 
 **Status**: done
