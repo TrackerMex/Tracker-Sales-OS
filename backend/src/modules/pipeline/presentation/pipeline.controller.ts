@@ -32,7 +32,6 @@ export class PipelineController {
 
   @Get('seller/:id')
   @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
-  @UseInterceptors(AuditInterceptor)
   @ApiOperation({ summary: 'Get pipeline grouped by stage for a seller' })
   findBySeller(@Param('id') sellerId: string) {
     return this.getPipelineBySeller.execute({ sellerId });
