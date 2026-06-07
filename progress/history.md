@@ -1,5 +1,20 @@
 # History — Tracker Sales OS
 
+## 2026-06-07 — 11-coaching
+
+**Status**: done
+
+**Archivos creados:**
+- Backend (2 nuevos, 2 modificados): coaching-daily.dto.ts, get-coaching-daily.use-case.ts, coaching.controller.ts (stub reemplazado), coaching.module.ts (entidades + use-case registrados)
+- Frontend (5 nuevos, 1 modificado): coaching.types.ts, coaching.api.ts, useCoachingDaily.ts, CoachingPage.tsx, routes/_app/coaching.tsx (placeholder reemplazado)
+
+**Decisiones:**
+- Mix via GROUP BY en QueryBuilder (más eficiente que queries individuales por tipo)
+- Admin/Director ven selector de vendedor; Seller ve reporte propio directo
+- mixInsights = 4 reglas estáticas (Claude API llega en feature 12)
+
+---
+
 ## 2026-06-07 — 10-mi-dia
 
 **Status**: done

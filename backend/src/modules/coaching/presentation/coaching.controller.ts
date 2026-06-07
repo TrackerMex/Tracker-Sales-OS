@@ -1,13 +1,22 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
+import { GetCoachingDailyUseCase } from '../application/use-cases/get-coaching-daily.use-case';
 
 @ApiTags('coaching')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('coaching')
 export class CoachingController {
-  // TODO: implement in feature 11-coaching and 12-ai-coach
+  constructor(private readonly getCoachingDaily: GetCoachingDailyUseCase) {}
+
   @Get('seller/:id/daily')
-  getDailyReport(@Param('id') _sellerId: string) { throw new Error('Not implemented'); }
+  getDailyReport(@Param('id') sellerId: string) {
+    return this.getCoachingDaily.execute(sellerId);
+  }
 
   @Post('suggestion')
-  getSuggestion(@Body() _dto: unknown) { throw new Error('Not implemented'); }
+  getSuggestion(@Body() _dto: unknown) {
+    throw new Error('Not implemented — feature 12');
+  }
 }

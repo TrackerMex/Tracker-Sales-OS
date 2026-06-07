@@ -103,7 +103,7 @@
     "id": "11-coaching",
     "name": "Coaching Comercial",
     "description": "Reporte diario por vendedor: progreso vs mínimo, mix de actividades, calidad promedio, vencidos, agenda de mañana. Director puede ver cualquier vendedor.",
-    "status": "pending",
+    "status": "done",
     "priority": 11,
     "backend_modules": ["coaching"],
     "frontend_modules": ["coaching"],
