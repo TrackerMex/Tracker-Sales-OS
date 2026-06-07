@@ -1,5 +1,21 @@
 # History — Tracker Sales OS
 
+## 2026-06-07 — 14-settings
+
+**Status**: done
+
+**Archivos creados:**
+- Backend (6 nuevos/modificados): setting.typeorm.entity.ts, update-settings.dto.ts, get-settings.use-case.ts (OnModuleInit cache), update-settings.use-case.ts (upsert + invalidate), settings.controller.ts (stub reemplazado), settings.module.ts
+- Frontend (6 nuevos, 1 modificado): settings.types.ts, settings.api.ts, useSettings.ts, useUpdateSettings.ts, SettingsPage.tsx, configuracion.tsx (placeholder reemplazado)
+
+**Decisiones:**
+- Storage: una sola row con key='app_settings' + value JSONB (más simple que múltiples rows)
+- Cache pre-calentada via OnModuleInit; invalidada en cada PATCH
+- SettingsModule exporta GetSettingsUseCase para que otros módulos lo inyecten en feat 15+
+- Director puede leer settings pero no modificar; Seller no tiene acceso
+
+---
+
 ## 2026-06-07 — 13-reports
 
 **Status**: done

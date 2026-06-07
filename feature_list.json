@@ -133,7 +133,7 @@
     "id": "14-settings",
     "name": "Settings",
     "description": "Configuración del sistema: dailyMinPoints (30), monthlyAmountGoal ($600k), monthlyUnitGoal (150), sellerMonthlyAmountGoal ($150k).",
-    "status": "pending",
+    "status": "done",
     "priority": 14,
     "backend_modules": ["settings"],
     "frontend_modules": ["settings"],
