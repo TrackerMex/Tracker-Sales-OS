@@ -143,7 +143,7 @@
     "id": "15-import-export",
     "name": "Import/Export",
     "description": "Exportar respaldo completo en JSON. Importar JSON con validación de schema y upsert (no duplica).",
-    "status": "pending",
+    "status": "done",
     "priority": 15,
     "backend_modules": ["import-export"],
     "frontend_modules": ["settings"],

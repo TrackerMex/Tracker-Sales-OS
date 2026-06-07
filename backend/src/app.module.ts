@@ -16,6 +16,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { UsersModule } from './modules/users/users.module';
+import { ImportExportModule } from './modules/import-export/import-export.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { UsersModule } from './modules/users/users.module';
     ReportsModule,
     SettingsModule,
     DashboardModule,
+    ImportExportModule,
   ],
   controllers: [AppController],
   providers: [AppService],

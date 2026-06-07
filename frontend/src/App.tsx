@@ -14,6 +14,7 @@ import { coachingRoute } from './routes/_app/coaching';
 import { reportesRoute } from './routes/_app/reportes';
 import { equipoRoute } from './routes/_app/equipo';
 import { configuracionRoute } from './routes/_app/configuracion';
+import { importExportRoute } from './routes/_app/import-export';
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -30,6 +31,7 @@ const routeTree = rootRoute.addChildren([
     reportesRoute,
     equipoRoute,
     configuracionRoute,
+    importExportRoute,
   ]),
 ]);
 

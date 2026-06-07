@@ -158,8 +158,8 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ## 15-import-export
 
-- [ ] `GET /api/export` retorna JSON con todos los datos del tenant
-- [ ] `POST /api/import` importa JSON y valida schema antes de insertar
-- [ ] Import hace upsert (no duplica si ya existe)
-- [ ] Solo Admin
-- [ ] Frontend: pagina Import/Export con botones de descarga y upload
+- [x] `GET /api/export` retorna JSON con todos los datos del tenant
+- [x] `POST /api/import` importa JSON y valida schema antes de insertar
+- [x] Import hace upsert (no duplica si ya existe)
+- [x] Solo Admin
+- [x] Frontend: pagina Import/Export con botones de descarga y upload

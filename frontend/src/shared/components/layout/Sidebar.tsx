@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { to: '/reportes', label: 'Reportes' },
   { to: '/equipo', label: 'Equipo comercial' },
   { to: '/configuracion', label: 'Configuración' },
+  { to: '/import-export', label: 'Import / Export' },
 ];
 
 export function Sidebar() {
