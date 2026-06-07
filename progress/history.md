@@ -1,5 +1,21 @@
 # History — Tracker Sales OS
 
+## 2026-06-07 — 13-reports
+
+**Status**: done
+
+**Archivos creados:**
+- Backend (4 nuevos/modificados): monthly-report.dto.ts, get-monthly-report.use-case.ts, reports.controller.ts (stub reemplazado), reports.module.ts (TypeORM + AuthModule)
+- Frontend (5 nuevos, 1 modificado): reports.types.ts, reports.api.ts, useMonthlyReport.ts, ReportsPage.tsx, routes/_app/reportes.tsx (placeholder reemplazado)
+
+**Decisiones:**
+- Metas hardcodeadas ($600k / 150 unidades) — se harán dinámicas en feature 14-settings
+- commercialHealth = 50% peso monto + 50% peso unidades
+- Query única agrupa por type+clientType para calcular newUnits/existingUnits en memoria
+
+---
+
+
 ## 2026-06-07 — 11-coaching
 
 **Status**: done

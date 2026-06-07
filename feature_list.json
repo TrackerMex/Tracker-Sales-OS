@@ -123,7 +123,7 @@
     "id": "13-reports",
     "name": "Executive Reports",
     "description": "Reportes mensuales consolidados por: Dirección Comercial + ATC + Equipo vendedores. Metas vs logros, origen cuentas, análisis salud comercial 0-100.",
-    "status": "pending",
+    "status": "done",
     "priority": 13,
     "backend_modules": ["reports"],
     "frontend_modules": ["reports"],
