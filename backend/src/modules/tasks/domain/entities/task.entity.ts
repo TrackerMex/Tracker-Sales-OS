@@ -1,14 +1,16 @@
 import { BaseEntity } from '../../../../core/domain/base.entity';
-import { ActivityType } from '../../../activities/domain/entities/activity.entity';
+
+export enum TaskStatus {
+  Pending = 'Pendiente',
+  Completed = 'Completado',
+}
 
 export class TaskEntity extends BaseEntity {
   sellerId: string;
-  clientId: string;
-  type: ActivityType;
-  objective: string;
+  clientId: string | null;
+  title: string;
+  description: string | null;
   scheduledAt: Date;
-  completed: boolean;
   completedAt: Date | null;
-  aiSuggestion: string | null;
-  sourceActivityId: string | null;
+  status: TaskStatus;
 }

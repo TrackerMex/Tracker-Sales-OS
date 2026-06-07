@@ -53,7 +53,7 @@
     "id": "06-tasks",
     "name": "Tasks & Agenda",
     "description": "CRUD tareas con scheduledAt, listar agenda del día, completar tarea → derivar a formulario de actividad",
-    "status": "pending",
+    "status": "done",
     "priority": 6,
     "backend_modules": ["tasks"],
     "frontend_modules": ["tasks"],

@@ -1,14 +1,22 @@
-import { ID } from '../../../core/domain/types/common.types';
-import { ActivityType } from '../../../shared/lib/constants';
+export type TaskStatus = 'Pendiente' | 'Completado'
 
 export interface Task {
-  id: ID;
-  sellerId: ID;
-  clientId: ID;
-  type: ActivityType;
-  objective: string;
-  scheduledAt: string;
-  completed: boolean;
-  completedAt: string | null;
-  aiSuggestion: string | null;
+  id: string
+  sellerId: string
+  clientId: string | null
+  title: string
+  description: string | null
+  scheduledAt: string
+  completedAt: string | null
+  status: TaskStatus
+  isOverdue: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateTaskInput {
+  clientId?: string
+  title: string
+  description?: string
+  scheduledAt: string
 }

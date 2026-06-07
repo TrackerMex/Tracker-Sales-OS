@@ -1,5 +1,23 @@
 # History — Tracker Sales OS
 
+## 2026-06-07 — 06-tasks
+
+**Status**: done
+
+**Archivos creados/modificados:**
+- Backend: task.entity.ts, task.repository.interface.ts, create-task.dto.ts, task.dto.ts (con isOverdue calculado), create-task.use-case.ts, get-today-tasks.use-case.ts, complete-task.use-case.ts, task.typeorm.entity.ts, task.repository.impl.ts, tasks.controller.ts, tasks.module.ts
+- Frontend: tasks.types.ts, tasks.api.ts, useTodayTasks.ts, useCreateTask.ts, useCompleteTask.ts, TaskCard.tsx, CreateTaskForm.tsx, AgendaPage.tsx, routes/_app/agenda.tsx
+
+**Decisiones clave:**
+- `isOverdue` se calcula en TaskDto.fromEntity() (no se persiste en DB)
+- CompleteTask lanza ForbiddenException si task.sellerId !== input.sellerId
+- Completar tarea navega a /actividades/nueva con clientId en search params
+- DB: synchronize:true, sin migrations
+
+**tsc --noEmit**: PASS backend y frontend
+
+---
+
 ## 2026-06-06 — 05-activities
 
 **Status**: done

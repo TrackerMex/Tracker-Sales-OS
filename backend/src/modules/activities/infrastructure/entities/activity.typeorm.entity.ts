@@ -9,15 +9,15 @@ export class ActivityTypeormEntity {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Column({ name: 'seller_id' }) sellerId: string;
   @Column({ name: 'client_id' }) clientId: string;
-  @Column({ name: 'contact_id', nullable: true }) contactId: string | null;
+  @Column({ name: 'contact_id', type: 'varchar', nullable: true }) contactId: string | null;
   @Column({ type: 'enum', enum: ActivityType }) type: ActivityType;
   @Column({ type: 'enum', enum: ActivityResult }) result: ActivityResult;
   @Column({ type: 'text' }) summary: string;
   @Column({ type: 'text', nullable: true }) discovery: string | null;
   @Column({ type: 'text', nullable: true }) agreement: string | null;
   @Column({ name: 'next_step', type: 'text', nullable: true }) nextStep: string | null;
-  @Column({ name: 'next_date', nullable: true }) nextDate: string | null;
-  @Column({ name: 'next_time', nullable: true }) nextTime: string | null;
+  @Column({ name: 'next_date', type: 'varchar', nullable: true }) nextDate: string | null;
+  @Column({ name: 'next_time', type: 'varchar', nullable: true }) nextTime: string | null;
   @Column({ type: 'int' }) points: number;
   @Column({ type: 'int' }) quality: number;
   @Column({ name: 'executed_at', type: 'timestamptz' }) executedAt: Date;
