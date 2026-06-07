@@ -17,6 +17,17 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value);
 }
 
+const SALE_TYPE_TAG: Record<string, string> = {
+  seller: 'tag tag-navy',
+  atc: 'tag tag-amber',
+  direction: 'tag tag-purple',
+};
+
+const CLIENT_TYPE_TAG: Record<string, string> = {
+  Nuevo: 'tag tag-navy',
+  Existente: 'tag tag-gray',
+};
+
 export function SalesPage() {
   const currentUser = useAppStore((s) => s.currentUser);
   const sellerId = currentUser?.sellerId ?? currentUser?.id ?? '';
@@ -39,36 +50,46 @@ export function SalesPage() {
   const summary = data?.summary;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-black text-[#002B49]">Ventas</h2>
-        <p className="mt-1 text-sm text-slate-500">Registro de cierres por tipo</p>
+        <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Ventas</h1>
+        <p style={{ marginTop: 2, fontSize: 12, color: '#94A3B8' }}>Registro de cierres por tipo</p>
       </div>
 
       {successMessage && (
-        <div className="rounded-md border border-[#82bc00] bg-[#82bc00]/10 px-4 py-3 text-sm font-medium text-[#5a8500]">
+        <div
+          className="rounded-lg px-4 py-3"
+          style={{ background: '#EEFAD4', border: '1px solid #82bc00', fontSize: 13, fontWeight: 500, color: '#4a7c00' }}
+        >
           {successMessage}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="flex border-b border-slate-200">
+      <div className="card">
+        <div className="flex border-b border-[#E2E8F0]">
           {TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-6 py-3 text-sm font-semibold transition-colors ${
-                activeTab === tab.key
-                  ? 'border-b-2 border-[#002B49] text-[#002B49]'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
+              style={{
+                padding: '11px 20px',
+                fontSize: 13,
+                fontWeight: 600,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                borderBottom: activeTab === tab.key ? '2px solid #002B49' : '2px solid transparent',
+                color: activeTab === tab.key ? '#002B49' : '#94A3B8',
+                transition: 'color 0.12s',
+                marginBottom: -1,
+              }}
             >
               {tab.label}
             </button>
           ))}
         </div>
-        <div className="p-6">
+        <div className="p-5">
           <SaleFormBase
             key={activeTab}
             type={activeTab}
@@ -77,10 +98,8 @@ export function SalesPage() {
             isLoading={createSale.isPending}
           />
           {createSale.isError && (
-            <p className="mt-2 text-sm text-red-600">
-              {createSale.error instanceof Error
-                ? createSale.error.message
-                : 'No se pudo registrar la venta'}
+            <p style={{ marginTop: 8, fontSize: 12, color: '#EF4444' }}>
+              {createSale.error instanceof Error ? createSale.error.message : 'No se pudo registrar la venta'}
             </p>
           )}
         </div>
@@ -88,85 +107,66 @@ export function SalesPage() {
 
       {/* Summary cards */}
       {summary && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Total ventas</p>
-            <p className="mt-1 text-2xl font-black text-[#002B49]">{summary.total}</p>
+        <div className="kpi-strip">
+          <div className="kpi-cell">
+            <div className="kl">Total ventas</div>
+            <div className="kv">{summary.total}</div>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Unidades</p>
-            <p className="mt-1 text-2xl font-black text-[#002B49]">{summary.totalUnits}</p>
+          <div className="kpi-cell">
+            <div className="kl">Unidades</div>
+            <div className="kv">{summary.totalUnits}</div>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Monto total</p>
-            <p className="mt-1 text-lg font-black text-[#82bc00]">{formatCurrency(summary.totalAmount)}</p>
+          <div className="kpi-cell">
+            <div className="kl">Monto total</div>
+            <div className="kv" style={{ fontSize: 18, color: '#82bc00' }}>{formatCurrency(summary.totalAmount)}</div>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Nuevos / Existentes</p>
-            <p className="mt-1 text-base font-bold text-[#002B49]">
-              {summary.unitsByClientType.Nuevo} / {summary.unitsByClientType.Existente}
-            </p>
-            <p className="text-xs text-slate-400">unidades</p>
+          <div className="kpi-cell">
+            <div className="kl">Nuevos / Existentes</div>
+            <div className="kv">{summary.unitsByClientType.Nuevo} / {summary.unitsByClientType.Existente}</div>
+            <div className="ksb">unidades</div>
           </div>
         </div>
       )}
 
-      {/* History list */}
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-6 py-4">
-          <h3 className="text-sm font-semibold text-[#002B49]">Historial de ventas</h3>
+      {/* History */}
+      <div className="card">
+        <div className="border-b border-[#E2E8F0] px-5 py-3">
+          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#002B49' }}>Historial de ventas</h3>
         </div>
         {loadingList && (
-          <div className="space-y-3 p-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 animate-pulse rounded-md bg-slate-100" />
-            ))}
+          <div className="space-y-3 p-5">
+            {[1, 2, 3].map((i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-slate-100" />)}
           </div>
         )}
-        {isError && (
-          <p className="p-6 text-sm text-red-600">No se pudo cargar el historial.</p>
-        )}
-        {!loadingList && !isError && data && data.data.length === 0 && (
-          <p className="p-6 text-sm text-slate-500">No hay ventas registradas.</p>
+        {isError && <p className="p-5" style={{ fontSize: 13, color: '#EF4444' }}>No se pudo cargar el historial.</p>}
+        {!loadingList && !isError && data?.data.length === 0 && (
+          <p className="p-5" style={{ fontSize: 13, color: '#94A3B8' }}>No hay ventas registradas.</p>
         )}
         {!loadingList && !isError && data && data.data.length > 0 && (
-          <div className="divide-y divide-slate-100">
-            {data.data.map((sale) => (
-              <div key={sale.id} className="flex items-center justify-between px-6 py-4">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-slate-800">{sale.clientName}</p>
-                  <p className="text-xs text-slate-500">
-                    {sale.product} · {sale.units} ud. · {sale.date}
-                  </p>
-                </div>
-                <div className="ml-4 flex items-center gap-3">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      sale.clientType === 'Nuevo'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-slate-100 text-slate-600'
-                    }`}
-                  >
-                    {sale.clientType}
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      sale.type === 'seller'
-                        ? 'bg-[#002B49]/10 text-[#002B49]'
-                        : sale.type === 'atc'
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'bg-purple-100 text-purple-700'
-                    }`}
-                  >
-                    {sale.type}
-                  </span>
-                  <span className="text-sm font-bold text-[#82bc00]">
-                    {formatCurrency(sale.amount)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <table className="dt">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Producto</th>
+                <th className="text-right">Unidades</th>
+                <th>Tipo cliente</th>
+                <th>Tipo venta</th>
+                <th className="text-right">Monto</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.data.map((sale) => (
+                <tr key={sale.id}>
+                  <td style={{ fontWeight: 600, color: '#0F172A' }}>{sale.clientName}</td>
+                  <td style={{ color: '#64748B' }}>{sale.product}</td>
+                  <td className="text-right">{sale.units}</td>
+                  <td><span className={CLIENT_TYPE_TAG[sale.clientType] ?? 'tag tag-gray'}>{sale.clientType}</span></td>
+                  <td><span className={SALE_TYPE_TAG[sale.type] ?? 'tag tag-gray'}>{sale.type}</span></td>
+                  <td className="text-right" style={{ fontWeight: 700, color: '#82bc00' }}>{formatCurrency(sale.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

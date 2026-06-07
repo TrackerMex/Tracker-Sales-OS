@@ -1,5 +1,4 @@
 import { useAppStore } from '../../store/app.store';
-import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
   title?: string;
@@ -10,23 +9,21 @@ export function Header({ title = 'Dashboard', subtitle }: HeaderProps) {
   const { currentUser, clearAuth } = useAppStore();
 
   return (
-    <header className="flex h-20 items-center justify-between border-b border-slate-200 bg-white px-6">
+    <header className="flex h-[54px] items-center justify-between border-b bg-white px-5" style={{ borderColor: '#E2E8F0' }}>
       <div>
-        <h1 className="text-base font-black uppercase text-[#002B49]">{title}</h1>
-        {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+        <h1 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{title}</h1>
+        {subtitle && <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{subtitle}</p>}
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-xs font-bold text-slate-500">
+        <span className="text-xs font-medium" style={{ color: '#64748B' }}>
           {currentUser?.name}
         </span>
-        <Button
-          variant="outline"
-          size="sm"
+        <button
           onClick={clearAuth}
-          className="text-xs"
+          className="btn-ghost"
         >
           Salir
-        </Button>
+        </button>
       </div>
     </header>
   );

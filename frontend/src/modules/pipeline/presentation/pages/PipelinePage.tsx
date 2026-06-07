@@ -19,12 +19,9 @@ const ALL_STAGES: PipelineStage[] = [
 
 function SkeletonColumns() {
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-3">
       {ALL_STAGES.map((stage) => (
-        <div
-          key={stage}
-          className="h-48 w-64 shrink-0 animate-pulse rounded-lg bg-slate-200"
-        />
+        <div key={stage} className="h-48 w-64 shrink-0 animate-pulse rounded-lg bg-slate-200" />
       ))}
     </div>
   )
@@ -74,9 +71,7 @@ export function PipelinePage() {
         amount: amount ? Number(amount) : undefined,
         stage: modal.stage,
       },
-      {
-        onSuccess: () => handleCloseModal(),
-      }
+      { onSuccess: () => handleCloseModal() }
     )
   }
 
@@ -86,22 +81,20 @@ export function PipelinePage() {
   }
 
   return (
-    <div className="space-y-4 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-black text-[#002B49]">Pipeline</h2>
-          <p className="mt-1 text-sm text-slate-500">Vista Kanban por stage</p>
-        </div>
+    <div className="space-y-4">
+      <div>
+        <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Pipeline</h1>
+        <p style={{ marginTop: 2, fontSize: 12, color: '#94A3B8' }}>Vista Kanban por stage</p>
       </div>
 
       {isLoading && <SkeletonColumns />}
       {isError && (
-        <p className="text-sm text-red-600">No se pudo cargar el pipeline.</p>
+        <p style={{ fontSize: 13, color: '#EF4444' }}>No se pudo cargar el pipeline.</p>
       )}
 
       {!isLoading && !isError && (
         <div className="overflow-x-auto pb-4">
-          <div className="flex min-w-max gap-4">
+          <div style={{ display: 'flex', gap: 11, minWidth: 'max-content' }}>
             {ALL_STAGES.map((stage) => (
               <KanbanColumn
                 key={stage}
@@ -116,58 +109,51 @@ export function PipelinePage() {
       )}
 
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
-            <h3 className="mb-4 text-base font-bold text-[#002B49]">
+        <div
+          className="modal-blur fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) handleCloseModal() }}
+        >
+          <div className="card w-full max-w-sm p-6">
+            <h3 style={{ marginBottom: 16, fontSize: 14, fontWeight: 700, color: '#002B49' }}>
               Nuevo deal — {modal.stage}
             </h3>
             <form onSubmit={handleCreateDeal} className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">
-                  Client ID
-                </label>
+                <label className="slabel mb-1 block">Client ID</label>
                 <input
                   required
                   value={clientId}
                   onChange={(e) => setClientId(e.target.value)}
                   placeholder="UUID del cliente"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#00A8E8]"
+                  className="input"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">
-                  Monto (opcional)
-                </label>
+                <label className="slabel mb-1 block">Monto (opcional)</label>
                 <input
                   type="number"
                   min="0"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#00A8E8]"
+                  className="input"
                 />
               </div>
               <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="flex-1 rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
-                >
+                <button type="button" onClick={handleCloseModal} className="btn-ghost flex-1 justify-center">
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={createDeal.isPending}
-                  className="flex-1 rounded-md bg-[#002B49] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#002B49]/90 disabled:opacity-50"
+                  className="btn-primary flex-1 justify-center"
                 >
                   {createDeal.isPending ? "Guardando..." : "Crear"}
                 </button>
               </div>
               {createDeal.isError && (
-                <p className="text-xs text-red-600">
-                  {createDeal.error instanceof Error
-                    ? createDeal.error.message
-                    : "No se pudo crear el deal"}
+                <p style={{ fontSize: 12, color: '#EF4444' }}>
+                  {createDeal.error instanceof Error ? createDeal.error.message : "No se pudo crear el deal"}
                 </p>
               )}
             </form>

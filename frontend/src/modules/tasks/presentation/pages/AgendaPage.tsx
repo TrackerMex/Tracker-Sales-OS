@@ -34,27 +34,31 @@ export function AgendaPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-[#002B49]">Agenda del día</h1>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Agenda del día</h1>
           {tasks.length > 0 && (
-            <span className="rounded-full bg-[#002B49]/10 px-3 py-1 text-sm font-semibold text-[#002B49]">
+            <span className="tag tag-navy">
               {pendingCount} pendiente{pendingCount !== 1 ? 's' : ''}
             </span>
           )}
         </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded-md bg-[#002B49] px-4 py-2 text-sm font-medium text-white hover:bg-[#002B49]/90 transition-colors"
-        >
-          {showForm ? 'Cancelar' : 'Nueva tarea'}
-        </button>
+        <div className="flex gap-2">
+          {showForm && (
+            <button onClick={() => setShowForm(false)} className="btn-ghost">
+              Cancelar
+            </button>
+          )}
+          <button onClick={() => setShowForm((v) => !v)} className="btn-primary">
+            {showForm ? 'Cerrar' : 'Nueva tarea'}
+          </button>
+        </div>
       </div>
 
       {showForm && (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-700 mb-4">Nueva tarea</h2>
+        <div className="card p-5">
+          <div className="slabel mb-4">Nueva tarea</div>
           <CreateTaskForm
             onSubmit={handleCreateTask}
             onCancel={() => setShowForm(false)}
@@ -70,11 +74,11 @@ export function AgendaPage() {
           ))}
         </div>
       ) : tasks.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-300 py-12 text-center">
-          <p className="text-sm text-slate-400">No hay tareas para hoy</p>
+        <div className="empty-state">
+          <p>No hay tareas para hoy</p>
           <button
             onClick={() => setShowForm(true)}
-            className="mt-3 text-sm text-[#002B49] underline hover:no-underline"
+            style={{ marginTop: 8, fontSize: 12, color: '#002B49', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
           >
             Crear una tarea
           </button>

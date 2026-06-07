@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react"
 import type { FormEvent } from "react"
-import { UserRole } from "../../../../core/domain/types/common.types"
-import { useAppStore } from "../../../../shared/store/app.store"
-import { useAddContact } from "../../application/hooks/useAddContact"
+import { useQuery } from "@tanstack/react-query"
+import { UserRole } from "@/core/domain/types/common.types"
+import { useAppStore } from "@/shared/store/app.store"
+import { activitiesApi } from "@/modules/activities/infrastructure/activities.api"
+import type { Activity } from "@/modules/activities/domain/activities.types"
 import { useClients } from "../../application/hooks/useClients"
 import { useCreateClient } from "../../application/hooks/useCreateClient"
+import { useDeleteClient } from "../../application/hooks/useDeleteClient"
 import { useUpdateClient } from "../../application/hooks/useUpdateClient"
 import type {
   Client,
@@ -38,6 +41,16 @@ const clientSources: ClientSource[] = [
   "Dirección Comercial",
 ]
 
+const stageTag: Record<PipelineStage, string> = {
+  Prospecto: "tag-gray",
+  Contactado: "tag-navy",
+  Interesado: "tag-navy",
+  Propuesta: "tag-amber",
+  Negociación: "tag-amber",
+  Cierre: "tag-green",
+  Perdido: "tag-red",
+}
+
 const emptyContact: CreateContactInput = {
   name: "",
   role: "",
@@ -66,36 +79,36 @@ function emptyClientForm(sellerId?: string | null): CreateClientInput {
   }
 }
 
-function compactMoney(value: number) {
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  }).format(value)
+function formatDate(iso: string | null) {
+  if (!iso) return "—"
+  return new Date(iso).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })
 }
 
-function cleanContact(contact: CreateContactInput): CreateContactInput {
+function cleanContact(c: CreateContactInput): CreateContactInput {
   return {
-    name: contact.name.trim(),
-    role: contact.role?.trim() || undefined,
-    phone: contact.phone?.trim() || undefined,
-    email: contact.email?.trim() || undefined,
-    isDecisionMaker: contact.isDecisionMaker,
+    name: c.name.trim(),
+    role: c.role?.trim() || undefined,
+    phone: c.phone?.trim() || undefined,
+    email: c.email?.trim() || undefined,
+    isDecisionMaker: c.isDecisionMaker,
   }
 }
 
+type View = { mode: "list" } | { mode: "detail"; clientId: string }
+
 export function ClientesPage() {
   const currentUser = useAppStore((s) => s.currentUser)
+  const [view, setView] = useState<View>({ mode: "list" })
   const [q, setQ] = useState("")
   const [stage, setStage] = useState<PipelineStage | "">("")
   const [type, setType] = useState<ClientType | "">("")
   const [seller, setSeller] = useState("")
-  const [form, setForm] = useState<CreateClientInput>(() =>
-    emptyClientForm(currentUser?.sellerId)
-  )
-  const [edits, setEdits] = useState<Record<string, { stage: PipelineStage; nextStep: string }>>({})
-  const [contactClientId, setContactClientId] = useState<string | null>(null)
-  const [contactForm, setContactForm] = useState<CreateContactInput>(emptyContact)
+
+  const [showModal, setShowModal] = useState(false)
+  const [editingClient, setEditingClient] = useState<Client | null>(null)
+  const [form, setForm] = useState<CreateClientInput>(() => emptyClientForm(currentUser?.sellerId))
+
+  const [deleteTarget, setDeleteTarget] = useState<Client | null>(null)
 
   const filters = useMemo(
     () => ({
@@ -111,402 +124,563 @@ export function ClientesPage() {
   const { data, isLoading, isError } = useClients(filters)
   const createClient = useCreateClient()
   const updateClient = useUpdateClient()
-  const addContact = useAddContact()
+  const deleteClient = useDeleteClient()
   const canChooseSeller = currentUser?.role !== UserRole.Seller
 
+  const clientList = data?.data ?? []
+  const selectedClient = view.mode === "detail" ? clientList.find((c) => c.id === view.clientId) ?? null : null
+
+  const sellerId = currentUser?.sellerId ?? currentUser?.id ?? ""
+  const { data: sellerActivities } = useQuery({
+    queryKey: ["activities", "seller", sellerId],
+    queryFn: () => activitiesApi.getSellerActivities(sellerId, { limit: 200 }),
+    enabled: !!sellerId && view.mode === "detail",
+  })
+
+  const clientActivities: Activity[] = useMemo(() => {
+    if (!sellerActivities?.data || !selectedClient) return []
+    return sellerActivities.data.filter((a) => a.clientId === selectedClient.id)
+  }, [sellerActivities, selectedClient])
+
   function updateForm<K extends keyof CreateClientInput>(key: K, value: CreateClientInput[K]) {
-    setForm((current) => ({ ...current, [key]: value }))
+    setForm((cur) => ({ ...cur, [key]: value }))
   }
 
-  function submitClient(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const firstContact = form.contacts?.[0]
-    const contacts =
-      firstContact?.name.trim() || firstContact?.phone?.trim() || firstContact?.email?.trim()
-        ? [cleanContact(firstContact)]
-        : []
-
-    createClient.mutate(
-      {
-        ...form,
-        domain: form.domain?.trim() || undefined,
-        sellerId: canChooseSeller ? form.sellerId || undefined : currentUser?.sellerId ?? undefined,
-        expectedAmount: Number(form.expectedAmount ?? 0),
-        units: Number(form.units ?? 0),
-        contacts,
-      },
-      {
-        onSuccess: () => setForm(emptyClientForm(currentUser?.sellerId)),
-      }
-    )
+  function openCreate() {
+    setEditingClient(null)
+    setForm(emptyClientForm(currentUser?.sellerId))
+    setShowModal(true)
   }
 
-  function stageDraft(client: Client) {
-    return edits[client.id] ?? { stage: client.stage, nextStep: client.nextStep ?? "" }
+  function openEdit(client: Client) {
+    setEditingClient(client)
+    setForm({
+      name: client.name,
+      domain: client.domain ?? "",
+      type: client.type,
+      person: client.person,
+      sellerId: client.sellerId,
+      source: client.source,
+      stage: client.stage,
+      expectedAmount: client.expectedAmount,
+      units: client.units,
+      pain: client.pain ?? "",
+      provider: client.provider ?? "",
+      nextStep: client.nextStep ?? "",
+      nextDate: client.nextDate ?? "",
+      nextTime: client.nextTime ?? "",
+      contacts: client.contacts.length
+        ? client.contacts.map((c) => ({
+            name: c.name,
+            role: c.role || "",
+            phone: c.phone || "",
+            email: c.email || "",
+            isDecisionMaker: c.isDecisionMaker,
+          }))
+        : [{ ...emptyContact }],
+    })
+    setShowModal(true)
   }
 
-  function saveClientPatch(client: Client) {
-    const draft = stageDraft(client)
-    updateClient.mutate({
-      id: client.id,
-      payload: {
-        stage: draft.stage,
-        nextStep: draft.nextStep,
+  function submitClient(e: FormEvent) {
+    e.preventDefault()
+    const payload: CreateClientInput = {
+      ...form,
+      domain: form.domain?.trim() || undefined,
+      sellerId: canChooseSeller ? form.sellerId || undefined : currentUser?.sellerId ?? undefined,
+      expectedAmount: Number(form.expectedAmount ?? 0),
+      units: Number(form.units ?? 0),
+      contacts: (form.contacts ?? [])
+        .filter((c) => c.name.trim() || c.phone?.trim() || c.email?.trim())
+        .map(cleanContact),
+    }
+
+    if (editingClient) {
+      updateClient.mutate(
+        { id: editingClient.id, payload },
+        { onSuccess: () => setShowModal(false) }
+      )
+    } else {
+      createClient.mutate(payload, {
+        onSuccess: () => setShowModal(false),
+      })
+    }
+  }
+
+  function confirmDelete() {
+    if (!deleteTarget) return
+    deleteClient.mutate(deleteTarget.id, {
+      onSuccess: () => {
+        setDeleteTarget(null)
+        if (view.mode === "detail" && view.clientId === deleteTarget.id) {
+          setView({ mode: "list" })
+        }
       },
     })
   }
 
-  function submitContact(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!contactClientId) return
+  function goToDetail(clientId: string) {
+    setView({ mode: "detail", clientId })
+  }
 
-    addContact.mutate(
-      { clientId: contactClientId, payload: cleanContact(contactForm) },
-      {
-        onSuccess: () => {
-          setContactForm(emptyContact)
-          setContactClientId(null)
-        },
-      }
+  function goToList() {
+    setView({ mode: "list" })
+  }
+
+  // --- DETAIL VIEW ---
+  if (view.mode === "detail" && selectedClient) {
+    return (
+      <div className="p-6 space-y-4">
+        <button onClick={goToList} className="btn-ghost">
+          ← Volver a clientes
+        </button>
+
+        <div className="grid gap-5" style={{ gridTemplateColumns: "280px 1fr" }}>
+          {/* Left sidebar */}
+          <div className="rounded-xl p-5 space-y-5" style={{ background: "#001524" }}>
+            <div>
+              <h2 className="text-lg font-bold text-white">{selectedClient.name}</h2>
+              <div className="flex items-center gap-2 mt-2">
+                <span className={`tag ${stageTag[selectedClient.stage]}`}>{selectedClient.stage}</span>
+                <span className="text-[11px] text-slate-400">Seller {selectedClient.sellerId.slice(0, 8)}</span>
+              </div>
+            </div>
+
+            <div>
+              <p className="slabel text-slate-400">Contactos</p>
+              <div className="mt-2 space-y-2">
+                {selectedClient.contacts.length > 0 ? (
+                  selectedClient.contacts.map((c) => (
+                    <div key={c.id} className="rounded-lg bg-white/5 p-2.5">
+                      <p className="text-sm font-semibold text-white">{c.name}</p>
+                      <p className="text-[11px] text-slate-400">{c.role || "Sin rol"} {c.phone ? `· ${c.phone}` : ""}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-500">Sin contactos</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <p className="slabel text-slate-400">Pain / Necesidad</p>
+              <p className="mt-1 text-xs text-slate-300 leading-relaxed">{selectedClient.pain || "Sin registrarlo"}</p>
+            </div>
+
+            <div>
+              <p className="slabel text-slate-400">Proveedor actual</p>
+              <p className="mt-1 text-xs text-slate-300">{selectedClient.provider || "Sin info"}</p>
+            </div>
+
+            <div>
+              <p className="slabel text-slate-400">Siguiente paso</p>
+              <p className="mt-1 text-xs text-slate-300">{selectedClient.nextStep || "—"}</p>
+              {selectedClient.nextDate && (
+                <p className="text-[11px] text-slate-500 mt-0.5">{formatDate(selectedClient.nextDate)}{selectedClient.nextTime ? ` ${selectedClient.nextTime}` : ""}</p>
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-white/10">
+              <p className="slabel text-slate-400 mb-2">Registrar avance</p>
+              <button
+                onClick={() => openEdit(selectedClient)}
+                className="w-full rounded-lg bg-[#82bc00] px-3 py-2 text-xs font-bold text-[#002B49] transition-colors hover:bg-[#6da000]"
+              >
+                Editar cliente
+              </button>
+            </div>
+          </div>
+
+          {/* Right content */}
+          <div className="space-y-5">
+            {/* Stage update */}
+            <div className="card p-5">
+              <p className="slabel mb-3">Actualizar stage</p>
+              <div className="flex flex-wrap gap-2">
+                {pipelineStages.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() =>
+                      updateClient.mutate({
+                        id: selectedClient.id,
+                        payload: { stage: s },
+                      })
+                    }
+                    className={`rounded-lg px-3.5 py-2 text-xs font-semibold transition-all ${
+                      selectedClient.stage === s
+                        ? "bg-[#002B49] text-white shadow-sm"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Activity history */}
+            <div className="card p-5">
+              <p className="slabel mb-3">Historial de actividad ({clientActivities.length})</p>
+              {clientActivities.length === 0 ? (
+                <div className="empty-state">Sin actividades registradas para este cliente</div>
+              ) : (
+                <div className="space-y-2.5 max-h-[480px] overflow-y-auto pr-1">
+                  {clientActivities.map((act) => (
+                    <div key={act.id} className="log-card">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-[#002B49]">{act.type}</span>
+                        <span className="text-[10px] text-slate-400">{formatDate(act.executedAt)}</span>
+                      </div>
+                      <p className="text-xs text-slate-600 mb-1">{act.summary}</p>
+                      <div className="flex items-center gap-3 text-[10px] text-slate-400">
+                        <span>Resultado: <b className="text-slate-600">{act.result}</b></span>
+                        <span>Calidad: <b className="text-slate-600">{act.quality}/5</b></span>
+                        <span>Puntos: <b className="text-slate-600">{act.points}</b></span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Edit modal */}
+        {showModal && editingClient && renderModal()}
+      </div>
     )
   }
 
+  // --- LIST VIEW ---
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="p-6 space-y-5">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-black text-[#002B49]">Clientes / Prospectos</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            {data ? `${data.total} registros` : "Cartera comercial"}
-          </p>
+          <p className="mt-1 text-sm text-slate-500">{data ? `${data.total} registros` : "Cartera comercial"}</p>
         </div>
-        <div className="grid gap-2 sm:grid-cols-4 lg:min-w-[720px]">
+        <div className="flex items-center gap-3">
           <input
             value={q}
-            onChange={(event) => setQ(event.target.value)}
-            placeholder="Buscar texto"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#00A8E8]"
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar cliente..."
+            className="input max-w-[360px]"
           />
           <select
             value={stage}
-            onChange={(event) => setStage(event.target.value as PipelineStage | "")}
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
+            onChange={(e) => setStage(e.target.value as PipelineStage | "")}
+            className="input w-auto"
           >
             <option value="">Todos los stages</option>
-            {pipelineStages.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
+            {pipelineStages.map((s) => (
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
           <select
             value={type}
-            onChange={(event) => setType(event.target.value as ClientType | "")}
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
+            onChange={(e) => setType(e.target.value as ClientType | "")}
+            className="input w-auto"
           >
             <option value="">Todos los tipos</option>
-            {clientTypes.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
+            {clientTypes.map((t) => (
+              <option key={t} value={t}>{t}</option>
             ))}
           </select>
           {canChooseSeller && (
             <input
               value={seller}
-              onChange={(event) => setSeller(event.target.value)}
-              placeholder="Seller ID"
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#00A8E8]"
+              onChange={(e) => setSeller(e.target.value)}
+              placeholder="Seller"
+              className="input w-[120px]"
             />
           )}
+          <button onClick={openCreate} className="btn-primary whitespace-nowrap">
+            + Nuevo cliente
+          </button>
         </div>
       </div>
 
-      <form
-        onSubmit={submitClient}
-        className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
-      >
-        <div className="grid gap-3 md:grid-cols-4">
-          <input
-            required
-            value={form.name}
-            onChange={(event) => updateForm("name", event.target.value)}
-            placeholder="Empresa"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
-          <input
-            value={form.domain}
-            onChange={(event) => updateForm("domain", event.target.value)}
-            placeholder="Dominio"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
-          <select
-            value={form.type}
-            onChange={(event) => updateForm("type", event.target.value as ClientType)}
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          >
-            {clientTypes.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-          <select
-            value={form.source}
-            onChange={(event) => updateForm("source", event.target.value as ClientSource)}
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          >
-            {clientSources.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-5">
-          {canChooseSeller && (
-            <input
-              required
-              value={form.sellerId}
-              onChange={(event) => updateForm("sellerId", event.target.value)}
-              placeholder="Seller ID"
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-            />
-          )}
-          <select
-            value={form.person}
-            onChange={(event) => updateForm("person", event.target.value as PersonType)}
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          >
-            {personTypes.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            min="0"
-            value={form.expectedAmount}
-            onChange={(event) => updateForm("expectedAmount", Number(event.target.value))}
-            placeholder="Monto esperado"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
-          <input
-            type="number"
-            min="0"
-            value={form.units}
-            onChange={(event) => updateForm("units", Number(event.target.value))}
-            placeholder="Unidades"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
-          <input
-            value={form.nextStep}
-            onChange={(event) => updateForm("nextStep", event.target.value)}
-            placeholder="Siguiente paso"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-5">
-          <input
-            value={form.contacts?.[0]?.name ?? ""}
-            onChange={(event) =>
-              updateForm("contacts", [
-                { ...(form.contacts?.[0] ?? emptyContact), name: event.target.value },
-              ])
-            }
-            placeholder="Contacto"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
-          <input
-            value={form.contacts?.[0]?.role ?? ""}
-            onChange={(event) =>
-              updateForm("contacts", [
-                { ...(form.contacts?.[0] ?? emptyContact), role: event.target.value },
-              ])
-            }
-            placeholder="Rol"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
-          <input
-            value={form.contacts?.[0]?.phone ?? ""}
-            onChange={(event) =>
-              updateForm("contacts", [
-                { ...(form.contacts?.[0] ?? emptyContact), phone: event.target.value },
-              ])
-            }
-            placeholder="Telefono"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
-          <input
-            value={form.contacts?.[0]?.email ?? ""}
-            onChange={(event) =>
-              updateForm("contacts", [
-                { ...(form.contacts?.[0] ?? emptyContact), email: event.target.value },
-              ])
-            }
-            placeholder="Email"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
-          <button
-            disabled={createClient.isPending}
-            className="rounded-md bg-[#002B49] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-          >
-            {createClient.isPending ? "Guardando..." : "Crear cliente"}
-          </button>
-        </div>
-      </form>
-
-      {createClient.isError && (
-        <p className="text-sm text-red-600">
-          {createClient.error instanceof Error ? createClient.error.message : "No se pudo crear"}
-        </p>
-      )}
       {isLoading && <p className="text-sm text-slate-400">Cargando clientes...</p>}
       {isError && <p className="text-sm text-red-600">No se pudo cargar la cartera.</p>}
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        {data?.data.map((client) => {
-          const draft = stageDraft(client)
-          return (
-            <article
-              key={client.id}
-              className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
-            >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-base font-bold text-[#002B49]">{client.name}</h3>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                      {client.type}
-                    </span>
-                    <span className="rounded-full bg-cyan-50 px-2 py-0.5 text-xs font-medium text-cyan-700">
-                      {client.stage}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {client.domain ?? "Sin dominio"} · Seller {client.sellerId.slice(0, 8)}
-                  </p>
-                </div>
-                <div className="text-left md:text-right">
-                  <p className="text-sm font-semibold text-slate-700">
-                    {compactMoney(client.expectedAmount)}
-                  </p>
-                  <p className="text-xs text-slate-400">{client.units} unidades</p>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-3 md:grid-cols-[180px_1fr_auto]">
-                <select
-                  value={draft.stage}
-                  onChange={(event) =>
-                    setEdits((current) => ({
-                      ...current,
-                      [client.id]: { ...draft, stage: event.target.value as PipelineStage },
-                    }))
-                  }
-                  className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-                >
-                  {pipelineStages.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  value={draft.nextStep}
-                  onChange={(event) =>
-                    setEdits((current) => ({
-                      ...current,
-                      [client.id]: { ...draft, nextStep: event.target.value },
-                    }))
-                  }
-                  placeholder="Siguiente paso"
-                  className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-                />
+      {/* Client grid */}
+      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
+        {clientList.map((client) => (
+          <div key={client.id} className="card p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
                 <button
-                  onClick={() => saveClientPatch(client)}
-                  disabled={updateClient.isPending}
-                  className="rounded-md border border-[#002B49] px-4 py-2 text-sm font-semibold text-[#002B49] disabled:opacity-50"
+                  onClick={() => goToDetail(client.id)}
+                  className="text-sm font-bold text-[#002B49] hover:underline text-left"
                 >
-                  Actualizar
+                  {client.name}
                 </button>
               </div>
-
-              <div className="mt-4 grid gap-2">
-                {client.contacts.length > 0 ? (
-                  client.contacts.map((contact) => (
-                    <div key={contact.id} className="rounded-md bg-slate-50 px-3 py-2 text-sm">
-                      <p className="font-medium text-slate-700">{contact.name}</p>
-                      <p className="text-xs text-slate-500">
-                        {contact.role || "Sin rol"} · {contact.phone || "Sin telefono"} ·{" "}
-                        {contact.email || "Sin email"}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-400">
-                    Sin contactos registrados
-                  </p>
-                )}
+              <div className="flex items-center gap-2 mb-2">
+                <span className="tag tag-gray text-[9px]">{client.type}</span>
+                <span className={`tag ${stageTag[client.stage]} text-[9px]`}>{client.stage}</span>
               </div>
+              <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{client.pain || "Sin pain registrado"}</p>
+            </div>
 
-              {contactClientId === client.id ? (
-                <form onSubmit={submitContact} className="mt-4 grid gap-2 md:grid-cols-5">
-                  <input
-                    required
-                    value={contactForm.name}
-                    onChange={(event) =>
-                      setContactForm((current) => ({ ...current, name: event.target.value }))
-                    }
-                    placeholder="Nombre"
-                    className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-                  />
-                  <input
-                    value={contactForm.role}
-                    onChange={(event) =>
-                      setContactForm((current) => ({ ...current, role: event.target.value }))
-                    }
-                    placeholder="Rol"
-                    className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-                  />
-                  <input
-                    value={contactForm.phone}
-                    onChange={(event) =>
-                      setContactForm((current) => ({ ...current, phone: event.target.value }))
-                    }
-                    placeholder="Telefono"
-                    className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-                  />
-                  <input
-                    value={contactForm.email}
-                    onChange={(event) =>
-                      setContactForm((current) => ({ ...current, email: event.target.value }))
-                    }
-                    placeholder="Email"
-                    className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-                  />
-                  <button
-                    disabled={addContact.isPending}
-                    className="rounded-md bg-[#00A8E8] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                  >
-                    Agregar
-                  </button>
-                </form>
-              ) : (
-                <button
-                  onClick={() => setContactClientId(client.id)}
-                  className="mt-4 rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700"
-                >
-                  Agregar contacto
+            <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between">
+              <div className="text-[11px] text-slate-400">
+                <span>{client.sellerId.slice(0, 8)}</span>
+                {client.nextDate && <span> · {formatDate(client.nextDate)}</span>}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => openEdit(client)} className="btn-green">
+                  Editar
                 </button>
-              )}
-            </article>
-          )
-        })}
+                <button onClick={() => setDeleteTarget(client)} className="btn-danger">
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
+
+      {clientList.length === 0 && !isLoading && (
+        <div className="empty-state py-12">No se encontraron clientes con los filtros seleccionados</div>
+      )}
+
+      {/* Create modal */}
+      {showModal && renderModal()}
+
+      {/* Delete confirmation */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-blur">
+          <div className="card w-full max-w-sm p-6 space-y-4">
+            <h3 className="text-sm font-bold text-[#002B49]">Eliminar cliente</h3>
+            <p className="text-xs text-slate-500">
+              ¿Seguro que deseas eliminar <b>{deleteTarget.name}</b>? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button onClick={() => setDeleteTarget(null)} className="btn-ghost">Cancelar</button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleteClient.isPending}
+                className="btn-danger"
+              >
+                {deleteClient.isPending ? "Eliminando..." : "Eliminar"}
+              </button>
+            </div>
+            {deleteClient.isError && (
+              <p className="text-xs text-red-600">
+                {deleteClient.error instanceof Error ? deleteClient.error.message : "No se pudo eliminar"}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
+
+  // --- SHARED MODAL ---
+  function renderModal() {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center modal-blur overflow-y-auto py-8">
+        <div className="card w-full max-w-[860px] p-6 space-y-4">
+          <h3 className="text-base font-bold text-[#002B49]">
+            {editingClient ? "Editar cliente" : "Nuevo cliente"}
+          </h3>
+
+          <form onSubmit={submitClient} className="space-y-4">
+            {/* Row 1 */}
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                required
+                value={form.name}
+                onChange={(e) => updateForm("name", e.target.value)}
+                placeholder="Nombre de la empresa"
+                className="input"
+              />
+              <input
+                value={form.domain}
+                onChange={(e) => updateForm("domain", e.target.value)}
+                placeholder="Dominio (ej. empresa.com)"
+                className="input"
+              />
+            </div>
+
+            {/* Row 2 */}
+            <div className="grid grid-cols-4 gap-3">
+              <select value={form.type} onChange={(e) => updateForm("type", e.target.value as ClientType)} className="input">
+                {clientTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <select value={form.person} onChange={(e) => updateForm("person", e.target.value as PersonType)} className="input">
+                {personTypes.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <select value={form.source} onChange={(e) => updateForm("source", e.target.value as ClientSource)} className="input">
+                {clientSources.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+              {canChooseSeller && (
+                <input
+                  value={form.sellerId}
+                  onChange={(e) => updateForm("sellerId", e.target.value)}
+                  placeholder="Seller ID"
+                  className="input"
+                />
+              )}
+            </div>
+
+            {/* Row 3 */}
+            <div className="grid grid-cols-4 gap-3">
+              <input
+                type="number"
+                min="0"
+                value={form.expectedAmount}
+                onChange={(e) => updateForm("expectedAmount", Number(e.target.value))}
+                placeholder="Monto esperado"
+                className="input"
+              />
+              <input
+                type="number"
+                min="0"
+                value={form.units}
+                onChange={(e) => updateForm("units", Number(e.target.value))}
+                placeholder="Unidades"
+                className="input"
+              />
+              <input
+                value={form.nextStep}
+                onChange={(e) => updateForm("nextStep", e.target.value)}
+                placeholder="Siguiente paso"
+                className="input"
+              />
+              <input
+                type="date"
+                value={form.nextDate}
+                onChange={(e) => updateForm("nextDate", e.target.value)}
+                className="input"
+              />
+            </div>
+
+            {/* Row 4 - provider */}
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                value={form.provider}
+                onChange={(e) => updateForm("provider", e.target.value)}
+                placeholder="Proveedor actual"
+                className="input"
+              />
+              <select value={form.stage} onChange={(e) => updateForm("stage", e.target.value as PipelineStage)} className="input">
+                {pipelineStages.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
+            {/* Contacts */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="slabel">Contactos</p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateForm("contacts", [...(form.contacts ?? []), { ...emptyContact }])
+                  }
+                  className="text-[11px] font-semibold text-[#00A8E8] hover:underline"
+                >
+                  + Agregar contacto
+                </button>
+              </div>
+              <div className="space-y-2">
+                {(form.contacts ?? []).map((contact, idx) => (
+                  <div key={idx} className="grid grid-cols-[1fr_140px_140px_180px_32px] gap-2 items-center">
+                    <input
+                      value={contact.name}
+                      onChange={(e) => {
+                        const updated = [...(form.contacts ?? [])]
+                        updated[idx] = { ...updated[idx], name: e.target.value }
+                        updateForm("contacts", updated)
+                      }}
+                      placeholder="Nombre"
+                      className="input"
+                    />
+                    <input
+                      value={contact.role}
+                      onChange={(e) => {
+                        const updated = [...(form.contacts ?? [])]
+                        updated[idx] = { ...updated[idx], role: e.target.value }
+                        updateForm("contacts", updated)
+                      }}
+                      placeholder="Rol"
+                      className="input"
+                    />
+                    <input
+                      value={contact.phone}
+                      onChange={(e) => {
+                        const updated = [...(form.contacts ?? [])]
+                        updated[idx] = { ...updated[idx], phone: e.target.value }
+                        updateForm("contacts", updated)
+                      }}
+                      placeholder="Teléfono"
+                      className="input"
+                    />
+                    <input
+                      value={contact.email}
+                      onChange={(e) => {
+                        const updated = [...(form.contacts ?? [])]
+                        updated[idx] = { ...updated[idx], email: e.target.value }
+                        updateForm("contacts", updated)
+                      }}
+                      placeholder="Email"
+                      className="input"
+                    />
+                    {(form.contacts?.length ?? 0) > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = (form.contacts ?? []).filter((_, i) => i !== idx)
+                          updateForm("contacts", updated)
+                        }}
+                        className="btn-danger justify-self-center"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Pain */}
+            <textarea
+              value={form.pain}
+              onChange={(e) => updateForm("pain", e.target.value)}
+              placeholder="Pain / Necesidad del cliente"
+              rows={3}
+              className="input resize-none"
+            />
+
+            {/* AI Coach hint */}
+            <div className="ai-box">
+              <strong>Coach IA:</strong> Un buen pain description incluye el problema concreto, quién lo sufre y el impacto en el negocio.
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button type="button" onClick={() => setShowModal(false)} className="btn-ghost">Cancelar</button>
+              <button
+                type="submit"
+                disabled={createClient.isPending || updateClient.isPending}
+                className="btn-primary"
+              >
+                {createClient.isPending || updateClient.isPending
+                  ? "Guardando..."
+                  : editingClient
+                    ? "Guardar cambios"
+                    : "Crear cliente"}
+              </button>
+            </div>
+
+            {(createClient.isError || updateClient.isError) && (
+              <p className="text-xs text-red-600">No se pudo guardar</p>
+            )}
+          </form>
+        </div>
+      </div>
+    )
+  }
 }

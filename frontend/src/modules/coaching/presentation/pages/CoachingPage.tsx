@@ -4,6 +4,18 @@ import { UserRole } from "@/core/domain/types/common.types"
 import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
 import { useCoachingDaily } from "../../application/hooks/useCoachingDaily"
 
+function getBarColor(pct: number): string {
+  if (pct >= 100) return '#82bc00'
+  if (pct >= 50) return '#F59E0B'
+  return '#EF4444'
+}
+
+function getQualityColor(q: number): string {
+  if (q >= 80) return '#82bc00'
+  if (q >= 50) return '#F59E0B'
+  return '#EF4444'
+}
+
 export function CoachingPage() {
   const currentUser = useAppStore((s) => s.currentUser)
   const isAdmin = currentUser?.role !== UserRole.Seller
@@ -11,131 +23,111 @@ export function CoachingPage() {
   const [selectedSellerId, setSelectedSellerId] = useState<string>("")
   const { data: sellers } = useSellers()
 
-  const targetSellerId = isAdmin
-    ? selectedSellerId || null
-    : currentUser?.sellerId
+  const targetSellerId = isAdmin ? selectedSellerId || null : currentUser?.sellerId
   const { data, isLoading, error } = useCoachingDaily(targetSellerId)
 
   const today = new Date().toLocaleDateString("es-MX", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
   })
 
-  const barColor = (pct: number) => {
-    if (pct >= 100) return "bg-green-500"
-    if (pct >= 50) return "bg-amber-400"
-    return "bg-red-500"
-  }
-
-  const qualityColor = (q: number) => {
-    if (q >= 80) return "text-green-600"
-    if (q >= 50) return "text-amber-500"
-    return "text-red-600"
-  }
-
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <h2 className="text-2xl font-black text-[#002B49]">Coaching Comercial</h2>
+    <div style={{ maxWidth: 720 }} className="space-y-5">
+      <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Coaching Comercial</h1>
 
       {isAdmin && (
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Vendedor
-          </label>
+          <label className="slabel mb-1 block">Vendedor</label>
           <select
             value={selectedSellerId}
             onChange={(e) => setSelectedSellerId(e.target.value)}
-            className="w-full max-w-xs rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input"
+            style={{ maxWidth: 280 }}
           >
             <option value="">Selecciona un vendedor</option>
             {sellers?.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
+              <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
         </div>
       )}
 
-      {isLoading && (
-        <p className="text-sm text-slate-500">Cargando reporte...</p>
-      )}
-
-      {error && (
-        <p className="text-sm text-red-600">Error al cargar el reporte.</p>
-      )}
+      {isLoading && <p style={{ fontSize: 13, color: '#94A3B8' }}>Cargando reporte...</p>}
+      {error && <p style={{ fontSize: 13, color: '#EF4444' }}>Error al cargar el reporte.</p>}
 
       {data && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div>
-            <p className="text-lg font-semibold text-slate-800">
-              {data.sellerName}
-            </p>
-            <p className="text-sm text-slate-500 capitalize">{today}</p>
+            <p style={{ fontSize: 15, fontWeight: 600, color: '#0F172A' }}>{data.sellerName}</p>
+            <p style={{ fontSize: 12, color: '#94A3B8', textTransform: 'capitalize' }}>{today}</p>
           </div>
 
-          {/* Progreso del dia */}
-          <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4">
-            <div className="flex justify-between text-sm font-medium text-slate-700">
-              <span>Progreso del día</span>
-              <span>
-                {data.pointsToday} / {data.dailyPointsGoal} puntos
+          {/* Progress */}
+          <div className="card p-4">
+            <div className="flex justify-between mb-2">
+              <span className="kl">Progreso del día</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#0F172A' }}>
+                {data.pointsToday} / {data.dailyPointsGoal} pts
               </span>
             </div>
-            <div className="h-3 w-full rounded-full bg-slate-100">
+            <div className="prog">
               <div
-                className={`h-3 rounded-full transition-all ${barColor(data.progressPct)}`}
-                style={{ width: `${data.progressPct}%` }}
+                className="prog-fill"
+                style={{ width: `${data.progressPct}%`, backgroundColor: getBarColor(data.progressPct) }}
               />
             </div>
-            <p className="text-xs text-slate-500">
-              {data.progressPct}% completado
-            </p>
+            <p style={{ marginTop: 4, fontSize: 11, color: '#94A3B8' }}>{data.progressPct}% completado</p>
           </div>
 
-          {/* Calidad promedio */}
-          <div className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4">
-            <div>
-              <p className="text-sm text-slate-500">Calidad promedio</p>
-              <p
-                className={`text-4xl font-black ${qualityColor(data.avgQuality)}`}
-              >
+          {/* Quality + overdue chips */}
+          <div className="flex gap-4">
+            <div className="card p-4 flex-1 text-center">
+              <div className="kl">Calidad promedio</div>
+              <div style={{ fontSize: 36, fontWeight: 800, color: getQualityColor(data.avgQuality), lineHeight: 1.1, marginTop: 4 }}>
                 {Math.round(data.avgQuality)}%
-              </p>
+              </div>
+            </div>
+            <div className="card p-4 flex items-center gap-3">
+              <span
+                className="tag"
+                style={{
+                  background: data.overdueCount > 0 ? '#FEE2E2' : '#F0FDF4',
+                  color: data.overdueCount > 0 ? '#B91C1C' : '#16A34A',
+                }}
+              >
+                Vencidos: {data.overdueCount}
+              </span>
+              <span
+                className="tag"
+                style={{
+                  background: data.tomorrowTasksCount < 5 ? '#FFFBEB' : '#F0FDF4',
+                  color: data.tomorrowTasksCount < 5 ? '#D97706' : '#16A34A',
+                }}
+              >
+                Mañana: {data.tomorrowTasksCount}
+              </span>
             </div>
           </div>
 
-          {/* Mix de actividades */}
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <p className="mb-3 text-sm font-semibold text-slate-700">
-              Mix de actividades
-            </p>
+          {/* Activity mix */}
+          <div className="card p-4">
+            <p className="slabel mb-3">Mix de actividades</p>
             {data.activityMix.length === 0 ? (
-              <p className="text-sm text-slate-400">Sin actividades hoy</p>
+              <p style={{ fontSize: 13, color: '#94A3B8' }}>Sin actividades hoy</p>
             ) : (
-              <table className="w-full text-sm">
+              <table className="dt">
                 <thead>
-                  <tr className="border-b border-slate-100 text-left text-slate-500">
-                    <th className="pb-2 font-medium">Tipo</th>
-                    <th className="pb-2 text-right font-medium">Cantidad</th>
-                    <th className="pb-2 text-right font-medium">% del día</th>
+                  <tr>
+                    <th>Tipo</th>
+                    <th className="text-right">Cantidad</th>
+                    <th className="text-right">% del día</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.activityMix.map((item) => (
-                    <tr
-                      key={item.type}
-                      className="border-b border-slate-50 last:border-0"
-                    >
-                      <td className="py-1.5 text-slate-700">{item.type}</td>
-                      <td className="py-1.5 text-right text-slate-700">
-                        {item.count}
-                      </td>
-                      <td className="py-1.5 text-right text-slate-500">
-                        {item.percentage}%
-                      </td>
+                    <tr key={item.type}>
+                      <td>{item.type}</td>
+                      <td className="text-right">{item.count}</td>
+                      <td className="text-right" style={{ color: '#94A3B8' }}>{item.percentage}%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -143,42 +135,15 @@ export function CoachingPage() {
             )}
           </div>
 
-          {/* Chips de vencidos y manana */}
-          <div className="flex flex-wrap gap-3">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${
-                data.overdueCount > 0
-                  ? "bg-red-100 text-red-700"
-                  : "bg-green-100 text-green-700"
-              }`}
-            >
-              Vencidos: {data.overdueCount}
-            </span>
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${
-                data.tomorrowTasksCount < 5
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-green-100 text-green-700"
-              }`}
-            >
-              Mañana: {data.tomorrowTasksCount} tareas
-            </span>
-          </div>
-
-          {/* Insights del mix */}
+          {/* Insights */}
           {data.mixInsights.length > 0 && (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <p className="mb-2 text-sm font-semibold text-blue-800">
+            <div className="ai-box">
+              <p style={{ fontWeight: 700, marginBottom: 6, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Análisis del día
               </p>
-              <ul className="space-y-1">
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {data.mixInsights.map((insight, i) => (
-                  <li
-                    key={i}
-                    className="text-sm text-blue-800 before:mr-2 before:content-['•']"
-                  >
-                    {insight}
-                  </li>
+                  <li key={i}>• {insight}</li>
                 ))}
               </ul>
             </div>
@@ -187,9 +152,7 @@ export function CoachingPage() {
       )}
 
       {!data && !isLoading && !error && isAdmin && !selectedSellerId && (
-        <p className="text-sm text-slate-400">
-          Selecciona un vendedor para ver el reporte.
-        </p>
+        <p style={{ fontSize: 13, color: '#94A3B8' }}>Selecciona un vendedor para ver el reporte.</p>
       )}
     </div>
   )
