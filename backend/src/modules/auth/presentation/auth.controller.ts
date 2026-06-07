@@ -1,13 +1,16 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { LoginDto, LoginResponseDto } from '../application/dtos/login.dto';
+import { LoginUseCase } from '../application/use-cases/login.use-case';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  // TODO: inject LoginUseCase (feature 02-auth)
+  constructor(private readonly loginUseCase: LoginUseCase) {}
+
   @Post('login')
-  login(@Body() _dto: LoginDto): LoginResponseDto {
-    throw new Error('Not implemented — pending feature 02-auth');
+  @HttpCode(HttpStatus.OK)
+  login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
+    return this.loginUseCase.execute(dto);
   }
 }

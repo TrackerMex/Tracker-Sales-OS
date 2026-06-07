@@ -1,11 +1,11 @@
-import { AuthUser } from '../../../core/domain/types/common.types';
+import type { AuthUser } from "@/core/domain/types/common.types"
 
 export interface LoginRequest {
-  username: string;
-  password: string;
+  username: string
+  password: string
 }
 
 export interface LoginResponse {
-  accessToken: string;
-  user: AuthUser;
+  accessToken: string
+  user: AuthUser
 }

@@ -13,7 +13,7 @@
     "id": "02-auth",
     "name": "Authentication",
     "description": "Login/logout, JWT, JwtAuthGuard, RolesGuard, RBAC (Admin/Director/Seller), bcrypt",
-    "status": "pending",
+    "status": "done",
     "priority": 2,
     "backend_modules": ["auth"],
     "frontend_modules": ["auth"],
