@@ -1,0 +1,96 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
+import { ActivityEntity } from '../../domain/entities/activity.entity';
+import { IActivityRepository } from '../../domain/repositories/activity.repository.interface';
+import { ActivityTypeormEntity } from '../entities/activity.typeorm.entity';
+import { FindAllOptions } from '../../../../core/domain/repository.interface';
+
+@Injectable()
+export class ActivityRepositoryImpl implements IActivityRepository {
+  constructor(
+    @InjectRepository(ActivityTypeormEntity)
+    private readonly repo: Repository<ActivityTypeormEntity>,
+  ) {}
+
+  async findById(id: string): Promise<ActivityEntity | null> {
+    const entity = await this.repo.findOne({ where: { id } });
+    return entity ? this.toDomain(entity) : null;
+  }
+
+  async findAll(options?: FindAllOptions): Promise<{ data: ActivityEntity[]; total: number }> {
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.repo.findAndCount({
+      where: options?.where as FindOptionsWhere<ActivityTypeormEntity>,
+      skip,
+      take: limit,
+      order: { executedAt: 'DESC' },
+    });
+
+    return { data: data.map((e) => this.toDomain(e)), total };
+  }
+
+  async create(entity: Partial<ActivityEntity>): Promise<ActivityEntity> {
+    const saved = await this.repo.save(this.repo.create(entity as Partial<ActivityTypeormEntity>));
+    return this.toDomain(saved);
+  }
+
+  async update(id: string, entity: Partial<ActivityEntity>): Promise<ActivityEntity> {
+    const existing = await this.repo.findOne({ where: { id } });
+    Object.assign(existing!, entity);
+    const saved = await this.repo.save(existing!);
+    return this.toDomain(saved);
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.repo.softDelete(id);
+  }
+
+  async findDailyBySeller(sellerId: string, date: Date): Promise<ActivityEntity[]> {
+    const start = new Date(date);
+    start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setUTCHours(23, 59, 59, 999);
+
+    const data = await this.repo
+      .createQueryBuilder('activity')
+      .where('activity.sellerId = :sellerId', { sellerId })
+      .andWhere('activity.executedAt >= :start AND activity.executedAt <= :end', { start, end })
+      .orderBy('activity.executedAt', 'DESC')
+      .getMany();
+
+    return data.map((e) => this.toDomain(e));
+  }
+
+  async sumDailyPoints(sellerId: string, date: Date): Promise<number> {
+    const start = new Date(date);
+    start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setUTCHours(23, 59, 59, 999);
+
+    const result = await this.repo
+      .createQueryBuilder('activity')
+      .select('SUM(activity.points)', 'total')
+      .where('activity.sellerId = :sellerId', { sellerId })
+      .andWhere('activity.executedAt >= :start AND activity.executedAt <= :end', { start, end })
+      .getRawOne<{ total: string | null }>();
+
+    return Number(result?.total ?? 0);
+  }
+
+  async findRecentBySeller(sellerId: string, limit: number): Promise<ActivityEntity[]> {
+    const data = await this.repo.find({
+      where: { sellerId } as FindOptionsWhere<ActivityTypeormEntity>,
+      order: { executedAt: 'DESC' },
+      take: limit,
+    });
+    return data.map((e) => this.toDomain(e));
+  }
+
+  private toDomain(entity: ActivityTypeormEntity): ActivityEntity {
+    return Object.assign(new ActivityEntity(), entity);
+  }
+}

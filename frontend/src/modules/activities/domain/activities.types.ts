@@ -15,6 +15,7 @@ export interface Activity {
   id: ID
   sellerId: ID
   clientId: ID
+  contactId: ID | null
   type: ActivityType
   result: ActivityResult
   summary: string
@@ -22,14 +23,21 @@ export interface Activity {
   agreement: string | null
   nextStep: string | null
   nextDate: string | null
+  nextTime: string | null
   points: number
   quality: number
   executedAt: string
   capturedAt: string
   delayMinutes: number
+  createdAt: string
 }
 
-export interface CreateActivityDto {
+export interface DailyActivitiesResponse {
+  activities: Activity[]
+  totalPoints: number
+}
+
+export interface CreateActivityInput {
   clientId: ID
   contactId?: ID
   type: ActivityType

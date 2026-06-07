@@ -43,7 +43,7 @@
     "id": "05-activities",
     "name": "Activities",
     "description": "Registro de actividades en tiempo real, sistema de puntos TASK_POINTS, cálculo automático de calidad (0-100%), campos: resumen/descubrimiento/acuerdo/siguiente paso",
-    "status": "pending",
+    "status": "done",
     "priority": 5,
     "backend_modules": ["activities"],
     "frontend_modules": ["activities"],

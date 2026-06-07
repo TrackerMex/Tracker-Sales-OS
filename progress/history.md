@@ -1,68 +1,18 @@
-# Historial de Features — Append Only
+# History — Tracker Sales OS
 
-Este archivo NUNCA se modifica, solo se agrega al final.
+## 2026-06-06 — 05-activities
 
----
+**Status**: done
 
-## 2026-06-05 — Scaffolding inicial
+**Archivos creados (18):**
+- Backend (9 nuevos): DTOs (create, response, query), use-cases (create, get-daily, get-seller), TypeORM entity, repository impl, tests unitarios
+- Backend (2 reemplazados): activities.controller.ts, activities.module.ts
+- Frontend (5 nuevos): activities.api.ts, useCreateActivity, useDailyActivities, ActivityForm.tsx, ActivitiesPage.tsx
+- Frontend (2 actualizados): activities.types.ts, actividades.nueva.tsx (ruta)
 
-**Acción**: Setup completo del proyecto
-**Resultado**: 
-- Harness SubAgents Pattern configurado (CLAUDE.md, AGENTS.md, CHECKPOINTS.md, feature_list.json)
-- Clean Architecture scaffold creado (backend + frontend)
-- Docker Compose configurado
-- Documentación de arquitectura migrada y actualizada con gaps corregidos
-- 15 features definidas en feature_list.json, todas `pending`
+**CHECKPOINT**: PASSED — 8/8 criterios
 
-**Siguiente feature**: 01-infra-setup
-
----
-
-## 2026-06-06 — Feature 01-infra-setup (código completo)
-
-**Acción**: Implementación de infraestructura NestJS
-**Cambios**:
-- `backend/src/app.module.ts`: ConfigModule (global), ThrottlerModule (100 req/60s), TypeOrmModule.forRootAsync con env vars
-- `backend/src/main.ts`: GET / excluido del global prefix 'api' para health check
-- `backend/src/app.controller.ts`: retorna `{ status: 'ok', timestamp }` JSON
-- `backend/tsconfig.json`: fix crítico nodenext → commonjs/node (NestJS no es ESM)
-- `backend/src/modules/pipeline/domain/` y `tasks/domain/`: fix import paths rotos
-- Instalado: `@nestjs/config` 4.0.4, `@nestjs/throttler` 6.5.0
-**Verificación**: `pnpm tsc --noEmit` LIMPIO. Runtime pendiente.
-**Estado**: `in_progress` — falta verificación runtime (docker-compose up + endpoints)
-
----
-
-## 2026-06-06 — Review 01-03 (PASSED)
-
-**Acción**: Revisión de CHECKPOINTS 01, 02 y 03.
-**Resultado**:
-- `01-infra-setup`: PASSED. Configuración, health check, Swagger, Dockerfiles y variables de entorno revisados.
-- `02-auth`: PASSED. Login/JWT/guards/RBAC/frontend login revisados.
-- `03-users-sellers`: PASSED. CRUD base de users/sellers, bloqueo y página Equipo revisados.
-- `CHECKPOINTS.md` actualizado con 01-03 marcados como completos.
-- Reporte guardado en `progress/review_01-03.md`.
-**Verificación**:
-- `npm.cmd exec tsc -- --noEmit` en backend: limpio.
-- `npm.cmd exec tsc -- --noEmit` en frontend: limpio.
-- `npm.cmd test -- --runInBand` en backend: 2 suites / 6 tests passing.
-**Siguiente feature**: 04-clients
-
----
-
-## 2026-06-06 - Feature 04-clients (PASSED)
-
-**Accion**: Implementacion y revision de Clients & Contacts.
-**Cambios**:
-- Backend `clients`: DTOs, use-cases, entidades TypeORM, repositorio, controller protegido con JWT/Roles y modulo registrado.
-- Frontend `clients`: tipos, API Axios, hooks TanStack Query, pagina `ClientesPage` y ruta `/clientes`.
-- Anti-duplicados por nombre empresa, dominio, telefono y correo.
-- Filtros por stage/type/seller y busqueda `q`.
-- Restriccion de Seller a sus propios clientes; Admin/Director ven todos.
-**Verificacion**:
-- `npm.cmd exec tsc -- --noEmit` en backend: limpio.
-- `npm.cmd exec tsc -- --noEmit` en frontend: limpio.
-**Estado**: `done`
-**Siguiente feature**: 05-activities
-
----
+**Decisiones clave:**
+- `findDailyBySeller` usa rango UTC explícito (setUTCHours) en vez de DATE() en SQL raw
+- `GetDailyInput/GetDailyOutput` interfaces exportadas para evitar error TS4053
+- `Roles` decorator real en `presentation/decorators/` (no `infrastructure/decorators/`)
