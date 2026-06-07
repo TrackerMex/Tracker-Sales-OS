@@ -1,5 +1,19 @@
 # History — Tracker Sales OS
 
+## 2026-06-07 — 10-mi-dia
+
+**Status**: done
+
+**Archivos creados:**
+- Backend (2 nuevos, 2 modificados): mi-dia.dto.ts, get-mi-dia.use-case.ts, dashboard.controller.ts (endpoint stub reemplazado), dashboard.module.ts (ClientTypeormEntity + GetMiDiaUseCase registrados)
+- Frontend (5 nuevos, 1 modificado): mi-dia.types.ts, mi-dia.api.ts, useMiDia.ts, MiDiaPage.tsx, routes/_app/mi-dia.tsx (placeholder reemplazado)
+
+**Decisiones:**
+- Morado = patrón "muchas llamadas sin agenda mañana" (IA Coach visual, sin Claude API — eso es feature 12)
+- coachTips = 5 reglas estáticas basadas en métricas del día
+
+---
+
 ## 2026-06-07 — 09-dashboard
 
 **Status**: done

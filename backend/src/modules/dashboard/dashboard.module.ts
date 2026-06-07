@@ -5,10 +5,12 @@ import { ActivityTypeormEntity } from '../activities/infrastructure/entities/act
 import { TaskTypeormEntity } from '../tasks/infrastructure/entities/task.typeorm.entity';
 import { SaleTypeormEntity } from '../sales/infrastructure/entities/sale.typeorm.entity';
 import { SellerTypeormEntity } from '../sellers/infrastructure/entities/seller.typeorm.entity';
+import { ClientTypeormEntity } from '../clients/infrastructure/entities/client.typeorm.entity';
 import { DashboardController } from './presentation/dashboard.controller';
 import { GetDashboardSummaryUseCase } from './application/use-cases/get-dashboard-summary.use-case';
 import { GetSellersScoreUseCase } from './application/use-cases/get-sellers-score.use-case';
 import { GetOverdueTasksUseCase } from './application/use-cases/get-overdue-tasks.use-case';
+import { GetMiDiaUseCase } from './application/use-cases/get-mi-dia.use-case';
 
 @Module({
   imports: [
@@ -17,6 +19,7 @@ import { GetOverdueTasksUseCase } from './application/use-cases/get-overdue-task
       TaskTypeormEntity,
       SaleTypeormEntity,
       SellerTypeormEntity,
+      ClientTypeormEntity,
     ]),
     AuthModule,
   ],
@@ -25,6 +28,7 @@ import { GetOverdueTasksUseCase } from './application/use-cases/get-overdue-task
     GetDashboardSummaryUseCase,
     GetSellersScoreUseCase,
     GetOverdueTasksUseCase,
+    GetMiDiaUseCase,
   ],
 })
 export class DashboardModule {}

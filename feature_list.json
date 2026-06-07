@@ -93,7 +93,7 @@
     "id": "10-mi-dia",
     "name": "Mi Día (Termómetro Operativo)",
     "description": "Vista personal del vendedor: puntos del día vs meta (30), llamadas del día (meta 10), agenda de mañana (meta 5), prospectos nuevos (meta 2), seguimientos vencidos",
-    "status": "pending",
+    "status": "done",
     "priority": 10,
     "backend_modules": ["dashboard"],
     "frontend_modules": ["mi-dia"],
