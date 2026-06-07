@@ -1,5 +1,28 @@
 # History — Tracker Sales OS
 
+## 2026-06-07 — 07-pipeline
+
+**Status**: done
+
+**Archivos creados (17):**
+- Backend (9): deal.typeorm.entity.ts, deal.repository.impl.ts, audit.interceptor.ts, create-deal.dto.ts, change-stage.dto.ts, deal.dto.ts, create-deal.use-case.ts, get-pipeline-by-seller.use-case.ts, change-deal-stage.use-case.ts
+- Backend (2 modificados): pipeline.controller.ts, pipeline.module.ts
+- Frontend (8): pipeline.types.ts (actualizado), pipeline.api.ts, usePipeline.ts, useCreateDeal.ts, useChangeStage.ts, DealCard.tsx, KanbanColumn.tsx, PipelinePage.tsx
+- Frontend (1 modificado): routes/_app/pipeline.tsx
+
+**CHECKPOINT**: PASSED — 6/6 criterios
+
+**Decisiones clave:**
+- AuditInterceptor deriva `oldStage` del penúltimo entry de `stageHistory` en el response (no hace query a DB)
+- Kanban click-based (select + botón Mover) — sin DnD library instalada
+- `getPipelineBySeller` retorna todos los 7 stages inicializados aunque estén vacíos
+- `amount` en TypeORM como `decimal` con `Number()` cast en toDomain()
+- `ALLOWED_TRANSITIONS` definido en domain/entities y re-usado en frontend DealCard
+
+**tsc --noEmit**: PASS backend y frontend
+
+---
+
 ## 2026-06-07 — 06-tasks
 
 **Status**: done

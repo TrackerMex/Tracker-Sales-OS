@@ -63,7 +63,7 @@
     "id": "07-pipeline",
     "name": "Pipeline (Kanban)",
     "description": "7 etapas: Prospecto→Contactado→Interesado→Propuesta→Negociación→Cierre→Perdido. Cambio de stage con historial JSONB. Probability automática por stage.",
-    "status": "pending",
+    "status": "done",
     "priority": 7,
     "backend_modules": ["pipeline"],
     "frontend_modules": ["pipeline"],

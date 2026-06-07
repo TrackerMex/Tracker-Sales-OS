@@ -1,19 +1,35 @@
-import { ID } from '../../../core/domain/types/common.types';
-import { PipelineStage } from '../../clients/domain/clients.types';
+import type { ID } from "@/core/domain/types/common.types"
+import type { PipelineStage } from "@/modules/clients/domain/clients.types"
+
+export type { PipelineStage }
 
 export interface StageHistoryEntry {
-  stage: PipelineStage;
-  changedAt: string;
-  changedBy: string;
+  stage: PipelineStage
+  changedAt: string
+  changedBy: string
 }
 
 export interface Deal {
-  id: ID;
-  clientId: ID;
-  clientName: string;
-  sellerId: ID;
-  stage: PipelineStage;
-  amount: number;
-  probability: number;
-  stageHistory: StageHistoryEntry[];
+  id: ID
+  clientId: ID
+  clientName: string
+  sellerId: ID
+  stage: PipelineStage
+  amount: number
+  probability: number
+  stageHistory: StageHistoryEntry[]
 }
+
+export interface CreateDealInput {
+  clientId: string
+  sellerId: string
+  amount?: number
+  stage?: PipelineStage
+}
+
+export interface ChangeStageInput {
+  newStage: PipelineStage
+  changedBy: string
+}
+
+export type PipelineGrouped = Record<PipelineStage, Deal[]>

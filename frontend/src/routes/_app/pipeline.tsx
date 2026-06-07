@@ -1,17 +1,9 @@
-import { createRoute } from '@tanstack/react-router';
-import { appLayoutRoute } from '../_app';
-
-function PipelinePage() {
-  return (
-    <div>
-      <h2 className="text-xl font-black text-[#002B49]">Pipeline</h2>
-      <p className="mt-2 text-sm text-slate-500">Pendiente — feature 07-pipeline</p>
-    </div>
-  );
-}
+import { createRoute } from "@tanstack/react-router"
+import { appLayoutRoute } from "../_app"
+import { PipelinePage } from "../../modules/pipeline/presentation/pages/PipelinePage"
 
 export const pipelineRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
-  path: '/pipeline',
+  path: "/pipeline",
   component: PipelinePage,
-});
+})
