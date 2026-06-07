@@ -1,19 +1,38 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
+import { GetDashboardSummaryUseCase } from '../application/use-cases/get-dashboard-summary.use-case';
+import { GetSellersScoreUseCase } from '../application/use-cases/get-sellers-score.use-case';
+import { GetOverdueTasksUseCase } from '../application/use-cases/get-overdue-tasks.use-case';
 
 @ApiTags('dashboard')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('dashboard')
 export class DashboardController {
-  // TODO: implement in features 09-dashboard and 10-mi-dia
+  constructor(
+    private readonly getDashboardSummary: GetDashboardSummaryUseCase,
+    private readonly getSellersScoreUseCase: GetSellersScoreUseCase,
+    private readonly getOverdueTasksUseCase: GetOverdueTasksUseCase,
+  ) {}
+
   @Get('summary')
-  getSummary() { throw new Error('Not implemented'); }
+  getSummary() {
+    return this.getDashboardSummary.execute();
+  }
 
   @Get('sellers-score')
-  getSellersScore() { throw new Error('Not implemented'); }
+  fetchSellersScore() {
+    return this.getSellersScoreUseCase.execute();
+  }
 
   @Get('overdue-tasks')
-  getOverdueTasks() { throw new Error('Not implemented'); }
+  fetchOverdueTasks() {
+    return this.getOverdueTasksUseCase.execute();
+  }
 
   @Get('mi-dia/seller/:id')
-  getMiDia(@Param('id') _sellerId: string) { throw new Error('Not implemented'); }
+  getMiDia(@Param('id') _sellerId: string) {
+    throw new Error('Not implemented — feature 10');
+  }
 }

@@ -83,7 +83,7 @@
     "id": "09-dashboard",
     "name": "Dashboard & KPIs",
     "description": "Semáforo comercial por vendedor (verde/ámbar/rojo), scoring 0-100%, KPIs globales (venta registrada, unidades, puntos, calidad), alertas de seguimientos vencidos",
-    "status": "pending",
+    "status": "done",
     "priority": 9,
     "backend_modules": ["dashboard"],
     "frontend_modules": ["dashboard"],

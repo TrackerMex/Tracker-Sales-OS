@@ -1,5 +1,21 @@
 # History — Tracker Sales OS
 
+## 2026-06-07 — 09-dashboard
+
+**Status**: done
+
+**Archivos creados:**
+- Backend (8): dashboard-summary.dto.ts, seller-score.dto.ts, overdue-task.dto.ts, get-dashboard-summary.use-case.ts, get-sellers-score.use-case.ts, get-overdue-tasks.use-case.ts, dashboard.controller.ts (reemplazado), dashboard.module.ts (reemplazado)
+- Frontend (10): dashboard.types.ts, dashboard.api.ts, useDashboardSummary.ts, useSellersSemaphore.ts, useOverdueTasks.ts, KPICard.tsx, SellerSemaphoreTable.tsx, OverdueTasksList.tsx, DashboardPage.tsx, routes/_app/dashboard.tsx (reemplazado)
+
+**CHECKPOINT**: PASSED — 5/5 criterios
+
+**Decisiones clave:**
+- Dashboard usa TypeOrmModule.forFeature directo (no importa módulos ajenos) — módulo de lectura agregada
+- Score formula: 45×esfuerzo + 35×calidad + 40×volumen - 10×vencidos, clamped [0,100]
+- volumen = monthlyPoints (puntos del mes) / 50 — no sales units
+- GetOverdueTasks filtra por sellers activos (no expone tareas de sellers inactivos)
+
 ## 2026-06-07 — 08-sales
 
 **Status**: done
