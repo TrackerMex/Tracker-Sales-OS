@@ -32,3 +32,20 @@ Este archivo NUNCA se modifica, solo se agrega al final.
 **Estado**: `in_progress` — falta verificación runtime (docker-compose up + endpoints)
 
 ---
+
+## 2026-06-06 — Review 01-03 (PASSED)
+
+**Acción**: Revisión de CHECKPOINTS 01, 02 y 03.
+**Resultado**:
+- `01-infra-setup`: PASSED. Configuración, health check, Swagger, Dockerfiles y variables de entorno revisados.
+- `02-auth`: PASSED. Login/JWT/guards/RBAC/frontend login revisados.
+- `03-users-sellers`: PASSED. CRUD base de users/sellers, bloqueo y página Equipo revisados.
+- `CHECKPOINTS.md` actualizado con 01-03 marcados como completos.
+- Reporte guardado en `progress/review_01-03.md`.
+**Verificación**:
+- `npm.cmd exec tsc -- --noEmit` en backend: limpio.
+- `npm.cmd exec tsc -- --noEmit` en frontend: limpio.
+- `npm.cmd test -- --runInBand` en backend: 2 suites / 6 tests passing.
+**Siguiente feature**: 04-clients
+
+---

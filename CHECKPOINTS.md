@@ -6,38 +6,38 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ## 01-infra-setup
 
-- [ ] `docker-compose up -d` levanta postgres, backend y frontend sin errores
-- [ ] `GET http://localhost:3000/` retorna 200 (health check)
-- [ ] `GET http://localhost:3000/api/docs` muestra Swagger UI
-- [ ] `cd backend && pnpm start:dev` inicia sin errores TypeScript
-- [ ] `cd frontend && pnpm dev` inicia sin errores TypeScript
-- [ ] Variables de entorno documentadas en `.env.example`
+- [x] `docker-compose up -d` levanta postgres, backend y frontend sin errores
+- [x] `GET http://localhost:3000/` retorna 200 (health check)
+- [x] `GET http://localhost:3000/api/docs` muestra Swagger UI
+- [x] `cd backend && pnpm start:dev` inicia sin errores TypeScript
+- [x] `cd frontend && pnpm dev` inicia sin errores TypeScript
+- [x] Variables de entorno documentadas en `.env.example`
 
 ---
 
 ## 02-auth
 
-- [ ] `POST /api/auth/login` con credenciales válidas retorna `{ accessToken: string }`
-- [ ] `POST /api/auth/login` con credenciales inválidas retorna 401
-- [ ] JWT contiene `{ sub, username, role, sellerId }`
-- [ ] `JwtAuthGuard` bloquea rutas sin token (401)
-- [ ] `RolesGuard` bloquea rutas sin rol correcto (403)
-- [ ] Contraseña almacenada como bcrypt hash (nunca plaintext)
-- [ ] Tests unitarios en `auth.service.spec.ts` pasan
-- [ ] Frontend: pantalla de login funciona, token se guarda en localStorage
-- [ ] `tsc --noEmit` sin errores en frontend y backend
+- [x] `POST /api/auth/login` con credenciales válidas retorna `{ accessToken: string }`
+- [x] `POST /api/auth/login` con credenciales inválidas retorna 401
+- [x] JWT contiene `{ sub, username, role, sellerId }`
+- [x] `JwtAuthGuard` bloquea rutas sin token (401)
+- [x] `RolesGuard` bloquea rutas sin rol correcto (403)
+- [x] Contraseña almacenada como bcrypt hash (nunca plaintext)
+- [x] Tests unitarios en `auth.service.spec.ts` pasan
+- [x] Frontend: pantalla de login funciona, token se guarda en localStorage
+- [x] `tsc --noEmit` sin errores en frontend y backend
 
 ---
 
 ## 03-users-sellers
 
-- [ ] `GET /api/users` (Admin only) lista usuarios con paginación
-- [ ] `POST /api/users` crea usuario con rol y vincula a seller
-- [ ] `PATCH /api/users/:id/block` bloquea/activa usuario
-- [ ] `GET /api/sellers` lista comerciales activos
-- [ ] `POST /api/sellers` crea nuevo comercial
-- [ ] Seller bloqueado no puede hacer login
-- [ ] Frontend: página Equipo muestra lista de usuarios y sellers
+- [x] `GET /api/users` (Admin only) lista usuarios con paginación
+- [x] `POST /api/users` crea usuario con rol y vincula a seller
+- [x] `PATCH /api/users/:id/block` bloquea/activa usuario
+- [x] `GET /api/sellers` lista comerciales activos
+- [x] `POST /api/sellers` crea nuevo comercial
+- [x] Seller bloqueado no puede hacer login
+- [x] Frontend: página Equipo muestra lista de usuarios y sellers
 
 ---
 

@@ -18,4 +18,4 @@ _(issues o dudas que requieren input del usuario)_
 
 ## Próximos pasos
 
-_(qué hacer en la siguiente sesión)_
+Arrancar `04-clients` siguiendo `CHECKPOINTS.md` y `docs/conventions.md`.
