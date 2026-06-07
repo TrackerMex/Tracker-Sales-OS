@@ -49,3 +49,20 @@ Este archivo NUNCA se modifica, solo se agrega al final.
 **Siguiente feature**: 04-clients
 
 ---
+
+## 2026-06-06 - Feature 04-clients (PASSED)
+
+**Accion**: Implementacion y revision de Clients & Contacts.
+**Cambios**:
+- Backend `clients`: DTOs, use-cases, entidades TypeORM, repositorio, controller protegido con JWT/Roles y modulo registrado.
+- Frontend `clients`: tipos, API Axios, hooks TanStack Query, pagina `ClientesPage` y ruta `/clientes`.
+- Anti-duplicados por nombre empresa, dominio, telefono y correo.
+- Filtros por stage/type/seller y busqueda `q`.
+- Restriccion de Seller a sus propios clientes; Admin/Director ven todos.
+**Verificacion**:
+- `npm.cmd exec tsc -- --noEmit` en backend: limpio.
+- `npm.cmd exec tsc -- --noEmit` en frontend: limpio.
+**Estado**: `done`
+**Siguiente feature**: 05-activities
+
+---

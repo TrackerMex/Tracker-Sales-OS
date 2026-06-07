@@ -1,21 +1,22 @@
-# Sesión Activa
+# Sesion Activa
 
-**Feature en progreso**: ninguna  
-**Iniciada**: —  
-**Agente**: —
+**Feature en progreso**: ninguna
+**Iniciada**: -
+**Agente**: -
 
-## Plan de la sesión
+## Plan de la sesion
 
-_(se llena al inicio de cada sesión)_
+Feature `04-clients` implementada y revisada.
 
 ## Decisiones tomadas
 
-_(se registran decisiones importantes durante la sesión)_
+- Se acepto `q` como filtro adicional para busqueda full-text de frontend.
+- Admin/Director pueden filtrar por `seller`; Seller queda restringido a su propio `sellerId`.
 
 ## Bloqueantes
 
 _(issues o dudas que requieren input del usuario)_
 
-## Próximos pasos
+## Proximos pasos
 
-Arrancar `04-clients` siguiendo `CHECKPOINTS.md` y `docs/conventions.md`.
+Arrancar `05-activities` siguiendo `CHECKPOINTS.md` y `docs/conventions.md`.

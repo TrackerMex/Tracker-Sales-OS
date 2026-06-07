@@ -33,7 +33,7 @@
     "id": "04-clients",
     "name": "Clients & Contacts",
     "description": "CRUD clientes/prospectos, múltiples contactos por cliente, anti-duplicados por nombre/dominio/tel/email, 7 tipos de persona (Moral/Física)",
-    "status": "pending",
+    "status": "done",
     "priority": 4,
     "backend_modules": ["clients"],
     "frontend_modules": ["clients"],
