@@ -1,6 +1,14 @@
-import { Injectable, Inject, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
-import { DEAL_REPOSITORY, IDealsRepository } from '../../domain/repositories/deal.repository.interface';
+import {
+  DEAL_REPOSITORY,
+  IDealsRepository,
+} from '../../domain/repositories/deal.repository.interface';
 import {
   ALLOWED_TRANSITIONS,
   STAGE_PROBABILITY,
@@ -16,9 +24,10 @@ interface ChangeDealStageInput {
 }
 
 @Injectable()
-export class ChangeDealStageUseCase
-  implements IUseCase<ChangeDealStageInput, DealDto>
-{
+export class ChangeDealStageUseCase implements IUseCase<
+  ChangeDealStageInput,
+  DealDto
+> {
   constructor(
     @Inject(DEAL_REPOSITORY)
     private readonly dealRepo: IDealsRepository,
