@@ -23,7 +23,7 @@
     "id": "03-users-sellers",
     "name": "Users & Sellers",
     "description": "CRUD usuarios, CRUD comerciales, asignar roles, bloquear/activar",
-    "status": "pending",
+    "status": "done",
     "priority": 3,
     "backend_modules": ["users", "sellers"],
     "frontend_modules": ["equipo"],

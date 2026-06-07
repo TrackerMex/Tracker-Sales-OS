@@ -1,16 +1,50 @@
-import { Controller, Get, Post, Body, Patch, Param } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/infrastructure/guards/roles.guard';
+import { Roles } from '../../auth/presentation/decorators/roles.decorator';
+import { UserRole } from '../../auth/domain/entities/user.entity';
+import { GetSellersUseCase } from '../application/use-cases/get-sellers.use-case';
+import { CreateSellerUseCase } from '../application/use-cases/create-seller.use-case';
+import { DeactivateSellerUseCase } from '../application/use-cases/deactivate-seller.use-case';
+import { CreateSellerDto } from '../application/dtos/seller.dto';
 
 @ApiTags('sellers')
+@ApiBearerAuth()
 @Controller('sellers')
 export class SellersController {
-  // TODO: implement in feature 03-users-sellers
+  constructor(
+    private readonly getSellersUseCase: GetSellersUseCase,
+    private readonly createSellerUseCase: CreateSellerUseCase,
+    private readonly deactivateSellerUseCase: DeactivateSellerUseCase,
+  ) {}
+
   @Get()
-  findAll() { throw new Error('Not implemented'); }
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.Admin, UserRole.Director)
+  findAll() {
+    return this.getSellersUseCase.execute();
+  }
 
   @Post()
-  create(@Body() _dto: unknown) { throw new Error('Not implemented'); }
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.Admin, UserRole.Director)
+  create(@Body() dto: CreateSellerDto) {
+    return this.createSellerUseCase.execute(dto);
+  }
 
   @Patch(':id/deactivate')
-  deactivate(@Param('id') _id: string) { throw new Error('Not implemented'); }
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.Admin)
+  deactivate(@Param('id') id: string) {
+    return this.deactivateSellerUseCase.execute(id);
+  }
 }

@@ -15,6 +15,7 @@ import { CoachingModule } from './modules/coaching/coaching.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     }),
     AuthModule,
     SellersModule,
+    UsersModule,
     ClientsModule,
     ActivitiesModule,
     TasksModule,

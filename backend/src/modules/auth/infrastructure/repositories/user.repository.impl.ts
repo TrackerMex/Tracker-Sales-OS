@@ -22,9 +22,16 @@ export class UserRepositoryImpl implements IUserRepository {
     return entity ? this.toDomain(entity) : null;
   }
 
-  async findAll() {
-    const [data, total] = await this.repo.findAndCount();
-    return { data: data.map(this.toDomain), total };
+  async findAll(options?: { page?: number; limit?: number }) {
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 20;
+    const skip = (page - 1) * limit;
+    const [data, total] = await this.repo.findAndCount({
+      skip,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+    return { data: data.map((e) => this.toDomain(e)), total };
   }
 
   async create(partial: Partial<UserEntity>): Promise<UserEntity> {
