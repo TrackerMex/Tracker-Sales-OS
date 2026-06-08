@@ -19,6 +19,8 @@ export class CreateTaskUseCase implements IUseCase<CreateTaskDto, TaskDto> {
     const entity = await this.taskRepo.create({
       sellerId: input.sellerId,
       clientId: input.clientId ?? null,
+      type: input.type ?? null,
+      contactId: input.contactId ?? null,
       title: input.title,
       description: input.description ?? null,
       scheduledAt: new Date(input.scheduledAt),

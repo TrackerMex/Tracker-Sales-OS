@@ -4,6 +4,8 @@ export interface Task {
   id: string
   sellerId: string
   clientId: string | null
+  type: string | null
+  contactId: string | null
   title: string
   description: string | null
   scheduledAt: string
@@ -16,6 +18,8 @@ export interface Task {
 
 export interface CreateTaskInput {
   clientId?: string
+  type?: string
+  contactId?: string
   title: string
   description?: string
   scheduledAt: string

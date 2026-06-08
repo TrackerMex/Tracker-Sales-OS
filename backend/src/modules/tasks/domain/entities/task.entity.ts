@@ -8,6 +8,8 @@ export enum TaskStatus {
 export class TaskEntity extends BaseEntity {
   sellerId: string;
   clientId: string | null;
+  type: string | null;
+  contactId: string | null;
   title: string;
   description: string | null;
   scheduledAt: Date;

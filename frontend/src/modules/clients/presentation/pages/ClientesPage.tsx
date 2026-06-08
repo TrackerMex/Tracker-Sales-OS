@@ -9,6 +9,7 @@ import { useClients } from "../../application/hooks/useClients"
 import { useCreateClient } from "../../application/hooks/useCreateClient"
 import { useDeleteClient } from "../../application/hooks/useDeleteClient"
 import { useUpdateClient } from "../../application/hooks/useUpdateClient"
+import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
 import type {
   Client,
   ClientSource,
@@ -38,6 +39,7 @@ const clientSources: ClientSource[] = [
   "Marketing",
   "LinkedIn",
   "Web",
+  "Facebook",
   "Dirección Comercial",
 ]
 
@@ -100,10 +102,6 @@ export function ClientesPage() {
   const currentUser = useAppStore((s) => s.currentUser)
   const [view, setView] = useState<View>({ mode: "list" })
   const [q, setQ] = useState("")
-  const [stage, setStage] = useState<PipelineStage | "">("")
-  const [type, setType] = useState<ClientType | "">("")
-  const [seller, setSeller] = useState("")
-
   const [showModal, setShowModal] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [form, setForm] = useState<CreateClientInput>(() => emptyClientForm(currentUser?.sellerId))
@@ -111,20 +109,16 @@ export function ClientesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Client | null>(null)
 
   const filters = useMemo(
-    () => ({
-      q,
-      stage: stage || undefined,
-      type: type || undefined,
-      seller: currentUser?.role === UserRole.Seller ? undefined : seller || undefined,
-      limit: 50,
-    }),
-    [currentUser?.role, q, seller, stage, type]
+    () => ({ q, limit: 50 }),
+    [q]
   )
 
   const { data, isLoading, isError } = useClients(filters)
   const createClient = useCreateClient()
   const updateClient = useUpdateClient()
   const deleteClient = useDeleteClient()
+  const { data: sellersData } = useSellers()
+  const activeSellers = (sellersData ?? []).filter((s) => s.active)
   const canChooseSeller = currentUser?.role !== UserRole.Seller
 
   const clientList = data?.data ?? []
@@ -367,34 +361,6 @@ export function ClientesPage() {
             placeholder="Buscar cliente..."
             className="input max-w-[360px]"
           />
-          <select
-            value={stage}
-            onChange={(e) => setStage(e.target.value as PipelineStage | "")}
-            className="input w-auto"
-          >
-            <option value="">Todos los stages</option>
-            {pipelineStages.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as ClientType | "")}
-            className="input w-auto"
-          >
-            <option value="">Todos los tipos</option>
-            {clientTypes.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-          {canChooseSeller && (
-            <input
-              value={seller}
-              onChange={(e) => setSeller(e.target.value)}
-              placeholder="Seller"
-              className="input w-[120px]"
-            />
-          )}
           <button onClick={openCreate} className="btn-primary whitespace-nowrap">
             + Nuevo cliente
           </button>
@@ -422,12 +388,19 @@ export function ClientesPage() {
                 <span className={`tag ${stageTag[client.stage]} text-[9px]`}>{client.stage}</span>
               </div>
               <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{client.pain || "Sin pain registrado"}</p>
+              {client.contacts.length > 0 && (
+                <p style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                  {client.contacts[0].name}
+                  {client.contacts[0].phone ? ` · ${client.contacts[0].phone}` : ''}
+                </p>
+              )}
             </div>
 
             <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between">
               <div className="text-[11px] text-slate-400">
-                <span>{client.sellerId.slice(0, 8)}</span>
+                <span>{activeSellers.find((s) => s.id === client.sellerId)?.name ?? client.sellerId.slice(0, 8)}</span>
                 {client.nextDate && <span> · {formatDate(client.nextDate)}</span>}
+                {client.nextStep && <span> · {client.nextStep.slice(0, 40)}{client.nextStep.length > 40 ? '…' : ''}</span>}
               </div>
               <div className="flex items-center gap-1.5">
                 <button onClick={() => openEdit(client)} className="btn-green">
@@ -482,97 +455,96 @@ export function ClientesPage() {
   function renderModal() {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center modal-blur overflow-y-auto py-8">
-        <div className="card w-full max-w-[860px] p-6 space-y-4">
-          <h3 className="text-base font-bold text-[#002B49]">
-            {editingClient ? "Editar cliente" : "Nuevo cliente"}
-          </h3>
+        <div className="card w-full max-w-[860px] p-7">
+          <div className="flex items-start justify-between mb-1">
+            <h3 className="text-base font-bold text-[#0F172A]">
+              {editingClient ? "Editar cliente / prospecto" : "Nuevo cliente / prospecto"}
+            </h3>
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              className="text-slate-400 hover:text-slate-600 text-lg leading-none bg-transparent border-none cursor-pointer"
+            >
+              ×
+            </button>
+          </div>
+          <p className="text-xs text-slate-400 mb-5">Puedes registrar varios contactos: decisor, finanzas, operaciones, compras, etc.</p>
 
-          <form onSubmit={submitClient} className="space-y-4">
-            {/* Row 1 */}
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                required
-                value={form.name}
-                onChange={(e) => updateForm("name", e.target.value)}
-                placeholder="Nombre de la empresa"
-                className="input"
-              />
-              <input
-                value={form.domain}
-                onChange={(e) => updateForm("domain", e.target.value)}
-                placeholder="Dominio (ej. empresa.com)"
-                className="input"
-              />
-            </div>
+          <form onSubmit={submitClient} className="grid grid-cols-2 gap-3">
+            {/* name - span 2 */}
+            <input
+              required
+              value={form.name}
+              onChange={(e) => updateForm("name", e.target.value)}
+              placeholder="Nombre de la cuenta"
+              className="input col-span-2"
+            />
 
-            {/* Row 2 */}
-            <div className="grid grid-cols-4 gap-3">
-              <select value={form.type} onChange={(e) => updateForm("type", e.target.value as ClientType)} className="input">
-                {clientTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+            {/* domain | type */}
+            <input
+              value={form.domain}
+              onChange={(e) => updateForm("domain", e.target.value)}
+              placeholder="Dominio web. Ej: empresa.com"
+              className="input"
+            />
+            <select value={form.type} onChange={(e) => updateForm("type", e.target.value as ClientType)} className="input">
+              {clientTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+
+            {/* person | seller */}
+            <select value={form.person} onChange={(e) => updateForm("person", e.target.value as PersonType)} className="input">
+              {personTypes.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+            {canChooseSeller ? (
+              <select
+                value={form.sellerId}
+                onChange={(e) => updateForm("sellerId", e.target.value)}
+                className="input"
+              >
+                <option value="">Seleccionar vendedor</option>
+                {activeSellers.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
               </select>
-              <select value={form.person} onChange={(e) => updateForm("person", e.target.value as PersonType)} className="input">
-                {personTypes.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-              <select value={form.source} onChange={(e) => updateForm("source", e.target.value as ClientSource)} className="input">
-                {clientSources.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-              {canChooseSeller && (
-                <input
-                  value={form.sellerId}
-                  onChange={(e) => updateForm("sellerId", e.target.value)}
-                  placeholder="Seller ID"
-                  className="input"
-                />
-              )}
-            </div>
+            ) : <div />}
 
-            {/* Row 3 */}
-            <div className="grid grid-cols-4 gap-3">
-              <input
-                type="number"
-                min="0"
-                value={form.expectedAmount}
-                onChange={(e) => updateForm("expectedAmount", Number(e.target.value))}
-                placeholder="Monto esperado"
-                className="input"
-              />
-              <input
-                type="number"
-                min="0"
-                value={form.units}
-                onChange={(e) => updateForm("units", Number(e.target.value))}
-                placeholder="Unidades"
-                className="input"
-              />
-              <input
-                value={form.nextStep}
-                onChange={(e) => updateForm("nextStep", e.target.value)}
-                placeholder="Siguiente paso"
-                className="input"
-              />
-              <input
-                type="date"
-                value={form.nextDate}
-                onChange={(e) => updateForm("nextDate", e.target.value)}
-                className="input"
-              />
-            </div>
+            {/* source | provider */}
+            <select value={form.source} onChange={(e) => updateForm("source", e.target.value as ClientSource)} className="input">
+              {clientSources.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <input
+              value={form.provider}
+              onChange={(e) => updateForm("provider", e.target.value)}
+              placeholder="Proveedor actual"
+              className="input"
+            />
 
-            {/* Row 4 - provider */}
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                value={form.provider}
-                onChange={(e) => updateForm("provider", e.target.value)}
-                placeholder="Proveedor actual"
-                className="input"
-              />
-              <select value={form.stage} onChange={(e) => updateForm("stage", e.target.value as PipelineStage)} className="input">
-                {pipelineStages.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
+            {/* units | amount */}
+            <input
+              type="number"
+              min="0"
+              value={form.units}
+              onChange={(e) => updateForm("units", Number(e.target.value))}
+              placeholder="Unidades potenciales"
+              className="input"
+            />
+            <input
+              type="number"
+              min="0"
+              value={form.expectedAmount}
+              onChange={(e) => updateForm("expectedAmount", Number(e.target.value))}
+              placeholder="Monto esperado"
+              className="input"
+            />
 
-            {/* Contacts */}
-            <div>
+            {/* stage - col 1 only */}
+            <select value={form.stage} onChange={(e) => updateForm("stage", e.target.value as PipelineStage)} className="input">
+              {pipelineStages.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <div />
+
+            {/* Contacts - span 2 */}
+            <div className="col-span-2">
               <div className="flex items-center justify-between mb-2">
                 <p className="slabel">Contactos</p>
                 <button
@@ -587,7 +559,7 @@ export function ClientesPage() {
               </div>
               <div className="space-y-2">
                 {(form.contacts ?? []).map((contact, idx) => (
-                  <div key={idx} className="grid grid-cols-[1fr_140px_140px_180px_32px] gap-2 items-center">
+                  <div key={idx} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-center rounded-lg bg-slate-50 border border-slate-100 p-2.5">
                     <input
                       value={contact.name}
                       onChange={(e) => {
@@ -595,7 +567,7 @@ export function ClientesPage() {
                         updated[idx] = { ...updated[idx], name: e.target.value }
                         updateForm("contacts", updated)
                       }}
-                      placeholder="Nombre"
+                      placeholder="Nombre contacto"
                       className="input"
                     />
                     <input
@@ -605,7 +577,7 @@ export function ClientesPage() {
                         updated[idx] = { ...updated[idx], role: e.target.value }
                         updateForm("contacts", updated)
                       }}
-                      placeholder="Rol"
+                      placeholder="Rol: decisor, finanzas..."
                       className="input"
                     />
                     <input
@@ -625,58 +597,69 @@ export function ClientesPage() {
                         updated[idx] = { ...updated[idx], email: e.target.value }
                         updateForm("contacts", updated)
                       }}
-                      placeholder="Email"
+                      placeholder="Correo"
                       className="input"
                     />
-                    {(form.contacts?.length ?? 0) > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updated = (form.contacts ?? []).filter((_, i) => i !== idx)
-                          updateForm("contacts", updated)
-                        }}
-                        className="btn-danger justify-self-center"
-                      >
-                        ✕
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2 min-w-[110px]">
+                      <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-600 whitespace-nowrap cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={contact.isDecisionMaker ?? false}
+                          onChange={(e) => {
+                            const updated = [...(form.contacts ?? [])]
+                            updated[idx] = { ...updated[idx], isDecisionMaker: e.target.checked }
+                            updateForm("contacts", updated)
+                          }}
+                        />
+                        Decisor
+                      </label>
+                      {(form.contacts?.length ?? 0) > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = (form.contacts ?? []).filter((_, i) => i !== idx)
+                            updateForm("contacts", updated)
+                          }}
+                          className="text-[11px] font-semibold text-red-600 hover:text-red-800 bg-none border-none cursor-pointer"
+                        >
+                          Quitar
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Pain */}
+            {/* Pain - span 2 */}
             <textarea
               value={form.pain}
               onChange={(e) => updateForm("pain", e.target.value)}
-              placeholder="Pain / Necesidad del cliente"
-              rows={3}
-              className="input resize-none"
+              placeholder="¿Por qué crees que Tracker puede ayudarle? Dolor / necesidad detectada"
+              rows={4}
+              className="input resize-none col-span-2"
             />
 
-            {/* AI Coach hint */}
-            <div className="ai-box">
-              <strong>Coach IA:</strong> Un buen pain description incluye el problema concreto, quién lo sufre y el impacto en el negocio.
+            {/* AI Coach hint - span 2 */}
+            <div className="ai-box col-span-2">
+              <strong>Coach IA:</strong> Un buen registro debe identificar empresa, contactos clave, decisor, teléfono, correo/dominio y razón comercial.
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-              <button type="button" onClick={() => setShowModal(false)} className="btn-ghost">Cancelar</button>
-              <button
-                type="submit"
-                disabled={createClient.isPending || updateClient.isPending}
-                className="btn-primary"
-              >
-                {createClient.isPending || updateClient.isPending
-                  ? "Guardando..."
-                  : editingClient
-                    ? "Guardar cambios"
-                    : "Crear cliente"}
-              </button>
-            </div>
+            {/* Save button - span 2 */}
+            <button
+              type="submit"
+              disabled={createClient.isPending || updateClient.isPending}
+              className="btn-primary col-span-2 justify-center py-2.5"
+            >
+              {createClient.isPending || updateClient.isPending
+                ? "Guardando..."
+                : editingClient
+                  ? "Guardar cambios"
+                  : "Guardar cliente"}
+            </button>
 
             {(createClient.isError || updateClient.isError) && (
-              <p className="text-xs text-red-600">No se pudo guardar</p>
+              <p className="text-xs text-red-600 col-span-2">No se pudo guardar</p>
             )}
           </form>
         </div>

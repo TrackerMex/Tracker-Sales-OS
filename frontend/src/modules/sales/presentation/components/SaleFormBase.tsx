@@ -20,9 +20,8 @@ interface Props {
   isLoading: boolean;
 }
 
-const labelClass = 'block text-sm font-medium text-slate-700 mb-1';
-const inputClass =
-  'w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#002B49]/30 focus:border-[#002B49]';
+const labelClass = 'slabel';
+const inputClass = 'input';
 
 const defaultValues = {
   clientId: '',
@@ -211,7 +210,7 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading }: Props) {
         <button
           type="submit"
           disabled={isLoading}
-          className="rounded-md bg-[#002B49] px-6 py-2 text-sm font-semibold text-white hover:bg-[#002B49]/90 disabled:opacity-50"
+          className="btn-primary disabled:opacity-50"
         >
           {isLoading ? 'Registrando...' : 'Registrar venta'}
         </button>

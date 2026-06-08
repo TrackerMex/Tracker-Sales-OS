@@ -2,81 +2,67 @@ import { useState, useMemo } from 'react'
 import { useClients } from '../../../clients/application/hooks/useClients'
 import type { CreateTaskInput } from '../../domain/tasks.types'
 
-type ActivityType = 'llamada' | 'videoconferencia' | 'reunion' | 'visita'
-
-interface CreateTaskFormProps {
-  onSubmit: (input: CreateTaskInput) => void
-  onCancel: () => void
-  isLoading?: boolean
-}
-
-function defaultDate(): string {
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`
-}
-
-function defaultTime(): string {
-  return '09:00'
-}
-
-const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
-  { value: 'llamada', label: 'Llamada' },
-  { value: 'videoconferencia', label: 'Videoconferencia' },
-  { value: 'reunion', label: 'Reunión presencial' },
-  { value: 'visita', label: 'Visita' },
+const TASK_TYPES = [
+  'Chat',
+  'WhatsApp',
+  'Correo',
+  'Llamada',
+  'Videoconferencia',
+  'Reunión virtual',
+  'Visita física',
+  'Reunión presencial',
+  'Propuesta',
+  'Seguimiento',
+  'Cierre',
 ]
 
-function getAiComment(
-  objective: string,
-  activityType: ActivityType,
-  contactName: string,
-): string {
+const OUTLOOK_TYPES = new Set(['Videoconferencia', 'Reunión virtual', 'Visita física', 'Reunión presencial'])
+
+function todayISO(): string {
+  const d = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+function getAiComment(type: string, objective: string, contactName: string): string {
   const lower = objective.toLowerCase()
-  if (objective.length < 10) {
-    return 'La tarea está muy abierta. Escribe: a quién contactarás, para qué y cuál es el resultado esperado.'
-  }
-  if (lower.includes('compra') || lower.includes('cierre')) {
+  if (objective.length < 10) return 'Escribe el objetivo de la tarea y te daré una sugerencia antes de guardar.'
+  if (lower.includes('compra') || lower.includes('cierre'))
     return `Buena tarea de cierre. Con ${contactName}: confirma 1) unidades, 2) fecha de compra, 3) presupuesto final.`
-  }
-  if (lower.includes('propuesta')) {
+  if (lower.includes('propuesta') || type === 'Propuesta')
     return `Antes de enviar propuesta, valida con ${contactName}: dolor principal, presupuesto y timeline de decisión.`
-  }
-  if (activityType === 'reunion' || activityType === 'videoconferencia') {
+  if (type === 'Reunión presencial' || type === 'Reunión virtual' || type === 'Videoconferencia' || type === 'Visita física')
     return `Para la cita con ${contactName}, lleva agenda: 1) situación actual, 2) propuesta, 3) próximos pasos.`
-  }
-  if (activityType === 'llamada') {
+  if (type === 'Llamada')
     return `En la llamada con ${contactName}, evita solo "dar seguimiento". Define una acción concreta como resultado.`
-  }
   return 'Mejora: termina esta tarea con un resultado medible. Ejemplo: "Confirmar compra de X unidades para [fecha]."'
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
+interface CreateTaskFormProps {
+  onSubmit: (input: CreateTaskInput) => void
+  onClose: () => void
+  isLoading?: boolean
 }
 
-export function CreateTaskForm({ onSubmit, onCancel, isLoading = false }: CreateTaskFormProps) {
+export function CreateTaskForm({ onSubmit, onClose, isLoading = false }: CreateTaskFormProps) {
   const { data: clientsData } = useClients({ limit: 200 })
   const clients = clientsData?.data ?? []
 
   const [clientId, setClientId] = useState('')
+  const [type, setType] = useState('Llamada')
   const [contactId, setContactId] = useState('')
-  const [activityType, setActivityType] = useState<ActivityType>('llamada')
   const [objective, setObjective] = useState('')
-  const [date, setDate] = useState(defaultDate)
-  const [time, setTime] = useState(defaultTime)
+  const [date, setDate] = useState(todayISO)
+  const [time, setTime] = useState('09:00')
 
   const selectedClient = useMemo(() => clients.find((c) => c.id === clientId), [clients, clientId])
   const contacts = selectedClient?.contacts ?? []
   const selectedContact = useMemo(() => contacts.find((c) => c.id === contactId), [contacts, contactId])
 
-  const showOutlookReminder = activityType === 'videoconferencia' || activityType === 'reunion' || activityType === 'visita'
-
+  const showOutlookReminder = OUTLOOK_TYPES.has(type)
   const aiComment = useMemo(
-    () => getAiComment(objective, activityType, selectedContact?.name ?? '[contacto]'),
-    [objective, activityType, selectedContact],
+    () => getAiComment(type, objective, selectedContact?.name ?? '[contacto]'),
+    [type, objective, selectedContact],
   )
 
   function handleSubmit(e: React.FormEvent) {
@@ -85,140 +71,102 @@ export function CreateTaskForm({ onSubmit, onCancel, isLoading = false }: Create
     const scheduledAt = new Date(`${date}T${time}`).toISOString()
     onSubmit({
       clientId: clientId || undefined,
+      type,
+      contactId: contactId || undefined,
       title: objective.trim(),
       scheduledAt,
     })
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div>
-        <h3 className="text-base font-bold" style={{ color: 'var(--tracker-text)' }}>
-          Crear tarea con objetivo
-        </h3>
-        <p className="mt-0.5 text-xs" style={{ color: 'var(--tracker-text-secondary)' }}>
-          Escribe qué vas a hacer, con quién y para qué.
+    <div className="fixed inset-0 z-50 flex items-center justify-center modal-blur">
+      <div style={{ background: '#fff', borderRadius: 14, padding: 28, maxWidth: 640, width: '100%', maxHeight: '92vh', overflowY: 'auto' }}>
+        <div className="flex items-start justify-between mb-1">
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#0F172A' }}>Crear tarea con objetivo</div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: 18, lineHeight: 1, fontFamily: 'inherit' }}
+          >
+            ×
+          </button>
+        </div>
+        <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 20 }}>
+          El comercial debe escribir qué hará, con quién y para qué.
         </p>
-      </div>
 
-      <div>
-        <label className="text-tracker-label mb-1 block">Cliente</label>
-        <select
-          value={clientId}
-          onChange={(e) => {
-            setClientId(e.target.value)
-            setContactId('')
-          }}
-          className="input"
-        >
-          <option value="">Sin cliente</option>
-          {clients.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-tracker-label mb-1 block">Tipo de actividad</label>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+          {/* cliente */}
           <select
-            value={activityType}
-            onChange={(e) => setActivityType(e.target.value as ActivityType)}
+            value={clientId}
+            onChange={(e) => { setClientId(e.target.value); setContactId('') }}
             className="input"
           >
-            {ACTIVITY_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
+            <option value="">Sin cliente / prospecto nuevo</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
-        </div>
-        <div>
-          <label className="text-tracker-label mb-1 block">Contacto</label>
-          <select
-            value={contactId}
-            onChange={(e) => setContactId(e.target.value)}
-            className="input"
-            disabled={!selectedClient}
+
+          {/* tipo | contacto */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <select value={type} onChange={(e) => setType(e.target.value)} className="input">
+              {TASK_TYPES.map((t) => <option key={t}>{t}</option>)}
+            </select>
+            <select
+              value={contactId}
+              onChange={(e) => setContactId(e.target.value)}
+              className="input"
+              disabled={!selectedClient}
+            >
+              <option value="">
+                {selectedClient ? 'Selecciona un contacto' : 'Selecciona primero una empresa'}
+              </option>
+              {contacts.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}{c.role ? ` · ${c.role}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* objetivo */}
+          <textarea
+            value={objective}
+            onChange={(e) => setObjective(e.target.value)}
+            required
+            maxLength={500}
+            style={{ height: 110 }}
+            placeholder="¿Qué vas a hacer y para qué? Ej. Llamaré a Gerardo para validar si realizará la compra este mes..."
+            className="input resize-none"
+          />
+
+          {/* fecha | hora */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="input" />
+            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} required className="input" />
+          </div>
+
+          {/* AI box */}
+          <div className="ai-box">{aiComment}</div>
+
+          {/* outlook reminder */}
+          {showOutlookReminder && (
+            <div style={{ padding: '11px 13px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1D4ED8' }}>
+              Recordatorio: si es videoconferencia o cita, regístrala también en Outlook.
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading || !objective.trim()}
+            className="btn-green"
+            style={{ justifyContent: 'center', padding: '10px', fontSize: 13 }}
           >
-            <option value="">
-              {selectedClient ? 'Seleccionar contacto' : 'Primero selecciona cliente'}
-            </option>
-            {contacts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} — {c.role}
-              </option>
-            ))}
-          </select>
-        </div>
+            {isLoading ? 'Guardando...' : 'Guardar tarea'}
+          </button>
+        </form>
       </div>
-
-      <div>
-        <label className="text-tracker-label mb-1 block">Objetivo</label>
-        <textarea
-          value={objective}
-          onChange={(e) => setObjective(e.target.value)}
-          maxLength={500}
-          rows={4}
-          placeholder="¿Qué vas a hacer y para qué?"
-          className="input resize-none"
-          style={{ height: 110 }}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-tracker-label mb-1 block">Fecha</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-            className="input"
-          />
-        </div>
-        <div>
-          <label className="text-tracker-label mb-1 block">Hora</label>
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
-            className="input"
-          />
-        </div>
-      </div>
-
-      <div className="ai-box">
-        <span className="mr-1 text-[10px] font-bold uppercase" style={{ color: 'var(--tracker-purple)' }}>
-          AI Coach
-        </span>
-        {aiComment}
-      </div>
-
-      {showOutlookReminder && (
-        <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs" style={{ background: '#F5F3FF', color: 'var(--tracker-purple)' }}>
-          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-          </svg>
-          Se creará recordatorio en Outlook para esta actividad.
-        </div>
-      )}
-
-      <div className="flex justify-end gap-2 pt-1">
-        <button type="button" onClick={onCancel} className="btn-ghost">
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={isLoading || !objective.trim()}
-          className="btn-green w-full justify-center py-2.5 text-sm"
-        >
-          {isLoading ? 'Guardando...' : 'Crear tarea'}
-        </button>
-      </div>
-    </form>
+    </div>
   )
 }
