@@ -2,13 +2,13 @@ import type { Deal, PipelineStage } from "../../domain/pipeline.types"
 import { DealCard } from "./DealCard"
 
 const STAGE_HEADER_COLOR: Record<PipelineStage, string> = {
-  Prospecto: "bg-[#002B49]",
-  Contactado: "bg-[#002B49]",
-  Interesado: "bg-[#002B49]",
-  Propuesta: "bg-[#002B49]",
-  Negociación: "bg-[#002B49]",
-  Cierre: "bg-green-700",
-  Perdido: "bg-red-700",
+  Prospecto:   "bg-[#334155]",
+  Contactado:  "bg-[#1e40af]",
+  Interesado:  "bg-[#0369a1]",
+  Propuesta:   "bg-[#d97706]",
+  Negociación: "bg-[#7c3aed]",
+  Cierre:      "bg-[#16a34a]",
+  Perdido:     "bg-[#dc2626]",
 }
 
 const NO_CREATE_STAGES: PipelineStage[] = ["Cierre", "Perdido"]

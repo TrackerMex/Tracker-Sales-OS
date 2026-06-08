@@ -39,52 +39,46 @@ export function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-2xl p-6">
-        <p className="text-sm text-slate-500">Cargando configuración...</p>
+      <div style={{ maxWidth: 560 }}>
+        <p style={{ fontSize: 13, color: '#94A3B8' }}>Cargando configuración...</p>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-6">
-      <h2 className="text-2xl font-black text-[#002B49]">Configuración</h2>
+    <div style={{ maxWidth: 560 }} className="space-y-5">
+      <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Configuración</h1>
 
       <form onSubmit={handleSubmit}>
-        <div className="rounded-lg border border-slate-200 bg-white p-6 space-y-5">
-          <p className="text-sm font-semibold text-slate-700">Metas del sistema</p>
+        <div className="card p-5 space-y-4">
+          <div className="slabel">Metas del sistema</div>
 
           {(Object.keys(form) as Array<keyof typeof form>).map((field) => (
             <div key={field}>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                {FIELD_LABELS[field]}
-              </label>
+              <label className="slabel mb-1 block">{FIELD_LABELS[field]}</label>
               <input
                 type="number"
                 value={form[field]}
                 onChange={(e) => handleChange(field, e.target.value)}
                 disabled={!isAdmin}
                 min={field === 'dailyMinPoints' ? 1 : 0}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#002B49]/20"
+                className="input"
+                style={!isAdmin ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
               />
             </div>
           ))}
 
           {!isAdmin && (
-            <p className="text-xs text-slate-400">Solo los administradores pueden modificar la configuración.</p>
+            <p style={{ fontSize: 12, color: '#94A3B8' }}>Solo los administradores pueden modificar la configuración.</p>
           )}
 
           {isAdmin && (
             <div className="flex items-center gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={isPending}
-                className="rounded-md bg-[#002B49] px-4 py-2 text-sm font-medium text-white hover:bg-[#003a63] disabled:opacity-60 transition-colors"
-              >
+              <button type="submit" disabled={isPending} className="btn-primary">
                 {isPending ? 'Guardando...' : 'Guardar'}
               </button>
-
               {isSuccess && (
-                <span className="text-sm text-green-600 font-medium">
+                <span style={{ fontSize: 13, fontWeight: 500, color: '#16A34A' }}>
                   Configuración guardada
                 </span>
               )}

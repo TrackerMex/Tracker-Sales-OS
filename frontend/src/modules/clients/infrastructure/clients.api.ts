@@ -26,4 +26,7 @@ export const clientsApi = {
 
   addContact: (clientId: string, payload: CreateContactInput): Promise<Client> =>
     api.post(`/clients/${clientId}/contacts`, payload).then((r) => r.data),
+
+  deleteClient: (id: string): Promise<void> =>
+    api.delete(`/clients/${id}`).then(() => undefined),
 }

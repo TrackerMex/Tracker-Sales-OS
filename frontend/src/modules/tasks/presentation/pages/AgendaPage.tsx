@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { useClients } from '@/modules/clients/application/hooks/useClients'
 import { useTodayTasks } from '../../application/hooks/useTodayTasks'
 import { useCreateTask } from '../../application/hooks/useCreateTask'
 import { useCompleteTask } from '../../application/hooks/useCompleteTask'
@@ -8,13 +9,13 @@ import { CreateTaskForm } from '../components/CreateTaskForm'
 import type { CreateTaskInput } from '../../domain/tasks.types'
 
 export function AgendaPage() {
-  const [showForm, setShowForm] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const { data: tasks = [], isLoading } = useTodayTasks()
   const { mutate: createTask, isPending } = useCreateTask()
   const { mutate: completeTask } = useCompleteTask()
+  const { data: clientsData } = useClients({ limit: 200 })
+  const clients = clientsData?.data ?? []
   const navigate = useNavigate()
-
-  const pendingCount = tasks.filter((t) => t.status === 'Pendiente').length
 
   function handleComplete(taskId: string) {
     completeTask(taskId, {
@@ -28,40 +29,20 @@ export function AgendaPage() {
   }
 
   function handleCreateTask(input: CreateTaskInput) {
-    createTask(input, {
-      onSuccess: () => setShowForm(false),
-    })
+    createTask(input, { onSuccess: () => setShowModal(false) })
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-[#002B49]">Agenda del día</h1>
-          {tasks.length > 0 && (
-            <span className="rounded-full bg-[#002B49]/10 px-3 py-1 text-sm font-semibold text-[#002B49]">
-              {pendingCount} pendiente{pendingCount !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded-md bg-[#002B49] px-4 py-2 text-sm font-medium text-white hover:bg-[#002B49]/90 transition-colors"
-        >
-          {showForm ? 'Cancelar' : 'Nueva tarea'}
+        <h1 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Compromisos comerciales</h1>
+        <button onClick={() => setShowModal(true)} className="btn-primary">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+          Crear tarea
         </button>
       </div>
-
-      {showForm && (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-700 mb-4">Nueva tarea</h2>
-          <CreateTaskForm
-            onSubmit={handleCreateTask}
-            onCancel={() => setShowForm(false)}
-            isLoading={isPending}
-          />
-        </div>
-      )}
 
       {isLoading ? (
         <div className="space-y-3">
@@ -70,21 +51,39 @@ export function AgendaPage() {
           ))}
         </div>
       ) : tasks.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-300 py-12 text-center">
-          <p className="text-sm text-slate-400">No hay tareas para hoy</p>
+        <div className="empty-state">
+          <p>Sin tareas registradas</p>
           <button
-            onClick={() => setShowForm(true)}
-            className="mt-3 text-sm text-[#002B49] underline hover:no-underline"
+            onClick={() => setShowModal(true)}
+            style={{ marginTop: 8, fontSize: 12, color: '#002B49', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
           >
             Crear una tarea
           </button>
         </div>
       ) : (
         <div className="space-y-3">
-          {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} onComplete={handleComplete} />
-          ))}
+          {tasks.map((task) => {
+            const client = clients.find((c) => c.id === task.clientId)
+            const contact = client?.contacts.find((c) => c.id === task.contactId)
+            return (
+              <TaskCard
+                key={task.id}
+                task={task}
+                clientName={client?.name ?? null}
+                contactName={contact?.name ?? null}
+                onComplete={handleComplete}
+              />
+            )
+          })}
         </div>
+      )}
+
+      {showModal && (
+        <CreateTaskForm
+          onSubmit={handleCreateTask}
+          onClose={() => setShowModal(false)}
+          isLoading={isPending}
+        />
       )}
     </div>
   )

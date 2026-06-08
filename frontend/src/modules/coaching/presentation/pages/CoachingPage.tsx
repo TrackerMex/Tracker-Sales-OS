@@ -3,194 +3,280 @@ import { useAppStore } from "@/shared/store/app.store"
 import { UserRole } from "@/core/domain/types/common.types"
 import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
 import { useCoachingDaily } from "../../application/hooks/useCoachingDaily"
+import type { EquipoSeller } from "@/modules/equipo/domain/equipo.types"
+import type { ActivityMixItem } from "../../domain/coaching.types"
+
+function getActivityCount(mix: ActivityMixItem[], types: string[]): number {
+  return mix
+    .filter((m) => types.includes(m.type))
+    .reduce((sum, m) => sum + m.count, 0)
+}
+
+function getRecommendedAction(
+  points: number,
+  minDaily: number,
+  overdueCount: number
+): string {
+  if (points < minDaily) return `Alcanzar mínimo de ${minDaily} puntos`
+  if (overdueCount > 0) return `Atender ${overdueCount} seguimientos vencidos`
+  return "Mantener ritmo de actividad"
+}
+
+interface SellerCoachingCardProps {
+  seller: EquipoSeller
+  minDaily: number
+}
+
+function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
+  const { data, isLoading } = useCoachingDaily(seller.id)
+
+  if (isLoading) {
+    return (
+      <div className="card p-5">
+        <p style={{ fontSize: 12, color: "#94A3B8" }}>Cargando...</p>
+      </div>
+    )
+  }
+
+  const mix: ActivityMixItem[] = data?.activityMix ?? []
+  const calls = getActivityCount(mix, ["Llamada"])
+  const meetings = getActivityCount(mix, [
+    "Reunión virtual",
+    "Reunión presencial",
+    "Visita física",
+  ])
+  const proposals = getActivityCount(mix, ["Propuesta"])
+  const closes = getActivityCount(mix, ["Cierre"])
+  const points = data?.pointsToday ?? 0
+  const quality = data?.avgQuality ?? 0
+  const overdue = data?.overdueCount ?? 0
+  const tomorrow = data?.tomorrowTasksCount ?? 0
+
+  const qualityColor =
+    quality >= 80 ? "#16a34a" : quality >= 50 ? "#d97706" : "#dc2626"
+  const recommendedAction = getRecommendedAction(points, minDaily, overdue)
+
+  return (
+    <div className="card p-5">
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 16,
+        }}
+      >
+        <div>
+          <p style={{ fontWeight: 700, color: "#0F172A", fontSize: 15 }}>
+            {seller.name}
+          </p>
+          <p style={{ fontSize: 12, color: "#94A3B8" }}>
+            {seller.profile ?? "Ejecutivo comercial"}
+          </p>
+        </div>
+        <span
+          className="tag"
+          style={{ backgroundColor: "#fee2e2", color: "#dc2626" }}
+        >
+          {points}/{minDaily} pts
+        </span>
+      </div>
+
+      {/* 4 main stats */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4,1fr)",
+          gap: 8,
+          marginBottom: 12,
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
+            {calls}
+          </p>
+          <p className="slabel">Llamadas</p>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
+            {meetings}
+          </p>
+          <p className="slabel">Reuniones</p>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
+            {proposals}
+          </p>
+          <p className="slabel">Propuestas</p>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
+            {closes}
+          </p>
+          <p className="slabel">Cierres</p>
+        </div>
+      </div>
+
+      {/* 3 secondary stats */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3,1fr)",
+          gap: 8,
+          marginBottom: 12,
+          borderTop: "1px solid #f1f5f9",
+          paddingTop: 10,
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 18, fontWeight: 700, color: qualityColor }}>
+            {quality}%
+          </p>
+          <p className="slabel">Calidad</p>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 18, fontWeight: 700, color: "#0F172A" }}>
+            {overdue}
+          </p>
+          <p className="slabel">Vencidos</p>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 18, fontWeight: 700, color: "#0F172A" }}>
+            {tomorrow}
+          </p>
+          <p className="slabel">Mañana</p>
+        </div>
+      </div>
+
+      {/* Recommended action */}
+      <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 10 }}>
+        <p className="slabel" style={{ marginBottom: 4 }}>
+          Acción recomendada
+        </p>
+        <p style={{ fontSize: 12, color: "#475569" }}>{recommendedAction}</p>
+      </div>
+    </div>
+  )
+}
 
 export function CoachingPage() {
   const currentUser = useAppStore((s) => s.currentUser)
   const isAdmin = currentUser?.role !== UserRole.Seller
+  const [minDaily, setMinDaily] = useState(30)
+  const [inputValue, setInputValue] = useState("30")
 
-  const [selectedSellerId, setSelectedSellerId] = useState<string>("")
   const { data: sellers } = useSellers()
 
-  const targetSellerId = isAdmin
-    ? selectedSellerId || null
-    : currentUser?.sellerId
-  const { data, isLoading, error } = useCoachingDaily(targetSellerId)
-
-  const today = new Date().toLocaleDateString("es-MX", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-
-  const barColor = (pct: number) => {
-    if (pct >= 100) return "bg-green-500"
-    if (pct >= 50) return "bg-amber-400"
-    return "bg-red-500"
+  const handleSave = () => {
+    const val = parseInt(inputValue, 10)
+    if (!isNaN(val) && val > 0) {
+      setMinDaily(val)
+    }
   }
 
-  const qualityColor = (q: number) => {
-    if (q >= 80) return "text-green-600"
-    if (q >= 50) return "text-amber-500"
-    return "text-red-600"
-  }
+  const currentSellerId = currentUser?.sellerId
+  const currentSeller = sellers?.find((s) => s.id === currentSellerId)
+
+  const sellerFallback: EquipoSeller | null = currentSellerId
+    ? {
+        id: currentSellerId,
+        name: currentUser?.name ?? "",
+        profile: null,
+        userId: currentUser?.id ?? null,
+        active: true,
+        createdAt: "",
+      }
+    : null
+
+  const activeSellers = sellers?.filter((s) => s.active) ?? []
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <h2 className="text-2xl font-black text-[#002B49]">Coaching Comercial</h2>
-
-      {isAdmin && (
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Vendedor
-          </label>
-          <select
-            value={selectedSellerId}
-            onChange={(e) => setSelectedSellerId(e.target.value)}
-            className="w-full max-w-xs rounded-md border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value="">Selecciona un vendedor</option>
-            {sellers?.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {isLoading && (
-        <p className="text-sm text-slate-500">Cargando reporte...</p>
-      )}
-
-      {error && (
-        <p className="text-sm text-red-600">Error al cargar el reporte.</p>
-      )}
-
-      {data && (
-        <div className="space-y-6">
+    <div style={{ padding: "24px", maxWidth: 1200, margin: "0 auto" }}>
+      {/* Header card */}
+      <div className="card p-6" style={{ marginBottom: 24 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 16,
+          }}
+        >
           <div>
-            <p className="text-lg font-semibold text-slate-800">
-              {data.sellerName}
-            </p>
-            <p className="text-sm text-slate-500 capitalize">{today}</p>
-          </div>
-
-          {/* Progreso del dia */}
-          <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4">
-            <div className="flex justify-between text-sm font-medium text-slate-700">
-              <span>Progreso del día</span>
-              <span>
-                {data.pointsToday} / {data.dailyPointsGoal} puntos
-              </span>
-            </div>
-            <div className="h-3 w-full rounded-full bg-slate-100">
-              <div
-                className={`h-3 rounded-full transition-all ${barColor(data.progressPct)}`}
-                style={{ width: `${data.progressPct}%` }}
-              />
-            </div>
-            <p className="text-xs text-slate-500">
-              {data.progressPct}% completado
-            </p>
-          </div>
-
-          {/* Calidad promedio */}
-          <div className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4">
-            <div>
-              <p className="text-sm text-slate-500">Calidad promedio</p>
-              <p
-                className={`text-4xl font-black ${qualityColor(data.avgQuality)}`}
-              >
-                {Math.round(data.avgQuality)}%
-              </p>
-            </div>
-          </div>
-
-          {/* Mix de actividades */}
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <p className="mb-3 text-sm font-semibold text-slate-700">
-              Mix de actividades
-            </p>
-            {data.activityMix.length === 0 ? (
-              <p className="text-sm text-slate-400">Sin actividades hoy</p>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100 text-left text-slate-500">
-                    <th className="pb-2 font-medium">Tipo</th>
-                    <th className="pb-2 text-right font-medium">Cantidad</th>
-                    <th className="pb-2 text-right font-medium">% del día</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.activityMix.map((item) => (
-                    <tr
-                      key={item.type}
-                      className="border-b border-slate-50 last:border-0"
-                    >
-                      <td className="py-1.5 text-slate-700">{item.type}</td>
-                      <td className="py-1.5 text-right text-slate-700">
-                        {item.count}
-                      </td>
-                      <td className="py-1.5 text-right text-slate-500">
-                        {item.percentage}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-
-          {/* Chips de vencidos y manana */}
-          <div className="flex flex-wrap gap-3">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${
-                data.overdueCount > 0
-                  ? "bg-red-100 text-red-700"
-                  : "bg-green-100 text-green-700"
-              }`}
+            <h2
+              style={{
+                fontWeight: 900,
+                color: "#0F172A",
+                fontSize: 20,
+                marginBottom: 4,
+              }}
             >
-              Vencidos: {data.overdueCount}
-            </span>
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${
-                data.tomorrowTasksCount < 5
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-green-100 text-green-700"
-              }`}
-            >
-              Mañana: {data.tomorrowTasksCount} tareas
-            </span>
+              Reporte diario de coaching
+            </h2>
+            <p style={{ fontSize: 13, color: "#64748B" }}>
+              Termómetro exacto de actividad comercial por vendedor
+            </p>
           </div>
-
-          {/* Insights del mix */}
-          {data.mixInsights.length > 0 && (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <p className="mb-2 text-sm font-semibold text-blue-800">
-                Análisis del día
-              </p>
-              <ul className="space-y-1">
-                {data.mixInsights.map((insight, i) => (
-                  <li
-                    key={i}
-                    className="text-sm text-blue-800 before:mr-2 before:content-['•']"
-                  >
-                    {insight}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#64748B",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              Mínimo diario
+            </span>
+            <input
+              type="number"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="input"
+              style={{ width: 64 }}
+              min={1}
+            />
+            <button className="btn-primary" onClick={handleSave}>
+              Guardar
+            </button>
+          </div>
         </div>
-      )}
+      </div>
 
-      {!data && !isLoading && !error && isAdmin && !selectedSellerId && (
-        <p className="text-sm text-slate-400">
-          Selecciona un vendedor para ver el reporte.
-        </p>
-      )}
+      {/* Seller cards grid */}
+      {isAdmin ? (
+        activeSellers.length > 0 ? (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3,1fr)",
+              gap: 16,
+            }}
+          >
+            {activeSellers.map((seller) => (
+              <SellerCoachingCard
+                key={seller.id}
+                seller={seller}
+                minDaily={minDaily}
+              />
+            ))}
+          </div>
+        ) : (
+          <p style={{ fontSize: 13, color: "#94A3B8" }}>
+            No hay vendedores activos registrados.
+          </p>
+        )
+      ) : (() => {
+          const seller = currentSeller ?? sellerFallback
+          if (!seller) return null
+          return (
+            <div style={{ maxWidth: 480 }}>
+              <SellerCoachingCard seller={seller} minDaily={minDaily} />
+            </div>
+          )
+        })()}
     </div>
   )
 }

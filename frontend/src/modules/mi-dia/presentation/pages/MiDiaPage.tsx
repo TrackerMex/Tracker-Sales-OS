@@ -1,134 +1,300 @@
+import { useNavigate } from '@tanstack/react-router';
 import { useAppStore } from '@/shared/store/app.store';
 import { useMiDia } from '../../application/hooks/useMiDia';
+import { useTodayTasks } from '../../../tasks/application/hooks/useTodayTasks';
+import { useCompleteTask } from '../../../tasks/application/hooks/useCompleteTask';
 
-interface MetricCardProps {
-  title: string;
-  current: number;
-  goal: number;
-}
-
-function MetricCard({ title, current, goal }: MetricCardProps) {
-  const percent = Math.min(100, (current / goal) * 100);
-  const barColor =
-    percent >= 100 ? 'bg-green-500' : percent >= 50 ? 'bg-amber-400' : 'bg-red-500';
-
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-sm font-medium text-slate-500">{title}</p>
-      <p className="mt-1 text-2xl font-bold text-slate-900">
-        {current} <span className="text-sm font-normal text-slate-400">/ {goal}</span>
-      </p>
-      <div className="mt-3 h-2 w-full rounded-full bg-slate-100">
-        <div
-          className={`h-2 rounded-full transition-all ${barColor}`}
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-const SEMAPHORE_STYLES = {
-  verde: { badge: 'bg-green-100 text-green-700', label: 'Todo OK' },
-  ambar: { badge: 'bg-amber-100 text-amber-700', label: 'Atención' },
-  rojo: { badge: 'bg-red-100 text-red-700', label: 'Urgente' },
-  morado: { badge: 'bg-purple-100 text-purple-700', label: 'Sugerencia del Coach' },
+const semaphoreTagMap: Record<string, string> = {
+  verde: 'green',
+  ambar: 'amber',
+  rojo: 'red',
+  morado: 'purple',
 };
 
+const semaphoreLabel: Record<string, string> = {
+  verde: 'Todo OK',
+  ambar: 'Atención',
+  rojo: 'Urgente',
+  morado: 'Coach',
+};
+
+function stripColor(current: number, goal: number): string {
+  if (goal === 0) return '#82bc00';
+  const pct = current / goal;
+  if (pct >= 1) return '#82bc00';
+  if (pct >= 0.5) return '#F59E0B';
+  return '#EF4444';
+}
+
+function formatTime(scheduledAt: string | null | undefined): string {
+  if (!scheduledAt) return '';
+  const d = new Date(scheduledAt);
+  if (isNaN(d.getTime())) return scheduledAt;
+  const today = new Date();
+  const isToday =
+    d.getFullYear() === today.getFullYear() &&
+    d.getMonth() === today.getMonth() &&
+    d.getDate() === today.getDate();
+  if (isToday) {
+    return d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+  return d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' });
+}
+
 export function MiDiaPage() {
+  const navigate = useNavigate();
   const currentUser = useAppStore((s) => s.currentUser);
   const { data, isLoading, isError } = useMiDia(currentUser?.sellerId);
+  const { data: tasks } = useTodayTasks();
+  const { mutate: completeTask } = useCompleteTask();
 
   if (!currentUser?.sellerId) {
     return (
-      <div className="p-6">
-        <p className="text-sm text-slate-500">No tienes un perfil de vendedor asociado.</p>
+      <div style={{ padding: 24 }}>
+        <p style={{ fontSize: 13, color: '#94A3B8' }}>No tienes un perfil de vendedor asociado.</p>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <p className="text-sm text-slate-500">Cargando...</p>
+      <div style={{ padding: 24 }}>
+        <p style={{ fontSize: 13, color: '#94A3B8' }}>Cargando...</p>
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="p-6">
-        <p className="text-sm text-red-500">Error cargando datos</p>
+      <div style={{ padding: 24 }}>
+        <p style={{ fontSize: 13, color: '#EF4444' }}>Error cargando datos</p>
       </div>
     );
   }
 
-  const semStyle = SEMAPHORE_STYLES[data.semaphore];
+  const taskList = tasks ?? [];
+
+  const metrics = [
+    {
+      label: 'PUNTOS HOY',
+      current: data.pointsToday,
+      goal: data.dailyPointsGoal,
+      goalText: `/ ${data.dailyPointsGoal}`,
+    },
+    {
+      label: 'LLAMADAS',
+      current: data.callsToday,
+      goal: data.dailyCallsGoal,
+      goalText: `/ ${data.dailyCallsGoal}`,
+    },
+    {
+      label: 'TAREAS MAÑANA',
+      current: data.tomorrowTasksCount,
+      goal: data.tomorrowTasksGoal,
+      goalText: `meta: ${data.tomorrowTasksGoal}`,
+    },
+    {
+      label: 'PROSPECTOS',
+      current: data.newProspectsToday,
+      goal: data.newProspectsGoal,
+      goalText: `/ ${data.newProspectsGoal}`,
+    },
+  ];
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center gap-4">
-        <h2 className="text-xl font-black text-[#002B49]">Mi Día</h2>
-        <span className={`rounded-full px-3 py-1 text-sm font-semibold ${semStyle.badge}`}>
-          {semStyle.label}
-        </span>
-        <span className="text-sm text-slate-500">{data.sellerName}</span>
-      </div>
+    <div style={{ padding: 24, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+      {/* LEFT COLUMN */}
+      <div style={{ flex: 2, minWidth: 0 }}>
+        {/* TERMÓMETRO OPERATIVO */}
+        <p className="slabel" style={{ marginBottom: 12 }}>
+          TERMÓMETRO OPERATIVO
+        </p>
 
-      {data.overdueCount > 0 && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-          <p className="text-sm font-semibold text-red-700">
-            Tienes {data.overdueCount} seguimiento{data.overdueCount !== 1 ? 's' : ''} vencido
-            {data.overdueCount !== 1 ? 's' : ''} — atiéndelos primero.
-          </p>
-        </div>
-      )}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+          {metrics.map((m) => {
+            const color = stripColor(m.current, m.goal);
+            return (
+              <div
+                key={m.label}
+                className="card"
+                style={{
+                  padding: 12,
+                  textAlign: 'center',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  paddingBottom: 16,
+                }}
+              >
+                <p className="slabel" style={{ marginBottom: 4 }}>
+                  {m.label}
+                </p>
+                <p style={{ fontSize: 28, fontWeight: 800, color: '#0F172A', lineHeight: 1.1 }}>
+                  {m.current}
+                </p>
+                <p style={{ fontSize: 11, color: '#94A3B8' }}>{m.goalText}</p>
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 4,
+                    background: color,
+                  }}
+                />
+              </div>
+            );
+          })}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <MetricCard
-          title="Puntos hoy"
-          current={data.pointsToday}
-          goal={data.dailyPointsGoal}
-        />
-        <MetricCard
-          title="Llamadas hoy"
-          current={data.callsToday}
-          goal={data.dailyCallsGoal}
-        />
-        <MetricCard
-          title="Tareas mañana"
-          current={data.tomorrowTasksCount}
-          goal={data.tomorrowTasksGoal}
-        />
-        <MetricCard
-          title="Prospectos nuevos"
-          current={data.newProspectsToday}
-          goal={data.newProspectsGoal}
-        />
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-medium text-slate-500">Seguimientos vencidos</p>
-          <p
-            className={`mt-1 text-2xl font-bold ${
-              data.overdueCount > 0 ? 'text-red-600' : 'text-slate-900'
-            }`}
+          {/* VENCIDOS */}
+          <div
+            className="card"
+            style={{
+              padding: 12,
+              textAlign: 'center',
+              position: 'relative',
+              overflow: 'hidden',
+              paddingBottom: 16,
+            }}
           >
-            {data.overdueCount}
-          </p>
+            <p className="slabel" style={{ marginBottom: 4 }}>
+              VENCIDOS
+            </p>
+            <p style={{ fontSize: 28, fontWeight: 800, color: '#0F172A', lineHeight: 1.1 }}>
+              {data.overdueCount}
+            </p>
+            <p style={{ fontSize: 11, color: '#94A3B8' }}>&nbsp;</p>
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 4,
+                background: data.overdueCount > 0 ? '#EF4444' : '#82bc00',
+              }}
+            />
+          </div>
         </div>
+
+        {/* AGENDA DE HOY Y PENDIENTES */}
+        <p className="slabel" style={{ margin: '20px 0 10px' }}>
+          AGENDA DE HOY Y PENDIENTES
+        </p>
+
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          {taskList.length === 0 ? (
+            <p style={{ fontSize: 13, color: '#94A3B8', padding: 16 }}>Sin tareas para hoy</p>
+          ) : (
+            taskList.map((task, idx) => {
+              const isCompleted = task.status === 'Completado';
+              const titleColor = task.isOverdue
+                ? '#EF4444'
+                : isCompleted
+                  ? '#94A3B8'
+                  : '#0F172A';
+
+              return (
+                <div
+                  key={task.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '10px 14px',
+                    borderBottom:
+                      idx < taskList.length - 1 ? '1px solid #f1f5f9' : 'none',
+                  }}
+                >
+                  <div>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: titleColor,
+                        textDecoration: isCompleted ? 'line-through' : 'none',
+                        margin: 0,
+                      }}
+                    >
+                      {task.title}
+                    </p>
+                    <p style={{ fontSize: 11, color: '#94A3B8', margin: '2px 0 0' }}>
+                      {formatTime(task.scheduledAt)}
+                    </p>
+                  </div>
+                  {task.status === 'Pendiente' && (
+                    <button
+                      className="btn-green"
+                      style={{ padding: '3px 8px', fontSize: 11 }}
+                      onClick={() => completeTask(task.id)}
+                    >
+                      Completar
+                    </button>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* AI Tips */}
+        {data.coachTips.length > 0 && (
+          <div className="ai-box" style={{ marginTop: 16 }}>
+            <ul style={{ margin: 0, paddingLeft: 16 }}>
+              {data.coachTips.map((tip, i) => (
+                <li key={i} style={{ fontSize: 13, marginBottom: 4 }}>
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
-      {data.coachTips.length > 0 && (
-        <div className="mt-6 bg-purple-50 border border-purple-200 rounded-lg p-4">
-          <p className="text-sm font-semibold text-purple-800 mb-2">Sugerencias del Coach</p>
-          <ul className="list-disc list-inside space-y-1">
-            {data.coachTips.map((tip, index) => (
-              <li key={index} className="text-purple-800 text-sm">
-                {tip}
-              </li>
-            ))}
-          </ul>
+      {/* RIGHT COLUMN — sidebar */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="card" style={{ padding: 20 }}>
+          <p className="slabel" style={{ marginBottom: 12 }}>
+            REGLA DEL DÍA
+          </p>
+
+          <span className={`tag tag-${semaphoreTagMap[data.semaphore]}`}>
+            {semaphoreLabel[data.semaphore]}
+          </span>
+
+          <button
+            className="btn-green"
+            style={{ width: '100%', marginTop: 12, marginBottom: 8 }}
+            onClick={() => void navigate({ to: '/agenda' })}
+          >
+            + Crear tarea
+          </button>
+          <button
+            className="btn-primary"
+            style={{ width: '100%' }}
+            onClick={() => void navigate({ to: '/clientes' })}
+          >
+            + Nuevo prospecto
+          </button>
+
+          {data.overdueCount > 0 && (
+            <div
+              style={{
+                background: '#FEF2F2',
+                border: '1px solid #FCA5A5',
+                borderRadius: 8,
+                padding: '8px 12px',
+                fontSize: 12,
+                color: '#B91C1C',
+                marginTop: 12,
+              }}
+            >
+              {data.overdueCount} seguimiento{data.overdueCount !== 1 ? 's' : ''} vencido
+              {data.overdueCount !== 1 ? 's' : ''}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

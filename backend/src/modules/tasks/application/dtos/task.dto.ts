@@ -4,6 +4,8 @@ export class TaskDto {
   id: string;
   sellerId: string;
   clientId: string | null;
+  type: string | null;
+  contactId: string | null;
   title: string;
   description: string | null;
   scheduledAt: string;
@@ -19,6 +21,8 @@ export class TaskDto {
     dto.id = entity.id;
     dto.sellerId = entity.sellerId;
     dto.clientId = entity.clientId;
+    dto.type = entity.type ?? null;
+    dto.contactId = entity.contactId ?? null;
     dto.title = entity.title;
     dto.description = entity.description;
     dto.scheduledAt = entity.scheduledAt.toISOString();
