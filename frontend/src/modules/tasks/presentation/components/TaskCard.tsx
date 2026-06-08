@@ -3,62 +3,73 @@ import type { Task } from '../../domain/tasks.types'
 interface TaskCardProps {
   task: Task
   onComplete: (id: string) => void
+  clientName?: string | null
+  contactName?: string | null
 }
 
-function formatTime(isoString: string): string {
-  const date = new Date(isoString)
-  return date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
 }
 
-function StatusBadge({ task }: { task: Task }) {
-  if (task.status === 'Completado') {
-    return (
-      <span className="rounded-full bg-[#82bc00]/20 px-2 py-0.5 text-xs font-semibold text-[#4a6b00] border border-[#82bc00]/40">
-        Completado
-      </span>
-    )
-  }
-  if (task.isOverdue) {
-    return (
-      <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 border border-red-300">
-        Vencida
-      </span>
-    )
-  }
-  return (
-    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200">
-      Pendiente
-    </span>
-  )
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
 }
 
-export function TaskCard({ task, onComplete }: TaskCardProps) {
+function getAiComment(task: Task, clientName: string | null): string | null {
+  if (task.status === 'Completado') return null
+  const name = clientName ?? 'el contacto'
+  if (task.isOverdue) return `Tarea vencida. Reagenda con ${name} y define una nueva fecha concreta.`
+  return `Revisa: ¿esta tarea tiene un resultado medible? Si solo es "seguimiento", redefine con ${name}.`
+}
+
+export function TaskCard({ task, onComplete, clientName, contactName }: TaskCardProps) {
+  const isOverdue = task.isOverdue && task.status === 'Pendiente'
+  const aiComment = getAiComment(task, clientName ?? null)
+
+  const header = [clientName || 'Sin cliente', task.type, contactName]
+    .filter(Boolean)
+    .join(' · ')
+
   return (
     <div
-      className={`rounded-lg border bg-white p-4 shadow-sm ${
-        task.isOverdue && task.status === 'Pendiente' ? 'border-red-500' : 'border-slate-200'
-      }`}
+      className="card"
+      style={{ padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, opacity: task.status === 'Completado' ? 0.5 : 1 }}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-slate-400 font-medium">{formatTime(task.scheduledAt)}</span>
-            <StatusBadge task={task} />
-          </div>
-          <p className="mt-1 text-sm font-semibold text-[#002B49] truncate">{task.title}</p>
-          {task.description && (
-            <p className="mt-1 text-xs text-slate-500 line-clamp-2">{task.description}</p>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginBottom: 2 }}>{header}</p>
+        <p style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>{task.title}</p>
+        {aiComment && (
+          <p style={{ fontSize: 11.5, color: '#6D28D9', fontWeight: 500, marginBottom: 4 }}>IA: {aiComment}</p>
+        )}
+        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, color: '#94A3B8' }}>
+            Programada: {formatDate(task.scheduledAt)} {formatTime(task.scheduledAt)}
+          </span>
+          <span style={{ fontSize: 11, color: '#94A3B8' }}>
+            Creada: {formatDate(task.createdAt)}
+          </span>
+          {task.completedAt && (
+            <span style={{ fontSize: 11, color: '#94A3B8' }}>
+              Capturada: {formatDate(task.completedAt)}
+            </span>
+          )}
+          {isOverdue && (
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#DC2626' }}>Vencida</span>
           )}
         </div>
-        {task.status === 'Pendiente' && (
-          <button
-            onClick={() => onComplete(task.id)}
-            className="shrink-0 rounded-md bg-[#002B49] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#002B49]/90 transition-colors"
-          >
-            Completar
-          </button>
-        )}
       </div>
+
+      {task.status === 'Pendiente' ? (
+        <button
+          onClick={() => onComplete(task.id)}
+          className="btn-green"
+          style={{ padding: '6px 11px', fontSize: 11 }}
+        >
+          Completar
+        </button>
+      ) : (
+        <span className="tag tag-gray">Completada</span>
+      )}
     </div>
   )
 }
