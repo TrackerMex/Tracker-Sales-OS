@@ -12,7 +12,8 @@ function getPointsBarColor(pct: number): string {
 }
 
 export function ActivitiesPage() {
-  const { taskTitle } = useSearch({ from: '/actividades/nueva' })
+  const search = useSearch({ strict: false })
+  const taskTitle = (search as { taskTitle?: string }).taskTitle
   const [showForm, setShowForm] = useState(false)
   const { data, isLoading } = useDailyActivities()
   const { mutate, isPending } = useCreateActivity()
