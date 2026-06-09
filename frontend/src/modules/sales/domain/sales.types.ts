@@ -32,7 +32,7 @@ export interface Sale {
 
 export interface CreateSaleInput {
   sellerId: string;
-  clientId: string;
+  clientId?: string;
   clientName: string;
   clientType: 'Nuevo' | 'Existente';
   product: string;

@@ -6,6 +6,19 @@ interface KPIStripProps {
   pointsValue: number;
   qualityValue: number;
   isLoading: boolean;
+  onRetry?: () => void;
+}
+
+function KPITooltip({ children, title }: { children: React.ReactNode; title: string }) {
+  return (
+    <div className="group relative inline-flex cursor-help">
+      {children}
+      <div className="invisible absolute bottom-full left-1/2 mb-2 w-48 -translate-x-1/2 rounded-lg bg-[#0f172a] px-3 py-2 text-xs text-white opacity-0 transition-opacity group-hover:visible group-hover:opacity-100">
+        {title}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#0f172a]" />
+      </div>
+    </div>
+  );
 }
 
 export function KPIStrip({
@@ -32,12 +45,16 @@ export function KPIStrip({
         <div className="ksb">meta mensual</div>
       </div>
       <div className="kpi-cell">
-        <div className="kl">Puntos totales</div>
+        <KPITooltip title="Actividad acumulada: llamadas, emails y reuniones registradas por el equipo este mes">
+          <div className="kl">Puntos totales</div>
+        </KPITooltip>
         <div className="kv">{fmt(pointsValue.toLocaleString('es-MX'))}</div>
         <div className="ksb">acumulados mes</div>
       </div>
       <div className="kpi-cell">
-        <div className="kl">Calidad promedio</div>
+        <KPITooltip title="% de seguimientos completados a tiempo. Mayor % = mejor cumplimiento">
+          <div className="kl">Calidad promedio</div>
+        </KPITooltip>
         <div className="kv">{fmt(`${qualityValue.toFixed(1)}%`)}</div>
         <div className="ksb">promedio del equipo</div>
       </div>

@@ -1,0 +1,7 @@
+{
+  "framework": "vite-react",
+  "files": ["index.html"],
+  "insertBefore": "<script type=\"module\" src=\"/src/main.tsx\"></script>",
+  "commentSyntax": "jsx",
+  "cspChecked": true
+}

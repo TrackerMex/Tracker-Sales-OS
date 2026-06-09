@@ -56,15 +56,12 @@ export class TaskRepositoryImpl implements ITaskRepository {
   async findTodayBySeller(sellerId: string, date: Date): Promise<TaskEntity[]> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
 
     const data = await this.repo
       .createQueryBuilder('task')
       .where('task.sellerId = :sellerId', { sellerId })
-      .andWhere('task.scheduledAt >= :start AND task.scheduledAt <= :end', {
+      .andWhere('task.scheduledAt >= :start', {
         start: startOfDay,
-        end: endOfDay,
       })
       .andWhere('task.deletedAt IS NULL')
       .orderBy('task.scheduledAt', 'ASC')

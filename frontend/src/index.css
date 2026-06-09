@@ -129,6 +129,15 @@
   html {
     @apply font-sans;
   }
+
+  /* Keyboard focus styles */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid var(--tracker-green);
+    outline-offset: 2px;
+  }
 }
 
 /* =============================================
@@ -465,3 +474,36 @@ body {
 .alert-item.green { background: #F0FDF4; }
 .alert-item.red { background: #FEF2F2; }
 .alert-item.amber { background: #FFFBEB; }
+
+/* === HARDENING: REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* === HARDENING: TEXT OVERFLOW === */
+.kpi-cell .kl {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kpi-cell .kv {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* === HARDENING: PROGRESS BAR EDGE CASES === */
+.prog {
+  position: relative;
+  overflow: hidden;
+}
+
+.prog-fill {
+  min-width: 2px;
+  max-width: 100%;
+}

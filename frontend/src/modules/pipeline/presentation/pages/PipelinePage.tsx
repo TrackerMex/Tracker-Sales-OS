@@ -93,8 +93,8 @@ export function PipelinePage() {
       )}
 
       {!isLoading && !isError && (
-        <div className="overflow-x-auto pb-4">
-          <div style={{ display: 'flex', gap: 11, minWidth: 'max-content' }}>
+        <div style={{ overflowX: 'auto', paddingBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: '12px', minWidth: 'max-content' }}>
             {ALL_STAGES.map((stage) => (
               <KanbanColumn
                 key={stage}

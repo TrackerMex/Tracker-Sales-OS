@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DealTypeormEntity } from './infrastructure/entities/deal.typeorm.entity';
+import { AuditLogTypeormEntity } from '../../core/infrastructure/entities/audit-log.typeorm.entity';
 import { DealRepositoryImpl } from './infrastructure/repositories/deal.repository.impl';
 import { DEAL_REPOSITORY } from './domain/repositories/deal.repository.interface';
 import { CreateDealUseCase } from './application/use-cases/create-deal.use-case';
@@ -11,9 +12,14 @@ import {
   DealsController,
 } from './presentation/pipeline.controller';
 import { AuthModule } from '../auth/auth.module';
+import { ClientsModule } from '../clients/clients.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DealTypeormEntity]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([DealTypeormEntity, AuditLogTypeormEntity]),
+    AuthModule,
+    ClientsModule,
+  ],
   controllers: [PipelineController, DealsController],
   providers: [
     { provide: DEAL_REPOSITORY, useClass: DealRepositoryImpl },

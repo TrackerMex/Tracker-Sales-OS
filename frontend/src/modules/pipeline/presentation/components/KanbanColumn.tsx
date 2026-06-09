@@ -22,15 +22,41 @@ export function KanbanColumn({
   return (
     <div className="pipe-col">
       <div className="pipe-col-h">
-        <span className="text-sm font-bold text-white">{stage}</span>
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold text-white">
+        <span>{stage}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{
+            display: 'inline-block',
+            minWidth: '22px',
+            textAlign: 'center',
+            fontSize: '11px',
+            fontWeight: 700,
+            color: '#64748B',
+            background: '#E2E8F0',
+            borderRadius: '10px',
+            padding: '2px 6px'
+          }}>
             {deals.length}
           </span>
           {canCreate && (
             <button
               onClick={() => onCreateDeal(stage)}
-              className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white transition-colors hover:bg-white/30"
+              style={{
+                width: '20px',
+                height: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px',
+                fontWeight: 700,
+                color: '#64748B',
+                background: '#E2E8F0',
+                border: 'none',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#CBD5E1'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#E2E8F0'}
               title={`Crear deal en ${stage}`}
             >
               +
@@ -38,9 +64,11 @@ export function KanbanColumn({
           )}
         </div>
       </div>
-      <div className="max-h-[calc(100vh-220px)] flex-1 space-y-2 overflow-y-auto p-2">
+      <div style={{ maxHeight: 'calc(100vh - 220px)', overflowY: 'auto', paddingRight: '4px' }}>
         {deals.length === 0 ? (
-          <p className="py-4 text-center text-xs text-slate-400">Sin deals</p>
+          <p style={{ padding: '16px 0', textAlign: 'center', fontSize: '12px', color: '#CBD5E1' }}>
+            Sin deals
+          </p>
         ) : (
           deals.map((deal) => (
             <DealCard key={deal.id} deal={deal} onChangeStage={onChangeStage} />

@@ -95,7 +95,7 @@ export function SalesPage() {
     e.preventDefault();
     const input: CreateSaleInput = {
       sellerId,
-      clientId: '',
+      clientId: undefined,
       clientName: dirProject,
       clientType: 'Existente',
       product: dirProject,
@@ -122,7 +122,7 @@ export function SalesPage() {
     e.preventDefault();
     const input: CreateSaleInput = {
       sellerId,
-      clientId: '',
+      clientId: undefined,
       clientName: 'ATC',
       clientType: 'Existente',
       product: 'ATC',

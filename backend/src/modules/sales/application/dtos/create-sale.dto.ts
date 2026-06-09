@@ -16,7 +16,7 @@ import { PaymentMethod, SaleSource, SaleType } from '../../domain/entities/sale.
 export class CreateSaleDto {
   @ApiProperty() @IsUUID() sellerId: string;
 
-  @ApiProperty() @IsUUID() clientId: string;
+  @ApiProperty() @IsOptional() @IsUUID() clientId: string;
 
   @ApiProperty() @IsString() @IsNotEmpty() clientName: string;
 
