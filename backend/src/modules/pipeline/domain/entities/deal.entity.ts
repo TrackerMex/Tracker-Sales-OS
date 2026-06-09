@@ -29,6 +29,7 @@ export const ALLOWED_TRANSITIONS: Partial<Record<PipelineStage, PipelineStage[]>
 
 export class DealEntity extends BaseEntity {
   clientId: string;
+  clientName: string;
   sellerId: string;
   stage: PipelineStage;
   amount: number;

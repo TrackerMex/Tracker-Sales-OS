@@ -9,6 +9,7 @@ import { ActivityType } from '../../../activities/domain/entities/activity.entit
 import { TaskStatus } from '../../../tasks/domain/entities/task.entity';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
 import { MiDiaDto } from '../dtos/mi-dia.dto';
+import { GetSettingsUseCase } from '../../../settings/application/use-cases/get-settings.use-case';
 
 @Injectable()
 export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
@@ -21,6 +22,7 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
     private clientRepo: Repository<ClientTypeormEntity>,
     @InjectRepository(SellerTypeormEntity)
     private sellerRepo: Repository<SellerTypeormEntity>,
+    private settingsUseCase: GetSettingsUseCase,
   ) {}
 
   async execute(sellerId: string): Promise<MiDiaDto> {
@@ -30,9 +32,12 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
     const tomorrowStart = todayEnd;
     const tomorrowEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
 
-    const seller = await this.sellerRepo.findOne({
-      where: { id: sellerId, deletedAt: IsNull() },
-    });
+    const [seller, settings] = await Promise.all([
+      this.sellerRepo.findOne({
+        where: { id: sellerId, deletedAt: IsNull() },
+      }),
+      this.settingsUseCase.execute(),
+    ]);
 
     if (!seller) {
       throw new NotFoundException(`Seller ${sellerId} not found`);
@@ -88,15 +93,16 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
       ]);
 
     const pointsToday = Number(pointsRaw?.total) || 0;
+    const dailyGoal = settings.dailyMinPoints;
 
     let semaphore: 'verde' | 'ambar' | 'rojo' | 'morado';
     if (overdueCount > 2) {
       semaphore = 'rojo';
-    } else if (pointsToday >= 30 && tomorrowTasksCount >= 5 && overdueCount === 0) {
+    } else if (pointsToday >= dailyGoal && tomorrowTasksCount >= 5 && overdueCount === 0) {
       semaphore = 'verde';
     } else if (callsToday >= 7 && tomorrowTasksCount === 0) {
       semaphore = 'morado';
-    } else if (pointsToday < 15 && callsToday < 5) {
+    } else if (pointsToday < dailyGoal / 2 && callsToday < 5) {
       semaphore = 'ambar';
     } else {
       semaphore = 'ambar';
@@ -115,7 +121,7 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
     if (newProspectsToday === 0) {
       coachTips.push('Sin prospectos nuevos hoy. Considera prospectar antes de que termine el día.');
     }
-    if (pointsToday >= 30 && tomorrowTasksCount >= 5) {
+    if (pointsToday >= dailyGoal && tomorrowTasksCount >= 5) {
       coachTips.push('Excelente día. Mantén el ritmo mañana.');
     }
 
@@ -123,7 +129,7 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
       sellerId,
       sellerName: seller.name,
       pointsToday,
-      dailyPointsGoal: 30,
+      dailyPointsGoal: dailyGoal,
       callsToday,
       dailyCallsGoal: 10,
       tomorrowTasksCount,

@@ -43,9 +43,9 @@ export function DealCard({ deal, onChangeStage }: DealCardProps) {
   }
 
   return (
-    <div className="card" style={{ padding: '14px' }}>
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-sm leading-tight font-bold text-[#002B49]">
+    <div className="card" style={{ padding: '14px', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '6px' }}>
+        <p style={{ fontSize: '13px', lineHeight: '1.3', fontWeight: 700, color: '#002B49' }}>
           {deal.clientName}
         </p>
         <span
@@ -54,16 +54,24 @@ export function DealCard({ deal, onChangeStage }: DealCardProps) {
           {deal.probability}%
         </span>
       </div>
-      <p className="text-sm font-medium text-slate-600">
+      <p style={{ fontSize: '13px', fontWeight: 600, color: '#64748B', marginBottom: '10px' }}>
         {formatCurrency(deal.amount)}
       </p>
 
       {transitions.length > 0 && (
-        <div className="flex items-center gap-1">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px' }}>
           <select
             value={selectedStage}
             onChange={(e) => setSelectedStage(e.target.value as PipelineStage)}
-            className="flex-1 rounded-md border border-slate-200 px-2 py-1 text-xs"
+            style={{
+              flex: 1,
+              fontSize: '12px',
+              padding: '4px 8px',
+              border: '1px solid #E2E8F0',
+              borderRadius: '6px',
+              background: 'white',
+              color: '#475569'
+            }}
           >
             <option value="">Mover a...</option>
             {transitions.map((stage) => (
@@ -75,9 +83,19 @@ export function DealCard({ deal, onChangeStage }: DealCardProps) {
           <button
             onClick={handleMove}
             disabled={!selectedStage}
-            className="rounded-md bg-[#002B49] px-2 py-1 text-xs font-medium text-white transition-colors hover:bg-[#002B49]/90 disabled:opacity-40"
+            style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              padding: '4px 12px',
+              background: !selectedStage ? '#94A3B8' : '#002B49',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: !selectedStage ? 'not-allowed' : 'pointer',
+              transition: 'background 0.2s'
+            }}
           >
-            Mover
+            →
           </button>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
+import { SettingsModule } from '../settings/settings.module';
 import { ActivityTypeormEntity } from '../activities/infrastructure/entities/activity.typeorm.entity';
 import { TaskTypeormEntity } from '../tasks/infrastructure/entities/task.typeorm.entity';
 import { SaleTypeormEntity } from '../sales/infrastructure/entities/sale.typeorm.entity';
@@ -22,6 +23,7 @@ import { GetMiDiaUseCase } from './application/use-cases/get-mi-dia.use-case';
       ClientTypeormEntity,
     ]),
     AuthModule,
+    SettingsModule,
   ],
   controllers: [DashboardController],
   providers: [

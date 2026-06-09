@@ -12,9 +12,9 @@ import { PaymentMethod, SaleSource, SaleType } from '../../domain/entities/sale.
 export class SaleTypeormEntity {
   @PrimaryGeneratedColumn('uuid') id: string;
 
-  @Column({ name: 'seller_id', type: 'varchar' }) sellerId: string;
+  @Column({ name: 'seller_id', type: 'uuid' }) sellerId: string;
 
-  @Column({ name: 'client_id', type: 'varchar' }) clientId: string;
+  @Column({ name: 'client_id', type: 'uuid' }) clientId: string;
 
   @Column({ name: 'client_name', type: 'varchar' }) clientName: string;
 

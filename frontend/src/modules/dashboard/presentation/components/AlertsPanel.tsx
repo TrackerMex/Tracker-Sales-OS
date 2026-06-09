@@ -16,8 +16,18 @@ const ALERT_STYLES: Record<AlertItem['color'], { bg: string; text: string }> = {
 };
 
 export function AlertsPanel({ alerts }: AlertsPanelProps) {
+  const getStatusLabel = (color: string) => {
+    const statusMap: Record<string, string> = {
+      red: 'crítico — requiere atención inmediata',
+      amber: 'pendiente — requiere seguimiento',
+      green: 'cumplimiento — está en buen camino',
+      navy: 'información',
+    };
+    return statusMap[color] || '';
+  };
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" role="region" aria-label="Alertas operativas">
       {alerts.map((alert, i) => {
         const style = ALERT_STYLES[alert.color];
         return (
@@ -25,6 +35,9 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
             key={i}
             className={`alert-item ${alert.color}`}
             style={{ backgroundColor: style.bg }}
+            role="status"
+            aria-live="polite"
+            aria-label={`${alert.label}: ${alert.value} (${getStatusLabel(alert.color)})`}
           >
             <p className="text-xs font-semibold" style={{ color: style.text }}>
               {alert.label}

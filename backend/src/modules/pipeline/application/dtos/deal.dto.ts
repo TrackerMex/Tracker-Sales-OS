@@ -7,6 +7,7 @@ import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 export class DealDto {
   id: string;
   clientId: string;
+  clientName: string;
   sellerId: string;
   stage: PipelineStage;
   amount: number;
@@ -20,6 +21,7 @@ export class DealDto {
     const dto = new DealDto();
     dto.id = entity.id;
     dto.clientId = entity.clientId;
+    dto.clientName = entity.clientName;
     dto.sellerId = entity.sellerId;
     dto.stage = entity.stage;
     dto.amount = entity.amount;

@@ -25,10 +25,33 @@ ChartJS.register(
 )
 
 function formatCurrency(value: number): string {
+  // Handle edge cases: null, undefined, NaN, Infinity
+  if (!Number.isFinite(value)) {
+    return "$0.00"
+  }
   return new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: "MXN",
-  }).format(value)
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Math.abs(value) > 999999999 ? 999999999 : value)
+}
+
+function formatPercent(value: number): string {
+  // Handle edge cases and clamp to 0-100
+  if (!Number.isFinite(value)) {
+    return "0%"
+  }
+  const clamped = Math.max(0, Math.min(100, value))
+  return `${clamped.toFixed(1)}%`
+}
+
+function formatNumber(value: number): string {
+  // Handle edge cases and format with thousands separator
+  if (!Number.isFinite(value)) {
+    return "0"
+  }
+  return new Intl.NumberFormat("es-MX").format(Math.round(value))
 }
 
 const CHART_DATA = [2, 5, 3, 8, 6, 4, 9, 7, 11, 6, 8, 10, 7, 12]
@@ -97,22 +120,39 @@ export function DashboardPage() {
 
   const totalOverdue = overdue.data?.length ?? 0
 
+  // Get current time for data freshness indicator
+  const now = new Date()
+  const timeString = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+
   return (
     <div>
       {/* Title */}
       <div className="mb-5">
-        <h1 style={{ fontSize: 18, fontWeight: 700, color: "#002B49" }}>
-          Dashboard
-        </h1>
-        <p style={{ marginTop: 2, fontSize: 12, color: "#94A3B8" }}>
-          Vista general del equipo de ventas
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 style={{ fontSize: 18, fontWeight: 700, color: "#002B49" }}>
+              Dashboard de ventas
+            </h1>
+            <p style={{ marginTop: 2, fontSize: 12, color: "#94A3B8" }}>
+              Resumen del desempeño del equipo de hoy
+            </p>
+          </div>
+          <p style={{ fontSize: 11, color: "#94A3B8", textAlign: 'right' }}>
+            Actualizado<br />a las {timeString}
+          </p>
+        </div>
       </div>
 
       {summary.isError && (
-        <p className="mb-4 text-sm text-red-600">
-          No se pudo cargar el resumen del mes.
-        </p>
+        <div className="mb-4 flex items-center justify-between rounded-lg bg-red-50 p-3 text-sm text-red-700 border border-red-200">
+          <p>No se pudo cargar el resumen. Verifica tu conexión e intenta de nuevo.</p>
+          <button
+            onClick={() => summary.refetch?.()}
+            className="ml-3 rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
+          >
+            Reintentar
+          </button>
+        </div>
       )}
 
       {/* KPI Strip */}
@@ -126,6 +166,7 @@ export function DashboardPage() {
         pointsValue={data?.totalPoints ?? 0}
         qualityValue={data?.avgQuality ?? 0}
         isLoading={isLoading}
+        onRetry={() => summary.refetch?.()}
       />
 
       {/* 2-column: Activity + Alerts */}
@@ -136,11 +177,17 @@ export function DashboardPage() {
         {/* Activity chart */}
         <div className="card">
           <div className="border-b border-[#E2E8F0] px-5 py-3">
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#002B49" }}>
+            <h3
+              style={{ fontSize: 13, fontWeight: 700, color: "#002B49" }}
+              id="activity-chart-title"
+            >
               Actividad — últimos 14 días
             </h3>
+            <p style={{ fontSize: 11, marginTop: 4, color: "#94A3B8" }}>
+              Muestra llamadas, emails y reuniones registradas
+            </p>
           </div>
-          <div className="p-4">
+          <div className="p-4" aria-labelledby="activity-chart-title">
             <ActivityChart />
           </div>
         </div>
@@ -156,22 +203,22 @@ export function DashboardPage() {
             <AlertsPanel
               alerts={[
                 {
-                  label: "seguimientos vencidos",
+                  label: "Seguimientos vencidos (acción requerida)",
                   value: String(totalOverdue),
                   color: "red",
                 },
                 {
-                  label: "tareas pendientes manana",
+                  label: "Tareas programadas para mañana",
                   value: "0",
                   color: "amber",
                 },
                 {
-                  label: "cumplimiento semanal",
+                  label: "Cumplimiento del equipo esta semana",
                   value: `${data?.avgQuality?.toFixed(0) ?? 0}%`,
                   color: "green",
                 },
                 {
-                  label: "prospectos nuevos hoy",
+                  label: "Nuevos prospectos hoy",
                   value: "0",
                   color: "navy",
                 },
@@ -193,9 +240,15 @@ export function DashboardPage() {
           isLoading={sellers.isLoading}
         />
         {sellers.isError && (
-          <p className="px-5 pb-4 text-sm text-red-600">
-            No se pudo cargar el semaforo.
-          </p>
+          <div className="flex items-center justify-between px-5 pb-4">
+            <p className="text-sm text-red-600">No se pudo cargar el desempeño del equipo.</p>
+            <button
+              onClick={() => sellers.refetch?.()}
+              className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
+            >
+              Reintentar
+            </button>
+          </div>
         )}
       </div>
     </div>
