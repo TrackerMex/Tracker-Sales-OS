@@ -42,9 +42,10 @@ interface CreateTaskFormProps {
   onSubmit: (input: CreateTaskInput) => void
   onClose: () => void
   isLoading?: boolean
+  error?: string | null
 }
 
-export function CreateTaskForm({ onSubmit, onClose, isLoading = false }: CreateTaskFormProps) {
+export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error }: CreateTaskFormProps) {
   const { data: clientsData } = useClients({ limit: 200 })
   const clients = clientsData?.data ?? []
 
@@ -135,7 +136,7 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false }: CreateT
             value={objective}
             onChange={(e) => setObjective(e.target.value)}
             required
-            maxLength={500}
+            maxLength={200}
             style={{ height: 110 }}
             placeholder="¿Qué vas a hacer y para qué? Ej. Llamaré a Gerardo para validar si realizará la compra este mes..."
             className="input resize-none"
@@ -154,6 +155,12 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false }: CreateT
           {showOutlookReminder && (
             <div style={{ padding: '11px 13px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1D4ED8' }}>
               Recordatorio: si es videoconferencia o cita, regístrala también en Outlook.
+            </div>
+          )}
+
+          {error && (
+            <div style={{ padding: '10px 13px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, fontSize: 12, color: '#B91C1C' }}>
+              {error}
             </div>
           )}
 

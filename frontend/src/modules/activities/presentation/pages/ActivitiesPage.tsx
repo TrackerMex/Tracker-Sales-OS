@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useSearch } from "@tanstack/react-router"
 import { useDailyActivities } from "../../application/hooks/useDailyActivities"
 import { useCreateActivity } from "../../application/hooks/useCreateActivity"
 import { ActivityForm } from "../components/ActivityForm"
@@ -11,6 +12,7 @@ function getPointsBarColor(pct: number): string {
 }
 
 export function ActivitiesPage() {
+  const { taskTitle } = useSearch({ from: '/actividades/nueva' })
   const [showForm, setShowForm] = useState(false)
   const { data, isLoading } = useDailyActivities()
   const { mutate, isPending } = useCreateActivity()
@@ -61,7 +63,7 @@ export function ActivitiesPage() {
       {showForm && (
         <div className="card p-5">
           <div className="slabel mb-4">Registrar actividad</div>
-          <ActivityForm onSubmit={handleSubmit} isLoading={isPending} />
+          <ActivityForm onSubmit={handleSubmit} isLoading={isPending} programmedTask={taskTitle} />
         </div>
       )}
 

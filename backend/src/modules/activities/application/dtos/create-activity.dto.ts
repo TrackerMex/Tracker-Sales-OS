@@ -12,6 +12,7 @@ export class CreateActivityDto {
   @ApiPropertyOptional() @IsOptional() @IsString() discovery?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() agreement?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() nextStep?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() nextObjective?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() nextDate?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() nextTime?: string;
   @ApiProperty() @IsDateString() executedAt: string;

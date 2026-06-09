@@ -11,6 +11,7 @@ export class ActivityDto {
   discovery: string | null;
   agreement: string | null;
   nextStep: string | null;
+  nextObjective: string | null;
   nextDate: string | null;
   nextTime: string | null;
   points: number;
@@ -34,6 +35,7 @@ export class ActivityDto {
     dto.discovery = entity.discovery;
     dto.agreement = entity.agreement;
     dto.nextStep = entity.nextStep;
+    dto.nextObjective = entity.nextObjective;
     dto.nextDate = entity.nextDate;
     dto.nextTime = entity.nextTime;
     dto.points = entity.points;

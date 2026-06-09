@@ -58,6 +58,7 @@ export class ActivityEntity extends BaseEntity {
   discovery: string | null;
   agreement: string | null;
   nextStep: string | null;
+  nextObjective: string | null;
   nextDate: string | null;
   nextTime: string | null;
   points: number;

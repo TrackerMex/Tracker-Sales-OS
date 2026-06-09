@@ -91,25 +91,25 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
           marginBottom: 12,
         }}
       >
-        <div style={{ textAlign: "center" }}>
+        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
           <p style={{ fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
             {calls}
           </p>
           <p className="slabel">Llamadas</p>
         </div>
-        <div style={{ textAlign: "center" }}>
+        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
           <p style={{ fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
             {meetings}
           </p>
           <p className="slabel">Reuniones</p>
         </div>
-        <div style={{ textAlign: "center" }}>
+        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
           <p style={{ fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
             {proposals}
           </p>
           <p className="slabel">Propuestas</p>
         </div>
-        <div style={{ textAlign: "center" }}>
+        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
           <p style={{ fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
             {closes}
           </p>
@@ -128,19 +128,28 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
           paddingTop: 10,
         }}
       >
-        <div style={{ textAlign: "center" }}>
+        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
           <p style={{ fontSize: 18, fontWeight: 700, color: qualityColor }}>
             {quality}%
           </p>
+          <div className="prog" style={{ marginTop: 4 }}>
+            <div
+              className="prog-fill"
+              style={{
+                width: `${quality}%`,
+                background: quality >= 75 ? '#82bc00' : quality >= 45 ? '#F59E0B' : '#EF4444'
+              }}
+            />
+          </div>
           <p className="slabel">Calidad</p>
         </div>
-        <div style={{ textAlign: "center" }}>
+        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
           <p style={{ fontSize: 18, fontWeight: 700, color: "#0F172A" }}>
             {overdue}
           </p>
           <p className="slabel">Vencidos</p>
         </div>
-        <div style={{ textAlign: "center" }}>
+        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
           <p style={{ fontSize: 18, fontWeight: 700, color: "#0F172A" }}>
             {tomorrow}
           </p>
@@ -153,7 +162,7 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
         <p className="slabel" style={{ marginBottom: 4 }}>
           Acción recomendada
         </p>
-        <p style={{ fontSize: 12, color: "#475569" }}>{recommendedAction}</p>
+        <div className="ai-box">{recommendedAction}</div>
       </div>
     </div>
   )

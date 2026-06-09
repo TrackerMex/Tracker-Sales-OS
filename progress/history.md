@@ -1,5 +1,35 @@
 # History — Tracker Sales OS
 
+## 2026-06-08 — 16-ui-design-review
+
+**Status**: done
+
+**Exploración (3 agentes Explore en paralelo):**
+- Auditado estado de 20+ componentes contra UI-ALIGNMENT-PLAN.md
+- Hallazgos consolidados en progress/explore_ui_review.md
+- Resultado: ~65% alineado con spec — todos los módulos conectados a API real
+
+**Gaps críticos encontrados y corregidos:**
+
+Batch 1:
+- `index.css`: añadidas `.navbtn`, `.sb-logo`, `.sb-section`, `.sb-footer`, `.ni`, `.pipe-col`, `.pipe-col-h`, `.alert-item.navy/green/red/amber`
+- `Sidebar.tsx`: refactor completo de inline styles a clases spec (`navbtn`, `sb-logo`, `sb-section`, `sb-footer`, `ni`, active via `::before`)
+- `Header.tsx`: botones a `.btn-ghost`/`.btn-green`
+- `AlertsPanel.tsx`: `alert-item--X` → `alert-item X`
+- `KanbanColumn.tsx`: `.pipe-col` + `.pipe-col-h`
+- `DealCard.tsx`: `.card`
+- `CoachingPage.tsx`: `.ai-box` para insights, `.prog`/`.prog-fill` para calidad, mini stats bg #F8FAFC
+
+Batch 2:
+- `DashboardPage.tsx`: SVG custom → `<Line>` de react-chartjs-2 (chart.js ya instalado)
+- `ReportsPage.tsx`: 4 paneles IA añadidos (Fortalezas/Oportunidades/Red Flags/Recomendaciones)
+- `LoginPage.tsx`: submit → `.btn-green`, inputs sin inline duplicado, labels → `.slabel`
+- `EquipoPage.tsx`: filas seller → `.seller-row`
+
+**Módulos sin cambios (ya alineados):** MiDia, Clientes, KPIStrip, SellerSemaphoreTable, AppLayout, Settings, ImportExport, ActivityForm, AgendaPage
+
+**Pendiente de verificación visual:** Ejecutar app con docker-compose y confirmar render correcto en browser (parte de feature 17).
+
 ## 2026-06-07 — 14-settings
 
 **Status**: done

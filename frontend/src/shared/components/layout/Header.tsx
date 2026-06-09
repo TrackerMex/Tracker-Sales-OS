@@ -45,42 +45,21 @@ export function Header({ title, subtitle }: HeaderProps) {
 
       {/* Right: global actions */}
       <div className="flex items-center gap-2">
-        <button
-          onClick={() => void navigate({ to: '/agenda' })}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            padding: '5px 11px', borderRadius: 7, fontSize: 12, fontWeight: 600,
-            background: '#F1F5F9', color: '#475569', border: 'none', cursor: 'pointer',
-          }}
-        >
+        <button className="btn-ghost" onClick={() => void navigate({ to: '/agenda' })}>
           <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
             <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
           </svg>
           Tarea
         </button>
 
-        <button
-          onClick={() => void navigate({ to: '/clientes' })}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            padding: '5px 11px', borderRadius: 7, fontSize: 12, fontWeight: 600,
-            background: '#F1F5F9', color: '#475569', border: 'none', cursor: 'pointer',
-          }}
-        >
+        <button className="btn-ghost" onClick={() => void navigate({ to: '/clientes' })}>
           <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
             <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
           </svg>
           Prospecto
         </button>
 
-        <button
-          onClick={() => void navigate({ to: '/actividades/nueva' })}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 700,
-            background: '#82bc00', color: '#001524', border: 'none', cursor: 'pointer',
-          }}
-        >
+        <button className="btn-green" onClick={() => void navigate({ to: '/actividades/nueva' })}>
           Registrar actividad
         </button>
 
@@ -90,14 +69,7 @@ export function Header({ title, subtitle }: HeaderProps) {
           {currentUser?.name ?? currentUser?.username}
         </span>
 
-        <button
-          onClick={clearAuth}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 4,
-            padding: '5px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600,
-            background: 'none', color: '#94A3B8', border: '1px solid #E2E8F0', cursor: 'pointer',
-          }}
-        >
+        <button className="btn-ghost" onClick={clearAuth}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
           </svg>

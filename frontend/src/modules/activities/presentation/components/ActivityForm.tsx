@@ -36,13 +36,19 @@ function calcQuality(data: {
 interface Props {
   onSubmit: (data: CreateActivityInput) => void
   isLoading: boolean
+  programmedTask?: string
 }
 
-export function ActivityForm({ onSubmit, isLoading }: Props) {
+function nowStamp(): string {
+  return new Date().toLocaleString('es-MX', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })
+}
+
+export function ActivityForm({ onSubmit, isLoading, programmedTask }: Props) {
   const now = new Date()
   const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
     .toISOString()
     .slice(0, 16)
+  const capturedStamp = nowStamp()
 
   const { data: clientsResponse } = useClients({ limit: 100 })
   const clients: Client[] = clientsResponse?.data ?? []
@@ -56,6 +62,7 @@ export function ActivityForm({ onSubmit, isLoading }: Props) {
   const [discovery, setDiscovery] = useState("")
   const [agreement, setAgreement] = useState("")
   const [nextStep, setNextStep] = useState("")
+  const [nextObjective, setNextObjective] = useState("")
   const [nextDate, setNextDate] = useState("")
   const [nextTime, setNextTime] = useState("")
   const [executedAt, setExecutedAt] = useState(localNow)
@@ -89,6 +96,7 @@ export function ActivityForm({ onSubmit, isLoading }: Props) {
     if (discovery) input.discovery = discovery
     if (agreement) input.agreement = agreement
     if (nextStep) input.nextStep = nextStep
+    if (nextObjective) input.nextObjective = nextObjective
     if (nextDate) input.nextDate = nextDate
     if (nextTime) input.nextTime = nextTime
     onSubmit(input)
@@ -109,7 +117,31 @@ export function ActivityForm({ onSubmit, isLoading }: Props) {
     <form onSubmit={handleSubmit} className="card p-6 space-y-4">
       <div>
         <h2 className="text-lg font-bold text-slate-900">Registrar actividad comercial</h2>
-        <p className="text-sm text-slate-500 mt-1">El tiempo de ejecución se captura automáticamente</p>
+        <p className="text-sm text-slate-500 mt-1">La hora de captura queda registrada automáticamente. Llamadas, videoconferencias, visitas y propuestas requieren siguiente paso.</p>
+      </div>
+
+      {/* Info readonly row */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className="slabel">Tarea programada</label>
+          <input
+            type="text"
+            className="input"
+            value={programmedTask ?? 'Sin tarea vinculada'}
+            readOnly
+            style={{ background: '#F8FAFC', color: '#94A3B8' }}
+          />
+        </div>
+        <div>
+          <label className="slabel">Hora de captura</label>
+          <input
+            type="text"
+            className="input"
+            value={`Captura: ${capturedStamp}`}
+            readOnly
+            style={{ background: '#F8FAFC', color: '#94A3B8' }}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -253,15 +285,28 @@ export function ActivityForm({ onSubmit, isLoading }: Props) {
         {/* Next step fields */}
         {needsNextStep && (
           <div className="sm:col-span-2 space-y-3">
-            <div>
-              <label className="slabel">Próximo paso *</label>
-              <input
-                type="text"
-                className="input"
-                value={nextStep}
-                onChange={(e) => setNextStep(e.target.value)}
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="slabel">Siguiente paso concreto *</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={nextStep}
+                  onChange={(e) => setNextStep(e.target.value)}
+                  placeholder="Siguiente paso concreto"
+                  required
+                />
+              </div>
+              <div>
+                <label className="slabel">Objetivo del siguiente paso</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={nextObjective}
+                  onChange={(e) => setNextObjective(e.target.value)}
+                  placeholder="Objetivo del siguiente paso"
+                />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

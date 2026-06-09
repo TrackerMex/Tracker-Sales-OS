@@ -33,6 +33,7 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
       discovery: input.discovery ?? null,
       agreement: input.agreement ?? null,
       nextStep: input.nextStep ?? null,
+      nextObjective: input.nextObjective ?? null,
       nextDate: input.nextDate ?? null,
       nextTime: input.nextTime ?? null,
       programmedAt: input.programmedAt ? new Date(input.programmedAt) : null,
