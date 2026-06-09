@@ -23,7 +23,7 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
         return (
           <div
             key={i}
-            className={`alert-item alert-item--${alert.color}`}
+            className={`alert-item ${alert.color}`}
             style={{ backgroundColor: style.bg }}
           >
             <p className="text-xs font-semibold" style={{ color: style.text }}>

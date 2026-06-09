@@ -22,6 +22,7 @@ export interface Activity {
   discovery: string | null
   agreement: string | null
   nextStep: string | null
+  nextObjective: string | null
   nextDate: string | null
   nextTime: string | null
   points: number
@@ -46,6 +47,7 @@ export interface CreateActivityInput {
   discovery?: string
   agreement?: string
   nextStep?: string
+  nextObjective?: string
   nextDate?: string
   nextTime?: string
   executedAt: string

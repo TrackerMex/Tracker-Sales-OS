@@ -148,5 +148,25 @@
     "backend_modules": ["import-export"],
     "frontend_modules": ["settings"],
     "notes": "Solo Admin. Import valida schema antes de insertar. Útil para migración desde localStorage de la versión HTML."
+  },
+  {
+    "id": "16-ui-design-review",
+    "name": "UI Design Review",
+    "description": "Auditoría visual de todas las pantallas contra el prototipo HTML standalone. Identificar gaps de diseño, componentes faltantes, inconsistencias visuales y UX roto.",
+    "status": "done",
+    "priority": 16,
+    "backend_modules": [],
+    "frontend_modules": ["auth", "dashboard", "mi-dia", "clients", "pipeline", "activities", "tasks", "coaching", "reports", "settings", "equipo"],
+    "notes": "Flujo: (1) Levantar app con docker-compose. (2) Recorrer cada ruta autenticado con cada rol (Admin, Director, Seller). (3) Comparar contra docs/ui-spec o el HTML prototipo. (4) Documentar hallazgos en progress/explore_ui_review.md con screenshots o descripción de gaps. No implementar fixes aquí — solo inventariar."
+  },
+  {
+    "id": "17-integration-testing",
+    "name": "Integration & Functional Testing",
+    "description": "Pruebas de flujos completos end-to-end: login → actividades → tareas → pipeline → dashboard → reportes. Verifica que backend y frontend estén integrados correctamente y que los CHECKPOINTS pendientes pasen.",
+    "status": "pending",
+    "priority": 17,
+    "backend_modules": ["auth", "activities", "tasks", "pipeline", "sales", "dashboard", "coaching", "reports", "settings"],
+    "frontend_modules": ["auth", "dashboard", "mi-dia", "clients", "pipeline", "activities", "tasks", "coaching", "reports", "settings"],
+    "notes": "Flujo de prueba por rol: Admin verifica configuración y reportes. Director verifica semáforo de equipo y coaching. Seller verifica flujo diario completo (tarea → completar → actividad → puntos reflejados en Mi Día → pipeline actualizado). Checkpoints pendientes de features 05-14 deben pasar. Documentar en progress/impl_integration_testing.md. Bugs encontrados → abrir issue en progress/bugs.md con: ruta afectada, pasos para reproducir, comportamiento esperado vs actual."
   }
 ]

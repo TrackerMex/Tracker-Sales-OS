@@ -10,6 +10,7 @@ export const useCreateTask = () => {
   return useMutation({
     mutationFn: (input: CreateTaskInput) => {
       const sellerId = currentUser?.sellerId ?? currentUser?.id ?? ''
+      if (!sellerId) throw new Error('Sin sesión de vendedor activa')
       return tasksApi.createTask(sellerId, input)
     },
     onSuccess: () => {

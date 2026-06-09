@@ -10,6 +10,7 @@ import type { CreateTaskInput } from '../../domain/tasks.types'
 
 export function AgendaPage() {
   const [showModal, setShowModal] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   const { data: tasks = [], isLoading } = useTodayTasks()
   const { mutate: createTask, isPending } = useCreateTask()
   const { mutate: completeTask } = useCompleteTask()
@@ -18,18 +19,29 @@ export function AgendaPage() {
   const navigate = useNavigate()
 
   function handleComplete(taskId: string) {
+    const task = tasks.find((t) => t.id === taskId)
     completeTask(taskId, {
       onSuccess: (completedTask) => {
         void navigate({
           to: '/actividades/nueva',
-          search: completedTask.clientId ? { clientId: completedTask.clientId } : undefined,
+          search: {
+            ...(completedTask.clientId ? { clientId: completedTask.clientId } : {}),
+            ...(task?.title ? { taskTitle: task.title } : {}),
+          },
         })
       },
     })
   }
 
   function handleCreateTask(input: CreateTaskInput) {
-    createTask(input, { onSuccess: () => setShowModal(false) })
+    setCreateError(null)
+    createTask(input, {
+      onSuccess: () => setShowModal(false),
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Error al guardar la tarea'
+        setCreateError(msg)
+      },
+    })
   }
 
   return (
@@ -81,8 +93,9 @@ export function AgendaPage() {
       {showModal && (
         <CreateTaskForm
           onSubmit={handleCreateTask}
-          onClose={() => setShowModal(false)}
+          onClose={() => { setShowModal(false); setCreateError(null) }}
           isLoading={isPending}
+          error={createError}
         />
       )}
     </div>

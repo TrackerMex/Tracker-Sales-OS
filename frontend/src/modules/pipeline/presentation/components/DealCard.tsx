@@ -43,7 +43,7 @@ export function DealCard({ deal, onChangeStage }: DealCardProps) {
   }
 
   return (
-    <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="card" style={{ padding: '14px' }}>
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm leading-tight font-bold text-[#002B49]">
           {deal.clientName}

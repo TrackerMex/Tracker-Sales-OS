@@ -203,6 +203,97 @@ export function ReportsPage() {
               </table>
             </div>
           )}
+
+          {/* Paneles de análisis */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            {/* Fortalezas */}
+            <div style={{ background: '#F0FDF4', borderRadius: 10, padding: '16px 18px' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#15803D', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                Fortalezas
+              </div>
+              <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: 12.5, color: '#166534', lineHeight: 1.65 }}>
+                {data.total.amount >= data.monthlyAmountGoal && (
+                  <li>Meta de ventas superada ({((data.total.amount / (data.monthlyAmountGoal || 1)) * 100).toFixed(0)}%)</li>
+                )}
+                {data.commercialHealth >= 75 && (
+                  <li>Salud comercial sobresaliente ({data.commercialHealth}%)</li>
+                )}
+                {data.total.units >= data.monthlyUnitGoal && (
+                  <li>Meta de unidades alcanzada ({data.total.units} / {data.monthlyUnitGoal})</li>
+                )}
+                {data.total.amount < data.monthlyAmountGoal &&
+                 data.commercialHealth < 75 &&
+                 data.total.units < data.monthlyUnitGoal && (
+                  <li style={{ color: '#6B7280', fontStyle: 'italic' }}>Sin datos suficientes para este periodo</li>
+                )}
+              </ul>
+            </div>
+
+            {/* Oportunidades */}
+            <div style={{ background: '#FFF7ED', borderRadius: 10, padding: '16px 18px' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                Oportunidades
+              </div>
+              <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: 12.5, color: '#9A3412', lineHeight: 1.65 }}>
+                {data.total.amount < data.monthlyAmountGoal && (
+                  <li>Brecha de {(((data.monthlyAmountGoal - data.total.amount) / 1000)).toFixed(0)}K en meta de monto</li>
+                )}
+                {data.commercialHealth < 70 && (
+                  <li>Salud comercial por debajo del 70% — reforzar descubrimiento y acuerdos</li>
+                )}
+                {data.total.units < data.monthlyUnitGoal && data.total.amount >= data.monthlyAmountGoal && (
+                  <li>Unidades por debajo de meta ({data.total.units} / {data.monthlyUnitGoal})</li>
+                )}
+                {data.total.amount >= data.monthlyAmountGoal &&
+                 data.commercialHealth >= 70 &&
+                 data.total.units >= data.monthlyUnitGoal && (
+                  <li style={{ color: '#6B7280', fontStyle: 'italic' }}>Sin oportunidades críticas identificadas</li>
+                )}
+              </ul>
+            </div>
+
+            {/* Red Flags */}
+            <div style={{ background: '#FEF2F2', borderRadius: 10, padding: '16px 18px' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#B91C1C', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                Red Flags
+              </div>
+              <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: 12.5, color: '#991B1B', lineHeight: 1.65 }}>
+                {data.commercialHealth < 50 && (
+                  <li>Salud comercial crítica ({data.commercialHealth}%) — actividades incompletas</li>
+                )}
+                {data.total.count === 0 && (
+                  <li>Sin cierres registrados en el periodo</li>
+                )}
+                {data.total.amount < data.monthlyAmountGoal * 0.5 && data.monthlyAmountGoal > 0 && (
+                  <li>Monto alcanzado menor al 50% de la meta — revisar pipeline urgente</li>
+                )}
+                {data.commercialHealth >= 50 &&
+                 data.total.count > 0 &&
+                 (data.total.amount >= data.monthlyAmountGoal * 0.5 || data.monthlyAmountGoal === 0) && (
+                  <li style={{ color: '#6B7280', fontStyle: 'italic' }}>Sin alertas críticas este periodo</li>
+                )}
+              </ul>
+            </div>
+
+            {/* Recomendaciones */}
+            <div style={{ background: '#EDE9FE', borderRadius: 10, padding: '16px 18px' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#6D28D9', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                Recomendaciones
+              </div>
+              <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: 12.5, color: '#5B21B6', lineHeight: 1.65 }}>
+                {data.commercialHealth < 75 && (
+                  <li>Mejorar salud comercial: registrar descubrimiento, acuerdo y siguiente paso en cada actividad</li>
+                )}
+                {data.total.amount < data.monthlyAmountGoal * 0.8 && data.monthlyAmountGoal > 0 && (
+                  <li>Aumentar frecuencia de propuestas y visitas presenciales</li>
+                )}
+                {data.total.units < data.monthlyUnitGoal && (
+                  <li>Enfocar esfuerzos en cerrar unidades pendientes antes de fin de mes</li>
+                )}
+                <li>Revisar mix de actividades: balance llamadas → reuniones → propuestas</li>
+              </ul>
+            </div>
+          </div>
         </div>
       )}
     </div>

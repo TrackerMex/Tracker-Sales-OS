@@ -163,3 +163,44 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] Import hace upsert (no duplica si ya existe)
 - [x] Solo Admin
 - [x] Frontend: pagina Import/Export con botones de descarga y upload
+
+---
+
+## 16-ui-design-review
+
+**Fase 1 — Inventario visual (sin tocar código)**
+
+- [ ] App levanta sin errores con `docker-compose up -d`
+- [ ] Login funciona con los 3 roles (Admin, Director, Seller)
+- [ ] Todas las rutas del router cargan sin blank screen ni errores en consola
+- [ ] Sidebar/navegación muestra items correctos según rol
+- [ ] Dashboard: métricas visibles, semáforo renderiza
+- [ ] Mi Día: termómetro operativo visible con datos
+- [ ] Clientes: lista carga, filtros visibles, tarjetas con información
+- [ ] Pipeline: 7 columnas Kanban visibles
+- [ ] Actividades: formulario con todos los campos según tipo de actividad
+- [ ] Tareas/Agenda: lista del día visible
+- [ ] Coaching: reporte por vendedor visible (Admin/Director)
+- [ ] Reportes: tabla mensual visible (Admin/Director)
+- [ ] Configuración: formulario de settings visible (Admin)
+- [ ] Hallazgos documentados en `progress/explore_ui_review.md`
+
+---
+
+## 17-integration-testing
+
+**Fase 2 — Flujos funcionales end-to-end**
+
+- [ ] **Auth flow**: Login → token guardado → rutas protegidas → logout limpia sesión
+- [ ] **Flujo Seller diario**: Crear tarea → completar tarea → formulario actividad prellenado → registrar actividad → puntos reflejados en Mi Día
+- [ ] **Puntos TASK_POINTS**: Visita registrada suma 10pts, Llamada suma 3pts (verificar en Mi Día)
+- [ ] **Calidad actividad**: Actividad con todos los campos = 100%, parcial = proporción correcta
+- [ ] **Pipeline**: Crear deal → mover de stage → probability cambia → historial registrado
+- [ ] **Anti-duplicados clientes**: Crear cliente → crear otro con mismo email/tel → error 409
+- [ ] **Dashboard semáforo**: Score de vendedor calculado y color correcto (verde/ámbar/rojo)
+- [ ] **Seguimientos vencidos**: Tarea con fecha pasada aparece como vencida en dashboard
+- [ ] **RBAC**: Seller no puede acceder a rutas de Admin/Director (403)
+- [ ] **Settings**: Cambiar dailyMinPoints → Mi Día refleja nueva meta
+- [ ] **Reports**: Reporte mensual muestra ventas del mes actual
+- [ ] Todos los checkpoints pendientes de features 05-14 marcados como pasados
+- [ ] Bugs documentados en `progress/bugs.md` con pasos para reproducir

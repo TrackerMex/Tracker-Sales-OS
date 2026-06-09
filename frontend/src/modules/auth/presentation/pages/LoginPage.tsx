@@ -117,7 +117,7 @@ export function LoginPage() {
 
           <form onSubmit={handleSubmit((data) => login(data))}>
             <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
+              <label className="slabel" style={{ display: 'block', marginBottom: 6 }}>
                 Usuario
               </label>
               <input
@@ -126,16 +126,6 @@ export function LoginPage() {
                 autoComplete="username"
                 className="input"
                 placeholder="admin"
-                style={{
-                  width: '100%',
-                  fontSize: 13,
-                  fontWeight: 500,
-                  background: '#F8FAFC',
-                  border: '1.5px solid #E2E8F0',
-                  borderRadius: 7,
-                  padding: '10px 12px',
-                  outline: 'none',
-                }}
               />
               {errors.username && (
                 <p style={{ fontSize: 12, color: '#EF4444', marginTop: 4 }}>{errors.username.message}</p>
@@ -143,7 +133,7 @@ export function LoginPage() {
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
+              <label className="slabel" style={{ display: 'block', marginBottom: 6 }}>
                 Contrasena
               </label>
               <input
@@ -151,16 +141,6 @@ export function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 className="input"
-                style={{
-                  width: '100%',
-                  fontSize: 13,
-                  fontWeight: 500,
-                  background: '#F8FAFC',
-                  border: '1.5px solid #E2E8F0',
-                  borderRadius: 7,
-                  padding: '10px 12px',
-                  outline: 'none',
-                }}
               />
               {errors.password && (
                 <p style={{ fontSize: 12, color: '#EF4444', marginTop: 4 }}>{errors.password.message}</p>
@@ -176,18 +156,8 @@ export function LoginPage() {
             <Button
               type="submit"
               disabled={isPending}
-              style={{
-                width: '100%',
-                background: '#82bc00',
-                color: '#001524',
-                fontWeight: 700,
-                fontSize: 13,
-                borderRadius: 7,
-                padding: '11px 0',
-                border: 'none',
-                cursor: isPending ? 'not-allowed' : 'pointer',
-                opacity: isPending ? 0.7 : 1,
-              }}
+              className="btn-green"
+              style={{ width: '100%' }}
             >
               {isPending ? 'Entrando...' : 'Entrar'}
             </Button>

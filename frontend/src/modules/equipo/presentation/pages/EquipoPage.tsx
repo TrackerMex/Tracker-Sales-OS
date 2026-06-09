@@ -183,8 +183,8 @@ export function EquipoPage() {
             {sellers?.map((seller) => (
               <div
                 key={seller.id}
-                className="flex items-center justify-between rounded-lg px-3 py-3"
-                style={{ background: "#F8FAFC", opacity: seller.active ? 1 : 0.5 }}
+                className="seller-row flex items-center justify-between"
+                style={{ opacity: seller.active ? 1 : 0.5 }}
               >
                 <div>
                   <p className="text-sm font-semibold" style={{ color: "#0F172A" }}>{seller.name}</p>

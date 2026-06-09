@@ -16,6 +16,7 @@ export class ActivityTypeormEntity {
   @Column({ type: 'text', nullable: true }) discovery: string | null;
   @Column({ type: 'text', nullable: true }) agreement: string | null;
   @Column({ name: 'next_step', type: 'text', nullable: true }) nextStep: string | null;
+  @Column({ name: 'next_objective', type: 'text', nullable: true }) nextObjective: string | null;
   @Column({ name: 'next_date', type: 'varchar', nullable: true }) nextDate: string | null;
   @Column({ name: 'next_time', type: 'varchar', nullable: true }) nextTime: string | null;
   @Column({ type: 'int' }) points: number;

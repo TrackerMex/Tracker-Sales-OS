@@ -1,15 +1,6 @@
 import type { Deal, PipelineStage } from "../../domain/pipeline.types"
 import { DealCard } from "./DealCard"
 
-const STAGE_HEADER_COLOR: Record<PipelineStage, string> = {
-  Prospecto:   "bg-[#334155]",
-  Contactado:  "bg-[#1e40af]",
-  Interesado:  "bg-[#0369a1]",
-  Propuesta:   "bg-[#d97706]",
-  Negociación: "bg-[#7c3aed]",
-  Cierre:      "bg-[#16a34a]",
-  Perdido:     "bg-[#dc2626]",
-}
 
 const NO_CREATE_STAGES: PipelineStage[] = ["Cierre", "Perdido"]
 
@@ -26,14 +17,11 @@ export function KanbanColumn({
   onChangeStage,
   onCreateDeal,
 }: KanbanColumnProps) {
-  const headerColor = STAGE_HEADER_COLOR[stage]
   const canCreate = !NO_CREATE_STAGES.includes(stage)
 
   return (
-    <div className="flex w-64 shrink-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-      <div
-        className={`${headerColor} flex items-center justify-between px-3 py-2`}
-      >
+    <div className="pipe-col">
+      <div className="pipe-col-h">
         <span className="text-sm font-bold text-white">{stage}</span>
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold text-white">
