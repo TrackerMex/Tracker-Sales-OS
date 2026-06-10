@@ -26,7 +26,6 @@ function buildAnalysis(
 ) {
   const amtPct = goalAmount > 0 ? (data.total.amount / goalAmount) * 100 : 0;
   const unitPct = goalUnits > 0 ? (data.total.units / goalUnits) * 100 : 0;
-  const quality = data.commercialHealth; // proxy — API doesn't expose raw quality
   const sellerRows = data.sellers;
   const topSeller = [...sellerRows].sort((a, b) => b.amount - a.amount)[0];
   const lowSellers = sellerRows.filter((r) => r.amount < goalPerSeller * 0.5);
@@ -37,12 +36,11 @@ function buildAnalysis(
   const recommendations: string[] = [];
 
   if (amtPct >= 80) strengths.push(`Ventas en ${amtPct.toFixed(1)}% de la meta mensual.`);
-  if (quality >= 70) strengths.push(`Calidad comercial en ${quality}%, por encima del estándar.`);
   if (topSeller && topSeller.amount > 0)
     strengths.push(`${topSeller.sellerName} lidera ventas con ${money(topSeller.amount)}.`);
 
   if (amtPct < 50) opportunities.push('Ventas por debajo del 50% de la meta. Revisar calidad de pipeline.');
-  if (quality < 60) opportunities.push('Calidad de notas baja. Reforzar metodología de captura.');
+  if (unitPct < 50) opportunities.push(`Unidades en ${unitPct.toFixed(0)}% de meta. Revisar estrategia de volumen.`);
   if (lowSellers.length > 0)
     opportunities.push(`${lowSellers.map((s) => s.sellerName).join(', ')} por debajo del 50% de meta individual.`);
 
@@ -54,9 +52,12 @@ function buildAnalysis(
   recommendations.push('Priorizar conversión de llamada a reunión y de reunión a propuesta.');
 
   const health = data.commercialHealth;
+  const hasRedFlags = redFlags.length > 0;
   const status =
     health >= 80
-      ? 'Equipo en zona verde. Mantener ritmo.'
+      ? hasRedFlags
+        ? 'Salud alta, pero con alertas activas. Revisar focos rojos.'
+        : 'Equipo en zona verde. Mantener ritmo.'
       : health >= 50
         ? 'Atención requerida en actividad o calidad.'
         : 'Intervención urgente necesaria.';
@@ -80,7 +81,7 @@ function loadGoals() {
 
 function AnalysisList({ items }: { items: string[] }) {
   if (items.length === 0) {
-    return <li style={{ color: '#94A3B8' }}>Sin observaciones suficientes en el periodo.</li>;
+    return <li style={{ color: '#94A3B8' }}>Sin hallazgos para este periodo.</li>;
   }
   return (
     <>
@@ -103,8 +104,6 @@ function SellerTable({ sellers }: { sellers: SellerSalesReport[] }) {
         <tr>
           <th>Vendedor</th>
           <th>Unidades</th>
-          <th>Nuevas</th>
-          <th>Existentes</th>
           <th>Monto</th>
         </tr>
       </thead>
@@ -113,8 +112,6 @@ function SellerTable({ sellers }: { sellers: SellerSalesReport[] }) {
           <tr key={r.sellerId}>
             <td style={{ fontWeight: 600, color: '#0F172A' }}>{r.sellerName}</td>
             <td>{r.units}</td>
-            <td>0</td>
-            <td>0</td>
             <td style={{ fontWeight: 600 }}>{money(r.amount)}</td>
           </tr>
         ))}
@@ -128,7 +125,7 @@ function SourceGrid({ sources }: { sources: SourceBreakdown[] }) {
     return <p style={{ fontSize: 12, color: '#94A3B8' }}>Sin datos de origen.</p>;
   }
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 7 }}>
       {sources.slice(0, 6).map((s) => (
         <div key={s.source} style={{ background: '#fff', borderRadius: 7, padding: 9 }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: '#0F172A' }}>{s.source}</p>
@@ -143,18 +140,24 @@ function SourceGrid({ sources }: { sources: SourceBreakdown[] }) {
 
 export function ReportsPage() {
   const [month, setMonth] = useState<string>(currentMonth());
-  const { data, isLoading, error } = useMonthlyReport(month);
+  const { data, isLoading, error, refetch, dataUpdatedAt } = useMonthlyReport(month);
 
-  const saved = loadGoals();
-  const [goalAmount, setGoalAmount] = useState<number>(saved?.amount ?? 600000);
-  const [goalUnits, setGoalUnits] = useState<number>(saved?.units ?? 150);
-  const [goalPerSeller, setGoalPerSeller] = useState<number>(saved?.perSeller ?? 150000);
+  const [goalAmount, setGoalAmount] = useState<number>(() => loadGoals()?.amount ?? 600000);
+  const [goalUnits, setGoalUnits] = useState<number>(() => loadGoals()?.units ?? 150);
+  const [goalPerSeller, setGoalPerSeller] = useState<number>(() => loadGoals()?.perSeller ?? 150000);
+  const [savedMsg, setSavedMsg] = useState(false);
+  const [copyMsg, setCopyMsg] = useState<'idle' | 'ok' | 'fail'>('idle');
+  const updatedAt = dataUpdatedAt > 0
+    ? new Date(dataUpdatedAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   function saveGoals() {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ amount: goalAmount, units: goalUnits, perSeller: goalPerSeller }),
     );
+    setSavedMsg(true);
+    setTimeout(() => setSavedMsg(false), 2000);
   }
 
   function copyReportText() {
@@ -170,19 +173,21 @@ export function ReportsPage() {
     const lines = [
       `Meta vs Logro ${month}: Ventas globales: ${money(data.total.amount)} contra meta de ${money(goalAmount)} (${((data.total.amount / goalAmount) * 100).toFixed(2)}%). Unidades: ${data.total.units} contra meta de ${goalUnits} (${((data.total.units / goalUnits) * 100).toFixed(2)}%).`,
       `Dirección Comercial: ${data.direction.units} unidades por ${money(data.direction.amount)}.`,
-      `ATC: ${data.atc.existingUnits} unidades existentes por ${money(data.atc.existingAmount)}.`,
+      `ATC (Atención a Clientes): ${data.atc.existingUnits} unidades existentes por ${money(data.atc.existingAmount)}.`,
       `Equipo: ${sellerSummary || 'Sin ventas del equipo.'}.`,
       `Origen de cuentas: ${sourceSummary || 'Sin datos.'}.`,
       `Análisis IA: Salud comercial ${ai.health}/100 — ${ai.status}`,
     ];
-    navigator.clipboard?.writeText(lines.join('\n'));
+    navigator.clipboard?.writeText(lines.join('\n'))
+      .then(() => { setCopyMsg('ok'); setTimeout(() => setCopyMsg('idle'), 2000); })
+      .catch(() => { setCopyMsg('fail'); setTimeout(() => setCopyMsg('idle'), 3000); });
   }
 
   function openLamina() {
     const node = document.getElementById('executive-slide');
     if (!node) { window.print(); return; }
     const win = window.open('', '_blank');
-    if (!win) return;
+    if (!win) { window.print(); return; }
     win.document.write(
       `<html><head><title>Reporte Ejecutivo Tracker</title>` +
       `<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">` +
@@ -212,7 +217,7 @@ export function ReportsPage() {
               Informe Ejecutivo Mensual
             </div>
             <p style={{ fontSize: 12, color: '#94A3B8', marginTop: 3 }}>
-              Separado por Dirección Comercial, ATC y Equipo de Vendedores.
+              Separado por Dirección Comercial, ATC (Atención a Clientes) y Equipo de Vendedores.
             </p>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -256,6 +261,7 @@ export function ReportsPage() {
                 type="number"
                 className="input"
                 style={{ width: 140 }}
+                min={1}
                 value={goalAmount}
                 onChange={(e) => setGoalAmount(Number(e.target.value))}
               />
@@ -278,6 +284,7 @@ export function ReportsPage() {
                 type="number"
                 className="input"
                 style={{ width: 120 }}
+                min={1}
                 value={goalUnits}
                 onChange={(e) => setGoalUnits(Number(e.target.value))}
               />
@@ -300,16 +307,17 @@ export function ReportsPage() {
                 type="number"
                 className="input"
                 style={{ width: 140 }}
+                min={1}
                 value={goalPerSeller}
                 onChange={(e) => setGoalPerSeller(Number(e.target.value))}
               />
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7 }}>
               <button onClick={saveGoals} className="btn-green">
-                Guardar metas
+                {savedMsg ? 'Guardado' : 'Guardar metas'}
               </button>
               <button onClick={copyReportText} disabled={!data} className="btn-ghost">
-                Copiar informe
+                {copyMsg === 'ok' ? 'Copiado' : copyMsg === 'fail' ? 'Error al copiar' : 'Copiar informe'}
               </button>
               <button onClick={openLamina} className="btn-primary">
                 Abrir lámina
@@ -320,7 +328,14 @@ export function ReportsPage() {
       </div>
 
       {isLoading && <p style={{ fontSize: 13, color: '#94A3B8' }}>Cargando reporte...</p>}
-      {error && <p style={{ fontSize: 13, color: '#EF4444' }}>Error al cargar el reporte.</p>}
+      {error && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <p style={{ fontSize: 13, color: '#EF4444' }}>Error al cargar el reporte.</p>
+          <button className="btn-ghost" onClick={() => refetch()} style={{ fontSize: 12, padding: '4px 10px' }}>
+            Reintentar
+          </button>
+        </div>
+      )}
 
       {data && (() => {
         const ai = buildAnalysis(data, goalAmount, goalUnits, goalPerSeller);
@@ -395,6 +410,11 @@ export function ReportsPage() {
                   <div style={{ fontSize: 12, fontWeight: 600, color: '#82bc00', marginTop: 2 }}>
                     {data.total.units} unidades
                   </div>
+                  {updatedAt && (
+                    <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 4 }}>
+                      Datos al {updatedAt}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -424,7 +444,7 @@ export function ReportsPage() {
                   <div className="ksb">{data.direction.units} unidades</div>
                 </div>
                 <div className="kpi-cell">
-                  <div className="kl">ATC Existentes</div>
+                  <div className="kl"><abbr title="Atención a Clientes" style={{ textDecoration: 'none' }}>ATC</abbr> Existentes</div>
                   <div className="kv" style={{ fontSize: 17 }}>
                     {money(data.atc.existingAmount)}
                   </div>
@@ -509,7 +529,7 @@ export function ReportsPage() {
                       marginBottom: 8,
                     }}
                   >
-                    ATC
+                    <abbr title="Atención a Clientes" style={{ textDecoration: 'none' }}>ATC</abbr>
                   </div>
                   <p style={{ fontSize: 13, fontWeight: 600, color: '#166534' }}>
                     {data.atc.existingUnits} unidades existentes · {money(data.atc.existingAmount)}
@@ -536,11 +556,9 @@ export function ReportsPage() {
               <div style={{ marginTop: 20 }}>
                 <div
                   style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: '#64748B',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: '#334155',
                     marginBottom: 12,
                   }}
                 >
@@ -705,8 +723,6 @@ export function ReportsPage() {
                     <tr>
                       <th>Vendedor</th>
                       <th>Unidades</th>
-                      <th>Nuevas</th>
-                      <th>Existentes</th>
                       <th>Monto</th>
                       <th>% Meta</th>
                     </tr>
@@ -722,8 +738,6 @@ export function ReportsPage() {
                         <tr key={r.sellerId}>
                           <td style={{ fontWeight: 600, color: '#0F172A' }}>{r.sellerName}</td>
                           <td>{r.units}</td>
-                          <td>0</td>
-                          <td>0</td>
                           <td style={{ fontWeight: 600 }}>{money(r.amount)}</td>
                           <td>
                             <span
@@ -760,7 +774,7 @@ export function ReportsPage() {
                 <b>Dirección Comercial:</b> {data.direction.units} unidades por{' '}
                 {money(data.direction.amount)}.
                 <br />
-                <b>ATC:</b> {data.atc.existingUnits} unidades existentes por{' '}
+                <b><abbr title="Atención a Clientes" style={{ textDecoration: 'none' }}>ATC</abbr>:</b> {data.atc.existingUnits} unidades existentes por{' '}
                 {money(data.atc.existingAmount)}.
                 {data.sellers.length > 0 && (
                   <>

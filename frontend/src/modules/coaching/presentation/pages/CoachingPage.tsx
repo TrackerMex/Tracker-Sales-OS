@@ -23,6 +23,57 @@ function getRecommendedAction(
   return "Mantener ritmo de actividad"
 }
 
+interface StatCellProps {
+  value: string | number
+  label: string
+  valueClassName?: string
+  valueColor?: string
+  children?: React.ReactNode
+}
+
+function StatCell({ value, label, valueClassName, valueColor, children }: StatCellProps) {
+  return (
+    <div className="bg-[#F8FAFC] rounded-[7px] px-2 py-[6px] text-center">
+      <p
+        className={valueClassName ?? "text-[22px] font-bold text-[#0F172A]"}
+        style={valueColor ? { color: valueColor } : undefined}
+      >
+        {value}
+      </p>
+      {children}
+      <p className="slabel">{label}</p>
+    </div>
+  )
+}
+
+function SkeletonCard() {
+  return (
+    <div className="card p-5 animate-pulse motion-reduce:animate-none">
+      <div className="flex justify-between items-start mb-4">
+        <div className="space-y-2">
+          <div className="h-4 w-32 bg-slate-200 rounded" />
+          <div className="h-3 w-24 bg-slate-100 rounded" />
+        </div>
+        <div className="h-5 w-16 bg-slate-100 rounded" />
+      </div>
+      <div className="grid grid-cols-4 gap-2 mb-3">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="bg-slate-100 rounded-[7px] h-14" />
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-2 mb-3 border-t border-slate-100 pt-2.5">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="bg-slate-100 rounded-[7px] h-12" />
+        ))}
+      </div>
+      <div className="border-t border-slate-100 pt-2.5 space-y-2">
+        <div className="h-3 w-28 bg-slate-100 rounded" />
+        <div className="h-10 bg-slate-100 rounded-lg" />
+      </div>
+    </div>
+  )
+}
+
 interface SellerCoachingCardProps {
   seller: EquipoSeller
   minDaily: number
@@ -31,13 +82,7 @@ interface SellerCoachingCardProps {
 function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
   const { data, isLoading } = useCoachingDaily(seller.id)
 
-  if (isLoading) {
-    return (
-      <div className="card p-5">
-        <p style={{ fontSize: 12, color: "#94A3B8" }}>Cargando...</p>
-      </div>
-    )
-  }
+  if (isLoading) return <SkeletonCard />
 
   const mix: ActivityMixItem[] = data?.activityMix ?? []
   const calls = getActivityCount(mix, ["Llamada"])
@@ -55,117 +100,60 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
 
   const qualityColor =
     quality >= 80 ? "#16a34a" : quality >= 50 ? "#d97706" : "#dc2626"
+  const qualityBarColor =
+    quality >= 75 ? "#82bc00" : quality >= 45 ? "#F59E0B" : "#EF4444"
   const recommendedAction = getRecommendedAction(points, minDaily, overdue)
+  const meetsMinimum = points >= minDaily
 
   return (
     <div className="card p-5">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginBottom: 16,
-        }}
-      >
+      <div className="flex justify-between items-start mb-4">
         <div>
-          <p style={{ fontWeight: 700, color: "#0F172A", fontSize: 15 }}>
-            {seller.name}
-          </p>
-          <p style={{ fontSize: 12, color: "#94A3B8" }}>
+          <p className="font-bold text-[#0F172A] text-[15px]">{seller.name}</p>
+          <p className="text-[12px] text-[#94A3B8]">
             {seller.profile ?? "Ejecutivo comercial"}
           </p>
         </div>
-        <span
-          className="tag"
-          style={{
-            backgroundColor: points >= minDaily ? "#dcfce7" : "#fee2e2",
-            color: points >= minDaily ? "#16a34a" : "#dc2626"
-          }}
-        >
+        <span className={`tag ${meetsMinimum ? "tag-green" : "tag-red"}`}>
           {points}/{minDaily} pts
         </span>
       </div>
 
-      {/* 4 main stats */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4,1fr)",
-          gap: 8,
-          marginBottom: 12,
-        }}
-      >
-        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
-          <p style={{ fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
-            {calls}
-          </p>
-          <p className="slabel">Llamadas</p>
-        </div>
-        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
-          <p style={{ fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
-            {meetings}
-          </p>
-          <p className="slabel">Reuniones</p>
-        </div>
-        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
-          <p style={{ fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
-            {proposals}
-          </p>
-          <p className="slabel">Propuestas</p>
-        </div>
-        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
-          <p style={{ fontSize: 22, fontWeight: 700, color: "#0F172A" }}>
-            {closes}
-          </p>
-          <p className="slabel">Cierres</p>
-        </div>
+      <div className="grid grid-cols-4 gap-2 mb-3">
+        <StatCell value={calls} label="Llamadas" />
+        <StatCell value={meetings} label="Reuniones" />
+        <StatCell value={proposals} label="Propuestas" />
+        <StatCell value={closes} label="Cierres" />
       </div>
 
-      {/* 3 secondary stats */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3,1fr)",
-          gap: 8,
-          marginBottom: 12,
-          borderTop: "1px solid #f1f5f9",
-          paddingTop: 10,
-        }}
-      >
-        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
-          <p style={{ fontSize: 18, fontWeight: 700, color: qualityColor }}>
-            {quality}%
-          </p>
-          <div className="prog" style={{ marginTop: 4 }}>
+      <div className="grid grid-cols-3 gap-2 mb-3 border-t border-slate-100 pt-2.5">
+        <StatCell
+          value={`${quality}%`}
+          label="Calidad"
+          valueClassName="text-[18px] font-bold"
+          valueColor={qualityColor}
+        >
+          <div className="prog mt-1">
             <div
               className="prog-fill"
-              style={{
-                width: `${quality}%`,
-                background: quality >= 75 ? '#82bc00' : quality >= 45 ? '#F59E0B' : '#EF4444'
-              }}
+              style={{ width: `${quality}%`, background: qualityBarColor }}
             />
           </div>
-          <p className="slabel">Calidad</p>
-        </div>
-        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
-          <p style={{ fontSize: 18, fontWeight: 700, color: "#0F172A" }}>
-            {overdue}
-          </p>
-          <p className="slabel">Vencidos</p>
-        </div>
-        <div style={{ background: '#F8FAFC', borderRadius: 7, padding: '6px 8px', textAlign: 'center' }}>
-          <p style={{ fontSize: 18, fontWeight: 700, color: "#0F172A" }}>
-            {tomorrow}
-          </p>
-          <p className="slabel">Mañana</p>
-        </div>
+        </StatCell>
+        <StatCell
+          value={overdue}
+          label="Vencidos"
+          valueClassName={`text-[18px] font-bold ${overdue > 0 ? "text-red-600" : "text-[#0F172A]"}`}
+        />
+        <StatCell
+          value={tomorrow}
+          label="Mañana"
+          valueClassName={`text-[18px] font-bold ${tomorrow > 0 ? "text-[#002B49]" : "text-[#0F172A]"}`}
+        />
       </div>
 
-      {/* Recommended action */}
-      <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 10 }}>
-        <p className="slabel" style={{ marginBottom: 4 }}>
-          Acción recomendada
-        </p>
+      <div className="border-t border-slate-100 pt-2.5">
+        <p className="slabel mb-1">Acción recomendada</p>
         <div className="ai-box">{recommendedAction}</div>
       </div>
     </div>
@@ -202,50 +190,33 @@ export function CoachingPage() {
     : activeSellers
 
   return (
-    <div style={{ padding: "24px", maxWidth: 1200, margin: "0 auto" }}>
-      {/* Header card */}
-      <div className="card p-6" style={{ marginBottom: 24 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 16,
-          }}
-        >
+    <div className="p-6 max-w-[1200px] mx-auto">
+      <div className="card p-6 mb-6">
+        <div className="flex justify-between items-center flex-wrap gap-4">
           <div>
-            <h2
-              style={{
-                fontWeight: 900,
-                color: "#0F172A",
-                fontSize: 20,
-                marginBottom: 4,
-              }}
-            >
+            <h2 className="font-black text-[20px] text-[#0F172A] mb-1">
               Reporte diario de coaching
             </h2>
-            <p style={{ fontSize: 13, color: "#64748B" }}>
+            <p className="text-[13px] text-[#64748B]">
               Termómetro exacto de actividad comercial por vendedor
             </p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Mínimo diario
-            </span>
-            <span style={{ fontSize: 18, fontWeight: 900, color: "#002B49" }}>
+          <div className="flex items-center gap-2">
+            <span className="slabel">Mínimo diario</span>
+            <span className="text-[18px] font-black text-[#002B49]">
               {minDaily} pts
             </span>
           </div>
         </div>
       </div>
 
-      {/* Seller cards grid */}
       {isAdmin ? (
         activeSellers.length > 0 ? (
           <>
-            <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#64748B" }}>Vendedor:</span>
+            <div className="flex items-center gap-2.5 mb-4">
+              <span className="text-[12px] font-semibold text-[#64748B]">
+                Vendedor:
+              </span>
               <select
                 className="input"
                 style={{ width: 220 }}
@@ -254,16 +225,19 @@ export function CoachingPage() {
               >
                 <option value="">Todos los vendedores</option>
                 {activeSellers.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
                 ))}
               </select>
             </div>
+
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: displayedSellers.length === 1 ? "1fr" : "repeat(3,1fr)",
-                gap: 16,
-              }}
+              className={
+                displayedSellers.length === 1
+                  ? "grid grid-cols-1 max-w-[480px]"
+                  : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              }
             >
               {displayedSellers.map((seller) => (
                 <SellerCoachingCard
@@ -275,15 +249,20 @@ export function CoachingPage() {
             </div>
           </>
         ) : (
-          <p style={{ fontSize: 13, color: "#94A3B8" }}>
-            No hay vendedores activos registrados.
-          </p>
+          <div className="card p-8 text-center">
+            <p className="text-[14px] font-semibold text-[#0F172A] mb-1">
+              Sin vendedores activos
+            </p>
+            <p className="text-[12px] text-[#94A3B8]">
+              Registra vendedores en la sección Equipo para ver el reporte.
+            </p>
+          </div>
         )
       ) : (() => {
           const seller = currentSeller ?? sellerFallback
           if (!seller) return null
           return (
-            <div style={{ maxWidth: 480 }}>
+            <div className="max-w-[480px]">
               <SellerCoachingCard seller={seller} minDaily={minDaily} />
             </div>
           )
