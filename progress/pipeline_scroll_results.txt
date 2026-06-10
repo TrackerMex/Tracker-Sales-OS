@@ -1,0 +1,67 @@
+=== PIPELINE SCROLL TEST ===
+Viewport: 1280x800
+URL: http://localhost:3001
+
+Step 1: Navigate to login page
+  URL: http://localhost:3001/login
+Step 2: Login as seller1
+  URL after login attempt: http://localhost:3001/mi-dia
+Step 3: Navigate to Pipeline (/pipeline)
+  URL: http://localhost:3001/pipeline
+  Screenshot: 04_pipeline_initial.png
+Step 4: Count Kanban columns
+  Total .pipe-col elements: 7/7
+  Column positions (viewport 1280px wide):
+    [0] "Prospecto": x=236, right=488, width=252 — FULLY VISIBLE
+    [1] "Contactado": x=500, right=752, width=252 — FULLY VISIBLE
+    [2] "Interesado": x=764, right=1016, width=252 — FULLY VISIBLE
+    [3] "Propuesta": x=1028, right=1280, width=252 — FULLY VISIBLE
+    [4] "Negociación": x=1292, right=1544, width=252 — OUT OF VIEWPORT
+    [5] "Cierre": x=1556, right=1808, width=252 — OUT OF VIEWPORT
+    [6] "Perdido": x=1820, right=2072, width=252 — OUT OF VIEWPORT
+Step 5: Analyze .pipeline-scroll container
+  .pipeline-scroll found: true
+  scrollWidth: 1836px
+  clientWidth: 1836px
+  overflowX computed: auto
+  Needs horizontal scroll: false
+  Hidden content: 0px
+Step 6: Parent overflow analysis
+  Parent chain:
+    <DIV id="" class="space-y-4"> overflow:visible, overflowX:visible, width:1836px
+    <MAIN id="" class="flex-1 overflow-y-auto overflow-x-hidden p-5"> overflow:hidden auto, overflowX:hidden, width:1876px
+    <DIV id="" class="flex flex-1 flex-col transition-all ml-[216px]"> overflow:visible, overflowX:visible, width:1876px
+    <DIV id="" class="flex h-screen overflow-hidden"> overflow:hidden, overflowX:hidden, width:1280px
+    <DIV id="root" class=""> overflow:visible, overflowX:visible, width:1280px
+    <BODY id="" class=""> overflow:visible, overflowX:visible, width:1280px
+Step 7: Scroll to rightmost position
+  scrollLeft after: 0
+  maxScroll possible: 0
+  Screenshot: 05_pipeline_scrolled_right.png
+  Columns visible AFTER scrolling right:
+    "Prospecto": x=236, right=488 — FULLY
+    "Contactado": x=500, right=752 — FULLY
+    "Interesado": x=764, right=1016 — FULLY
+    "Propuesta": x=1028, right=1280 — FULLY
+    "Negociación": x=1292, right=1544 — OUT
+    "Cierre": x=1556, right=1808 — OUT
+    "Perdido": x=1820, right=2072 — OUT
+Step 8: Test at 1920x1080 viewport
+  1920px scroll info: {"found":true,"scrollWidth":1836,"clientWidth":1836,"hasHorizontalScroll":false}
+  Columns at 1920px: 7
+  Columns at 1920px:
+    "Prospecto": x=236, right=488, fully=true
+    "Contactado": x=500, right=752, fully=true
+    "Interesado": x=764, right=1016, fully=true
+    "Propuesta": x=1028, right=1280, fully=true
+    "Negociación": x=1292, right=1544, fully=true
+    "Cierre": x=1556, right=1808, fully=true
+    "Perdido": x=1820, right=2072, fully=false
+  Screenshot: 06_pipeline_1920px.png
+
+=== FINAL SUMMARY ===
+Columns found: 7/7
+Fully visible at 1280px: 4 [Prospecto, Contactado, Interesado, Propuesta]
+Partially visible: 0 []
+Out of viewport: 3 [Negociación, Cierre, Perdido]
+Horizontal scroll available: NO (all fits)

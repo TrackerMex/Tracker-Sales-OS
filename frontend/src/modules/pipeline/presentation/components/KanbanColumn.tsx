@@ -1,4 +1,5 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import type { Deal, PipelineStage } from "../../domain/pipeline.types"
 import { DealCard } from "./DealCard"
 
@@ -23,38 +24,26 @@ export function KanbanColumn({
   const columnRef = useRef<HTMLDivElement>(null)
   const canCreate = !NO_CREATE_STAGES.includes(stage)
 
-  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = "move"
-  }
-
-  function handleDragEnter(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault()
-    setIsDragOver(true)
-  }
-
-  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
-    if (columnRef.current?.contains(e.relatedTarget as Node)) return
-    setIsDragOver(false)
-  }
-
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault()
-    const dealId = e.dataTransfer.getData("dealId")
-    if (dealId) {
-      onChangeStage(dealId, stage)
-    }
-    setIsDragOver(false)
-  }
+  useEffect(() => {
+    const el = columnRef.current
+    if (!el) return
+    return dropTargetForElements({
+      element: el,
+      getData: () => ({ stage }),
+      onDragEnter: () => setIsDragOver(true),
+      onDragLeave: () => setIsDragOver(false),
+      onDrop: ({ source }) => {
+        const dealId = source.data.dealId as string
+        if (dealId) onChangeStage(dealId, stage)
+        setIsDragOver(false)
+      },
+    })
+  }, [stage, onChangeStage])
 
   return (
     <div
       ref={columnRef}
       className="pipe-col"
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
       style={isDragOver ? {
         borderColor: '#82bc00',
         background: 'rgba(130, 188, 0, 0.05)',

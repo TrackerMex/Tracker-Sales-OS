@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import type { Deal } from "../../domain/pipeline.types"
 
 const STAGE_BADGE_COLORS: Record<string, string> = {
@@ -26,30 +27,30 @@ interface DealCardProps {
 
 export function DealCard({ deal, onClick }: DealCardProps) {
   const [isDragging, setIsDragging] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
   const contactInfo = [deal.contactName, deal.contactRole].filter(Boolean).join(' · ')
   const badgeColor = STAGE_BADGE_COLORS[deal.stage] || '#002B49'
 
-  function handleDragStart(e: React.DragEvent<HTMLDivElement>) {
-    e.dataTransfer.setData("dealId", deal.id as string)
-    e.dataTransfer.effectAllowed = "move"
-    setIsDragging(true)
-  }
-
-  function handleDragEnd() {
-    setIsDragging(false)
-  }
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    return draggable({
+      element: el,
+      getInitialData: () => ({ dealId: deal.id as string, type: 'deal' }),
+      onDragStart: () => setIsDragging(true),
+      onDrop: () => setIsDragging(false),
+    })
+  }, [deal.id])
 
   return (
     <div
-      draggable
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
+      ref={ref}
       onClick={() => onClick(deal)}
       className="card"
       style={{
         padding: '14px',
         marginBottom: '8px',
-        cursor: 'grab',
+        cursor: isDragging ? 'grabbing' : 'grab',
         transition: 'box-shadow 0.2s, opacity 0.15s',
         opacity: isDragging ? 0.5 : 1,
       }}

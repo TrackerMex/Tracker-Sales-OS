@@ -28,3 +28,5 @@ coverage/
 .playwright-mcp
 progress/qa_e2e_runner
 progress/qa_screenshots
+progress/node_modules
+progress/screenshots

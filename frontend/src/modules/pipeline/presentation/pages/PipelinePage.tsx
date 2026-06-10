@@ -1,12 +1,13 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { FormEvent } from "react"
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element"
 import { useAppStore } from "@/shared/store/app.store"
 import { usePipeline } from "../../application/hooks/usePipeline"
 import { useCreateDeal } from "../../application/hooks/useCreateDeal"
 import { useChangeStage } from "../../application/hooks/useChangeStage"
 import { KanbanColumn } from "../components/KanbanColumn"
 import { ClientDetailPage } from "./ClientDetailPage"
-import type { PipelineStage, Deal } from "../../domain/pipeline.types"
+import type { PipelineStage, Deal, PipelineGrouped } from "../../domain/pipeline.types"
 
 const ALL_STAGES: PipelineStage[] = [
   "Prospecto",
@@ -24,6 +25,40 @@ function SkeletonColumns() {
       {ALL_STAGES.map((stage) => (
         <div key={stage} className="h-48 w-64 shrink-0 animate-pulse rounded-lg bg-slate-200" />
       ))}
+    </div>
+  )
+}
+
+interface KanbanBoardProps {
+  grouped: PipelineGrouped
+  onChangeStage: (dealId: string, newStage: PipelineStage) => void
+  onCreateDeal: (stage: PipelineStage) => void
+  onDealClick: (deal: Deal) => void
+}
+
+function KanbanBoard({ grouped, onChangeStage, onCreateDeal, onDealClick }: KanbanBoardProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    return autoScrollForElements({ element: el })
+  }, [])
+
+  return (
+    <div ref={scrollRef} className="pipeline-scroll" style={{ overflowX: 'auto', paddingBottom: '16px' }}>
+      <div style={{ display: 'flex', gap: '12px', minWidth: 'max-content' }}>
+        {ALL_STAGES.map((stage) => (
+          <KanbanColumn
+            key={stage}
+            stage={stage}
+            deals={grouped[stage] ?? []}
+            onChangeStage={onChangeStage}
+            onCreateDeal={onCreateDeal}
+            onDealClick={onDealClick}
+          />
+        ))}
+      </div>
     </div>
   )
 }
@@ -81,11 +116,6 @@ export function PipelinePage() {
     setSelectedDeal(deal)
   }
 
-  function getDeals(stage: PipelineStage): Deal[] {
-    if (!grouped) return []
-    return grouped[stage] ?? []
-  }
-
   if (selectedDeal) {
     return <ClientDetailPage deal={selectedDeal} />
   }
@@ -102,21 +132,13 @@ export function PipelinePage() {
         <p style={{ fontSize: 13, color: '#EF4444' }}>No se pudo cargar el pipeline.</p>
       )}
 
-      {!isLoading && !isError && (
-        <div className="pipeline-scroll" style={{ overflowX: 'auto', paddingBottom: '16px' }}>
-          <div style={{ display: 'flex', gap: '12px', minWidth: 'max-content' }}>
-            {ALL_STAGES.map((stage) => (
-              <KanbanColumn
-                key={stage}
-                stage={stage}
-                deals={getDeals(stage)}
-                onChangeStage={handleChangeStage}
-                onCreateDeal={handleOpenCreate}
-                onDealClick={handleDealClick}
-              />
-            ))}
-          </div>
-        </div>
+      {!isLoading && !isError && grouped && (
+        <KanbanBoard
+          grouped={grouped}
+          onChangeStage={handleChangeStage}
+          onCreateDeal={handleOpenCreate}
+          onDealClick={handleDealClick}
+        />
       )}
 
       {modal && (
