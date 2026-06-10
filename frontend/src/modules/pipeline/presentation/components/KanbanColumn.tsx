@@ -9,6 +9,7 @@ interface KanbanColumnProps {
   deals: Deal[]
   onChangeStage: (dealId: string, newStage: PipelineStage) => void
   onCreateDeal: (stage: PipelineStage) => void
+  onDealClick: (deal: Deal) => void
 }
 
 export function KanbanColumn({
@@ -16,6 +17,7 @@ export function KanbanColumn({
   deals,
   onChangeStage,
   onCreateDeal,
+  onDealClick,
 }: KanbanColumnProps) {
   const canCreate = !NO_CREATE_STAGES.includes(stage)
 
@@ -67,11 +69,11 @@ export function KanbanColumn({
       <div style={{ maxHeight: 'calc(100vh - 220px)', overflowY: 'auto', paddingRight: '4px' }}>
         {deals.length === 0 ? (
           <p style={{ padding: '16px 0', textAlign: 'center', fontSize: '12px', color: '#CBD5E1' }}>
-            Sin deals
+            Sin oportunidades
           </p>
         ) : (
           deals.map((deal) => (
-            <DealCard key={deal.id} deal={deal} onChangeStage={onChangeStage} />
+            <DealCard key={deal.id} deal={deal} onClick={onDealClick} />
           ))
         )}
       </div>

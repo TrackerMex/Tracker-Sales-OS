@@ -20,7 +20,7 @@ export class GetPipelineBySellerUseCase
   ) {}
 
   async execute(input: GetPipelineBySellerInput): Promise<PipelineGrouped> {
-    const deals = await this.dealRepo.findBySellerId(input.sellerId);
+    const enrichedDeals = await this.dealRepo.findDetailedBySellerId(input.sellerId);
 
     const grouped: PipelineGrouped = {
       [PipelineStage.Prospecto]: [],
@@ -32,8 +32,8 @@ export class GetPipelineBySellerUseCase
       [PipelineStage.Perdido]: [],
     };
 
-    for (const deal of deals) {
-      grouped[deal.stage].push(DealDto.fromEntity(deal));
+    for (const row of enrichedDeals) {
+      grouped[row.deal.stage].push(DealDto.fromEnrichedRow(row));
     }
 
     return grouped;

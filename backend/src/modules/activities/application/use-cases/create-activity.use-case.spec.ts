@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CreateActivityUseCase } from './create-activity.use-case';
 import { ActivityType, ActivityResult } from '../../domain/entities/activity.entity';
 import { IActivityRepository } from '../../domain/repositories/activity.repository.interface';
+import { IDealsRepository } from '../../../pipeline/domain/repositories/deal.repository.interface';
 
 const makeMockRepo = (): jest.Mocked<IActivityRepository> => ({
   create: jest.fn(),
@@ -12,6 +13,18 @@ const makeMockRepo = (): jest.Mocked<IActivityRepository> => ({
   findDailyBySeller: jest.fn(),
   sumDailyPoints: jest.fn(),
   findRecentBySeller: jest.fn(),
+});
+
+const makeMockDealRepo = (): jest.Mocked<IDealsRepository> => ({
+  create: jest.fn(),
+  findById: jest.fn(),
+  findAll: jest.fn(),
+  update: jest.fn(),
+  softDelete: jest.fn(),
+  findBySellerId: jest.fn(),
+  findByStage: jest.fn(),
+  findByClientIdAndSellerId: jest.fn(),
+  findDetailedBySellerId: jest.fn(),
 });
 
 const baseInput = {
@@ -25,10 +38,12 @@ const baseInput = {
 describe('CreateActivityUseCase', () => {
   let useCase: CreateActivityUseCase;
   let repo: jest.Mocked<IActivityRepository>;
+  let dealRepo: jest.Mocked<IDealsRepository>;
 
   beforeEach(() => {
     repo = makeMockRepo();
-    useCase = new CreateActivityUseCase(repo as any);
+    dealRepo = makeMockDealRepo();
+    useCase = new CreateActivityUseCase(repo as any, dealRepo as any);
   });
 
   it('assigns correct points for Chat (1)', async () => {

@@ -18,6 +18,13 @@ export interface Deal {
   amount: number
   probability: number
   stageHistory: StageHistoryEntry[]
+  contactName?: string
+  contactRole?: string
+  painPoint?: string
+  sellerName?: string
+  nextStep?: string
+  nextDate?: string
+  nextTime?: string
 }
 
 export interface CreateDealInput {

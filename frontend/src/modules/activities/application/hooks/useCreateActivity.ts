@@ -14,6 +14,7 @@ export const useCreateActivity = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities'] })
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] })
     },
   })
 }

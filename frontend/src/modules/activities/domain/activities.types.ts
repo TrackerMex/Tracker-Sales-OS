@@ -1,5 +1,5 @@
 import type { ID } from "@/core/domain/types/common.types"
-import type { ActivityType } from "@/shared/lib/constants"
+import type { ActivityType, PipelineStage } from "@/shared/lib/constants"
 
 export type ActivityResult =
   | "Interesado"
@@ -52,4 +52,5 @@ export interface CreateActivityInput {
   nextTime?: string
   executedAt: string
   programmedAt?: string
+  stage?: PipelineStage
 }

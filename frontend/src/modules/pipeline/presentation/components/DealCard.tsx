@@ -1,104 +1,85 @@
-import { useState } from "react"
 import type { Deal, PipelineStage } from "../../domain/pipeline.types"
 
-const ALLOWED_TRANSITIONS: Record<PipelineStage, PipelineStage[]> = {
-  Prospecto: ["Contactado", "Perdido"],
-  Contactado: ["Interesado", "Perdido"],
-  Interesado: ["Propuesta", "Perdido"],
-  Propuesta: ["Negociación", "Perdido"],
-  Negociación: ["Cierre", "Perdido"],
-  Cierre: [],
-  Perdido: [],
+const STAGE_BADGE_COLORS: Record<string, string> = {
+  Prospecto: '#002B49',
+  Contactado: '#1E40AF',
+  Interesado: '#82bc00',
+  Propuesta: '#D97706',
+  'Negociación': '#7C3AED',
+  Cierre: '#059669',
+  Perdido: '#DC2626',
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
-
-function probabilityColor(probability: number): string {
-  if (probability === 0) return "bg-red-100 text-red-700 border-red-300"
-  if (probability >= 70) return "bg-green-100 text-green-700 border-green-300"
-  if (probability >= 30)
-    return "bg-yellow-100 text-yellow-700 border-yellow-300"
-  return "bg-slate-100 text-slate-600 border-slate-200"
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('es-MX', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
 }
 
 interface DealCardProps {
   deal: Deal
-  onChangeStage: (dealId: string, newStage: PipelineStage) => void
+  onClick: (deal: Deal) => void
 }
 
-export function DealCard({ deal, onChangeStage }: DealCardProps) {
-  const [selectedStage, setSelectedStage] = useState<PipelineStage | "">("")
-  const transitions = ALLOWED_TRANSITIONS[deal.stage] ?? []
-
-  function handleMove() {
-    if (!selectedStage) return
-    onChangeStage(deal.id, selectedStage)
-    setSelectedStage("")
-  }
+export function DealCard({ deal, onClick }: DealCardProps) {
+  const contactInfo = [deal.contactName, deal.contactRole].filter(Boolean).join(' · ')
+  const badgeColor = STAGE_BADGE_COLORS[deal.stage] || '#002B49'
 
   return (
-    <div className="card" style={{ padding: '14px', marginBottom: '8px' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '6px' }}>
-        <p style={{ fontSize: '13px', lineHeight: '1.3', fontWeight: 700, color: '#002B49' }}>
+    <div
+      onClick={() => onClick(deal)}
+      className="card"
+      style={{
+        padding: '14px',
+        marginBottom: '8px',
+        cursor: 'pointer',
+        transition: 'box-shadow 0.2s',
+      }}
+      onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
+      onMouseLeave={(e) => e.currentTarget.style.boxShadow = ''}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
+        <p style={{ fontSize: '13px', lineHeight: '1.3', fontWeight: 700, color: '#002B49', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {deal.clientName}
         </p>
         <span
-          className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold ${probabilityColor(deal.probability)}`}
+          style={{
+            flexShrink: 0,
+            fontSize: '10px',
+            fontWeight: 700,
+            color: '#fff',
+            background: badgeColor,
+            borderRadius: '10px',
+            padding: '2px 8px',
+            textTransform: 'uppercase',
+          }}
         >
-          {deal.probability}%
+          {deal.stage}
         </span>
       </div>
-      <p style={{ fontSize: '13px', fontWeight: 600, color: '#64748B', marginBottom: '10px' }}>
-        {formatCurrency(deal.amount)}
-      </p>
 
-      {transitions.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px' }}>
-          <select
-            value={selectedStage}
-            onChange={(e) => setSelectedStage(e.target.value as PipelineStage)}
-            style={{
-              flex: 1,
-              fontSize: '12px',
-              padding: '4px 8px',
-              border: '1px solid #E2E8F0',
-              borderRadius: '6px',
-              background: 'white',
-              color: '#475569'
-            }}
-          >
-            <option value="">Mover a...</option>
-            {transitions.map((stage) => (
-              <option key={stage} value={stage}>
-                {stage}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={handleMove}
-            disabled={!selectedStage}
-            style={{
-              fontSize: '12px',
-              fontWeight: 600,
-              padding: '4px 12px',
-              background: !selectedStage ? '#94A3B8' : '#002B49',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: !selectedStage ? 'not-allowed' : 'pointer',
-              transition: 'background 0.2s'
-            }}
-          >
-            →
-          </button>
-        </div>
+      {contactInfo && (
+        <p style={{ fontSize: '11px', color: '#64748B', marginBottom: '2px' }}>
+          {contactInfo}
+        </p>
       )}
+
+      {deal.painPoint && (
+        <p style={{ fontSize: '11px', color: '#475569', marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {deal.painPoint}
+        </p>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+        <span style={{ fontSize: '11px', color: '#94A3B8' }}>
+          {deal.sellerName ?? ''}
+        </span>
+        <span style={{ fontSize: '11px', color: '#94A3B8' }}>
+          {deal.createdAt ? formatDate(deal.createdAt as unknown as string) : ''}
+        </span>
+      </div>
     </div>
   )
 }

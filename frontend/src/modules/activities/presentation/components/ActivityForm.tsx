@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { ACTIVITY_TYPES, TASK_POINTS, REQUIRES_NEXT_STEP, PIPELINE_STAGES } from "@/shared/lib/constants"
-import type { ActivityType } from "@/shared/lib/constants"
+import type { ActivityType, PipelineStage } from "@/shared/lib/constants"
 import type { ActivityResult, CreateActivityInput } from "../../domain/activities.types"
 import type { Client } from "@/modules/clients/domain/clients.types"
 import { useClients } from "@/modules/clients/application/hooks/useClients"
@@ -123,6 +123,7 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError 
     if (nextObjective) input.nextObjective = nextObjective
     if (nextDate) input.nextDate = nextDate
     if (nextTime) input.nextTime = nextTime
+    if (stage) input.stage = stage as PipelineStage
     onSubmit(input)
   }
 

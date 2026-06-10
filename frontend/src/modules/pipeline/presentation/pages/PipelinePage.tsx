@@ -5,6 +5,7 @@ import { usePipeline } from "../../application/hooks/usePipeline"
 import { useCreateDeal } from "../../application/hooks/useCreateDeal"
 import { useChangeStage } from "../../application/hooks/useChangeStage"
 import { KanbanColumn } from "../components/KanbanColumn"
+import { ClientDetailPage } from "./ClientDetailPage"
 import type { PipelineStage, Deal } from "../../domain/pipeline.types"
 
 const ALL_STAGES: PipelineStage[] = [
@@ -43,6 +44,7 @@ export function PipelinePage() {
   const [modal, setModal] = useState<CreateDealModal | null>(null)
   const [clientId, setClientId] = useState("")
   const [amount, setAmount] = useState("")
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null)
 
   function handleChangeStage(dealId: string, newStage: PipelineStage) {
     changeStage.mutate({ dealId, input: { newStage, changedBy: username } })
@@ -75,16 +77,24 @@ export function PipelinePage() {
     )
   }
 
+  function handleDealClick(deal: Deal) {
+    setSelectedDeal(deal)
+  }
+
   function getDeals(stage: PipelineStage): Deal[] {
     if (!grouped) return []
     return grouped[stage] ?? []
+  }
+
+  if (selectedDeal) {
+    return <ClientDetailPage deal={selectedDeal} />
   }
 
   return (
     <div className="space-y-4">
       <div>
         <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Pipeline</h1>
-        <p style={{ marginTop: 2, fontSize: 12, color: '#94A3B8' }}>Vista Kanban por stage</p>
+        <p style={{ marginTop: 2, fontSize: 12, color: '#94A3B8' }}>Fases comerciales por oportunidad</p>
       </div>
 
       {isLoading && <SkeletonColumns />}
@@ -102,6 +112,7 @@ export function PipelinePage() {
                 deals={getDeals(stage)}
                 onChangeStage={handleChangeStage}
                 onCreateDeal={handleOpenCreate}
+                onDealClick={handleDealClick}
               />
             ))}
           </div>

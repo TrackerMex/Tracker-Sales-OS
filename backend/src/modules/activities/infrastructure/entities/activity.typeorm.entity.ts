@@ -21,6 +21,7 @@ export class ActivityTypeormEntity {
   @Column({ name: 'next_time', type: 'varchar', nullable: true }) nextTime: string | null;
   @Column({ type: 'int' }) points: number;
   @Column({ type: 'int' }) quality: number;
+  @Column({ type: 'varchar', nullable: true }) stage: string | null;
   @Column({ name: 'executed_at', type: 'timestamptz' }) executedAt: Date;
   @Column({ name: 'programmed_at', type: 'timestamptz', nullable: true }) programmedAt: Date | null;
   @Column({ name: 'captured_at', type: 'timestamptz' }) capturedAt: Date;
