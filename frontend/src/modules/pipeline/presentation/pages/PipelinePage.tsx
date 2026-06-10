@@ -103,7 +103,7 @@ export function PipelinePage() {
       )}
 
       {!isLoading && !isError && (
-        <div style={{ overflowX: 'auto', paddingBottom: '16px' }}>
+        <div className="pipeline-scroll" style={{ overflowX: 'auto', paddingBottom: '16px' }}>
           <div style={{ display: 'flex', gap: '12px', minWidth: 'max-content' }}>
             {ALL_STAGES.map((stage) => (
               <KanbanColumn

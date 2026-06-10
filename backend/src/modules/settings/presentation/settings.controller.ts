@@ -18,7 +18,7 @@ export class SettingsController {
   ) {}
 
   @Get()
-  @Roles(UserRole.Admin, UserRole.Director)
+  @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
   get() {
     return this.getSettings.execute();
   }

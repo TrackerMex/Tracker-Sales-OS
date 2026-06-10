@@ -1,6 +1,6 @@
+import { useRef, useState } from "react"
 import type { Deal, PipelineStage } from "../../domain/pipeline.types"
 import { DealCard } from "./DealCard"
-
 
 const NO_CREATE_STAGES: PipelineStage[] = ["Cierre", "Perdido"]
 
@@ -19,10 +19,48 @@ export function KanbanColumn({
   onCreateDeal,
   onDealClick,
 }: KanbanColumnProps) {
+  const [isDragOver, setIsDragOver] = useState(false)
+  const columnRef = useRef<HTMLDivElement>(null)
   const canCreate = !NO_CREATE_STAGES.includes(stage)
 
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+  }
+
+  function handleDragEnter(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    if (columnRef.current?.contains(e.relatedTarget as Node)) return
+    setIsDragOver(false)
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    const dealId = e.dataTransfer.getData("dealId")
+    if (dealId) {
+      onChangeStage(dealId, stage)
+    }
+    setIsDragOver(false)
+  }
+
   return (
-    <div className="pipe-col">
+    <div
+      ref={columnRef}
+      className="pipe-col"
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      style={isDragOver ? {
+        borderColor: '#82bc00',
+        background: 'rgba(130, 188, 0, 0.05)',
+        transition: 'border-color 0.15s, background 0.15s',
+      } : undefined}
+    >
       <div className="pipe-col-h">
         <span>{stage}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

@@ -1,4 +1,5 @@
-import type { Deal, PipelineStage } from "../../domain/pipeline.types"
+import { useState } from "react"
+import type { Deal } from "../../domain/pipeline.types"
 
 const STAGE_BADGE_COLORS: Record<string, string> = {
   Prospecto: '#002B49',
@@ -24,21 +25,36 @@ interface DealCardProps {
 }
 
 export function DealCard({ deal, onClick }: DealCardProps) {
+  const [isDragging, setIsDragging] = useState(false)
   const contactInfo = [deal.contactName, deal.contactRole].filter(Boolean).join(' · ')
   const badgeColor = STAGE_BADGE_COLORS[deal.stage] || '#002B49'
 
+  function handleDragStart(e: React.DragEvent<HTMLDivElement>) {
+    e.dataTransfer.setData("dealId", deal.id as string)
+    e.dataTransfer.effectAllowed = "move"
+    setIsDragging(true)
+  }
+
+  function handleDragEnd() {
+    setIsDragging(false)
+  }
+
   return (
     <div
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       onClick={() => onClick(deal)}
       className="card"
       style={{
         padding: '14px',
         marginBottom: '8px',
-        cursor: 'pointer',
-        transition: 'box-shadow 0.2s',
+        cursor: 'grab',
+        transition: 'box-shadow 0.2s, opacity 0.15s',
+        opacity: isDragging ? 0.5 : 1,
       }}
-      onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
-      onMouseLeave={(e) => e.currentTarget.style.boxShadow = ''}
+      onMouseEnter={(e) => { if (!isDragging) e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '' }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
         <p style={{ fontSize: '13px', lineHeight: '1.3', fontWeight: 700, color: '#002B49', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
