@@ -1,5 +1,5 @@
 import { api } from '@/shared/lib/axios';
-import type { DashboardSummary, SellerScore, OverdueTask } from '../domain/dashboard.types';
+import type { DashboardSummary, SellerScore, OverdueTask, ActivityTrendItem } from '../domain/dashboard.types';
 
 export const dashboardApi = {
   getSummary: async (): Promise<DashboardSummary> => {
@@ -14,6 +14,11 @@ export const dashboardApi = {
 
   getOverdueTasks: async (): Promise<OverdueTask[]> => {
     const res = await api.get<OverdueTask[]>('/dashboard/overdue-tasks');
+    return res.data;
+  },
+
+  getActivityTrend: async (): Promise<ActivityTrendItem[]> => {
+    const res = await api.get<ActivityTrendItem[]>('/dashboard/activity-trend');
     return res.data;
   },
 };

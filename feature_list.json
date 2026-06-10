@@ -83,11 +83,11 @@
     "id": "09-dashboard",
     "name": "Dashboard & KPIs",
     "description": "Semáforo comercial por vendedor (verde/ámbar/rojo), scoring 0-100%, KPIs globales (venta registrada, unidades, puntos, calidad), alertas de seguimientos vencidos",
-    "status": "partial",
+    "status": "done",
     "priority": 9,
     "backend_modules": ["dashboard"],
     "frontend_modules": ["dashboard"],
-    "notes": "Score = 45% esfuerzo (puntos vs mínimo) + 35% calidad promedio + 40% volumen (capped 50pts) - 10 por cada seguimiento vencido. BUG: Click en vendedor no navega a detalle. Gráfica no muestra datos reales correctamente."
+    "notes": "Score = 45% esfuerzo (puntos vs mínimo) + 35% calidad promedio + 40% volumen (capped 50pts) - 10 por cada seguimiento vencido. FIXED: Click vendedor navega a /coaching. Gráfica usa endpoint real GET /api/dashboard/activity-trend."
   },
   {
     "id": "10-mi-dia",
@@ -103,21 +103,21 @@
     "id": "11-coaching",
     "name": "Coaching Comercial",
     "description": "Reporte diario por vendedor: progreso vs mínimo, mix de actividades, calidad promedio, vencidos, agenda de mañana. Director puede ver cualquier vendedor.",
-    "status": "partial",
+    "status": "done",
     "priority": 11,
     "backend_modules": ["coaching"],
     "frontend_modules": ["coaching"],
-    "notes": "Mix óptimo: detectar si hay muchos chats pero pocas llamadas, muchas llamadas pero sin reuniones, etc. BUG CRÍTICO: Reporte no se visualiza correctamente. Falta selector de vendedor para Director. RBAC funciona para Seller (solo ve su reporte)."
+    "notes": "Mix óptimo: detectar si hay muchos chats pero pocas llamadas, muchas llamadas pero sin reuniones, etc. FIXED: Tag color condicional (verde/rojo según meta). minDaily lee de Settings. Selector de vendedor para Admin/Director. dailyPointsGoal dinámico en backend."
   },
   {
     "id": "12-ai-coach",
     "name": "IA Coach (Claude API)",
     "description": "Sugerencias contextuales al crear tareas/actividades. Endpoint POST /api/coaching/suggestion llama Anthropic API (claude-sonnet-4-6) y retorna 2-3 tips.",
-    "status": "pending",
+    "status": "done",
     "priority": 12,
     "backend_modules": ["coaching"],
     "frontend_modules": ["activities", "tasks"],
-    "notes": "Prompt incluye: tipo actividad, objetivo, cliente, stage deal, nombre contacto. Max 300 tokens. Requiere ANTHROPIC_API_KEY en .env."
+    "notes": "Proveedor intercambiable: LLM_PROVIDER=openrouter (dev) | anthropic (prod). Factory en coaching.module.ts. Fallback hardcoded si API falla. Frontend: botón 'Obtener sugerencias' en ActivityForm y CreateTaskForm."
   },
   {
     "id": "13-reports",

@@ -3,6 +3,9 @@ import { useAppStore } from '@/shared/store/app.store'
 import { UserRole } from '@/core/domain/types/common.types'
 import { useSettings } from '../../application/hooks/useSettings'
 import { useUpdateSettings } from '../../application/hooks/useUpdateSettings'
+import { useApiFormErrors } from '@/shared/lib/api-errors'
+import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
+import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
 
 const FIELD_LABELS: Record<string, string> = {
   dailyMinPoints: 'Puntos mínimos diarios',
@@ -15,7 +18,8 @@ export function SettingsPage() {
   const currentUser = useAppStore((s) => s.currentUser)
   const isAdmin = currentUser?.role === UserRole.Admin
   const { data, isLoading } = useSettings()
-  const { mutate, isPending, isSuccess } = useUpdateSettings()
+  const { mutate, isPending, isSuccess, error } = useUpdateSettings()
+  const { summary: errorSummary, fieldErrors, clearField, formRef } = useApiFormErrors(error)
 
   const [form, setForm] = useState({
     dailyMinPoints: 30,
@@ -29,6 +33,7 @@ export function SettingsPage() {
   }, [data])
 
   function handleChange(field: string, value: string) {
+    clearField(field)
     setForm((prev) => ({ ...prev, [field]: Number(value) }))
   }
 
@@ -49,9 +54,11 @@ export function SettingsPage() {
     <div style={{ maxWidth: 560 }} className="space-y-5">
       <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Configuración</h1>
 
-      <form onSubmit={handleSubmit}>
+      <form ref={formRef} onSubmit={handleSubmit}>
         <div className="card p-5 space-y-4">
           <div className="slabel">Metas del sistema</div>
+
+          <FormErrorSummary error={errorSummary} />
 
           {(Object.keys(form) as Array<keyof typeof form>).map((field) => (
             <div key={field}>
@@ -62,9 +69,11 @@ export function SettingsPage() {
                 onChange={(e) => handleChange(field, e.target.value)}
                 disabled={!isAdmin}
                 min={field === 'dailyMinPoints' ? 1 : 0}
-                className="input"
+                className={fieldErrors[field] ? 'input input-error' : 'input'}
                 style={!isAdmin ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                {...fieldErrorProps(field, fieldErrors[field])}
               />
+              <FieldError name={field} message={fieldErrors[field]} />
             </div>
           ))}
 

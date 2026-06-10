@@ -1,6 +1,6 @@
 # Bugs Tracker — Tracker Sales OS
 
-**Última actualización**: 2026-06-09
+**Última actualización**: 2026-06-09 (revisado 2026-06-09)
 **Reportados por**: Agente Implementer/Tester (Feature 17 - Integration Testing)
 
 ---
@@ -8,7 +8,7 @@
 ## Bug #1: Mi Día no usa configuración dinámica de dailyMinPoints
 
 **Severidad**: MEDIA
-**Estado**: ABIERTO
+**Estado**: CERRADO
 **Fecha detectado**: 2026-06-09
 
 ### Descripción
@@ -246,7 +246,7 @@ CHECKPOINTS.md línea 87:
 
 | Bug | Severidad | Estado | Feature | Prioridad Fix |
 |-----|-----------|--------|---------|---------------|
-| #1: Mi Día settings hardcoded | MEDIA | ABIERTO | 10, 14 | ALTA |
+| #1: Mi Día settings hardcoded | MEDIA | CERRADO | 10, 14 | — |
 | #2: AI Coach no implementado | ALTA/BAJA | PENDIENTE | 12 | DEPENDE |
 | #3: AuditInterceptor no verificado | BAJA | VERIFICAR | 07 | MEDIA |
 

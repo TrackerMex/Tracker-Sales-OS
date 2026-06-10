@@ -23,3 +23,8 @@ logs/
 
 # Coverage
 coverage/
+
+# test
+.playwright-mcp
+progress/qa_e2e_runner
+progress/qa_screenshots

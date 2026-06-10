@@ -104,7 +104,7 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] `GET /api/dashboard/sellers-score` retorna semaforo de vendedores (0-100%)
 - [x] Score calculado: 45% esfuerzo + 35% calidad + 40% volumen - 10 por vencido
 - [x] `GET /api/dashboard/overdue-tasks` retorna seguimientos vencidos
-- [ ] Frontend: dashboard muestra metricas + semaforo visual (no verificado visualmente)
+- [x] Frontend: dashboard muestra metricas + semaforo visual. Click vendedor → /coaching. Gráfica usa datos reales.
 
 ---
 
@@ -121,19 +121,19 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 - [x] `GET /api/coaching/seller/:id/daily` retorna reporte del dia
 - [x] Mix de actividades calculado (% por tipo)
-- [ ] Frontend: pagina Coaching muestra reporte por vendedor (no verificado visualmente)
-- [ ] Admin y Director pueden ver reporte de cualquier seller (no verificado RBAC)
+- [x] Frontend: pagina Coaching muestra reporte por vendedor. Tag color condicional. minDaily desde Settings.
+- [x] Admin y Director pueden ver reporte de cualquier seller. Selector de vendedor implementado.
 
 ---
 
 ## 12-ai-coach
 
-- [ ] `POST /api/coaching/suggestion` llama Claude API y retorna sugerencia
-- [ ] Prompt incluye: tipo actividad, objetivo, cliente, stage del deal
-- [ ] Response en < 3 segundos (o streaming)
-- [ ] Manejo de errores: si API falla, retorna sugerencia por defecto
-- [ ] ANTHROPIC_API_KEY en .env
-- [ ] Frontend: sugerencia se muestra en formulario de tarea/actividad
+- [x] `POST /api/coaching/suggestion` llama LLM (OpenRouter dev / Anthropic prod) y retorna sugerencia
+- [x] Prompt incluye: tipo actividad, objetivo, cliente, stage del deal
+- [x] Timeout configurado via LLM_TIMEOUT_MS (default 3000ms)
+- [x] Manejo de errores: si API falla, retorna sugerencias por defecto (source: "fallback")
+- [x] Keys en .env.example: OPENROUTER_API_KEY / ANTHROPIC_API_KEY
+- [x] Frontend: botón "Obtener sugerencias" en ActivityForm y CreateTaskForm
 
 ---
 

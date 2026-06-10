@@ -12,7 +12,10 @@
       "Bash(git diff *)",
       "Bash(tsc --noEmit)",
       "Bash(mkdir *)",
-      "Bash(ls *)"
+      "Bash(ls *)",
+      "Bash(npx playwright *)",
+      "Bash(docker exec *)",
+      "mcp__playwright__*"
     ]
   }
 }

@@ -12,6 +12,7 @@ import { GetDashboardSummaryUseCase } from './application/use-cases/get-dashboar
 import { GetSellersScoreUseCase } from './application/use-cases/get-sellers-score.use-case';
 import { GetOverdueTasksUseCase } from './application/use-cases/get-overdue-tasks.use-case';
 import { GetMiDiaUseCase } from './application/use-cases/get-mi-dia.use-case';
+import { GetActivityTrendUseCase } from './application/use-cases/get-activity-trend.use-case';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { GetMiDiaUseCase } from './application/use-cases/get-mi-dia.use-case';
     GetSellersScoreUseCase,
     GetOverdueTasksUseCase,
     GetMiDiaUseCase,
+    GetActivityTrendUseCase,
   ],
 })
 export class DashboardModule {}

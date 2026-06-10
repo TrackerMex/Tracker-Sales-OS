@@ -181,6 +181,9 @@
   background: #fff;
   outline: none;
 }
+.input-error {
+  border-color: var(--tracker-danger);
+}
 
 .btn-primary {
   @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-[7px] text-xs font-semibold transition-colors;

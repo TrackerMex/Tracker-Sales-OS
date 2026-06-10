@@ -1,4 +1,4 @@
-import { ID } from '../../../core/domain/types/common.types';
+import type { ID } from '../../../core/domain/types/common.types';
 
 export type SaleType = 'seller' | 'atc' | 'direction';
 export type PaymentMethod = 'Pagado' | 'Crédito' | '50% anticipo' | 'Pendiente';

@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router';
 import type { SellerScore } from '../../domain/dashboard.types';
 
 interface SellerSemaphoreTableProps {
@@ -18,6 +19,7 @@ function getBadgeStyle(score: number): string {
 }
 
 export function SellerSemaphoreTable({ sellers, isLoading }: SellerSemaphoreTableProps) {
+  const navigate = useNavigate();
   if (isLoading) {
     return (
       <div className="space-y-4 p-5" role="status" aria-label="Cargando desempeño del equipo">
@@ -51,6 +53,8 @@ export function SellerSemaphoreTable({ sellers, isLoading }: SellerSemaphoreTabl
           className="seller-row"
           role="article"
           aria-label={`${seller.sellerName}: puntuación ${seller.score}, ${seller.overdueCount > 0 ? seller.overdueCount + ' seguimientos vencidos' : 'sin seguimientos vencidos'}`}
+          onClick={() => navigate({ to: '/coaching' })}
+          style={{ cursor: 'pointer' }}
         >
           <div className="flex items-center justify-between gap-2 min-w-0">
             <span

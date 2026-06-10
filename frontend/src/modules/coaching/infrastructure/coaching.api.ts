@@ -8,4 +8,15 @@ export const coachingApi = {
     )
     return res.data
   },
+
+  getSuggestion: async (dto: {
+    type: string;
+    objective?: string;
+    client?: string;
+    dealStage?: string;
+    contactName?: string;
+  }): Promise<{ tips: string[]; source: string }> => {
+    const res = await api.post<{ tips: string[]; source: string }>('/coaching/suggestion', dto);
+    return res.data;
+  },
 }

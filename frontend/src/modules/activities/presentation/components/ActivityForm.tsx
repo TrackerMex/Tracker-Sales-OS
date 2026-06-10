@@ -4,6 +4,10 @@ import type { ActivityType } from "@/shared/lib/constants"
 import type { ActivityResult, CreateActivityInput } from "../../domain/activities.types"
 import type { Client } from "@/modules/clients/domain/clients.types"
 import { useClients } from "@/modules/clients/application/hooks/useClients"
+import { coachingApi } from '@/modules/coaching/infrastructure/coaching.api'
+import { useApiFormErrors } from '@/shared/lib/api-errors'
+import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
+import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
 
 const ACTIVITY_RESULTS: ActivityResult[] = [
   "Interesado",
@@ -37,13 +41,15 @@ interface Props {
   onSubmit: (data: CreateActivityInput) => void
   isLoading: boolean
   programmedTask?: string
+  submitError?: unknown
 }
 
 function nowStamp(): string {
   return new Date().toLocaleString('es-MX', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })
 }
 
-export function ActivityForm({ onSubmit, isLoading, programmedTask }: Props) {
+export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError }: Props) {
+  const { summary: errorSummary, fieldErrors, clearField, formRef } = useApiFormErrors(submitError)
   const now = new Date()
   const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
     .toISOString()
@@ -53,6 +59,8 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask }: Props) {
   const { data: clientsResponse } = useClients({ limit: 100 })
   const clients: Client[] = clientsResponse?.data ?? []
 
+  const [aiTips, setAiTips] = useState<string[]>([])
+  const [aiLoading, setAiLoading] = useState(false)
   const [clientId, setClientId] = useState("")
   const [contactId, setContactId] = useState("")
   const [type, setType] = useState<ActivityType>(ACTIVITY_TYPES[0])
@@ -70,7 +78,6 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask }: Props) {
   const selectedClient = clients.find((c) => c.id === clientId)
   const contacts = selectedClient?.contacts ?? []
   const needsNextStep = REQUIRES_NEXT_STEP.includes(type)
-  const points = TASK_POINTS[type]
   const quality = calcQuality({ summary, discovery, agreement, nextStep, nextDate, nextTime })
 
   function getCoachMessage(): string {
@@ -81,6 +88,23 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask }: Props) {
       return "Esta actividad requiere siguiente paso, fecha y hora."
     }
     return "Suma 1 punto. No requiere siguiente paso obligatorio."
+  }
+
+  async function fetchAiSuggestions() {
+    setAiLoading(true)
+    try {
+      const res = await coachingApi.getSuggestion({
+        type,
+        objective: summary || undefined,
+        client: selectedClient?.name,
+        dealStage: stage || undefined,
+      })
+      setAiTips(res.tips)
+    } catch {
+      setAiTips([])
+    } finally {
+      setAiLoading(false)
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -106,19 +130,23 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask }: Props) {
   const execTime = executedAt.includes("T") ? executedAt.split("T")[1] : ""
 
   function handleExecDateChange(e: React.ChangeEvent<HTMLInputElement>) {
+    clearField("executedAt")
     setExecutedAt(`${e.target.value}T${execTime || "00:00"}`)
   }
 
   function handleExecTimeChange(e: React.ChangeEvent<HTMLInputElement>) {
+    clearField("executedAt")
     setExecutedAt(`${execDate || new Date().toISOString().split("T")[0]}T${e.target.value}`)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card p-6 space-y-4">
+    <form ref={formRef} onSubmit={handleSubmit} className="card p-6 space-y-4">
       <div>
         <h2 className="text-lg font-bold text-slate-900">Registrar actividad comercial</h2>
         <p className="text-sm text-slate-500 mt-1">La hora de captura queda registrada automáticamente. Llamadas, videoconferencias, visitas y propuestas requieren siguiente paso.</p>
       </div>
+
+      <FormErrorSummary error={errorSummary} />
 
       {/* Info readonly row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -149,26 +177,29 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask }: Props) {
         <div>
           <label className="slabel">Cliente *</label>
           <select
-            className="input"
+            className={fieldErrors.clientId ? "input input-error" : "input"}
             value={clientId}
-            onChange={(e) => { setClientId(e.target.value); setContactId("") }}
+            onChange={(e) => { setClientId(e.target.value); setContactId(""); clearField("clientId") }}
             required
+            {...fieldErrorProps("clientId", fieldErrors.clientId)}
           >
             <option value="">Seleccionar cliente...</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
+          <FieldError name="clientId" message={fieldErrors.clientId} />
         </div>
 
         {/* Contact dropdown */}
         <div>
           <label className="slabel">Contacto</label>
           <select
-            className="input"
+            className={fieldErrors.contactId ? "input input-error" : "input"}
             value={contactId}
-            onChange={(e) => setContactId(e.target.value)}
+            onChange={(e) => { setContactId(e.target.value); clearField("contactId") }}
             disabled={!clientId || contacts.length === 0}
+            {...fieldErrorProps("contactId", fieldErrors.contactId)}
           >
             <option value="">
               {!clientId ? "Selecciona un cliente primero" : contacts.length === 0 ? "Sin contactos registrados" : "Seleccionar contacto..."}
@@ -179,34 +210,39 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask }: Props) {
               </option>
             ))}
           </select>
+          <FieldError name="contactId" message={fieldErrors.contactId} />
         </div>
 
         {/* Activity type */}
         <div>
           <label className="slabel">Tipo de actividad</label>
           <select
-            className="input"
+            className={fieldErrors.type ? "input input-error" : "input"}
             value={type}
-            onChange={(e) => setType(e.target.value as ActivityType)}
+            onChange={(e) => { setType(e.target.value as ActivityType); clearField("type") }}
+            {...fieldErrorProps("type", fieldErrors.type)}
           >
             {ACTIVITY_TYPES.map((t) => (
               <option key={t} value={t}>{t} ({TASK_POINTS[t]} pts)</option>
             ))}
           </select>
+          <FieldError name="type" message={fieldErrors.type} />
         </div>
 
         {/* Result */}
         <div>
           <label className="slabel">Resultado</label>
           <select
-            className="input"
+            className={fieldErrors.result ? "input input-error" : "input"}
             value={result}
-            onChange={(e) => setResult(e.target.value as ActivityResult)}
+            onChange={(e) => { setResult(e.target.value as ActivityResult); clearField("result") }}
+            {...fieldErrorProps("result", fieldErrors.result)}
           >
             {ACTIVITY_RESULTS.map((r) => (
               <option key={r} value={r}>{r}</option>
             ))}
           </select>
+          <FieldError name="result" message={fieldErrors.result} />
         </div>
 
         {/* Stage */}
@@ -225,61 +261,71 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask }: Props) {
         </div>
 
         {/* Execution date + time */}
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="slabel">Fecha de ejecución</label>
-            <input
-              type="date"
-              className="input"
-              value={execDate}
-              onChange={handleExecDateChange}
-              required
-            />
+        <div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="slabel">Fecha de ejecución</label>
+              <input
+                type="date"
+                className={fieldErrors.executedAt ? "input input-error" : "input"}
+                value={execDate}
+                onChange={handleExecDateChange}
+                required
+                {...fieldErrorProps("executedAt", fieldErrors.executedAt)}
+              />
+            </div>
+            <div>
+              <label className="slabel">Hora</label>
+              <input
+                type="time"
+                className={fieldErrors.executedAt ? "input input-error" : "input"}
+                value={execTime}
+                onChange={handleExecTimeChange}
+                required
+              />
+            </div>
           </div>
-          <div>
-            <label className="slabel">Hora</label>
-            <input
-              type="time"
-              className="input"
-              value={execTime}
-              onChange={handleExecTimeChange}
-              required
-            />
-          </div>
+          <FieldError name="executedAt" message={fieldErrors.executedAt} />
         </div>
 
         {/* Summary */}
         <div className="sm:col-span-2">
           <label className="slabel">Resumen *</label>
           <textarea
-            className="input"
+            className={fieldErrors.summary ? "input input-error" : "input"}
             style={{ height: 90 }}
             value={summary}
-            onChange={(e) => setSummary(e.target.value)}
+            onChange={(e) => { setSummary(e.target.value); clearField("summary") }}
             required
+            {...fieldErrorProps("summary", fieldErrors.summary)}
           />
+          <FieldError name="summary" message={fieldErrors.summary} />
         </div>
 
         {/* Discovery */}
         <div className="sm:col-span-2">
           <label className="slabel">Descubrimiento</label>
           <textarea
-            className="input"
+            className={fieldErrors.discovery ? "input input-error" : "input"}
             style={{ height: 80 }}
             value={discovery}
-            onChange={(e) => setDiscovery(e.target.value)}
+            onChange={(e) => { setDiscovery(e.target.value); clearField("discovery") }}
+            {...fieldErrorProps("discovery", fieldErrors.discovery)}
           />
+          <FieldError name="discovery" message={fieldErrors.discovery} />
         </div>
 
         {/* Agreement */}
         <div className="sm:col-span-2">
           <label className="slabel">Acuerdo</label>
           <textarea
-            className="input"
+            className={fieldErrors.agreement ? "input input-error" : "input"}
             style={{ height: 80 }}
             value={agreement}
-            onChange={(e) => setAgreement(e.target.value)}
+            onChange={(e) => { setAgreement(e.target.value); clearField("agreement") }}
+            {...fieldErrorProps("agreement", fieldErrors.agreement)}
           />
+          <FieldError name="agreement" message={fieldErrors.agreement} />
         </div>
 
         {/* Next step fields */}
@@ -290,22 +336,26 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask }: Props) {
                 <label className="slabel">Siguiente paso concreto *</label>
                 <input
                   type="text"
-                  className="input"
+                  className={fieldErrors.nextStep ? "input input-error" : "input"}
                   value={nextStep}
-                  onChange={(e) => setNextStep(e.target.value)}
+                  onChange={(e) => { setNextStep(e.target.value); clearField("nextStep") }}
                   placeholder="Siguiente paso concreto"
                   required
+                  {...fieldErrorProps("nextStep", fieldErrors.nextStep)}
                 />
+                <FieldError name="nextStep" message={fieldErrors.nextStep} />
               </div>
               <div>
                 <label className="slabel">Objetivo del siguiente paso</label>
                 <input
                   type="text"
-                  className="input"
+                  className={fieldErrors.nextObjective ? "input input-error" : "input"}
                   value={nextObjective}
-                  onChange={(e) => setNextObjective(e.target.value)}
+                  onChange={(e) => { setNextObjective(e.target.value); clearField("nextObjective") }}
                   placeholder="Objetivo del siguiente paso"
+                  {...fieldErrorProps("nextObjective", fieldErrors.nextObjective)}
                 />
+                <FieldError name="nextObjective" message={fieldErrors.nextObjective} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -313,21 +363,25 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask }: Props) {
                 <label className="slabel">Fecha próxima *</label>
                 <input
                   type="date"
-                  className="input"
+                  className={fieldErrors.nextDate ? "input input-error" : "input"}
                   value={nextDate}
-                  onChange={(e) => setNextDate(e.target.value)}
+                  onChange={(e) => { setNextDate(e.target.value); clearField("nextDate") }}
                   required
+                  {...fieldErrorProps("nextDate", fieldErrors.nextDate)}
                 />
+                <FieldError name="nextDate" message={fieldErrors.nextDate} />
               </div>
               <div>
                 <label className="slabel">Hora próxima *</label>
                 <input
                   type="time"
-                  className="input"
+                  className={fieldErrors.nextTime ? "input input-error" : "input"}
                   value={nextTime}
-                  onChange={(e) => setNextTime(e.target.value)}
+                  onChange={(e) => { setNextTime(e.target.value); clearField("nextTime") }}
                   required
+                  {...fieldErrorProps("nextTime", fieldErrors.nextTime)}
                 />
+                <FieldError name="nextTime" message={fieldErrors.nextTime} />
               </div>
             </div>
           </div>
@@ -335,8 +389,26 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask }: Props) {
 
         {/* AI Coach */}
         <div className="sm:col-span-2 ai-box">
-          <p className="text-sm font-medium text-purple-900">Coach IA</p>
-          <p className="text-sm text-purple-700 mt-1">{getCoachMessage()}</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <p className="text-sm font-medium text-purple-900">Coach IA</p>
+            <button
+              type="button"
+              onClick={fetchAiSuggestions}
+              disabled={aiLoading}
+              style={{ fontSize: 11, fontWeight: 600, color: '#7c3aed', background: 'none', border: '1px solid #c4b5fd', borderRadius: 6, padding: '2px 10px', cursor: 'pointer' }}
+            >
+              {aiLoading ? 'Cargando...' : 'Obtener sugerencias'}
+            </button>
+          </div>
+          {aiTips.length > 0 ? (
+            <ul style={{ marginTop: 8, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {aiTips.map((tip, i) => (
+                <li key={i} style={{ fontSize: 12, color: '#6d28d9' }}>{tip}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-purple-700 mt-1">{getCoachMessage()}</p>
+          )}
           <p className="text-xs text-purple-500 mt-2">
             Calidad estimada:{" "}
             <span className={quality >= 80 ? "font-semibold text-green-600" : quality >= 40 ? "font-semibold text-amber-600" : "font-semibold text-red-500"}>

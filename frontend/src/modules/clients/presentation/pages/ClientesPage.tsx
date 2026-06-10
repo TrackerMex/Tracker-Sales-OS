@@ -10,6 +10,9 @@ import { useCreateClient } from "../../application/hooks/useCreateClient"
 import { useDeleteClient } from "../../application/hooks/useDeleteClient"
 import { useUpdateClient } from "../../application/hooks/useUpdateClient"
 import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
+import { useApiFormErrors } from "@/shared/lib/api-errors"
+import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
+import { FieldError, fieldErrorProps } from "@/shared/components/forms/FieldError"
 import type {
   Client,
   ClientSource,
@@ -117,6 +120,9 @@ export function ClientesPage() {
   const createClient = useCreateClient()
   const updateClient = useUpdateClient()
   const deleteClient = useDeleteClient()
+  const { summary: saveError, fieldErrors, clearField, formRef } = useApiFormErrors(
+    createClient.error ?? updateClient.error
+  )
   const { data: sellersData } = useSellers()
   const activeSellers = (sellersData ?? []).filter((s) => s.active)
   const canChooseSeller = currentUser?.role !== UserRole.Seller
@@ -137,17 +143,25 @@ export function ClientesPage() {
   }, [sellerActivities, selectedClient])
 
   function updateForm<K extends keyof CreateClientInput>(key: K, value: CreateClientInput[K]) {
+    clearField(String(key))
     setForm((cur) => ({ ...cur, [key]: value }))
+  }
+
+  function resetSaveErrors() {
+    createClient.reset()
+    updateClient.reset()
   }
 
   function openCreate() {
     setEditingClient(null)
     setForm(emptyClientForm(currentUser?.sellerId))
+    resetSaveErrors()
     setShowModal(true)
   }
 
   function openEdit(client: Client) {
     setEditingClient(client)
+    resetSaveErrors()
     setForm({
       name: client.name,
       domain: client.domain ?? "",
@@ -470,77 +484,135 @@ export function ClientesPage() {
           </div>
           <p className="text-xs text-slate-400 mb-5">Puedes registrar varios contactos: decisor, finanzas, operaciones, compras, etc.</p>
 
-          <form onSubmit={submitClient} className="grid grid-cols-2 gap-3">
+          <form ref={formRef} onSubmit={submitClient} className="grid grid-cols-2 gap-3">
+            <FormErrorSummary error={saveError} className="col-span-2" />
+
             {/* name - span 2 */}
-            <input
-              required
-              value={form.name}
-              onChange={(e) => updateForm("name", e.target.value)}
-              placeholder="Nombre de la cuenta"
-              className="input col-span-2"
-            />
+            <div className="col-span-2">
+              <input
+                required
+                value={form.name}
+                onChange={(e) => updateForm("name", e.target.value)}
+                placeholder="Nombre de la cuenta"
+                className={fieldErrors.name ? "input input-error" : "input"}
+                {...fieldErrorProps("name", fieldErrors.name)}
+              />
+              <FieldError name="name" message={fieldErrors.name} />
+            </div>
 
             {/* domain | type */}
-            <input
-              value={form.domain}
-              onChange={(e) => updateForm("domain", e.target.value)}
-              placeholder="Dominio web. Ej: empresa.com"
-              className="input"
-            />
-            <select value={form.type} onChange={(e) => updateForm("type", e.target.value as ClientType)} className="input">
-              {clientTypes.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <div>
+              <input
+                value={form.domain}
+                onChange={(e) => updateForm("domain", e.target.value)}
+                placeholder="Dominio web. Ej: empresa.com"
+                className={fieldErrors.domain ? "input input-error" : "input"}
+                {...fieldErrorProps("domain", fieldErrors.domain)}
+              />
+              <FieldError name="domain" message={fieldErrors.domain} />
+            </div>
+            <div>
+              <select
+                value={form.type}
+                onChange={(e) => updateForm("type", e.target.value as ClientType)}
+                className={fieldErrors.type ? "input input-error" : "input"}
+                {...fieldErrorProps("type", fieldErrors.type)}
+              >
+                {clientTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <FieldError name="type" message={fieldErrors.type} />
+            </div>
 
             {/* person | seller */}
-            <select value={form.person} onChange={(e) => updateForm("person", e.target.value as PersonType)} className="input">
-              {personTypes.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-            {canChooseSeller ? (
+            <div>
               <select
-                value={form.sellerId}
-                onChange={(e) => updateForm("sellerId", e.target.value)}
-                className="input"
+                value={form.person}
+                onChange={(e) => updateForm("person", e.target.value as PersonType)}
+                className={fieldErrors.person ? "input input-error" : "input"}
+                {...fieldErrorProps("person", fieldErrors.person)}
               >
-                <option value="">Seleccionar vendedor</option>
-                {activeSellers.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
+                {personTypes.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
+              <FieldError name="person" message={fieldErrors.person} />
+            </div>
+            {canChooseSeller ? (
+              <div>
+                <select
+                  value={form.sellerId}
+                  onChange={(e) => updateForm("sellerId", e.target.value)}
+                  className={fieldErrors.sellerId ? "input input-error" : "input"}
+                  {...fieldErrorProps("sellerId", fieldErrors.sellerId)}
+                >
+                  <option value="">Seleccionar vendedor</option>
+                  {activeSellers.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+                <FieldError name="sellerId" message={fieldErrors.sellerId} />
+              </div>
             ) : <div />}
 
             {/* source | provider */}
-            <select value={form.source} onChange={(e) => updateForm("source", e.target.value as ClientSource)} className="input">
-              {clientSources.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-            <input
-              value={form.provider}
-              onChange={(e) => updateForm("provider", e.target.value)}
-              placeholder="Proveedor actual"
-              className="input"
-            />
+            <div>
+              <select
+                value={form.source}
+                onChange={(e) => updateForm("source", e.target.value as ClientSource)}
+                className={fieldErrors.source ? "input input-error" : "input"}
+                {...fieldErrorProps("source", fieldErrors.source)}
+              >
+                {clientSources.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <FieldError name="source" message={fieldErrors.source} />
+            </div>
+            <div>
+              <input
+                value={form.provider}
+                onChange={(e) => updateForm("provider", e.target.value)}
+                placeholder="Proveedor actual"
+                className={fieldErrors.provider ? "input input-error" : "input"}
+                {...fieldErrorProps("provider", fieldErrors.provider)}
+              />
+              <FieldError name="provider" message={fieldErrors.provider} />
+            </div>
 
             {/* units | amount */}
-            <input
-              type="number"
-              min="0"
-              value={form.units}
-              onChange={(e) => updateForm("units", Number(e.target.value))}
-              placeholder="Unidades potenciales"
-              className="input"
-            />
-            <input
-              type="number"
-              min="0"
-              value={form.expectedAmount}
-              onChange={(e) => updateForm("expectedAmount", Number(e.target.value))}
-              placeholder="Monto esperado"
-              className="input"
-            />
+            <div>
+              <input
+                type="number"
+                min="0"
+                value={form.units}
+                onChange={(e) => updateForm("units", Number(e.target.value))}
+                placeholder="Unidades potenciales"
+                className={fieldErrors.units ? "input input-error" : "input"}
+                {...fieldErrorProps("units", fieldErrors.units)}
+              />
+              <FieldError name="units" message={fieldErrors.units} />
+            </div>
+            <div>
+              <input
+                type="number"
+                min="0"
+                value={form.expectedAmount}
+                onChange={(e) => updateForm("expectedAmount", Number(e.target.value))}
+                placeholder="Monto esperado"
+                className={fieldErrors.expectedAmount ? "input input-error" : "input"}
+                {...fieldErrorProps("expectedAmount", fieldErrors.expectedAmount)}
+              />
+              <FieldError name="expectedAmount" message={fieldErrors.expectedAmount} />
+            </div>
 
             {/* stage - col 1 only */}
-            <select value={form.stage} onChange={(e) => updateForm("stage", e.target.value as PipelineStage)} className="input">
-              {pipelineStages.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
+            <div>
+              <select
+                value={form.stage}
+                onChange={(e) => updateForm("stage", e.target.value as PipelineStage)}
+                className={fieldErrors.stage ? "input input-error" : "input"}
+                {...fieldErrorProps("stage", fieldErrors.stage)}
+              >
+                {pipelineStages.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <FieldError name="stage" message={fieldErrors.stage} />
+            </div>
             <div />
 
             {/* Contacts - span 2 */}
@@ -632,13 +704,17 @@ export function ClientesPage() {
             </div>
 
             {/* Pain - span 2 */}
-            <textarea
-              value={form.pain}
-              onChange={(e) => updateForm("pain", e.target.value)}
-              placeholder="¿Por qué crees que Tracker puede ayudarle? Dolor / necesidad detectada"
-              rows={4}
-              className="input resize-none col-span-2"
-            />
+            <div className="col-span-2">
+              <textarea
+                value={form.pain}
+                onChange={(e) => updateForm("pain", e.target.value)}
+                placeholder="¿Por qué crees que Tracker puede ayudarle? Dolor / necesidad detectada"
+                rows={4}
+                className={`input resize-none${fieldErrors.pain ? " input-error" : ""}`}
+                {...fieldErrorProps("pain", fieldErrors.pain)}
+              />
+              <FieldError name="pain" message={fieldErrors.pain} />
+            </div>
 
             {/* AI Coach hint - span 2 */}
             <div className="ai-box col-span-2">
@@ -658,9 +734,6 @@ export function ClientesPage() {
                   : "Guardar cliente"}
             </button>
 
-            {(createClient.isError || updateClient.isError) && (
-              <p className="text-xs text-red-600 col-span-2">No se pudo guardar</p>
-            )}
           </form>
         </div>
       </div>

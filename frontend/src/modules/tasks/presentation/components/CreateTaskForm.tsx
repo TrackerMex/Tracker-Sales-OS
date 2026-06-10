@@ -1,6 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useClients } from '../../../clients/application/hooks/useClients'
 import type { CreateTaskInput } from '../../domain/tasks.types'
+import { coachingApi } from '../../../coaching/infrastructure/coaching.api'
+import { useApiFormErrors } from '@/shared/lib/api-errors'
+import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
+import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
 
 const TASK_TYPES = [
   'Chat',
@@ -42,13 +46,16 @@ interface CreateTaskFormProps {
   onSubmit: (input: CreateTaskInput) => void
   onClose: () => void
   isLoading?: boolean
-  error?: string | null
+  error?: unknown
 }
 
 export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error }: CreateTaskFormProps) {
   const { data: clientsData } = useClients({ limit: 200 })
   const clients = clientsData?.data ?? []
+  const { summary: errorSummary, fieldErrors, clearField, formRef } = useApiFormErrors(error)
 
+  const [aiTips, setAiTips] = useState<string[]>([])
+  const [aiLoading, setAiLoading] = useState(false)
   const [clientId, setClientId] = useState('')
   const [type, setType] = useState('Llamada')
   const [contactId, setContactId] = useState('')
@@ -65,6 +72,23 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error }: 
     () => getAiComment(type, objective, selectedContact?.name ?? '[contacto]'),
     [type, objective, selectedContact],
   )
+
+  async function fetchAiSuggestions() {
+    setAiLoading(true)
+    try {
+      const res = await coachingApi.getSuggestion({
+        type,
+        objective: objective || undefined,
+        client: selectedClient?.name,
+        contactName: selectedContact?.name,
+      })
+      setAiTips(res.tips)
+    } catch {
+      setAiTips([])
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -96,71 +120,124 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error }: 
           El comercial debe escribir qué hará, con quién y para qué.
         </p>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+        <form ref={formRef} onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+          <FormErrorSummary error={errorSummary} />
+
           {/* cliente */}
-          <select
-            value={clientId}
-            onChange={(e) => { setClientId(e.target.value); setContactId('') }}
-            className="input"
-          >
-            <option value="">Sin cliente / prospecto nuevo</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+          <div>
+            <select
+              value={clientId}
+              onChange={(e) => { setClientId(e.target.value); setContactId(''); clearField('clientId') }}
+              className={fieldErrors.clientId ? 'input input-error' : 'input'}
+              {...fieldErrorProps('clientId', fieldErrors.clientId)}
+            >
+              <option value="">Sin cliente / prospecto nuevo</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <FieldError name="clientId" message={fieldErrors.clientId} />
+          </div>
 
           {/* tipo | contacto */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <select value={type} onChange={(e) => setType(e.target.value)} className="input">
-              {TASK_TYPES.map((t) => <option key={t}>{t}</option>)}
-            </select>
-            <select
-              value={contactId}
-              onChange={(e) => setContactId(e.target.value)}
-              className="input"
-              disabled={!selectedClient}
-            >
-              <option value="">
-                {selectedClient ? 'Selecciona un contacto' : 'Selecciona primero una empresa'}
-              </option>
-              {contacts.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}{c.role ? ` · ${c.role}` : ''}
+            <div>
+              <select
+                value={type}
+                onChange={(e) => { setType(e.target.value); clearField('type') }}
+                className={fieldErrors.type ? 'input input-error' : 'input'}
+                {...fieldErrorProps('type', fieldErrors.type)}
+              >
+                {TASK_TYPES.map((t) => <option key={t}>{t}</option>)}
+              </select>
+              <FieldError name="type" message={fieldErrors.type} />
+            </div>
+            <div>
+              <select
+                value={contactId}
+                onChange={(e) => { setContactId(e.target.value); clearField('contactId') }}
+                className={fieldErrors.contactId ? 'input input-error' : 'input'}
+                disabled={!selectedClient}
+                {...fieldErrorProps('contactId', fieldErrors.contactId)}
+              >
+                <option value="">
+                  {selectedClient ? 'Selecciona un contacto' : 'Selecciona primero una empresa'}
                 </option>
-              ))}
-            </select>
+                {contacts.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}{c.role ? ` · ${c.role}` : ''}
+                  </option>
+                ))}
+              </select>
+              <FieldError name="contactId" message={fieldErrors.contactId} />
+            </div>
           </div>
 
           {/* objetivo */}
-          <textarea
-            value={objective}
-            onChange={(e) => setObjective(e.target.value)}
-            required
-            maxLength={200}
-            style={{ height: 110 }}
-            placeholder="¿Qué vas a hacer y para qué? Ej. Llamaré a Gerardo para validar si realizará la compra este mes..."
-            className="input resize-none"
-          />
+          <div>
+            <textarea
+              value={objective}
+              onChange={(e) => { setObjective(e.target.value); clearField('title') }}
+              required
+              maxLength={200}
+              style={{ height: 110 }}
+              placeholder="¿Qué vas a hacer y para qué? Ej. Llamaré a Gerardo para validar si realizará la compra este mes..."
+              className={`input resize-none${fieldErrors.title ? ' input-error' : ''}`}
+              {...fieldErrorProps('title', fieldErrors.title)}
+            />
+            <FieldError name="title" message={fieldErrors.title} />
+          </div>
 
           {/* fecha | hora */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="input" />
-            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} required className="input" />
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => { setDate(e.target.value); clearField('scheduledAt') }}
+                required
+                className={fieldErrors.scheduledAt ? 'input input-error' : 'input'}
+                {...fieldErrorProps('scheduledAt', fieldErrors.scheduledAt)}
+              />
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => { setTime(e.target.value); clearField('scheduledAt') }}
+                required
+                className={fieldErrors.scheduledAt ? 'input input-error' : 'input'}
+              />
+            </div>
+            <FieldError name="scheduledAt" message={fieldErrors.scheduledAt} />
           </div>
 
           {/* AI box */}
-          <div className="ai-box">{aiComment}</div>
+          <div className="ai-box">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#7c3aed' }}>Coach IA</span>
+              <button
+                type="button"
+                onClick={fetchAiSuggestions}
+                disabled={aiLoading}
+                style={{ fontSize: 11, fontWeight: 600, color: '#7c3aed', background: 'none', border: '1px solid #c4b5fd', borderRadius: 6, padding: '2px 10px', cursor: 'pointer' }}
+              >
+                {aiLoading ? 'Cargando...' : 'Obtener sugerencias'}
+              </button>
+            </div>
+            {aiTips.length > 0 ? (
+              <ul style={{ paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {aiTips.map((tip, i) => (
+                  <li key={i} style={{ fontSize: 12, color: '#6d28d9' }}>{tip}</li>
+                ))}
+              </ul>
+            ) : (
+              <span style={{ fontSize: 12, color: '#6d28d9' }}>{aiComment}</span>
+            )}
+          </div>
 
           {/* outlook reminder */}
           {showOutlookReminder && (
             <div style={{ padding: '11px 13px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1D4ED8' }}>
               Recordatorio: si es videoconferencia o cita, regístrala también en Outlook.
-            </div>
-          )}
-
-          {error && (
-            <div style={{ padding: '10px 13px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, fontSize: 12, color: '#B91C1C' }}>
-              {error}
             </div>
           )}
 

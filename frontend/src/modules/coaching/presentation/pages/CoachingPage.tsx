@@ -3,6 +3,7 @@ import { useAppStore } from "@/shared/store/app.store"
 import { UserRole } from "@/core/domain/types/common.types"
 import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
 import { useCoachingDaily } from "../../application/hooks/useCoachingDaily"
+import { useSettings } from "@/modules/settings/application/hooks/useSettings"
 import type { EquipoSeller } from "@/modules/equipo/domain/equipo.types"
 import type { ActivityMixItem } from "../../domain/coaching.types"
 
@@ -76,7 +77,10 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
         </div>
         <span
           className="tag"
-          style={{ backgroundColor: "#fee2e2", color: "#dc2626" }}
+          style={{
+            backgroundColor: points >= minDaily ? "#dcfce7" : "#fee2e2",
+            color: points >= minDaily ? "#16a34a" : "#dc2626"
+          }}
         >
           {points}/{minDaily} pts
         </span>
@@ -171,17 +175,11 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
 export function CoachingPage() {
   const currentUser = useAppStore((s) => s.currentUser)
   const isAdmin = currentUser?.role !== UserRole.Seller
-  const [minDaily, setMinDaily] = useState(30)
-  const [inputValue, setInputValue] = useState("30")
+
+  const { data: settingsData } = useSettings()
+  const minDaily = settingsData?.dailyMinPoints ?? 30
 
   const { data: sellers } = useSellers()
-
-  const handleSave = () => {
-    const val = parseInt(inputValue, 10)
-    if (!isNaN(val) && val > 0) {
-      setMinDaily(val)
-    }
-  }
 
   const currentSellerId = currentUser?.sellerId
   const currentSeller = sellers?.find((s) => s.id === currentSellerId)
@@ -198,6 +196,10 @@ export function CoachingPage() {
     : null
 
   const activeSellers = sellers?.filter((s) => s.active) ?? []
+  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null)
+  const displayedSellers = selectedSellerId
+    ? activeSellers.filter((s) => s.id === selectedSellerId)
+    : activeSellers
 
   return (
     <div style={{ padding: "24px", maxWidth: 1200, margin: "0 auto" }}>
@@ -227,29 +229,13 @@ export function CoachingPage() {
               Termómetro exacto de actividad comercial por vendedor
             </p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: "#64748B",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Mínimo diario
             </span>
-            <input
-              type="number"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className="input"
-              style={{ width: 64 }}
-              min={1}
-            />
-            <button className="btn-primary" onClick={handleSave}>
-              Guardar
-            </button>
+            <span style={{ fontSize: 18, fontWeight: 900, color: "#002B49" }}>
+              {minDaily} pts
+            </span>
           </div>
         </div>
       </div>
@@ -257,21 +243,37 @@ export function CoachingPage() {
       {/* Seller cards grid */}
       {isAdmin ? (
         activeSellers.length > 0 ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3,1fr)",
-              gap: 16,
-            }}
-          >
-            {activeSellers.map((seller) => (
-              <SellerCoachingCard
-                key={seller.id}
-                seller={seller}
-                minDaily={minDaily}
-              />
-            ))}
-          </div>
+          <>
+            <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#64748B" }}>Vendedor:</span>
+              <select
+                className="input"
+                style={{ width: 220 }}
+                value={selectedSellerId ?? ""}
+                onChange={(e) => setSelectedSellerId(e.target.value || null)}
+              >
+                <option value="">Todos los vendedores</option>
+                {activeSellers.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: displayedSellers.length === 1 ? "1fr" : "repeat(3,1fr)",
+                gap: 16,
+              }}
+            >
+              {displayedSellers.map((seller) => (
+                <SellerCoachingCard
+                  key={seller.id}
+                  seller={seller}
+                  minDaily={minDaily}
+                />
+              ))}
+            </div>
+          </>
         ) : (
           <p style={{ fontSize: 13, color: "#94A3B8" }}>
             No hay vendedores activos registrados.
