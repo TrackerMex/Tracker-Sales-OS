@@ -10,7 +10,7 @@ Prompt para Claude Code. Implementa `POST /api/coaching/suggestion` en el módul
 - Módulo existente: `backend/src/modules/coaching/`
   - `presentation/coaching.controller.ts` → el endpoint lanza `Not implemented — feature 12`
   - `application/use-cases/get-coaching-daily.use-case.ts` (referencia de estilo)
-- En dev se usará **OpenRouter con un modelo gratuito**; en prod, **Anthropic claude-sonnet-4-6**. El use-case NO debe conocer al proveedor.
+- En dev se usará **OpenRouter con un modelo gratuito**; en prod, **Anthropic claude-haiku-4-5**. El use-case NO debe conocer al proveedor.
 
 ## Variables de entorno (.env.example)
 
@@ -20,7 +20,7 @@ LLM_PROVIDER=openrouter            # openrouter | anthropic
 OPENROUTER_API_KEY=sk-or-...
 OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct:free
 ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_MODEL=claude-sonnet-4-6
+ANTHROPIC_MODEL=claude-haiku-4-5
 LLM_TIMEOUT_MS=3000
 ```
 
@@ -195,7 +195,7 @@ export class AnthropicAdapter implements LlmProvider {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: this.config.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-4-6',
+        model: this.config.get('ANTHROPIC_MODEL') ?? 'claude-haiku-4-5',
         max_tokens: req.maxTokens,
         system: req.system,
         messages: [{ role: 'user', content: req.user }],

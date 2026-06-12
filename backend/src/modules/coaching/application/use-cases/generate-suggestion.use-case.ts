@@ -1,13 +1,16 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { LLM_PROVIDER, LlmProvider } from '../../domain/ports/llm-provider.port';
+import {
+  LLM_PROVIDER,
+  LlmProvider,
+} from '../../domain/ports/llm-provider.port';
 import { SuggestionRequestDto } from '../dtos/suggestion-request.dto';
 
 const FALLBACKS: Record<string, string[]> = {
-  'Llamada': [
+  Llamada: [
     'Prepara 3 preguntas de descubrimiento antes de marcar.',
     'Define el siguiente paso concreto antes de colgar.',
   ],
-  'Propuesta': [
+  Propuesta: [
     'Personaliza la propuesta con los dolores detectados en actividades previas.',
     'Incluye fecha de vigencia para generar urgencia legítima.',
   ],
@@ -35,17 +38,23 @@ export class GenerateSuggestionUseCase {
       dto.client && `Cliente: ${dto.client}`,
       dto.dealStage && `Etapa del deal: ${dto.dealStage}`,
       dto.contactName && `Contacto: ${dto.contactName}`,
-    ].filter(Boolean).join('\n');
+    ]
+      .filter(Boolean)
+      .join('\n');
 
     try {
       const raw = await this.llm.complete({ system, user, maxTokens: 300 });
       const clean = raw.replace(/```json|```/g, '').trim();
       const tips: string[] = JSON.parse(clean);
-      if (!Array.isArray(tips) || tips.length === 0) throw new Error('Formato inválido');
+      if (!Array.isArray(tips) || tips.length === 0)
+        throw new Error('Formato inválido');
       return { tips: tips.slice(0, 3), source: 'llm' };
     } catch (err) {
       this.logger.warn(`LLM falló, usando fallback: ${(err as Error).message}`);
-      return { tips: FALLBACKS[dto.type] ?? FALLBACKS['default'], source: 'fallback' };
+      return {
+        tips: FALLBACKS[dto.type] ?? FALLBACKS['default'],
+        source: 'fallback',
+      };
     }
   }
 }

@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LlmProvider, LlmCompletionRequest } from '../../domain/ports/llm-provider.port';
+import {
+  LlmProvider,
+  LlmCompletionRequest,
+} from '../../domain/ports/llm-provider.port';
 
 @Injectable()
 export class AnthropicAdapter implements LlmProvider {
@@ -16,15 +19,16 @@ export class AnthropicAdapter implements LlmProvider {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: this.config.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-4-6',
+        model: this.config.get('ANTHROPIC_MODEL') ?? 'claude-haiku-4-5',
         max_tokens: req.maxTokens,
         system: req.system,
         messages: [{ role: 'user', content: req.user }],
       }),
       signal: AbortSignal.timeout(timeout),
     });
-    if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
-    const data = await res.json() as { content?: Array<{ text?: string }> };
+    if (!res.ok)
+      throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+    const data = (await res.json()) as { content?: Array<{ text?: string }> };
     return data.content?.[0]?.text ?? '';
   }
 }

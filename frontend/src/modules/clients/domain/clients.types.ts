@@ -18,7 +18,6 @@ export type ClientSource =
   | "Marketing"
   | "LinkedIn"
   | "Web"
-  | "Facebook"
   | "Dirección Comercial"
 
 export interface Contact {

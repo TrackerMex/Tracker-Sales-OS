@@ -64,5 +64,5 @@ Tracker-Sales-OS/
 
 - **Backend**: NestJS 11 + TypeScript + TypeORM + PostgreSQL
 - **Frontend**: React 19 + TypeScript + Vite + TanStack Router/Query + Zustand + Tailwind v4 + shadcn/ui
-- **IA Coach**: Claude API (claude-sonnet-4-6) en módulo coaching
+- **IA Coach**: Claude API (claude-haiku-4-5) en módulo coaching
 - **Infra**: Docker Compose (postgres + backend + frontend + nginx)

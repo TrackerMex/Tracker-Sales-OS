@@ -1,11 +1,29 @@
 -- ============================================================
 -- Tracker Sales OS — Seed Test Users
--- Fecha: 2026-06-09
+-- Fecha: 2026-06-11 (UUIDs corregidos a v4 válidos)
 -- Objetivo: Crear usuarios y datos de prueba para testing manual E2E
 -- ============================================================
 
 -- NOTA: Ejecutar como:
 -- docker exec -i tracker-sales-db psql -U tracker -d tracker_sales_os < progress/seed_test_users.sql
+
+-- UUID Map:
+-- seller1  (Juan Pérez)          : a1b2c3d4-0000-4000-8000-000000000001
+-- seller2  (María López)         : a1b2c3d4-0000-4000-8000-000000000002
+-- user     director1             : a1b2c3d4-0000-4000-8000-000000000003
+-- user     seller1               : a1b2c3d4-0000-4000-8000-000000000004
+-- user     seller2               : a1b2c3d4-0000-4000-8000-000000000005
+-- client   Empresa ABC           : a1b2c3d4-0000-4000-8000-000000000010
+-- contact  Roberto García        : a1b2c3d4-0000-4000-8000-000000000011
+-- task     Llamar a Roberto      : a1b2c3d4-0000-4000-8000-000000000020
+-- task     Cotización urgente    : a1b2c3d4-0000-4000-8000-000000000021
+-- task     Reunión mañana        : a1b2c3d4-0000-4000-8000-000000000022
+-- activity Llamada               : a1b2c3d4-0000-4000-8000-000000000030
+-- activity Reunión presencial    : a1b2c3d4-0000-4000-8000-000000000031
+-- activity Chat/WA               : a1b2c3d4-0000-4000-8000-000000000032
+-- deal     Implementación Tracker: a1b2c3d4-0000-4000-8000-000000000040
+-- sale     Plan Enterprise       : a1b2c3d4-0000-4000-8000-000000000050
+-- settings app_settings          : a1b2c3d4-0000-4000-8000-000000000060
 
 -- ============================================================
 -- 1. Crear Sellers
@@ -14,7 +32,7 @@
 -- Seller 1: Juan Pérez
 INSERT INTO sellers (id, name, email, phone, active, created_at, updated_at)
 VALUES (
-  '11111111-1111-1111-1111-111111111111',
+  'a1b2c3d4-0000-4000-8000-000000000001',
   'Juan Pérez',
   'juan@trackersales.com',
   '+52 55 1234 5678',
@@ -27,7 +45,7 @@ ON CONFLICT (id) DO NOTHING;
 -- Seller 2: María López
 INSERT INTO sellers (id, name, email, phone, active, created_at, updated_at)
 VALUES (
-  '22222222-2222-2222-2222-222222222222',
+  'a1b2c3d4-0000-4000-8000-000000000002',
   'María López',
   'maria@trackersales.com',
   '+52 55 8765 4321',
@@ -41,18 +59,10 @@ ON CONFLICT (id) DO NOTHING;
 -- 2. Crear Users
 -- ============================================================
 
--- Password hash para "admin123" (bcrypt rounds=10)
--- Generado con: bcrypt.hash('admin123', 10)
--- NOTA: En producción, generar hash real con bcrypt
-
--- User Admin (ya existe, skip)
--- INSERT INTO users (id, username, password, role, active, created_at, updated_at)
--- VALUES (...)
-
 -- User Director1
 INSERT INTO users (id, username, password, role, active, seller_id, created_at, updated_at)
 VALUES (
-  '33333333-3333-3333-3333-333333333333',
+  'a1b2c3d4-0000-4000-8000-000000000003',
   'director1',
   '$2b$10$8H7uzfFa5.MMkSbHnG8W5ehLdBfY8b8yFn3k.s.KeROkUzwGHVDDu',  -- Director123!
   'Director',
@@ -66,12 +76,12 @@ ON CONFLICT (username) DO NOTHING;
 -- User Seller1 (vinculado a Juan Pérez)
 INSERT INTO users (id, username, password, role, active, seller_id, created_at, updated_at)
 VALUES (
-  '44444444-4444-4444-4444-444444444444',
+  'a1b2c3d4-0000-4000-8000-000000000004',
   'seller1',
   '$2b$10$OhIzvEdBDtVEWVoXHL//jOPUhyEDyk37yE34Ra3.vY5B689Y6Dj9q',  -- Seller123!
   'Seller',
   true,
-  '11111111-1111-1111-1111-111111111111',  -- seller_id: Juan Pérez
+  'a1b2c3d4-0000-4000-8000-000000000001',
   NOW(),
   NOW()
 )
@@ -80,12 +90,12 @@ ON CONFLICT (username) DO NOTHING;
 -- User Seller2 (vinculado a María López)
 INSERT INTO users (id, username, password, role, active, seller_id, created_at, updated_at)
 VALUES (
-  '55555555-5555-5555-5555-555555555555',
+  'a1b2c3d4-0000-4000-8000-000000000005',
   'seller2',
   '$2b$10$OhIzvEdBDtVEWVoXHL//jOPUhyEDyk37yE34Ra3.vY5B689Y6Dj9q',  -- Seller123!
   'Seller',
   true,
-  '22222222-2222-2222-2222-222222222222',  -- seller_id: María López
+  'a1b2c3d4-0000-4000-8000-000000000002',
   NOW(),
   NOW()
 )
@@ -108,14 +118,14 @@ INSERT INTO clients (
   updated_at
 )
 VALUES (
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  'a1b2c3d4-0000-4000-8000-000000000010',
   'Empresa ABC S.A. de C.V.',
   'Moral',
   'Prospecto',
   'Enviar propuesta comercial',
   '2026-06-10',
   '10:00',
-  '11111111-1111-1111-1111-111111111111',  -- seller_id: Juan Pérez
+  'a1b2c3d4-0000-4000-8000-000000000001',
   NOW(),
   NOW()
 )
@@ -133,8 +143,8 @@ INSERT INTO contacts (
   updated_at
 )
 VALUES (
-  'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',  -- client_id: Empresa ABC
+  'a1b2c3d4-0000-4000-8000-000000000011',
+  'a1b2c3d4-0000-4000-8000-000000000010',
   'Roberto García',
   'roberto@abc.com',
   '+52 55 1111 2222',
@@ -162,14 +172,14 @@ INSERT INTO tasks (
   updated_at
 )
 VALUES (
-  'cccccccc-cccc-cccc-cccc-cccccccccccc',
+  'a1b2c3d4-0000-4000-8000-000000000020',
   'Llamar a Roberto García',
   'Seguimiento propuesta comercial',
   'Llamada',
   '2026-06-09T10:00:00Z',
   false,
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  '11111111-1111-1111-1111-111111111111',
+  'a1b2c3d4-0000-4000-8000-000000000010',
+  'a1b2c3d4-0000-4000-8000-000000000001',
   NOW(),
   NOW()
 )
@@ -189,14 +199,14 @@ INSERT INTO tasks (
   updated_at
 )
 VALUES (
-  'dddddddd-dddd-dddd-dddd-dddddddddddd',
+  'a1b2c3d4-0000-4000-8000-000000000021',
   'Enviar cotización urgente',
   'Cliente solicitó cotización servicios',
   'Correo',
   '2026-06-08T14:00:00Z',
   false,
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  '11111111-1111-1111-1111-111111111111',
+  'a1b2c3d4-0000-4000-8000-000000000010',
+  'a1b2c3d4-0000-4000-8000-000000000001',
   NOW(),
   NOW()
 )
@@ -216,14 +226,14 @@ INSERT INTO tasks (
   updated_at
 )
 VALUES (
-  'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+  'a1b2c3d4-0000-4000-8000-000000000022',
   'Reunión presencial oficinas ABC',
   'Presentación propuesta final',
   'Reunión presencial',
   '2026-06-10T11:00:00Z',
   false,
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  '11111111-1111-1111-1111-111111111111',
+  'a1b2c3d4-0000-4000-8000-000000000010',
+  'a1b2c3d4-0000-4000-8000-000000000001',
   NOW(),
   NOW()
 )
@@ -254,7 +264,7 @@ INSERT INTO activities (
   updated_at
 )
 VALUES (
-  'ffffffff-ffff-ffff-ffff-ffffffffffff',
+  'a1b2c3d4-0000-4000-8000-000000000030',
   'Llamada',
   'Dar seguimiento a propuesta enviada',
   'Cliente revisó propuesta y tiene dudas sobre implementación y tiempos',
@@ -263,12 +273,12 @@ VALUES (
   'Enviar documento de capacitación',
   '2026-06-11',
   '10:00',
-  100,  -- 5 campos completos × 20% = 100%
-  15,   -- capturada 15 min después
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  '11111111-1111-1111-1111-111111111111',
-  '2026-06-09T09:45:00Z',  -- captured_at
-  '2026-06-09T09:30:00Z',  -- executed_at
+  100,
+  15,
+  'a1b2c3d4-0000-4000-8000-000000000010',
+  'a1b2c3d4-0000-4000-8000-000000000001',
+  '2026-06-09T09:45:00Z',
+  '2026-06-09T09:30:00Z',
   NOW(),
   NOW()
 )
@@ -295,7 +305,7 @@ INSERT INTO activities (
   updated_at
 )
 VALUES (
-  '10101010-1010-1010-1010-101010101010',
+  'a1b2c3d4-0000-4000-8000-000000000031',
   'Reunión presencial',
   'Presentación de propuesta comercial completa',
   'Reunión con Director General y equipo de compras de 3 personas, bien recibida',
@@ -304,12 +314,12 @@ VALUES (
   'Seguimiento telefónico en 1 semana',
   '2026-06-16',
   '11:00',
-  100,  -- 5 campos completos × 20% = 100%
-  30,   -- capturada 30 min después
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  '11111111-1111-1111-1111-111111111111',
-  '2026-06-09T14:30:00Z',  -- captured_at
-  '2026-06-09T14:00:00Z',  -- executed_at
+  100,
+  30,
+  'a1b2c3d4-0000-4000-8000-000000000010',
+  'a1b2c3d4-0000-4000-8000-000000000001',
+  '2026-06-09T14:30:00Z',
+  '2026-06-09T14:00:00Z',
   NOW(),
   NOW()
 )
@@ -336,19 +346,19 @@ INSERT INTO activities (
   updated_at
 )
 VALUES (
-  '20202020-2020-2020-2020-202020202020',
+  'a1b2c3d4-0000-4000-8000-000000000032',
   'Chat/WA',
   'Consulta sobre servicios',
   'Cliente preguntó por disponibilidad y precios básicos',
   'Interesado en plan enterprise',
-  NULL,  -- no agreement
+  NULL,
   'Enviar propuesta',
   '2026-06-09',
-  NULL,  -- no time
-  60,   -- 3 campos × 20% = 60%
+  NULL,
+  60,
   5,
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  '11111111-1111-1111-1111-111111111111',
+  'a1b2c3d4-0000-4000-8000-000000000010',
+  'a1b2c3d4-0000-4000-8000-000000000001',
   '2026-06-08T16:05:00Z',
   '2026-06-08T16:00:00Z',
   NOW(),
@@ -374,15 +384,15 @@ INSERT INTO deals (
   updated_at
 )
 VALUES (
-  '30303030-3030-3030-3030-303030303030',
+  'a1b2c3d4-0000-4000-8000-000000000040',
   'Implementación Tracker Sales OS',
   'Sistema CRM para equipo de 5 vendedores con capacitación incluida',
   150000.00,
   'Propuesta',
   50,
   '[{"stage":"Prospecto","changedAt":"2026-06-05T10:00:00Z"},{"stage":"Contactado","changedAt":"2026-06-06T14:00:00Z"},{"stage":"Interesado","changedAt":"2026-06-07T11:00:00Z"},{"stage":"Propuesta","changedAt":"2026-06-09T09:00:00Z"}]'::jsonb,
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  '11111111-1111-1111-1111-111111111111',
+  'a1b2c3d4-0000-4000-8000-000000000010',
+  'a1b2c3d4-0000-4000-8000-000000000001',
   NOW(),
   NOW()
 )
@@ -407,7 +417,7 @@ INSERT INTO sales (
   updated_at
 )
 VALUES (
-  '40404040-4040-4040-4040-404040404040',
+  'a1b2c3d4-0000-4000-8000-000000000050',
   'Seller',
   'Nuevo',
   'Tracker Sales OS - Plan Enterprise',
@@ -416,7 +426,7 @@ VALUES (
   'Pagado',
   'Prospección propia',
   '2026-06-05',
-  '11111111-1111-1111-1111-111111111111',
+  'a1b2c3d4-0000-4000-8000-000000000001',
   NOW(),
   NOW()
 )
@@ -428,7 +438,7 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO settings (id, key, value, created_at, updated_at)
 VALUES (
-  '50505050-5050-5050-5050-505050505050',
+  'a1b2c3d4-0000-4000-8000-000000000060',
   'app_settings',
   '{"dailyMinPoints":30,"monthlyAmountGoal":600000,"monthlyUnitGoal":150,"sellerMonthlyAmountGoal":150000}'::jsonb,
   NOW(),

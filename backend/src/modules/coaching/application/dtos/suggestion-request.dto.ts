@@ -18,7 +18,15 @@ export class SuggestionRequestDto {
 
   @ApiPropertyOptional({ example: 'Negociación' })
   @IsOptional()
-  @IsIn(['Prospecto','Contactado','Interesado','Propuesta','Negociación','Cierre','Perdido'])
+  @IsIn([
+    'Prospecto',
+    'Contactado',
+    'Interesado',
+    'Propuesta',
+    'Negociación',
+    'Cierre',
+    'Perdido',
+  ])
   dealStage?: string;
 
   @ApiPropertyOptional({ example: 'Ing. Martínez' })

@@ -162,7 +162,7 @@ getSuggestion(@Body() _dto: unknown) {
 Implementar use-case `GenerateCoachingSuggestionUseCase` que:
 1. Reciba `{ type, objective, client, dealStage }`
 2. Construya prompt con contexto
-3. Llame a Anthropic API con `claude-sonnet-4-6`
+3. Llame a Anthropic API con `claude-haiku-4-5`
 4. Parse response y retorne sugerencia
 5. Maneje errores con fallback a sugerencias por defecto
 

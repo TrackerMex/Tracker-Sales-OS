@@ -112,7 +112,7 @@
   {
     "id": "12-ai-coach",
     "name": "IA Coach (Claude API)",
-    "description": "Sugerencias contextuales al crear tareas/actividades. Endpoint POST /api/coaching/suggestion llama Anthropic API (claude-sonnet-4-6) y retorna 2-3 tips.",
+    "description": "Sugerencias contextuales al crear tareas/actividades. Endpoint POST /api/coaching/suggestion llama Anthropic API (claude-haiku-4-5) y retorna 2-3 tips.",
     "status": "done",
     "priority": 12,
     "backend_modules": ["coaching"],
@@ -156,7 +156,19 @@
     "status": "done",
     "priority": 16,
     "backend_modules": [],
-    "frontend_modules": ["auth", "dashboard", "mi-dia", "clients", "pipeline", "activities", "tasks", "coaching", "reports", "settings", "equipo"],
+    "frontend_modules": [
+      "auth",
+      "dashboard",
+      "mi-dia",
+      "clients",
+      "pipeline",
+      "activities",
+      "tasks",
+      "coaching",
+      "reports",
+      "settings",
+      "equipo"
+    ],
     "notes": "Flujo: (1) Levantar app con docker-compose. (2) Recorrer cada ruta autenticado con cada rol (Admin, Director, Seller). (3) Comparar contra docs/ui-spec o el HTML prototipo. (4) Documentar hallazgos en progress/explore_ui_review.md con screenshots o descripción de gaps. No implementar fixes aquí — solo inventariar."
   },
   {
@@ -165,8 +177,29 @@
     "description": "Pruebas de flujos completos end-to-end: login → actividades → tareas → pipeline → dashboard → reportes. Verifica que backend y frontend estén integrados correctamente y que los CHECKPOINTS pendientes pasen.",
     "status": "done",
     "priority": 17,
-    "backend_modules": ["auth", "activities", "tasks", "pipeline", "sales", "dashboard", "coaching", "reports", "settings"],
-    "frontend_modules": ["auth", "dashboard", "mi-dia", "clients", "pipeline", "activities", "tasks", "coaching", "reports", "settings"],
+    "backend_modules": [
+      "auth",
+      "activities",
+      "tasks",
+      "pipeline",
+      "sales",
+      "dashboard",
+      "coaching",
+      "reports",
+      "settings"
+    ],
+    "frontend_modules": [
+      "auth",
+      "dashboard",
+      "mi-dia",
+      "clients",
+      "pipeline",
+      "activities",
+      "tasks",
+      "coaching",
+      "reports",
+      "settings"
+    ],
     "notes": "Verificación completada: 37/52 checkpoints PASS (71%), 6 FAIL (Feature 12 AI Coach no implementada), 11 requieren prueba manual. Bugs documentados en progress/bugs.md. Backend sólido, frontend funcional. Compilación TypeScript: PASS. Docker services: UP."
   }
 ]
