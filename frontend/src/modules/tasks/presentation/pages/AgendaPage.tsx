@@ -10,7 +10,6 @@ import type { CreateTaskInput } from '../../domain/tasks.types'
 
 export function AgendaPage() {
   const [showModal, setShowModal] = useState(false)
-  const [createError, setCreateError] = useState<string | null>(null)
   const { data: tasks = [], isLoading } = useTodayTasks()
   const { mutate: createTask, isPending, error: createError, reset: resetCreateTask } = useCreateTask()
   const { mutate: completeTask } = useCompleteTask()
