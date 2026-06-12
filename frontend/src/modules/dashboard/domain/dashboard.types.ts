@@ -18,6 +18,11 @@ export interface SellerScore {
   overdueCount: number;
 }
 
+export interface ActivityTrendItem {
+  date: string;
+  count: number;
+}
+
 export interface OverdueTask {
   taskId: string;
   sellerId: string;

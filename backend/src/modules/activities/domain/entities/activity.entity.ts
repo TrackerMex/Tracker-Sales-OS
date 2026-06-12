@@ -63,6 +63,7 @@ export class ActivityEntity extends BaseEntity {
   nextTime: string | null;
   points: number;
   quality: number;
+  stage: string | null;
   executedAt: Date;
   programmedAt: Date | null;
   capturedAt: Date;

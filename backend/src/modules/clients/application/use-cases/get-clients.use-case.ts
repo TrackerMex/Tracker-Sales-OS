@@ -23,8 +23,11 @@ export class GetClientsUseCase
   ) {}
 
   async execute(input: GetClientsInput): Promise<{ data: ClientDto[]; total: number }> {
+    if (input.user.role === UserRole.Seller && !input.user.sellerId) {
+      return { data: [], total: 0 };
+    }
     const sellerId =
-      input.user.role === UserRole.Seller ? input.user.sellerId ?? undefined : input.query.seller;
+      input.user.role === UserRole.Seller ? input.user.sellerId! : input.query.seller;
 
     const { data, total } = await this.clientRepo.findWithFilters({
       stage: input.query.stage,

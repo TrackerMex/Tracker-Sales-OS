@@ -1,13 +1,27 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import { useAppStore } from '../../store/app.store';
+import type { UserRole } from '@/core/domain/types/common.types';
 
-const SECTIONS = [
+interface NavItem {
+  to: string;
+  label: string;
+  roles: UserRole[];
+  icon: React.ReactNode;
+}
+
+interface NavSection {
+  header: string;
+  items: NavItem[];
+}
+
+const SECTIONS: NavSection[] = [
   {
     header: 'PRINCIPAL',
     items: [
       {
         to: '/dashboard',
         label: 'Dashboard',
+        roles: ['Admin', 'Director'],
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="ni">
             <rect x="3" y="3" width="7" height="7" />
@@ -20,6 +34,7 @@ const SECTIONS = [
       {
         to: '/mi-dia',
         label: 'Mi dia',
+        roles: ['Admin', 'Director', 'Seller'],
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="ni">
             <circle cx="12" cy="12" r="4" />
@@ -35,6 +50,7 @@ const SECTIONS = [
       {
         to: '/clientes',
         label: 'Clientes',
+        roles: ['Admin', 'Director', 'Seller'],
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="ni">
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -47,6 +63,7 @@ const SECTIONS = [
       {
         to: '/agenda',
         label: 'Agenda y tareas',
+        roles: ['Admin', 'Director', 'Seller'],
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="ni">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -59,6 +76,7 @@ const SECTIONS = [
       {
         to: '/actividades/nueva',
         label: 'Registrar actividad',
+        roles: ['Admin', 'Director', 'Seller'],
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="ni">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -69,6 +87,7 @@ const SECTIONS = [
       {
         to: '/pipeline',
         label: 'Pipeline',
+        roles: ['Admin', 'Director', 'Seller'],
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="ni">
             <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -80,6 +99,7 @@ const SECTIONS = [
       {
         to: '/ventas',
         label: 'Ventas',
+        roles: ['Admin', 'Director', 'Seller'],
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="ni">
             <line x1="12" y1="1" x2="12" y2="23" />
@@ -95,6 +115,7 @@ const SECTIONS = [
       {
         to: '/coaching',
         label: 'Coaching comercial',
+        roles: ['Admin', 'Director', 'Seller'],
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="ni">
             <line x1="18" y1="20" x2="18" y2="10" />
@@ -106,6 +127,7 @@ const SECTIONS = [
       {
         to: '/reportes',
         label: 'Reportes',
+        roles: ['Admin', 'Director'],
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="ni">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -124,6 +146,7 @@ const SECTIONS = [
       {
         to: '/equipo',
         label: 'Equipo comercial',
+        roles: ['Admin', 'Director'],
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="ni">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -136,6 +159,7 @@ const SECTIONS = [
       {
         to: '/configuracion',
         label: 'Configuracion',
+        roles: ['Admin', 'Director', 'Seller'],
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="ni">
             <circle cx="12" cy="12" r="3" />
@@ -146,6 +170,7 @@ const SECTIONS = [
       {
         to: '/import-export',
         label: 'Import / Export',
+        roles: ['Admin'],
         icon: (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="ni">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -158,11 +183,20 @@ const SECTIONS = [
   },
 ];
 
+const ROLE_LABELS: Record<UserRole, string> = {
+  Admin: 'Administrador',
+  Director: 'Director',
+  Seller: 'Vendedor',
+};
+
 export function Sidebar() {
   const sidebarOpen = useAppStore((s) => s.sidebarOpen);
+  const currentUser = useAppStore((s) => s.currentUser);
   const location = useLocation();
 
   if (!sidebarOpen) return null;
+
+  const role = currentUser?.role;
 
   return (
     <aside
@@ -207,58 +241,60 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '8px 8px' }}>
-        {SECTIONS.map((section) => (
-          <div key={section.header} style={{ marginBottom: 8 }}>
-            <div className="sb-section">{section.header}</div>
-            {section.items.map((item) => {
-              const isActive = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={`navbtn${isActive ? ' active' : ''}`}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        ))}
+        {SECTIONS.map((section) => {
+          const visibleItems = role
+            ? section.items.filter((item) => item.roles.includes(role))
+            : section.items;
+          if (visibleItems.length === 0) return null;
+          return (
+            <div key={section.header} style={{ marginBottom: 8 }}>
+              <div className="sb-section">{section.header}</div>
+              {visibleItems.map((item) => {
+                const isActive = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={`navbtn${isActive ? ' active' : ''}`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          );
+        })}
       </nav>
 
       {/* Footer */}
-      <div className="sb-footer">
-        <div
-          style={{
-            fontSize: 9,
-            fontWeight: 700,
-            color: 'rgba(255,255,255,0.25)',
-            textTransform: 'uppercase',
-            marginBottom: 6,
-            paddingLeft: 1,
-          }}
-        >
-          Rol
+      {currentUser && (
+        <div className="sb-footer">
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'rgba(255,255,255,0.85)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {currentUser.name}
+          </div>
+          <div
+            style={{
+              marginTop: 3,
+              fontSize: 10,
+              color: 'rgba(255,255,255,0.35)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            {role ? ROLE_LABELS[role] : ''}
+          </div>
         </div>
-        <select
-          style={{
-            width: '100%',
-            padding: '6px 8px',
-            background: 'rgba(255,255,255,0.08)',
-            border: 'none',
-            borderRadius: 7,
-            color: 'white',
-            fontSize: 12,
-            outline: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          <option value="admin">Administrador</option>
-          <option value="manager">Gerente</option>
-          <option value="rep">Representante</option>
-        </select>
-      </div>
+      )}
     </aside>
   );
 }

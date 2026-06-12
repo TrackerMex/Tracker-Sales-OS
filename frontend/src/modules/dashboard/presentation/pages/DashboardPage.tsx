@@ -11,9 +11,11 @@ import { Line } from "react-chartjs-2"
 import { useDashboardSummary } from "../../application/hooks/useDashboardSummary"
 import { useSellersSemaphore } from "../../application/hooks/useSellersSemaphore"
 import { useOverdueTasks } from "../../application/hooks/useOverdueTasks"
+import { useActivityTrend } from "../../application/hooks/useActivityTrend"
 import { KPIStrip } from "../components/KPIStrip"
 import { SellerSemaphoreTable } from "../components/SellerSemaphoreTable"
 import { AlertsPanel } from "../components/AlertsPanel"
+import type { ActivityTrendItem } from "../../domain/dashboard.types"
 
 ChartJS.register(
   CategoryScale,
@@ -37,37 +39,13 @@ function formatCurrency(value: number): string {
   }).format(Math.abs(value) > 999999999 ? 999999999 : value)
 }
 
-function formatPercent(value: number): string {
-  // Handle edge cases and clamp to 0-100
-  if (!Number.isFinite(value)) {
-    return "0%"
-  }
-  const clamped = Math.max(0, Math.min(100, value))
-  return `${clamped.toFixed(1)}%`
+interface ActivityChartProps {
+  data: ActivityTrendItem[];
 }
 
-function formatNumber(value: number): string {
-  // Handle edge cases and format with thousands separator
-  if (!Number.isFinite(value)) {
-    return "0"
-  }
-  return new Intl.NumberFormat("es-MX").format(Math.round(value))
-}
-
-const CHART_DATA = [2, 5, 3, 8, 6, 4, 9, 7, 11, 6, 8, 10, 7, 12]
-
-function getLast14Days(): string[] {
-  const days = []
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-    days.push(d.toLocaleDateString("es-MX", { day: "2-digit", month: "short" }))
-  }
-  return days
-}
-
-function ActivityChart() {
-  const labels = getLast14Days()
+function ActivityChart({ data }: ActivityChartProps) {
+  const labels = data.map((d) => d.date.slice(5))
+  const counts = data.map((d) => d.count)
 
   return (
     <div style={{ height: 180, position: "relative" }}>
@@ -76,7 +54,7 @@ function ActivityChart() {
           labels,
           datasets: [
             {
-              data: CHART_DATA,
+              data: counts,
               borderColor: "#82bc00",
               backgroundColor: "rgba(130,188,0,0.08)",
               borderWidth: 2,
@@ -114,6 +92,7 @@ export function DashboardPage() {
   const summary = useDashboardSummary()
   const sellers = useSellersSemaphore()
   const overdue = useOverdueTasks()
+  const trend = useActivityTrend()
 
   const isLoading = summary.isLoading
   const data = summary.data
@@ -188,7 +167,7 @@ export function DashboardPage() {
             </p>
           </div>
           <div className="p-4" aria-labelledby="activity-chart-title">
-            <ActivityChart />
+            <ActivityChart data={trend.data ?? []} />
           </div>
         </div>
 

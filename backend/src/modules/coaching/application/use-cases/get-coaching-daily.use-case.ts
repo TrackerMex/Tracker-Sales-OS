@@ -7,6 +7,7 @@ import { ActivityTypeormEntity } from '../../../activities/infrastructure/entiti
 import { TaskTypeormEntity } from '../../../tasks/infrastructure/entities/task.typeorm.entity';
 import { SellerTypeormEntity } from '../../../sellers/infrastructure/entities/seller.typeorm.entity';
 import { TaskStatus } from '../../../tasks/domain/entities/task.entity';
+import { GetSettingsUseCase } from '../../../settings/application/use-cases/get-settings.use-case';
 
 @Injectable()
 export class GetCoachingDailyUseCase implements IUseCase<
@@ -20,9 +21,11 @@ export class GetCoachingDailyUseCase implements IUseCase<
     private readonly taskRepo: Repository<TaskTypeormEntity>,
     @InjectRepository(SellerTypeormEntity)
     private readonly sellerRepo: Repository<SellerTypeormEntity>,
+    private readonly getSettings: GetSettingsUseCase,
   ) {}
 
   async execute(sellerId: string): Promise<CoachingDailyDto> {
+    const settings = await this.getSettings.execute();
     const now = new Date();
     const todayStart = new Date(
       now.getFullYear(),
@@ -90,7 +93,7 @@ export class GetCoachingDailyUseCase implements IUseCase<
 
     const pointsToday = Number(pointsRaw?.total ?? 0);
     const avgQuality = Number(pointsRaw?.avgQ ?? 0);
-    const dailyPointsGoal = 30;
+    const dailyPointsGoal = settings.dailyMinPoints ?? 30;
     const progressPct = Math.min(
       100,
       Math.round((pointsToday / dailyPointsGoal) * 100),

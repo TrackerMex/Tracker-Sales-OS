@@ -29,7 +29,7 @@ export class SellersController {
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.Admin, UserRole.Director)
+  @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
   findAll() {
     return this.getSellersUseCase.execute();
   }

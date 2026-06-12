@@ -12,7 +12,7 @@ export function AgendaPage() {
   const [showModal, setShowModal] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const { data: tasks = [], isLoading } = useTodayTasks()
-  const { mutate: createTask, isPending } = useCreateTask()
+  const { mutate: createTask, isPending, error: createError, reset: resetCreateTask } = useCreateTask()
   const { mutate: completeTask } = useCompleteTask()
   const { data: clientsData } = useClients({ limit: 200 })
   const clients = clientsData?.data ?? []
@@ -34,13 +34,8 @@ export function AgendaPage() {
   }
 
   function handleCreateTask(input: CreateTaskInput) {
-    setCreateError(null)
     createTask(input, {
       onSuccess: () => setShowModal(false),
-      onError: (err: unknown) => {
-        const msg = err instanceof Error ? err.message : 'Error al guardar la tarea'
-        setCreateError(msg)
-      },
     })
   }
 
@@ -48,7 +43,7 @@ export function AgendaPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Compromisos comerciales</h1>
-        <button onClick={() => setShowModal(true)} className="btn-primary">
+        <button onClick={() => { resetCreateTask(); setShowModal(true) }} className="btn-primary">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
@@ -66,7 +61,7 @@ export function AgendaPage() {
         <div className="empty-state">
           <p>Sin tareas registradas</p>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => { resetCreateTask(); setShowModal(true) }}
             style={{ marginTop: 8, fontSize: 12, color: '#002B49', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
           >
             Crear una tarea
@@ -93,7 +88,7 @@ export function AgendaPage() {
       {showModal && (
         <CreateTaskForm
           onSubmit={handleCreateTask}
-          onClose={() => { setShowModal(false); setCreateError(null) }}
+          onClose={() => { setShowModal(false); resetCreateTask() }}
           isLoading={isPending}
           error={createError}
         />

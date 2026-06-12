@@ -4,12 +4,17 @@ import { ActivityDto } from '../dtos/activity.dto';
 import { CreateActivityDto } from '../dtos/create-activity.dto';
 import { ACTIVITY_REPOSITORY, IActivityRepository } from '../../domain/repositories/activity.repository.interface';
 import { TASK_POINTS, REQUIRES_NEXT_STEP } from '../../domain/entities/activity.entity';
+import { DEAL_REPOSITORY, IDealsRepository } from '../../../pipeline/domain/repositories/deal.repository.interface';
+import { ALLOWED_TRANSITIONS, STAGE_PROBABILITY } from '../../../pipeline/domain/entities/deal.entity';
+import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 
 @Injectable()
 export class CreateActivityUseCase implements IUseCase<CreateActivityDto, ActivityDto> {
   constructor(
     @Inject(ACTIVITY_REPOSITORY)
     private readonly activityRepo: IActivityRepository,
+    @Inject(DEAL_REPOSITORY)
+    private readonly dealRepo: IDealsRepository,
   ) {}
 
   async execute(input: CreateActivityDto): Promise<ActivityDto> {
@@ -36,6 +41,7 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
       nextObjective: input.nextObjective ?? null,
       nextDate: input.nextDate ?? null,
       nextTime: input.nextTime ?? null,
+      stage: input.stage ?? null,
       programmedAt: input.programmedAt ? new Date(input.programmedAt) : null,
       executedAt,
       capturedAt,
@@ -44,7 +50,43 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
       quality,
     });
 
+    if (input.stage) {
+      await this.syncPipeline(input.clientId, input.sellerId, input.stage);
+    }
+
     return ActivityDto.fromEntity(entity);
+  }
+
+  private async syncPipeline(clientId: string, sellerId: string, stage: PipelineStage): Promise<void> {
+    const existingDeal = await this.dealRepo.findByClientIdAndSellerId(clientId, sellerId);
+
+    if (existingDeal) {
+      const allowed = ALLOWED_TRANSITIONS[existingDeal.stage] ?? [];
+      if (!allowed.includes(stage)) {
+        return;
+      }
+      await this.dealRepo.update(existingDeal.id, {
+        stage,
+        probability: STAGE_PROBABILITY[stage],
+        stageHistory: [
+          ...existingDeal.stageHistory,
+          {
+            stage,
+            changedAt: new Date().toISOString(),
+            changedBy: sellerId,
+          },
+        ],
+      });
+    } else {
+      await this.dealRepo.create({
+        clientId,
+        sellerId,
+        stage,
+        amount: 0,
+        probability: STAGE_PROBABILITY[stage],
+        stageHistory: [],
+      });
+    }
   }
 
   private calculateQuality(input: CreateActivityDto): number {

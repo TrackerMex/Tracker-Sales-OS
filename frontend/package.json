@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@atlaskit/pragmatic-drag-and-drop": "^1.8.1",
+    "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^2.1.5",
     "@fontsource-variable/montserrat": "^5.2.8",
     "@hookform/resolvers": "^5.4.0",
     "@hugeicons/core-free-icons": "^4.2.0",

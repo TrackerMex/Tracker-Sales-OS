@@ -16,7 +16,7 @@ export function ActivitiesPage() {
   const taskTitle = (search as { taskTitle?: string }).taskTitle
   const [showForm, setShowForm] = useState(false)
   const { data, isLoading } = useDailyActivities()
-  const { mutate, isPending } = useCreateActivity()
+  const { mutate, isPending, error: createError, reset: resetCreate } = useCreateActivity()
 
   function handleSubmit(input: CreateActivityInput) {
     mutate(input, {
@@ -44,7 +44,7 @@ export function ActivitiesPage() {
           {showForm && (
             <button onClick={() => setShowForm(false)} className="btn-ghost">Cancelar</button>
           )}
-          <button onClick={() => setShowForm((v) => !v)} className="btn-primary">
+          <button onClick={() => { resetCreate(); setShowForm((v) => !v) }} className="btn-primary">
             {showForm ? 'Cerrar' : 'Registrar actividad'}
           </button>
         </div>
@@ -64,7 +64,7 @@ export function ActivitiesPage() {
       {showForm && (
         <div className="card p-5">
           <div className="slabel mb-4">Registrar actividad</div>
-          <ActivityForm onSubmit={handleSubmit} isLoading={isPending} programmedTask={taskTitle} />
+          <ActivityForm onSubmit={handleSubmit} isLoading={isPending} programmedTask={taskTitle} submitError={createError} />
         </div>
       )}
 

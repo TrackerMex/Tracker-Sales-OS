@@ -1,6 +1,6 @@
 # Bugs Tracker — Tracker Sales OS
 
-**Última actualización**: 2026-06-09
+**Última actualización**: 2026-06-09 (revisado 2026-06-09)
 **Reportados por**: Agente Implementer/Tester (Feature 17 - Integration Testing)
 
 ---
@@ -8,7 +8,7 @@
 ## Bug #1: Mi Día no usa configuración dinámica de dailyMinPoints
 
 **Severidad**: MEDIA
-**Estado**: ABIERTO
+**Estado**: CERRADO
 **Fecha detectado**: 2026-06-09
 
 ### Descripción
@@ -162,7 +162,7 @@ getSuggestion(@Body() _dto: unknown) {
 Implementar use-case `GenerateCoachingSuggestionUseCase` que:
 1. Reciba `{ type, objective, client, dealStage }`
 2. Construya prompt con contexto
-3. Llame a Anthropic API con `claude-sonnet-4-6`
+3. Llame a Anthropic API con `claude-haiku-4-5`
 4. Parse response y retorne sugerencia
 5. Maneje errores con fallback a sugerencias por defecto
 
@@ -182,7 +182,7 @@ Feature marcada como `"status": "pending"` en `feature_list.json`. Requiere deci
 ## Posible Bug #3: AuditInterceptor no encontrado
 
 **Severidad**: BAJA (depende de requerimientos)
-**Estado**: REQUIERE VERIFICACIÓN
+**Estado**: CERRADO (2026-06-11 — interceptor existe en `backend/src/modules/pipeline/infrastructure/interceptors/audit.interceptor.ts`, aplicado en pipeline.controller. Verificado runtime: PATCH /api/deals/:id/stage crea row en audit_logs con old_values/new_values. Hallazgo menor: en deals recién creados old_values='initial' porque stage_history no incluye el stage inicial — ver qa_smoke_2026-06-11.md)
 **Fecha detectado**: 2026-06-09
 
 ### Descripción
@@ -246,9 +246,9 @@ CHECKPOINTS.md línea 87:
 
 | Bug | Severidad | Estado | Feature | Prioridad Fix |
 |-----|-----------|--------|---------|---------------|
-| #1: Mi Día settings hardcoded | MEDIA | ABIERTO | 10, 14 | ALTA |
+| #1: Mi Día settings hardcoded | MEDIA | CERRADO | 10, 14 | — |
 | #2: AI Coach no implementado | ALTA/BAJA | PENDIENTE | 12 | DEPENDE |
-| #3: AuditInterceptor no verificado | BAJA | VERIFICAR | 07 | MEDIA |
+| #3: AuditInterceptor no verificado | BAJA | CERRADO (2026-06-11) | 07 | — |
 
 ---
 

@@ -17,6 +17,14 @@ export class DealDto {
   updatedAt: Date;
   deletedAt: Date | null;
 
+  contactName: string | null;
+  contactRole: string | null;
+  painPoint: string | null;
+  sellerName: string | null;
+  nextStep: string | null;
+  nextDate: string | null;
+  nextTime: string | null;
+
   static fromEntity(entity: DealEntity): DealDto {
     const dto = new DealDto();
     dto.id = entity.id;
@@ -30,6 +38,29 @@ export class DealDto {
     dto.createdAt = entity.createdAt;
     dto.updatedAt = entity.updatedAt;
     dto.deletedAt = entity.deletedAt;
+    return dto;
+  }
+
+  static fromEnrichedRow(row: {
+    deal: DealEntity;
+    clientName?: string;
+    contactName?: string | null;
+    contactRole?: string | null;
+    painPoint?: string | null;
+    sellerName?: string | null;
+    clientNextStep?: string | null;
+    clientNextDate?: string | null;
+    clientNextTime?: string | null;
+  }): DealDto {
+    const dto = DealDto.fromEntity(row.deal);
+    dto.clientName = row.clientName ?? row.deal.clientName;
+    dto.contactName = row.contactName ?? null;
+    dto.contactRole = row.contactRole ?? null;
+    dto.painPoint = row.painPoint ?? null;
+    dto.sellerName = row.sellerName ?? null;
+    dto.nextStep = row.clientNextStep ?? null;
+    dto.nextDate = row.clientNextDate ?? null;
+    dto.nextTime = row.clientNextTime ?? null;
     return dto;
   }
 }

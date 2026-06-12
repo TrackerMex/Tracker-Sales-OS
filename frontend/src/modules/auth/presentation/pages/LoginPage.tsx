@@ -3,6 +3,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useLogin } from '../../application/hooks/useLogin';
 import { Button } from '@/components/ui/button';
+import { useApiFormErrors } from '@/shared/lib/api-errors';
+import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary';
+import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError';
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Requerido'),
@@ -28,6 +31,7 @@ function CheckIcon() {
 
 export function LoginPage() {
   const { mutate: login, isPending, error } = useLogin();
+  const { summary: serverError, fieldErrors, clearField, formRef } = useApiFormErrors(error);
   const {
     register,
     handleSubmit,
@@ -36,6 +40,9 @@ export function LoginPage() {
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
+
+  const usernameError = errors.username?.message ?? fieldErrors.username;
+  const passwordError = errors.password?.message ?? fieldErrors.password;
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#EEF2F7' }}>
@@ -115,21 +122,20 @@ export function LoginPage() {
             Ingresa tus credenciales para acceder
           </p>
 
-          <form onSubmit={handleSubmit((data) => login(data))}>
+          <form ref={formRef} onSubmit={handleSubmit((data) => login(data))}>
             <div style={{ marginBottom: 20 }}>
               <label className="slabel" style={{ display: 'block', marginBottom: 6 }}>
                 Usuario
               </label>
               <input
-                {...register('username')}
+                {...register('username', { onChange: () => clearField('username') })}
                 type="text"
                 autoComplete="username"
-                className="input"
+                className={usernameError ? 'input input-error' : 'input'}
                 placeholder="admin"
+                {...fieldErrorProps('username', usernameError)}
               />
-              {errors.username && (
-                <p style={{ fontSize: 12, color: '#EF4444', marginTop: 4 }}>{errors.username.message}</p>
-              )}
+              <FieldError name="username" message={usernameError} />
             </div>
 
             <div style={{ marginBottom: 20 }}>
@@ -137,20 +143,19 @@ export function LoginPage() {
                 Contrasena
               </label>
               <input
-                {...register('password')}
+                {...register('password', { onChange: () => clearField('password') })}
                 type="password"
                 autoComplete="current-password"
-                className="input"
+                className={passwordError ? 'input input-error' : 'input'}
+                {...fieldErrorProps('password', passwordError)}
               />
-              {errors.password && (
-                <p style={{ fontSize: 12, color: '#EF4444', marginTop: 4 }}>{errors.password.message}</p>
-              )}
+              <FieldError name="password" message={passwordError} />
             </div>
 
-            {error && (
-              <p style={{ fontSize: 12, color: '#EF4444', marginBottom: 16 }}>
-                Credenciales incorrectas
-              </p>
+            {serverError && (
+              <div style={{ marginBottom: 16 }}>
+                <FormErrorSummary error={serverError} />
+              </div>
             )}
 
             <Button

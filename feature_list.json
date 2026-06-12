@@ -83,11 +83,11 @@
     "id": "09-dashboard",
     "name": "Dashboard & KPIs",
     "description": "Semáforo comercial por vendedor (verde/ámbar/rojo), scoring 0-100%, KPIs globales (venta registrada, unidades, puntos, calidad), alertas de seguimientos vencidos",
-    "status": "partial",
+    "status": "done",
     "priority": 9,
     "backend_modules": ["dashboard"],
     "frontend_modules": ["dashboard"],
-    "notes": "Score = 45% esfuerzo (puntos vs mínimo) + 35% calidad promedio + 40% volumen (capped 50pts) - 10 por cada seguimiento vencido. BUG: Click en vendedor no navega a detalle. Gráfica no muestra datos reales correctamente."
+    "notes": "Score = 45% esfuerzo (puntos vs mínimo) + 35% calidad promedio + 40% volumen (capped 50pts) - 10 por cada seguimiento vencido. FIXED: Click vendedor navega a /coaching. Gráfica usa endpoint real GET /api/dashboard/activity-trend."
   },
   {
     "id": "10-mi-dia",
@@ -103,21 +103,21 @@
     "id": "11-coaching",
     "name": "Coaching Comercial",
     "description": "Reporte diario por vendedor: progreso vs mínimo, mix de actividades, calidad promedio, vencidos, agenda de mañana. Director puede ver cualquier vendedor.",
-    "status": "partial",
+    "status": "done",
     "priority": 11,
     "backend_modules": ["coaching"],
     "frontend_modules": ["coaching"],
-    "notes": "Mix óptimo: detectar si hay muchos chats pero pocas llamadas, muchas llamadas pero sin reuniones, etc. BUG CRÍTICO: Reporte no se visualiza correctamente. Falta selector de vendedor para Director. RBAC funciona para Seller (solo ve su reporte)."
+    "notes": "Mix óptimo: detectar si hay muchos chats pero pocas llamadas, muchas llamadas pero sin reuniones, etc. FIXED: Tag color condicional (verde/rojo según meta). minDaily lee de Settings. Selector de vendedor para Admin/Director. dailyPointsGoal dinámico en backend."
   },
   {
     "id": "12-ai-coach",
     "name": "IA Coach (Claude API)",
-    "description": "Sugerencias contextuales al crear tareas/actividades. Endpoint POST /api/coaching/suggestion llama Anthropic API (claude-sonnet-4-6) y retorna 2-3 tips.",
-    "status": "pending",
+    "description": "Sugerencias contextuales al crear tareas/actividades. Endpoint POST /api/coaching/suggestion llama Anthropic API (claude-haiku-4-5) y retorna 2-3 tips.",
+    "status": "done",
     "priority": 12,
     "backend_modules": ["coaching"],
     "frontend_modules": ["activities", "tasks"],
-    "notes": "Prompt incluye: tipo actividad, objetivo, cliente, stage deal, nombre contacto. Max 300 tokens. Requiere ANTHROPIC_API_KEY en .env."
+    "notes": "Proveedor intercambiable: LLM_PROVIDER=openrouter (dev) | anthropic (prod). Factory en coaching.module.ts. Fallback hardcoded si API falla. Frontend: botón 'Obtener sugerencias' en ActivityForm y CreateTaskForm."
   },
   {
     "id": "13-reports",
@@ -156,7 +156,19 @@
     "status": "done",
     "priority": 16,
     "backend_modules": [],
-    "frontend_modules": ["auth", "dashboard", "mi-dia", "clients", "pipeline", "activities", "tasks", "coaching", "reports", "settings", "equipo"],
+    "frontend_modules": [
+      "auth",
+      "dashboard",
+      "mi-dia",
+      "clients",
+      "pipeline",
+      "activities",
+      "tasks",
+      "coaching",
+      "reports",
+      "settings",
+      "equipo"
+    ],
     "notes": "Flujo: (1) Levantar app con docker-compose. (2) Recorrer cada ruta autenticado con cada rol (Admin, Director, Seller). (3) Comparar contra docs/ui-spec o el HTML prototipo. (4) Documentar hallazgos en progress/explore_ui_review.md con screenshots o descripción de gaps. No implementar fixes aquí — solo inventariar."
   },
   {
@@ -165,8 +177,119 @@
     "description": "Pruebas de flujos completos end-to-end: login → actividades → tareas → pipeline → dashboard → reportes. Verifica que backend y frontend estén integrados correctamente y que los CHECKPOINTS pendientes pasen.",
     "status": "done",
     "priority": 17,
-    "backend_modules": ["auth", "activities", "tasks", "pipeline", "sales", "dashboard", "coaching", "reports", "settings"],
-    "frontend_modules": ["auth", "dashboard", "mi-dia", "clients", "pipeline", "activities", "tasks", "coaching", "reports", "settings"],
+    "backend_modules": [
+      "auth",
+      "activities",
+      "tasks",
+      "pipeline",
+      "sales",
+      "dashboard",
+      "coaching",
+      "reports",
+      "settings"
+    ],
+    "frontend_modules": [
+      "auth",
+      "dashboard",
+      "mi-dia",
+      "clients",
+      "pipeline",
+      "activities",
+      "tasks",
+      "coaching",
+      "reports",
+      "settings"
+    ],
     "notes": "Verificación completada: 37/52 checkpoints PASS (71%), 6 FAIL (Feature 12 AI Coach no implementada), 11 requieren prueba manual. Bugs documentados en progress/bugs.md. Backend sólido, frontend funcional. Compilación TypeScript: PASS. Docker services: UP."
+  },
+  {
+    "id": "18-phase3-hardening",
+    "name": "Fase 3: Hardening y deuda técnica",
+    "description": "dailyCallsGoal dinámico desde Settings, gating por rol en useSellers (eliminar 403s de Seller), verificación runtime de AuditInterceptor, verificación E2E de error feedback, smoke con seed corregido.",
+    "status": "done",
+    "priority": 18,
+    "backend_modules": ["settings", "dashboard"],
+    "frontend_modules": ["equipo", "settings", "clients", "coaching"],
+    "notes": "Completada 2026-06-11. Review 11/11 PASS (progress/review_18-phase3-hardening.md). QA runtime PASS (progress/qa_smoke_2026-06-11.md): audit_logs verificado, dailyCallsGoal dinámico E2E, 0 errores 403 como Seller, error feedback en login OK. Fix post-QA: revert de gating en useSettings (backend permite Seller; vista read-only necesita datos reales). Pendiente menor: stage_history no incluye stage inicial (old_values='initial' en audit) — atacar con feature 25."
+  },
+  {
+    "id": "19-pipeline-forecast",
+    "name": "Forecast ponderado del pipeline",
+    "description": "SUM(amount × probability) mostrado en header del Kanban y tarjeta en Dashboard comparada vs monthlyAmountGoal.",
+    "status": "pending",
+    "priority": 19,
+    "backend_modules": ["pipeline", "dashboard"],
+    "frontend_modules": ["pipeline", "dashboard"],
+    "notes": "Origen: improve_plan.md 1.1. Probability por stage ya existe. Sin tablas nuevas."
+  },
+  {
+    "id": "20-stalled-deals",
+    "name": "Detección de deals estancados",
+    "description": "Días en stage actual calculados desde stage_history JSONB. Badge ámbar/rojo en tarjeta Kanban (>7/>14 días, umbrales en Settings). Lista 'Deals en riesgo' en dashboard para Admin/Director.",
+    "status": "pending",
+    "priority": 20,
+    "backend_modules": ["pipeline", "dashboard", "settings"],
+    "frontend_modules": ["pipeline", "dashboard", "settings"],
+    "notes": "Origen: improve_plan.md 1.2. Umbrales: 2 campos nuevos opcionales en Settings."
+  },
+  {
+    "id": "21-leaderboard",
+    "name": "Leaderboard mensual",
+    "description": "Ranking de vendedores del mes por puntos: posición, delta vs mes anterior, racha de días cumpliendo dailyMinPoints. Sección en Dashboard.",
+    "status": "pending",
+    "priority": 21,
+    "backend_modules": ["dashboard"],
+    "frontend_modules": ["dashboard"],
+    "notes": "Origen: improve_plan.md 1.3. Solo lectura, derivado de activities. Sin tablas nuevas."
+  },
+  {
+    "id": "22-overdue-tasks-badge",
+    "name": "Indicador de tareas vencidas",
+    "description": "Badge rojo en tareas con scheduledAt pasado sin completar, en Agenda y Mi Día.",
+    "status": "pending",
+    "priority": 22,
+    "backend_modules": [],
+    "frontend_modules": ["tasks", "mi-dia"],
+    "notes": "Origen: improve_plan.md 1.4. Pendiente conocido de feature 06."
+  },
+  {
+    "id": "23-cold-accounts",
+    "name": "Cuentas frías (data freshness)",
+    "description": "Cliente sin actividad en N días = cuenta fría. Columna 'última actividad' + filtro en lista de clientes. Alerta en Mi Día.",
+    "status": "pending",
+    "priority": 23,
+    "backend_modules": ["clients", "dashboard"],
+    "frontend_modules": ["clients", "mi-dia"],
+    "notes": "Origen: improve_plan.md 2.1. Query join clients-activities."
+  },
+  {
+    "id": "24-client-data-quality",
+    "name": "Score de calidad de datos por cliente",
+    "description": "% de campos llenos del cliente/contactos (tel, email, dominio, tipo persona, fuente). Badge en detalle + filtro 'datos incompletos'.",
+    "status": "pending",
+    "priority": 24,
+    "backend_modules": ["clients"],
+    "frontend_modules": ["clients"],
+    "notes": "Origen: improve_plan.md 2.2. Mismo patrón que calidad de actividad (campos × peso)."
+  },
+  {
+    "id": "25-winloss-analysis",
+    "name": "Análisis win/loss y conversión por etapa",
+    "description": "Funnel de conversión etapa→etapa, tiempo promedio por etapa, % perdidos por etapa de origen. Campo opcional lossReason al mover a Perdido. Sección nueva en Reports (Admin/Director).",
+    "status": "pending",
+    "priority": 25,
+    "backend_modules": ["pipeline", "reports"],
+    "frontend_modules": ["pipeline", "reports"],
+    "notes": "Origen: improve_plan.md 2.3. Única feature que toca schema (campo opcional lossReason). lossReason select: precio, competencia, sin respuesta, timing, otro."
+  },
+  {
+    "id": "26-ai-coach-context",
+    "name": "IA Coach con más contexto",
+    "description": "Enriquecer prompt de POST /api/coaching/suggestion con últimas 3 actividades del cliente, días en stage actual, calidad promedio del vendedor. Mencionar deals estancados.",
+    "status": "pending",
+    "priority": 26,
+    "backend_modules": ["coaching"],
+    "frontend_modules": [],
+    "notes": "Origen: improve_plan.md 2.4. Mismo endpoint y proveedor, solo mejor prompt. Depende de 20-stalled-deals para señal de estancamiento."
   }
 ]

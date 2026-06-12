@@ -1,11 +1,13 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { FormEvent } from "react"
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element"
 import { useAppStore } from "@/shared/store/app.store"
 import { usePipeline } from "../../application/hooks/usePipeline"
 import { useCreateDeal } from "../../application/hooks/useCreateDeal"
 import { useChangeStage } from "../../application/hooks/useChangeStage"
 import { KanbanColumn } from "../components/KanbanColumn"
-import type { PipelineStage, Deal } from "../../domain/pipeline.types"
+import { ClientDetailPage } from "./ClientDetailPage"
+import type { PipelineStage, Deal, PipelineGrouped } from "../../domain/pipeline.types"
 
 const ALL_STAGES: PipelineStage[] = [
   "Prospecto",
@@ -27,6 +29,40 @@ function SkeletonColumns() {
   )
 }
 
+interface KanbanBoardProps {
+  grouped: PipelineGrouped
+  onChangeStage: (dealId: string, newStage: PipelineStage) => void
+  onCreateDeal: (stage: PipelineStage) => void
+  onDealClick: (deal: Deal) => void
+}
+
+function KanbanBoard({ grouped, onChangeStage, onCreateDeal, onDealClick }: KanbanBoardProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    return autoScrollForElements({ element: el })
+  }, [])
+
+  return (
+    <div ref={scrollRef} className="pipeline-scroll" style={{ overflowX: 'auto', paddingBottom: '16px' }}>
+      <div style={{ display: 'flex', gap: '12px', minWidth: 'max-content' }}>
+        {ALL_STAGES.map((stage) => (
+          <KanbanColumn
+            key={stage}
+            stage={stage}
+            deals={grouped[stage] ?? []}
+            onChangeStage={onChangeStage}
+            onCreateDeal={onCreateDeal}
+            onDealClick={onDealClick}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 interface CreateDealModal {
   stage: PipelineStage
 }
@@ -43,6 +79,7 @@ export function PipelinePage() {
   const [modal, setModal] = useState<CreateDealModal | null>(null)
   const [clientId, setClientId] = useState("")
   const [amount, setAmount] = useState("")
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null)
 
   function handleChangeStage(dealId: string, newStage: PipelineStage) {
     changeStage.mutate({ dealId, input: { newStage, changedBy: username } })
@@ -75,16 +112,19 @@ export function PipelinePage() {
     )
   }
 
-  function getDeals(stage: PipelineStage): Deal[] {
-    if (!grouped) return []
-    return grouped[stage] ?? []
+  function handleDealClick(deal: Deal) {
+    setSelectedDeal(deal)
+  }
+
+  if (selectedDeal) {
+    return <ClientDetailPage deal={selectedDeal} />
   }
 
   return (
     <div className="space-y-4">
       <div>
         <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Pipeline</h1>
-        <p style={{ marginTop: 2, fontSize: 12, color: '#94A3B8' }}>Vista Kanban por stage</p>
+        <p style={{ marginTop: 2, fontSize: 12, color: '#94A3B8' }}>Fases comerciales por oportunidad</p>
       </div>
 
       {isLoading && <SkeletonColumns />}
@@ -92,20 +132,13 @@ export function PipelinePage() {
         <p style={{ fontSize: 13, color: '#EF4444' }}>No se pudo cargar el pipeline.</p>
       )}
 
-      {!isLoading && !isError && (
-        <div style={{ overflowX: 'auto', paddingBottom: '16px' }}>
-          <div style={{ display: 'flex', gap: '12px', minWidth: 'max-content' }}>
-            {ALL_STAGES.map((stage) => (
-              <KanbanColumn
-                key={stage}
-                stage={stage}
-                deals={getDeals(stage)}
-                onChangeStage={handleChangeStage}
-                onCreateDeal={handleOpenCreate}
-              />
-            ))}
-          </div>
-        </div>
+      {!isLoading && !isError && grouped && (
+        <KanbanBoard
+          grouped={grouped}
+          onChangeStage={handleChangeStage}
+          onCreateDeal={handleOpenCreate}
+          onDealClick={handleDealClick}
+        />
       )}
 
       {modal && (

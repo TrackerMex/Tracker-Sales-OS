@@ -409,7 +409,7 @@ Body: {
 CoachingService.generateSuggestion():
   1. Construir prompt con contexto del vendedor
   2. POST https://api.anthropic.com/v1/messages
-     model: claude-sonnet-4-6
+     model: claude-haiku-4-5
      max_tokens: 300
   3. Parse y retornar sugerencia
   4. Si API falla → retornar sugerencia por defecto según tipo de actividad

@@ -5,6 +5,7 @@ import { GetDashboardSummaryUseCase } from '../application/use-cases/get-dashboa
 import { GetSellersScoreUseCase } from '../application/use-cases/get-sellers-score.use-case';
 import { GetOverdueTasksUseCase } from '../application/use-cases/get-overdue-tasks.use-case';
 import { GetMiDiaUseCase } from '../application/use-cases/get-mi-dia.use-case';
+import { GetActivityTrendUseCase, ActivityTrendItem } from '../application/use-cases/get-activity-trend.use-case';
 
 @ApiTags('dashboard')
 @ApiBearerAuth()
@@ -16,6 +17,7 @@ export class DashboardController {
     private readonly getSellersScoreUseCase: GetSellersScoreUseCase,
     private readonly getOverdueTasksUseCase: GetOverdueTasksUseCase,
     private readonly getMiDiaUseCase: GetMiDiaUseCase,
+    private readonly getActivityTrendUseCase: GetActivityTrendUseCase,
   ) {}
 
   @Get('summary')
@@ -31,6 +33,11 @@ export class DashboardController {
   @Get('overdue-tasks')
   fetchOverdueTasks() {
     return this.getOverdueTasksUseCase.execute();
+  }
+
+  @Get('activity-trend')
+  getActivityTrend(): Promise<ActivityTrendItem[]> {
+    return this.getActivityTrendUseCase.execute();
   }
 
   @Get('mi-dia/seller/:id')

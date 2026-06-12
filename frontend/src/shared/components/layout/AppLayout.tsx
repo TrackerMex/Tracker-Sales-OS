@@ -9,9 +9,9 @@ export function AppLayout() {
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: '#EEF2F7' }}>
       <Sidebar />
-      <div className={`flex flex-1 flex-col transition-all ${sidebarOpen ? 'ml-[216px]' : 'ml-0'}`}>
+      <div className={`flex flex-1 min-w-0 flex-col transition-all ${sidebarOpen ? 'ml-[216px]' : 'ml-0'}`}>
         <Header />
-        <main className="flex-1 overflow-y-auto p-5">
+        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-5">
           <Outlet />
         </main>
       </div>

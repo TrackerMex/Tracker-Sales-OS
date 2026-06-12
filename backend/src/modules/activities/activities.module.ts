@@ -8,9 +8,10 @@ import { GetDailyActivitiesUseCase } from './application/use-cases/get-daily-act
 import { GetSellerActivitiesUseCase } from './application/use-cases/get-seller-activities.use-case';
 import { ActivitiesController } from './presentation/activities.controller';
 import { AuthModule } from '../auth/auth.module';
+import { PipelineModule } from '../pipeline/pipeline.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ActivityTypeormEntity]), AuthModule],
+  imports: [TypeOrmModule.forFeature([ActivityTypeormEntity]), AuthModule, PipelineModule],
   controllers: [ActivitiesController],
   providers: [
     { provide: ACTIVITY_REPOSITORY, useClass: ActivityRepositoryImpl },
