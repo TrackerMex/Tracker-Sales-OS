@@ -163,13 +163,14 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
 export function CoachingPage() {
   const currentUser = useAppStore((s) => s.currentUser)
   const isAdmin = currentUser?.role !== UserRole.Seller
+  const currentSellerId = currentUser?.sellerId
 
+  // Settings endpoint is gated to Admin/Director; Sellers get the goal from their own report
   const { data: settingsData } = useSettings()
-  const minDaily = settingsData?.dailyMinPoints ?? 30
+  const { data: ownDaily } = useCoachingDaily(!isAdmin ? currentSellerId : null)
+  const minDaily = settingsData?.dailyMinPoints ?? ownDaily?.dailyPointsGoal ?? 30
 
   const { data: sellers } = useSellers()
-
-  const currentSellerId = currentUser?.sellerId
   const currentSeller = sellers?.find((s) => s.id === currentSellerId)
 
   const sellerFallback: EquipoSeller | null = currentSellerId

@@ -27,7 +27,8 @@ export class GetSettingsUseCase implements OnModuleInit {
       await this.repo.save({ key: SETTINGS_KEY, value: DEFAULT_SETTINGS as unknown as object });
       this.cache = { ...DEFAULT_SETTINGS };
     } else {
-      this.cache = row.value as unknown as AppSettings;
+      // Merge defaults so rows persisted before new keys existed still expose them
+      this.cache = { ...DEFAULT_SETTINGS, ...(row.value as unknown as AppSettings) };
     }
     return this.cache;
   }

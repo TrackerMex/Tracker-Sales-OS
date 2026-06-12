@@ -182,7 +182,7 @@ Feature marcada como `"status": "pending"` en `feature_list.json`. Requiere deci
 ## Posible Bug #3: AuditInterceptor no encontrado
 
 **Severidad**: BAJA (depende de requerimientos)
-**Estado**: REQUIERE VERIFICACIÓN
+**Estado**: CERRADO (2026-06-11 — interceptor existe en `backend/src/modules/pipeline/infrastructure/interceptors/audit.interceptor.ts`, aplicado en pipeline.controller. Verificado runtime: PATCH /api/deals/:id/stage crea row en audit_logs con old_values/new_values. Hallazgo menor: en deals recién creados old_values='initial' porque stage_history no incluye el stage inicial — ver qa_smoke_2026-06-11.md)
 **Fecha detectado**: 2026-06-09
 
 ### Descripción
@@ -248,7 +248,7 @@ CHECKPOINTS.md línea 87:
 |-----|-----------|--------|---------|---------------|
 | #1: Mi Día settings hardcoded | MEDIA | CERRADO | 10, 14 | — |
 | #2: AI Coach no implementado | ALTA/BAJA | PENDIENTE | 12 | DEPENDE |
-| #3: AuditInterceptor no verificado | BAJA | VERIFICAR | 07 | MEDIA |
+| #3: AuditInterceptor no verificado | BAJA | CERRADO (2026-06-11) | 07 | — |
 
 ---
 

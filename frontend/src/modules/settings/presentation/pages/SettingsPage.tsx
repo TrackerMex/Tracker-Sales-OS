@@ -9,6 +9,7 @@ import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldErro
 
 const FIELD_LABELS: Record<string, string> = {
   dailyMinPoints: 'Puntos mínimos diarios',
+  dailyCallsGoal: 'Meta diaria de llamadas',
   monthlyAmountGoal: 'Meta mensual de monto ($)',
   monthlyUnitGoal: 'Meta mensual de unidades',
   sellerMonthlyAmountGoal: 'Meta mensual por vendedor ($)',
@@ -23,6 +24,7 @@ export function SettingsPage() {
 
   const [form, setForm] = useState({
     dailyMinPoints: 30,
+    dailyCallsGoal: 10,
     monthlyAmountGoal: 600000,
     monthlyUnitGoal: 150,
     sellerMonthlyAmountGoal: 150000,
@@ -68,7 +70,7 @@ export function SettingsPage() {
                 value={form[field]}
                 onChange={(e) => handleChange(field, e.target.value)}
                 disabled={!isAdmin}
-                min={field === 'dailyMinPoints' ? 1 : 0}
+                min={field === 'dailyMinPoints' || field === 'dailyCallsGoal' ? 1 : 0}
                 className={fieldErrors[field] ? 'input input-error' : 'input'}
                 style={!isAdmin ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 {...fieldErrorProps(field, fieldErrors[field])}

@@ -80,3 +80,21 @@ El código **nunca pasa a través del chat**. Siempre:
 - El Líder referencia paths, no contenido inline
 
 Esto previene errores de transcripción y mantiene el repositorio como fuente de verdad.
+
+## Agente Improve (Auditor)
+
+**Responsabilidad**: Audita la arquitectura actual, genera planes de refactor/fix, sin implementar nada.
+
+**Recibe del Líder**: 
+- Módulo o feature para auditar
+- Criterios de calidad (ej: "Clean Architecture", "sin DTOs duplicados")
+
+**Produce**:
+- Plan markdown en `plans/` con pasos concretos para el Implementer
+
+**Invocación**:
+```
+Usa /improve para auditar el módulo coaching (backend/src/modules/coaching/).
+Genera un plan que el Implementer pueda seguir paso a paso para implementar
+el IA Coach limpiamente sin violar convenciones.
+```

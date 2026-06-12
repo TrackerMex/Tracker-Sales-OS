@@ -438,3 +438,30 @@ Batch 2:
 - `findDailyBySeller` usa rango UTC explícito (setUTCHours) en vez de DATE() en SQL raw
 - `GetDailyInput/GetDailyOutput` interfaces exportadas para evitar error TS4053
 - `Roles` decorator real en `presentation/decorators/` (no `infrastructure/decorators/`)
+
+---
+
+## 2026-06-11 — 18-phase3-hardening
+
+**Status**: done
+
+**Origen**: progress/improve_plan.md (Fase 3) — plan de mejoras inspirado en docs.salesos.org. Features 18-26 agregadas a feature_list.json.
+
+**Implementado:**
+- dailyCallsGoal dinámico: setting.entity.ts + DTO + merge con defaults en get-settings.use-case (backfill jsonb sin migration) + get-mi-dia usa settings + input "Meta diaria de llamadas" en SettingsPage
+- Gating por rol en useSellers (GET /sellers es Admin/Director-only) — elimina 403s de consola con rol Seller
+- CoachingPage: fallback de minDaily para Seller desde reporte de coaching
+- Fix build pre-existente: createdAt? en pipeline.types.ts
+
+**Verificado (no requería código):**
+- Bug #3 AuditInterceptor: existe y funciona — row en audit_logs con old/new values al cambiar stage (runtime PASS)
+- Error feedback (impl_error_feedback.md): banner "Credenciales incorrectas." verificado en browser
+
+**Review**: 11/11 PASS (review_18-phase3-hardening.md)
+
+**Fix post-QA**: revert de gating en useSettings — backend permite Seller en GET /settings y la vista read-only mostraba defaults en vez de valores reales de DB (regresión detectada con dailyMinPoints=35 → UI mostraba 30). Re-verificado en browser tras fix.
+
+**QA smoke** (qa_smoke_2026-06-11.md): todos los criterios PASS. Hallazgos menores:
+- stage_history no incluye stage inicial → audit old_values='initial' (atacar con feature 25)
+- admin/Admin123! ya no funciona (usar admin_qa/Admin123!); card de login aún anuncia la credencial vieja
+- Watch de Nest/Vite no detecta cambios en volúmenes Windows → docker restart necesario tras editar código

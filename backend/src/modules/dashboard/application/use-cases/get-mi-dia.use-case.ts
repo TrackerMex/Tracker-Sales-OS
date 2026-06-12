@@ -131,7 +131,7 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
       pointsToday,
       dailyPointsGoal: dailyGoal,
       callsToday,
-      dailyCallsGoal: 10,
+      dailyCallsGoal: settings.dailyCallsGoal ?? 10,
       tomorrowTasksCount,
       tomorrowTasksGoal: 5,
       newProspectsToday,

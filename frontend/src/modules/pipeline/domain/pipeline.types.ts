@@ -25,6 +25,7 @@ export interface Deal {
   nextStep?: string
   nextDate?: string
   nextTime?: string
+  createdAt?: string
 }
 
 export interface CreateDealInput {

@@ -58,3 +58,12 @@ Al terminar: guarda resumen en progress/impl_[feature-id].md
 - Editar directamente archivos en `modules/`
 - Asumir que una feature está completa sin verificar todos sus CHECKPOINTS
 - Saltarte el Reviewer cuando hay lógica de negocio involucrada
+
+
+El usuario pide: "Implementa Feature 09 — Dashboard & KPIs"
+
+El Leader:
+1. Lee CHECKPOINTS.md y PRODUCT.md
+2. Invoca /improve para auditar backend/src/modules/dashboard/
+3. Recibe un plan detallado (001-dashboard-kpi-audit.md)
+4. Delega ese plan al Implementer con instrucciones claras
