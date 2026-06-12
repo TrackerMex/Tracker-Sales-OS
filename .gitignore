@@ -30,3 +30,9 @@ progress/qa_e2e_runner
 progress/qa_screenshots
 progress/node_modules
 progress/screenshots
+
+
+# skills
+agents/
+claude/
+impeccable/
