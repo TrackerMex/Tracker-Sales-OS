@@ -7,4 +7,8 @@ export interface IActivityRepository extends IRepository<ActivityEntity> {
   findDailyBySeller(sellerId: string, date: Date): Promise<ActivityEntity[]>;
   sumDailyPoints(sellerId: string, date: Date): Promise<number>;
   findRecentBySeller(sellerId: string, limit: number): Promise<ActivityEntity[]>;
+  sumPointsByDayForSellers(
+    from: Date,
+    to: Date,
+  ): Promise<{ sellerId: string; day: string; points: number }[]>;
 }

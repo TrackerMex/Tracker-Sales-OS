@@ -236,11 +236,11 @@
     "id": "21-leaderboard",
     "name": "Leaderboard mensual",
     "description": "Ranking de vendedores del mes por puntos: posición, delta vs mes anterior, racha de días cumpliendo dailyMinPoints. Sección en Dashboard.",
-    "status": "pending",
+    "status": "done",
     "priority": 21,
     "backend_modules": ["dashboard"],
     "frontend_modules": ["dashboard"],
-    "notes": "Origen: improve_plan.md 1.3. Solo lectura, derivado de activities. Sin tablas nuevas."
+    "notes": "Origen: improve_plan.md 1.3. Solo lectura, derivado de activities. Sin tablas nuevas. Completada 2026-06-13. Review 9/9 PASS (progress/review_21-leaderboard.md). Backend: IActivityRepository.sumPointsByDayForSellers (1 query GROUP BY seller+dia), GetLeaderboardUseCase (mes actual/anterior, delta, racha con gracia dia en curso, rank 1..N), GET /dashboard/leaderboard Admin/Director. Frontend: LeaderboardEntry type, useLeaderboard hook, LeaderboardTable, seccion 'Leaderboard del mes' en DashboardPage bajo isAdminOrDirector. tsc backend+frontend exit 0. Caveat: TO_CHAR usa TZ de sesion DB vs hora local Node (consistente si comparten TZ, mismo patron que get-sellers-score)."
   },
   {
     "id": "22-overdue-tasks-badge",

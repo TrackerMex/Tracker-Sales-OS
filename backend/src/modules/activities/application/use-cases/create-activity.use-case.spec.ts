@@ -13,6 +13,7 @@ const makeMockRepo = (): jest.Mocked<IActivityRepository> => ({
   findDailyBySeller: jest.fn(),
   sumDailyPoints: jest.fn(),
   findRecentBySeller: jest.fn(),
+  sumPointsByDayForSellers: jest.fn(),
 });
 
 const makeMockDealRepo = (): jest.Mocked<IDealsRepository> => ({

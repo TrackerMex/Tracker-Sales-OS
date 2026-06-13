@@ -10,6 +10,7 @@ import { GetOverdueTasksUseCase } from '../application/use-cases/get-overdue-tas
 import { GetMiDiaUseCase } from '../application/use-cases/get-mi-dia.use-case';
 import { GetActivityTrendUseCase, ActivityTrendItem } from '../application/use-cases/get-activity-trend.use-case';
 import { GetStalledDealsUseCase } from '../application/use-cases/get-stalled-deals.use-case';
+import { GetLeaderboardUseCase } from '../application/use-cases/get-leaderboard.use-case';
 
 @ApiTags('dashboard')
 @ApiBearerAuth()
@@ -23,6 +24,7 @@ export class DashboardController {
     private readonly getMiDiaUseCase: GetMiDiaUseCase,
     private readonly getActivityTrendUseCase: GetActivityTrendUseCase,
     private readonly getStalledDealsUseCase: GetStalledDealsUseCase,
+    private readonly getLeaderboardUseCase: GetLeaderboardUseCase,
   ) {}
 
   @Get('summary')
@@ -55,5 +57,12 @@ export class DashboardController {
   @Roles(UserRole.Admin, UserRole.Director)
   getStalledDeals() {
     return this.getStalledDealsUseCase.execute();
+  }
+
+  @Get('leaderboard')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.Admin, UserRole.Director)
+  getLeaderboard() {
+    return this.getLeaderboardUseCase.execute();
   }
 }

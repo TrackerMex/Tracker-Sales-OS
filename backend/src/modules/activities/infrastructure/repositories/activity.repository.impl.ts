@@ -81,6 +81,28 @@ export class ActivityRepositoryImpl implements IActivityRepository {
     return Number(result?.total ?? 0);
   }
 
+  async sumPointsByDayForSellers(
+    from: Date,
+    to: Date,
+  ): Promise<{ sellerId: string; day: string; points: number }[]> {
+    const rows = await this.repo
+      .createQueryBuilder('activity')
+      .select('activity.sellerId', 'sellerId')
+      .addSelect("TO_CHAR(activity.executedAt, 'YYYY-MM-DD')", 'day')
+      .addSelect('SUM(activity.points)', 'points')
+      .where('activity.executedAt >= :from AND activity.executedAt < :to', { from, to })
+      .andWhere('activity.deletedAt IS NULL')
+      .groupBy('activity.sellerId')
+      .addGroupBy("TO_CHAR(activity.executedAt, 'YYYY-MM-DD')")
+      .getRawMany<{ sellerId: string; day: string; points: string | null }>();
+
+    return rows.map((r) => ({
+      sellerId: r.sellerId,
+      day: r.day,
+      points: Number(r.points ?? 0),
+    }));
+  }
+
   async findRecentBySeller(sellerId: string, limit: number): Promise<ActivityEntity[]> {
     const data = await this.repo.find({
       where: { sellerId } as FindOptionsWhere<ActivityTypeormEntity>,
