@@ -5,4 +5,5 @@ export class DashboardSummaryDto {
   totalPoints: number;
   avgQuality: number;
   totalSalesCount: number;
+  pipelineForecast: number;
 }

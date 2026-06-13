@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ActivityTypeormEntity } from '../../../activities/infrastructure/entities/activity.typeorm.entity';
 import { SaleTypeormEntity } from '../../../sales/infrastructure/entities/sale.typeorm.entity';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
 import { DashboardSummaryDto } from '../dtos/dashboard-summary.dto';
+import { IDealsRepository } from '../../../pipeline/domain/repositories/deal.repository.interface';
 
 @Injectable()
 export class GetDashboardSummaryUseCase implements IUseCase<
@@ -16,6 +17,8 @@ export class GetDashboardSummaryUseCase implements IUseCase<
     private activityRepo: Repository<ActivityTypeormEntity>,
     @InjectRepository(SaleTypeormEntity)
     private saleRepo: Repository<SaleTypeormEntity>,
+    @Inject('DEAL_REPOSITORY')
+    private dealRepo: IDealsRepository,
   ) {}
 
   async execute(): Promise<DashboardSummaryDto> {
@@ -46,6 +49,8 @@ export class GetDashboardSummaryUseCase implements IUseCase<
 
     const month = now.toISOString().slice(0, 7);
 
+    const pipelineForecast = await this.dealRepo.getWeightedForecast();
+
     return {
       month,
       totalSalesAmount: Number(saleRaw?.totalAmount) || 0,
@@ -53,6 +58,7 @@ export class GetDashboardSummaryUseCase implements IUseCase<
       totalPoints: Number(activityRaw?.totalPoints) || 0,
       avgQuality: Number(activityRaw?.avgQuality) || 0,
       totalSalesCount: Number(saleRaw?.totalCount) || 0,
+      pipelineForecast,
     };
   }
 }

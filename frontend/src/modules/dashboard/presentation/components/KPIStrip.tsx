@@ -5,6 +5,8 @@ interface KPIStripProps {
   unitsGoal: number;
   pointsValue: number;
   qualityValue: number;
+  forecastValue: string;
+  forecastSubtitle: string;
   isLoading: boolean;
   onRetry?: () => void;
 }
@@ -28,6 +30,8 @@ export function KPIStrip({
   unitsGoal,
   pointsValue,
   qualityValue,
+  forecastValue,
+  forecastSubtitle,
   isLoading,
 }: KPIStripProps) {
   const fmt = (v: string | number) => (isLoading ? '...' : v);
@@ -57,6 +61,13 @@ export function KPIStrip({
         </KPITooltip>
         <div className="kv">{fmt(`${qualityValue.toFixed(1)}%`)}</div>
         <div className="ksb">promedio del equipo</div>
+      </div>
+      <div className="kpi-cell">
+        <KPITooltip title="Forecast ponderado del pipeline: suma de cada deal por su probabilidad de cierre, excluyendo Perdido">
+          <div className="kl">Forecast del mes</div>
+        </KPITooltip>
+        <div className="kv">{fmt(forecastValue)}</div>
+        <div className="ksb">{fmt(forecastSubtitle)}</div>
       </div>
     </div>
   );

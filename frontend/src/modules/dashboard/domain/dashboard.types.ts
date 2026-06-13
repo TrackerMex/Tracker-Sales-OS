@@ -5,6 +5,7 @@ export interface DashboardSummary {
   totalPoints: number;
   avgQuality: number;
   totalSalesCount: number;
+  pipelineForecast: number;
 }
 
 export interface SellerScore {
@@ -30,4 +31,14 @@ export interface OverdueTask {
   title: string;
   scheduledAt: string;
   daysOverdue: number;
+}
+
+export interface StalledDeal {
+  dealId: string;
+  clientName: string;
+  sellerName: string;
+  stage: string;
+  amount: number;
+  daysStalled: number;
+  severity: 'amber' | 'red';
 }

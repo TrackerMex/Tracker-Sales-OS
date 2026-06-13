@@ -204,3 +204,28 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [ ] **Reports**: Reporte mensual muestra ventas del mes actual (requiere prueba manual con datos)
 - [x] Todos los checkpoints pendientes de features 05-14 marcados como pasados (37/52 verificados)
 - [x] Bugs documentados en `progress/bugs.md` con pasos para reproducir
+
+---
+
+## 19-pipeline-forecast
+
+- [x] `IDealsRepository` expone `getWeightedForecast(): Promise<number>` = `SUM(amount × probability/100)` excluyendo stage Perdido y soft-deleted
+- [x] `GET /api/dashboard/summary` incluye campo `pipelineForecast` con el forecast ponderado global
+- [x] Dashboard muestra tarjeta "Forecast del mes" con valor formateado y % vs `monthlyAmountGoal` de Settings
+- [x] Header del Pipeline (Kanban) muestra "Total bruto" y "Forecast ponderado" derivados de los deals visibles (excluye Perdido)
+- [x] No se crean tablas nuevas
+- [x] `tsc --noEmit` sin errores en backend y frontend
+
+---
+
+## 20-stalled-deals
+
+- [ ] `AppSettings` tiene `stalledAmberDays: number` (default 7) y `stalledRedDays: number` (default 14)
+- [ ] `PATCH /api/settings` acepta y persiste ambos campos nuevos
+- [ ] `IDealsRepository` expone `findStalledDeals(amberDays: number): Promise<{deal: DealEntity, daysStalled: number}[]>` — excluye Cierre/Perdido
+- [ ] `GET /api/dashboard/stalled-deals` retorna `StalledDealDto[]` (solo Admin y Director)
+- [ ] Dashboard muestra sección "Deals en riesgo" con clientName, stage, daysStalled, sellerName (solo Admin/Director)
+- [ ] KanbanCard muestra badge ámbar cuando `daysStalled >= stalledAmberDays`
+- [ ] KanbanCard muestra badge rojo cuando `daysStalled >= stalledRedDays`
+- [ ] Settings page tiene campos para `stalledAmberDays` y `stalledRedDays`
+- [ ] `tsc --noEmit` sin errores en backend y frontend

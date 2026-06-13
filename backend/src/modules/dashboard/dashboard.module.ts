@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { SettingsModule } from '../settings/settings.module';
+import { PipelineModule } from '../pipeline/pipeline.module';
 import { ActivityTypeormEntity } from '../activities/infrastructure/entities/activity.typeorm.entity';
 import { TaskTypeormEntity } from '../tasks/infrastructure/entities/task.typeorm.entity';
 import { SaleTypeormEntity } from '../sales/infrastructure/entities/sale.typeorm.entity';
@@ -13,6 +14,7 @@ import { GetSellersScoreUseCase } from './application/use-cases/get-sellers-scor
 import { GetOverdueTasksUseCase } from './application/use-cases/get-overdue-tasks.use-case';
 import { GetMiDiaUseCase } from './application/use-cases/get-mi-dia.use-case';
 import { GetActivityTrendUseCase } from './application/use-cases/get-activity-trend.use-case';
+import { GetStalledDealsUseCase } from './application/use-cases/get-stalled-deals.use-case';
 
 @Module({
   imports: [
@@ -25,6 +27,7 @@ import { GetActivityTrendUseCase } from './application/use-cases/get-activity-tr
     ]),
     AuthModule,
     SettingsModule,
+    PipelineModule,
   ],
   controllers: [DashboardController],
   providers: [
@@ -33,6 +36,7 @@ import { GetActivityTrendUseCase } from './application/use-cases/get-activity-tr
     GetOverdueTasksUseCase,
     GetMiDiaUseCase,
     GetActivityTrendUseCase,
+    GetStalledDealsUseCase,
   ],
 })
 export class DashboardModule {}

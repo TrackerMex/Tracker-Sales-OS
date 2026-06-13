@@ -216,21 +216,21 @@
     "id": "19-pipeline-forecast",
     "name": "Forecast ponderado del pipeline",
     "description": "SUM(amount × probability) mostrado en header del Kanban y tarjeta en Dashboard comparada vs monthlyAmountGoal.",
-    "status": "pending",
+    "status": "done",
     "priority": 19,
     "backend_modules": ["pipeline", "dashboard"],
     "frontend_modules": ["pipeline", "dashboard"],
-    "notes": "Origen: improve_plan.md 1.1. Probability por stage ya existe. Sin tablas nuevas."
+    "notes": "Origen: improve_plan.md 1.1. Probability por stage ya existe. Sin tablas nuevas. Completada 2026-06-13. Review 6/6 PASS (progress/review_19-pipeline-forecast.md). Backend: IDealsRepository.getWeightedForecast() SUM(amount*prob/100) excl Perdido; dashboard summary expone pipelineForecast. Frontend: shared/lib/format.ts (formatCurrency), tarjeta Forecast del mes vs monthlyAmountGoal en KPIStrip, header Pipeline con total bruto + forecast. tsc backend+frontend exit 0."
   },
   {
     "id": "20-stalled-deals",
     "name": "Detección de deals estancados",
     "description": "Días en stage actual calculados desde stage_history JSONB. Badge ámbar/rojo en tarjeta Kanban (>7/>14 días, umbrales en Settings). Lista 'Deals en riesgo' en dashboard para Admin/Director.",
-    "status": "pending",
+    "status": "done",
     "priority": 20,
     "backend_modules": ["pipeline", "dashboard", "settings"],
     "frontend_modules": ["pipeline", "dashboard", "settings"],
-    "notes": "Origen: improve_plan.md 1.2. Umbrales: 2 campos nuevos opcionales en Settings."
+    "notes": "Origen: improve_plan.md 1.2. Umbrales: 2 campos nuevos en Settings (stalledAmberDays=7, stalledRedDays=14). Completada 2026-06-13. Review 14/14 PASS (progress/review_20-stalled-deals.md). Backend: findStalledDeals con raw SQL JSONB, GET /dashboard/stalled-deals Admin/Director. Frontend: DealCard badge desde stageHistory, DashboardPage sección Deals en riesgo, SettingsPage campos. tsc backend+frontend exit 0."
   },
   {
     "id": "21-leaderboard",

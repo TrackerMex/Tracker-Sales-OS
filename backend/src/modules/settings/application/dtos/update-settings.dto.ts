@@ -6,4 +6,6 @@ export class UpdateSettingsDto {
   @IsOptional() @IsNumber() @Min(0) monthlyAmountGoal?: number;
   @IsOptional() @IsNumber() @Min(0) monthlyUnitGoal?: number;
   @IsOptional() @IsNumber() @Min(0) sellerMonthlyAmountGoal?: number;
+  @IsOptional() @IsNumber() @Min(1) stalledAmberDays?: number;
+  @IsOptional() @IsNumber() @Min(1) stalledRedDays?: number;
 }

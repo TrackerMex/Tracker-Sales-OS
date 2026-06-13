@@ -8,6 +8,7 @@ import { useChangeStage } from "../../application/hooks/useChangeStage"
 import { KanbanColumn } from "../components/KanbanColumn"
 import { ClientDetailPage } from "./ClientDetailPage"
 import type { PipelineStage, Deal, PipelineGrouped } from "../../domain/pipeline.types"
+import { formatCurrency } from "@/shared/lib/format"
 
 const ALL_STAGES: PipelineStage[] = [
   "Prospecto",
@@ -120,11 +121,30 @@ export function PipelinePage() {
     return <ClientDetailPage deal={selectedDeal} />
   }
 
+  const allDeals = grouped ? Object.values(grouped).flat() : []
+  const openDeals = allDeals.filter((d) => d.stage !== "Perdido")
+  const totalGross = openDeals.reduce((s, d) => s + (d.amount ?? 0), 0)
+  const forecast = openDeals.reduce((s, d) => s + (d.amount ?? 0) * (d.probability ?? 0) / 100, 0)
+
   return (
     <div className="space-y-4">
-      <div>
-        <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Pipeline</h1>
-        <p style={{ marginTop: 2, fontSize: 12, color: '#94A3B8' }}>Fases comerciales por oportunidad</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Pipeline</h1>
+          <p style={{ marginTop: 2, fontSize: 12, color: '#94A3B8' }}>Fases comerciales por oportunidad</p>
+        </div>
+        {grouped && (
+          <div className="flex gap-6 text-right">
+            <div>
+              <div style={{ fontSize: 11, color: '#94A3B8' }}>Total bruto</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#002B49' }}>{formatCurrency(totalGross)}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: '#94A3B8' }}>Forecast ponderado</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#002B49' }}>{formatCurrency(forecast)}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {isLoading && <SkeletonColumns />}
