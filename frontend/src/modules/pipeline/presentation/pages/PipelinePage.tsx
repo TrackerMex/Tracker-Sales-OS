@@ -7,7 +7,7 @@ import { useCreateDeal } from "../../application/hooks/useCreateDeal"
 import { useChangeStage } from "../../application/hooks/useChangeStage"
 import { KanbanColumn } from "../components/KanbanColumn"
 import { ClientDetailPage } from "./ClientDetailPage"
-import type { PipelineStage, Deal, PipelineGrouped } from "../../domain/pipeline.types"
+import type { PipelineStage, Deal, PipelineGrouped, LossReason } from "../../domain/pipeline.types"
 import { formatCurrency } from "@/shared/lib/format"
 
 const ALL_STAGES: PipelineStage[] = [
@@ -68,6 +68,14 @@ interface CreateDealModal {
   stage: PipelineStage
 }
 
+const LOSS_REASONS: { value: LossReason; label: string }[] = [
+  { value: "precio", label: "Precio" },
+  { value: "competencia", label: "Competencia" },
+  { value: "sin_respuesta", label: "Sin respuesta" },
+  { value: "timing", label: "Timing" },
+  { value: "otro", label: "Otro" },
+]
+
 export function PipelinePage() {
   const currentUser = useAppStore((s) => s.currentUser)
   const sellerId = currentUser?.sellerId ?? currentUser?.id ?? ""
@@ -81,9 +89,30 @@ export function PipelinePage() {
   const [clientId, setClientId] = useState("")
   const [amount, setAmount] = useState("")
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null)
+  const [lossModal, setLossModal] = useState<{ dealId: string } | null>(null)
+  const [lossReason, setLossReason] = useState<LossReason | "">("")
 
   function handleChangeStage(dealId: string, newStage: PipelineStage) {
+    if (newStage === "Perdido") {
+      setLossReason("")
+      setLossModal({ dealId })
+      return
+    }
     changeStage.mutate({ dealId, input: { newStage, changedBy: username } })
+  }
+
+  function handleConfirmLoss() {
+    if (!lossModal) return
+    changeStage.mutate({
+      dealId: lossModal.dealId,
+      input: {
+        newStage: "Perdido",
+        changedBy: username,
+        ...(lossReason ? { lossReason } : {}),
+      },
+    })
+    setLossModal(null)
+    setLossReason("")
   }
 
   function handleOpenCreate(stage: PipelineStage) {
@@ -210,6 +239,51 @@ export function PipelinePage() {
                 </p>
               )}
             </form>
+          </div>
+        </div>
+      )}
+
+      {lossModal && (
+        <div
+          className="modal-blur fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) { setLossModal(null); setLossReason("") } }}
+        >
+          <div className="card w-full max-w-sm p-6">
+            <h3 style={{ marginBottom: 16, fontSize: 14, fontWeight: 700, color: '#002B49' }}>
+              Motivo de pérdida
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <label className="slabel mb-1 block">Motivo (opcional)</label>
+                <select
+                  value={lossReason}
+                  onChange={(e) => setLossReason(e.target.value as LossReason | "")}
+                  className="input"
+                >
+                  <option value="">Selecciona un motivo...</option>
+                  {LOSS_REASONS.map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setLossModal(null); setLossReason("") }}
+                  className="btn-ghost flex-1 justify-center"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmLoss}
+                  disabled={changeStage.isPending}
+                  className="btn-primary flex-1 justify-center"
+                >
+                  {changeStage.isPending ? "Guardando..." : "Confirmar"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

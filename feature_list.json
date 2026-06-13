@@ -276,11 +276,11 @@
     "id": "25-winloss-analysis",
     "name": "Análisis win/loss y conversión por etapa",
     "description": "Funnel de conversión etapa→etapa, tiempo promedio por etapa, % perdidos por etapa de origen. Campo opcional lossReason al mover a Perdido. Sección nueva en Reports (Admin/Director).",
-    "status": "pending",
+    "status": "done",
     "priority": 25,
     "backend_modules": ["pipeline", "reports"],
     "frontend_modules": ["pipeline", "reports"],
-    "notes": "Origen: improve_plan.md 2.3. Única feature que toca schema (campo opcional lossReason). lossReason select: precio, competencia, sin respuesta, timing, otro."
+    "notes": "Origen: improve_plan.md 2.3. Completada 2026-06-13. Review Líder PASS, tsc backend+frontend exit 0. lossReason (precio/competencia/sin_respuesta/timing/otro) vive en JSONB stage_history (sin columna nueva), se guarda solo al mover a Perdido y es opcional. Backend: ChangeDealStageUseCase + ChangeStageDtoBody (@IsIn); IDealsRepository.findAllForAnalysis; GetWinLossUseCase (in-memory: funnel reached por índice canónico, conversión etapa→etapa, avgDaysInStage por pares consecutivos, % perdidos por origen, motivos); GET /api/reports/win-loss Admin/Director; reports.module importa PipelineModule. Frontend: modal 'Motivo de pérdida' en PipelinePage al soltar en Perdido; WinLossSection en ReportsPage (useWinLoss). progress/impl_25-winloss-analysis.md. Caveat: avgDaysInStage omite dwell del stage inicial (no se registra entry de creación) y del stage actual en curso; origin de Perdido cae a Prospecto si stageHistory insuficiente."
   },
   {
     "id": "26-ai-coach-context",

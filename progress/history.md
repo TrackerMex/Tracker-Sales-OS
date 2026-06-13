@@ -530,3 +530,29 @@ Batch 2:
 - ClientesPage: toggle "Datos incompletos" + badge "Datos X%" en detalle y cards (verde=100, rojo<60, ambar resto).
 
 **Verificacion**: tsc backend+frontend exit 0. Filtro incomplete consistente con dataQuality<100. progress/impl_24-client-data-quality.md.
+
+---
+
+## 2026-06-13 — Feature 25: Análisis win/loss y conversión por etapa
+
+**Origen**: improve_plan.md 2.3. Funnel de conversión, tiempo por etapa, % perdidos por origen + campo opcional lossReason. Módulos: pipeline, reports. Único feature que "toca schema" (campo opcional dentro de JSONB stage_history, sin columna/migración nueva).
+
+**Backend pipeline (lossReason):**
+- deal.entity.ts: type LossReason ('precio'|'competencia'|'sin_respuesta'|'timing'|'otro'); StageHistoryEntry.lossReason?.
+- ChangeStageDtoBody: lossReason? opcional (@IsOptional @IsIn).
+- ChangeDealStageUseCase: guarda lossReason en history entry SOLO si newStage===Perdido y viene; opcional (no obliga). Controller ya hace {id,...dto}.
+- IDealsRepository.findAllForAnalysis(): todos los deals no borrados con stageHistory.
+
+**Backend reports:**
+- WinLossReportDto (totalDeals/won/lost/open/winRate/funnel/lossesByOrigin/lossReasons).
+- GetWinLossUseCase: in-memory desde findAllForAnalysis. maxStage por deal (current si !=Perdido, sino origin = ultimo non-Perdido de history). reached[i]=#deals con idx(maxStage)>=i (transiciones secuenciales). conversionFromPrevious=reached[i]/reached[i-1]. avgDaysInStage por pares consecutivos de stageHistory. lossesByOrigin agrupado por origin. lossReasons del entry Perdido (sin especificar si falta).
+- GET /api/reports/win-loss (Admin/Director). reports.module importa PipelineModule (DEAL_REPOSITORY), registra GetWinLossUseCase.
+
+**Frontend:**
+- pipeline.types.ts: LossReason, StageHistoryEntry.lossReason?, ChangeStageInput.lossReason?.
+- PipelinePage: al soltar deal en Perdido abre modal "Motivo de pérdida" (select opcional) antes de mutar; otros stages mutan directo.
+- reports.types.ts + reports.api.getWinLoss + hook useWinLoss. ReportsPage: WinLossSection (KPI winRate, tabla funnel, perdidos por origen, motivos) antes de Análisis Ejecutivo IA.
+
+**Verificacion**: Review Líder PASS. tsc backend+frontend exit 0. progress/impl_25-winloss-analysis.md. Stub findAllForAnalysis: jest.fn() en create-activity.use-case.spec.ts (mock, patron features 20/21).
+
+**Caveat no bloqueante**: avgDaysInStage omite dwell del stage inicial (no hay entry de creación en stageHistory) y del stage actual en curso; solo intervalos cerrados entre transiciones. origin de Perdido por defecto Prospecto si stageHistory insuficiente. Mismo limite conocido de feature 18 (stage inicial no registrado).

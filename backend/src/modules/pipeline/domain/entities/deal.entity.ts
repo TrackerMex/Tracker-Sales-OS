@@ -1,10 +1,13 @@
 import { BaseEntity } from '../../../../core/domain/base.entity';
 import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 
+export type LossReason = 'precio' | 'competencia' | 'sin_respuesta' | 'timing' | 'otro';
+
 export interface StageHistoryEntry {
   stage: PipelineStage;
   changedAt: string;
   changedBy: string;
+  lossReason?: LossReason;
 }
 
 export const STAGE_PROBABILITY: Record<PipelineStage, number> = {

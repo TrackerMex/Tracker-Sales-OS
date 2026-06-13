@@ -194,6 +194,11 @@ export class DealRepositoryImpl implements IDealsRepository {
     });
   }
 
+  async findAllForAnalysis(): Promise<DealEntity[]> {
+    const data = await this.repo.find({ order: { createdAt: 'DESC' } });
+    return data.map((e) => this.toDomain(e));
+  }
+
   private toDomain(entity: DealTypeormEntity): DealEntity {
     return Object.assign(new DealEntity(), {
       ...entity,

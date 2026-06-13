@@ -1,6 +1,21 @@
 import { useState } from 'react';
 import { useMonthlyReport } from '../../application/hooks/useMonthlyReport';
-import type { MonthlyReport, SellerSalesReport, SourceBreakdown } from '../../domain/reports.types';
+import { useWinLoss } from '../../application/hooks/useWinLoss';
+import type {
+  MonthlyReport,
+  SellerSalesReport,
+  SourceBreakdown,
+  WinLossReport,
+} from '../../domain/reports.types';
+
+const LOSS_REASON_LABELS: Record<string, string> = {
+  precio: 'Precio',
+  competencia: 'Competencia',
+  sin_respuesta: 'Sin respuesta',
+  timing: 'Timing',
+  otro: 'Otro',
+  'sin especificar': 'Sin especificar',
+};
 
 const STORAGE_KEY = 'tracker-report-goals';
 
@@ -138,9 +153,134 @@ function SourceGrid({ sources }: { sources: SourceBreakdown[] }) {
   );
 }
 
+function WinLossSection({
+  data,
+  isLoading,
+}: {
+  data: WinLossReport | undefined;
+  isLoading: boolean;
+}) {
+  return (
+    <div style={{ marginTop: 20 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 12 }}>
+        Win/Loss y conversión por etapa
+      </div>
+
+      {isLoading && <p style={{ fontSize: 12, color: '#94A3B8' }}>Cargando análisis...</p>}
+
+      {!isLoading && (!data || data.totalDeals === 0) && (
+        <p style={{ fontSize: 12, color: '#94A3B8' }}>Sin oportunidades registradas todavía.</p>
+      )}
+
+      {!isLoading && data && data.totalDeals > 0 && (
+        <>
+          <div className="kpi-strip" style={{ marginBottom: 14 }}>
+            <div className="kpi-cell ac">
+              <div className="kl">Win rate</div>
+              <div className="kv" style={{ fontSize: 17 }}>{data.winRate}%</div>
+              <div className="ksb">{data.totalDeals} oportunidades</div>
+            </div>
+            <div className="kpi-cell">
+              <div className="kl">Ganados</div>
+              <div className="kv">{data.won}</div>
+            </div>
+            <div className="kpi-cell">
+              <div className="kl">Perdidos</div>
+              <div className="kv">{data.lost}</div>
+            </div>
+            <div className="kpi-cell">
+              <div className="kl">Abiertos</div>
+              <div className="kv">{data.open}</div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 14, overflowX: 'auto' }}>
+            <div className="slabel" style={{ marginBottom: 8 }}>Embudo de conversión</div>
+            <table className="dt">
+              <thead>
+                <tr>
+                  <th>Etapa</th>
+                  <th>Alcanzados</th>
+                  <th>Conversión %</th>
+                  <th>Días prom.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.funnel.map((f, i) => (
+                  <tr key={f.stage}>
+                    <td style={{ fontWeight: 600, color: '#0F172A' }}>{f.stage}</td>
+                    <td>{f.reached}</td>
+                    <td>{i === 0 ? '—' : `${f.conversionFromPrevious}%`}</td>
+                    <td>{f.avgDaysInStage}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div>
+              <div className="slabel" style={{ marginBottom: 8 }}>Perdidos por etapa de origen</div>
+              {data.lossesByOrigin.length === 0 ? (
+                <p style={{ fontSize: 12, color: '#94A3B8' }}>Sin pérdidas registradas.</p>
+              ) : (
+                <table className="dt">
+                  <thead>
+                    <tr>
+                      <th>Etapa</th>
+                      <th>Pérdidas</th>
+                      <th>%</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.lossesByOrigin.map((l) => (
+                      <tr key={l.originStage}>
+                        <td style={{ fontWeight: 600, color: '#0F172A' }}>{l.originStage}</td>
+                        <td>{l.count}</td>
+                        <td>{l.percentage}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div>
+              <div className="slabel" style={{ marginBottom: 8 }}>Motivos de pérdida</div>
+              {data.lossReasons.length === 0 ? (
+                <p style={{ fontSize: 12, color: '#94A3B8' }}>Sin pérdidas registradas.</p>
+              ) : (
+                <table className="dt">
+                  <thead>
+                    <tr>
+                      <th>Motivo</th>
+                      <th>Pérdidas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.lossReasons.map((r) => (
+                      <tr key={r.reason}>
+                        <td style={{ fontWeight: 600, color: '#0F172A' }}>
+                          {LOSS_REASON_LABELS[r.reason] ?? r.reason}
+                        </td>
+                        <td>{r.count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function ReportsPage() {
   const [month, setMonth] = useState<string>(currentMonth());
   const { data, isLoading, error, refetch, dataUpdatedAt } = useMonthlyReport(month);
+  const { data: winLoss, isLoading: winLossLoading } = useWinLoss();
 
   const [goalAmount, setGoalAmount] = useState<number>(() => loadGoals()?.amount ?? 600000);
   const [goalUnits, setGoalUnits] = useState<number>(() => loadGoals()?.units ?? 150);
@@ -551,6 +691,9 @@ export function ReportsPage() {
                   <SourceGrid sources={data.bySource} />
                 </div>
               </div>
+
+              {/* Win/Loss y conversión por etapa */}
+              <WinLossSection data={winLoss} isLoading={winLossLoading} />
 
               {/* Análisis Ejecutivo IA */}
               <div style={{ marginTop: 20 }}>

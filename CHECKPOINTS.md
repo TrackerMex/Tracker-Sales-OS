@@ -265,3 +265,36 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] ClientesPage: columna "última actividad", badge "Fría", toggle "Sin contacto"
 - [x] `GET /api/dashboard/mi-dia/seller/:id` retorna `coldAccountsCount`; MiDiaPage muestra alerta cuando > 0
 - [x] `tsc --noEmit` sin errores en backend y frontend
+
+---
+
+## 24-client-data-quality
+
+- [x] `ClientDto` expone `dataQuality: number` (0-100); 5 campos × 20% (domain, person, source, contacto con phone, contacto con email)
+- [x] `GET /api/clients?incomplete=true` filtra clientes con `dataQuality < 100` vía Brackets/NOT EXISTS (paginación/total correctos)
+- [x] ClientesPage: badge "Datos X%" en detalle y cards (verde=100/rojo<60/ámbar), toggle "Datos incompletos"
+- [x] `tsc --noEmit` sin errores en backend y frontend
+
+---
+
+## 25-winloss-analysis
+
+**Backend — pipeline (lossReason):**
+- [x] `StageHistoryEntry` (deal.entity.ts) extendida con `lossReason?: LossReason`; tipo `LossReason = 'precio'|'competencia'|'sin_respuesta'|'timing'|'otro'`
+- [x] `ChangeStageDtoBody` acepta `lossReason?` opcional (`@IsOptional() @IsIn([...])`)
+- [x] `ChangeDealStageUseCase` almacena `lossReason` en el history entry **solo** cuando `newStage === Perdido` (campo opcional, no obligatorio); lo ignora en otros stages
+- [x] Sin tabla/columna nueva: `lossReason` vive dentro del JSONB `stage_history`
+
+**Backend — reports (análisis):**
+- [x] `IDealsRepository.findAllForAnalysis(): Promise<DealEntity[]>` retorna todos los deals no borrados con `stageHistory`
+- [x] `WinLossReportDto` con: `totalDeals, won, lost, open, winRate, funnel[], lossesByOrigin[], lossReasons[]`
+- [x] `GetWinLossUseCase` calcula in-memory: funnel (reached por stage canónico usando índice, conversión etapa→etapa), tiempo promedio por etapa (pares consecutivos de stageHistory), % perdidos por etapa de origen, breakdown de lossReason
+- [x] `GET /api/reports/win-loss` retorna `WinLossReportDto` (solo Admin/Director)
+- [x] `reports.module.ts` importa `PipelineModule` para inyectar `DEAL_REPOSITORY`
+
+**Frontend:**
+- [x] `pipeline.types.ts`: `LossReason`, `StageHistoryEntry.lossReason?`, `ChangeStageInput.lossReason?`
+- [x] PipelinePage: al soltar deal en "Perdido" abre modal para elegir motivo antes de mutar; otros stages mutan directo
+- [x] `reports.types.ts` + `reports.api.ts` (`getWinLoss`) + hook `useWinLoss`
+- [x] ReportsPage: sección "Win/Loss y conversión por etapa" (funnel: stage, alcanzados, conversión %, días prom; perdidos por origen; motivos), solo Admin/Director
+- [x] `tsc --noEmit` sin errores en backend y frontend
