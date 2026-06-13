@@ -1,5 +1,5 @@
 import { api } from '@/shared/lib/axios';
-import type { DashboardSummary, SellerScore, OverdueTask, ActivityTrendItem, StalledDeal } from '../domain/dashboard.types';
+import type { DashboardSummary, SellerScore, OverdueTask, ActivityTrendItem, StalledDeal, LeaderboardEntry } from '../domain/dashboard.types';
 
 export const dashboardApi = {
   getSummary: async (): Promise<DashboardSummary> => {
@@ -24,6 +24,11 @@ export const dashboardApi = {
 
   getStalledDeals: async (): Promise<StalledDeal[]> => {
     const res = await api.get<StalledDeal[]>('/dashboard/stalled-deals');
+    return res.data;
+  },
+
+  getLeaderboard: async (): Promise<LeaderboardEntry[]> => {
+    const res = await api.get<LeaderboardEntry[]>('/dashboard/leaderboard');
     return res.data;
   },
 };

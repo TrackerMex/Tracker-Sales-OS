@@ -13,8 +13,10 @@ import { useSellersSemaphore } from "../../application/hooks/useSellersSemaphore
 import { useOverdueTasks } from "../../application/hooks/useOverdueTasks"
 import { useActivityTrend } from "../../application/hooks/useActivityTrend"
 import { useStalledDeals } from "../../application/hooks/useStalledDeals"
+import { useLeaderboard } from "../../application/hooks/useLeaderboard"
 import { KPIStrip } from "../components/KPIStrip"
 import { SellerSemaphoreTable } from "../components/SellerSemaphoreTable"
+import { LeaderboardTable } from "../components/LeaderboardTable"
 import { AlertsPanel } from "../components/AlertsPanel"
 import type { ActivityTrendItem } from "../../domain/dashboard.types"
 import { useSettings } from "@/modules/settings/application/hooks/useSettings"
@@ -89,6 +91,7 @@ export function DashboardPage() {
   const trend = useActivityTrend()
   const settings = useSettings()
   const stalledDeals = useStalledDeals()
+  const leaderboard = useLeaderboard()
 
   const isLoading = summary.isLoading
   const data = summary.data
@@ -232,6 +235,36 @@ export function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Leaderboard del mes — Admin/Director only */}
+      {isAdminOrDirector && (
+        <div className="card mt-4">
+          <div className="border-b border-[#E2E8F0] px-5 py-3">
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#002B49" }}>
+              Leaderboard del mes
+            </h3>
+            <p style={{ fontSize: 11, marginTop: 4, color: "#94A3B8" }}>
+              Ranking por puntos acumulados este mes
+            </p>
+          </div>
+          {leaderboard.isError ? (
+            <div className="flex items-center justify-between px-5 py-4">
+              <p className="text-sm text-red-600">No se pudo cargar el leaderboard.</p>
+              <button
+                onClick={() => leaderboard.refetch?.()}
+                className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <LeaderboardTable
+              entries={leaderboard.data ?? []}
+              isLoading={leaderboard.isLoading}
+            />
+          )}
+        </div>
+      )}
 
       {/* Stalled deals — Admin/Director only */}
       {isAdminOrDirector && (

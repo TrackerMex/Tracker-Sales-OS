@@ -489,3 +489,26 @@ Batch 2:
 - stage_history no incluye stage inicial → audit old_values='initial' (atacar con feature 25)
 - admin/Admin123! ya no funciona (usar admin_qa/Admin123!); card de login aún anuncia la credencial vieja
 - Watch de Nest/Vite no detecta cambios en volúmenes Windows → docker restart necesario tras editar código
+
+---
+
+## 2026-06-13 — Feature 21: Leaderboard mensual
+
+**Origen**: improve_plan.md 1.3. Ranking mensual de vendedores en Dashboard (solo Admin/Director). Solo lectura, derivado de activities. Sin tablas nuevas.
+
+**Backend:**
+- IActivityRepository.sumPointsByDayForSellers(from, to): UNA query GROUP BY seller_id + dia (TO_CHAR YYYY-MM-DD), SUM(points), excluye deleted_at. Sin N+1.
+- GetLeaderboardUseCase: deriva en memoria monthlyPoints (mes actual), previousMonthPoints (mes anterior), pointsDelta, streakDays (dias consecutivos cumpliendo dailyMinPoints de Settings, con gracia para dia en curso, acotado a inicio mes anterior). Orden monthlyPoints DESC, rank 1..N, sellers con 0 al final. Incluye todos los sellers activos.
+- GET /api/dashboard/leaderboard con RolesGuard + @Roles(Admin, Director).
+- dashboard.module importa ActivitiesModule (token ACTIVITY_REPOSITORY).
+
+**Frontend:**
+- LeaderboardEntry type, dashboardApi.getLeaderboard, useLeaderboard hook (queryKey ['dashboard','leaderboard']).
+- LeaderboardTable: tabla .dt con # / Vendedor / Puntos mes / Delta (+/- color) / Racha. Top 3 destacado. Loading + empty.
+- DashboardPage: seccion "Leaderboard del mes" bajo isAdminOrDirector, entre SellerSemaphoreTable y Stalled deals.
+
+**Review**: 9/9 PASS (review_21-leaderboard.md). tsc backend+frontend exit 0.
+
+**Nota**: stub jest.fn() de sumPointsByDayForSellers anadido al mock en create-activity.use-case.spec.ts (necesario para compilar, mismo patron que feature 20).
+
+**Caveat no bloqueante**: TO_CHAR renderiza en TZ de sesion DB mientras el use-case arma claves de dia con hora local de Node; consistente si DB y Node comparten TZ (Docker UTC tipico). Mismo patron que get-sellers-score.

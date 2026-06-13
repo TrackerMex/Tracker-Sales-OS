@@ -229,3 +229,27 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [ ] KanbanCard muestra badge rojo cuando `daysStalled >= stalledRedDays`
 - [ ] Settings page tiene campos para `stalledAmberDays` y `stalledRedDays`
 - [ ] `tsc --noEmit` sin errores en backend y frontend
+
+---
+
+## 21-leaderboard
+
+- [ ] `IActivityRepository` expone método para sumar puntos por seller agrupado por día sobre un rango (`sumPointsByDayForSellers(from, to)` o similar), una sola query, excluye soft-deleted
+- [ ] `LeaderboardRowDto` con: `rank`, `sellerId`, `sellerName`, `monthlyPoints`, `previousMonthPoints`, `pointsDelta`, `streakDays`
+- [ ] `GetLeaderboardUseCase` calcula: puntos del mes actual y anterior por seller, delta, racha de días consecutivos cumpliendo `dailyMinPoints` (desde Settings), ordena por `monthlyPoints` DESC y asigna `rank` (1..N)
+- [ ] Incluye todos los sellers activos (los de 0 puntos aparecen al final)
+- [ ] Racha: cuenta días consecutivos hacia atrás desde hoy con `puntos_del_día >= dailyMinPoints`; si hoy no cumple pero ayer sí, cuenta desde ayer
+- [ ] `GET /api/dashboard/leaderboard` retorna `LeaderboardRowDto[]` (solo Admin y Director)
+- [ ] Dashboard muestra sección "Leaderboard del mes" con rank, nombre, puntos, delta (+/-) y racha (solo Admin/Director)
+- [ ] No se crean tablas nuevas
+- [ ] `tsc --noEmit` sin errores en backend y frontend
+
+---
+
+## 22-overdue-tasks-badge
+
+- [x] `TaskCard` muestra badge `tag tag-red` "Vencida" cuando `task.isOverdue && status === Pendiente` (Agenda)
+- [x] `MiDiaPage` muestra badge `tag tag-red` "Vencida" junto al título en tareas vencidas y pendientes de la lista de hoy
+- [x] Se conserva el coloreado rojo del título en Mi Día y el layout flex existente
+- [x] Sin cambios de backend (`isOverdue` ya lo calcula `task.dto.ts`)
+- [x] `tsc --noEmit` sin errores en frontend

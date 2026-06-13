@@ -207,17 +207,22 @@ export function MiDiaPage() {
                   }}
                 >
                   <div>
-                    <p
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: titleColor,
-                        textDecoration: isCompleted ? 'line-through' : 'none',
-                        margin: 0,
-                      }}
-                    >
-                      {task.title}
-                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <p
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: titleColor,
+                          textDecoration: isCompleted ? 'line-through' : 'none',
+                          margin: 0,
+                        }}
+                      >
+                        {task.title}
+                      </p>
+                      {task.isOverdue && task.status === 'Pendiente' && (
+                        <span className="tag tag-red">Vencida</span>
+                      )}
+                    </div>
                     <p style={{ fontSize: 11, color: '#94A3B8', margin: '2px 0 0' }}>
                       {formatTime(task.scheduledAt)}
                     </p>

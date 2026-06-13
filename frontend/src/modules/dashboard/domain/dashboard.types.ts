@@ -42,3 +42,13 @@ export interface StalledDeal {
   daysStalled: number;
   severity: 'amber' | 'red';
 }
+
+export interface LeaderboardEntry {
+  rank: number;
+  sellerId: string;
+  sellerName: string;
+  monthlyPoints: number;
+  previousMonthPoints: number;
+  pointsDelta: number;
+  streakDays: number;
+}
