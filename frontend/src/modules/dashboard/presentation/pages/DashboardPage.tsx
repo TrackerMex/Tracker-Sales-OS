@@ -12,11 +12,14 @@ import { useDashboardSummary } from "../../application/hooks/useDashboardSummary
 import { useSellersSemaphore } from "../../application/hooks/useSellersSemaphore"
 import { useOverdueTasks } from "../../application/hooks/useOverdueTasks"
 import { useActivityTrend } from "../../application/hooks/useActivityTrend"
+import { useStalledDeals } from "../../application/hooks/useStalledDeals"
 import { KPIStrip } from "../components/KPIStrip"
 import { SellerSemaphoreTable } from "../components/SellerSemaphoreTable"
 import { AlertsPanel } from "../components/AlertsPanel"
 import type { ActivityTrendItem } from "../../domain/dashboard.types"
 import { useSettings } from "@/modules/settings/application/hooks/useSettings"
+import { useAppStore } from "@/shared/store/app.store"
+import { UserRole } from "@/core/domain/types/common.types"
 import { formatCurrency } from "@/shared/lib/format"
 
 ChartJS.register(
@@ -78,11 +81,14 @@ function ActivityChart({ data }: ActivityChartProps) {
 }
 
 export function DashboardPage() {
+  const currentUser = useAppStore((s) => s.currentUser)
+  const isAdminOrDirector = currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Director
   const summary = useDashboardSummary()
   const sellers = useSellersSemaphore()
   const overdue = useOverdueTasks()
   const trend = useActivityTrend()
   const settings = useSettings()
+  const stalledDeals = useStalledDeals()
 
   const isLoading = summary.isLoading
   const data = summary.data
@@ -226,6 +232,70 @@ export function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Stalled deals — Admin/Director only */}
+      {isAdminOrDirector && (
+        <div className="card mt-4">
+          <div className="border-b border-[#E2E8F0] px-5 py-3">
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#002B49" }}>
+              Deals en riesgo
+            </h3>
+            <p style={{ fontSize: 11, marginTop: 4, color: "#94A3B8" }}>
+              Oportunidades sin movimiento de etapa
+            </p>
+          </div>
+          <div className="p-4">
+            {stalledDeals.isLoading && (
+              <p style={{ fontSize: 13, color: "#94A3B8" }}>Cargando...</p>
+            )}
+            {stalledDeals.isError && (
+              <p style={{ fontSize: 13, color: "#EF4444" }}>No se pudo cargar los deals estancados.</p>
+            )}
+            {!stalledDeals.isLoading && !stalledDeals.isError && (
+              stalledDeals.data?.length === 0 ? (
+                <p style={{ fontSize: 13, color: "#94A3B8" }}>No hay deals estancados</p>
+              ) : (
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #E2E8F0" }}>
+                      <th style={{ textAlign: "left", padding: "6px 8px", color: "#64748B", fontWeight: 600, fontSize: 11 }}>Cliente</th>
+                      <th style={{ textAlign: "left", padding: "6px 8px", color: "#64748B", fontWeight: 600, fontSize: 11 }}>Stage</th>
+                      <th style={{ textAlign: "left", padding: "6px 8px", color: "#64748B", fontWeight: 600, fontSize: 11 }}>Vendedor</th>
+                      <th style={{ textAlign: "right", padding: "6px 8px", color: "#64748B", fontWeight: 600, fontSize: 11 }}>Monto</th>
+                      <th style={{ textAlign: "right", padding: "6px 8px", color: "#64748B", fontWeight: 600, fontSize: 11 }}>Días estancado</th>
+                      <th style={{ textAlign: "center", padding: "6px 8px", color: "#64748B", fontWeight: 600, fontSize: 11 }}>Severidad</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stalledDeals.data?.map((item) => (
+                      <tr key={item.dealId} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                        <td style={{ padding: "8px", color: "#002B49", fontWeight: 500 }}>{item.clientName}</td>
+                        <td style={{ padding: "8px", color: "#475569" }}>{item.stage}</td>
+                        <td style={{ padding: "8px", color: "#475569" }}>{item.sellerName || "—"}</td>
+                        <td style={{ padding: "8px", textAlign: "right", color: "#475569" }}>{formatCurrency(item.amount)}</td>
+                        <td style={{ padding: "8px", textAlign: "right", color: "#475569" }}>{item.daysStalled}</td>
+                        <td style={{ padding: "8px", textAlign: "center" }}>
+                          <span style={{
+                            display: "inline-block",
+                            padding: "2px 10px",
+                            borderRadius: "10px",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: "#fff",
+                            background: item.severity === "red" ? "#ef4444" : "#f59e0b",
+                          }}>
+                            {item.severity === "red" ? "Rojo" : "Ámbar"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

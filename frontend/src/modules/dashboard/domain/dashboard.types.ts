@@ -32,3 +32,13 @@ export interface OverdueTask {
   scheduledAt: string;
   daysOverdue: number;
 }
+
+export interface StalledDeal {
+  dealId: string;
+  clientName: string;
+  sellerName: string;
+  stage: string;
+  amount: number;
+  daysStalled: number;
+  severity: 'amber' | 'red';
+}

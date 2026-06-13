@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository, In } from 'typeorm';
-import { DealEntity } from '../../domain/entities/deal.entity';
+import { DealEntity, StageHistoryEntry } from '../../domain/entities/deal.entity';
 import { IDealsRepository } from '../../domain/repositories/deal.repository.interface';
 import { DealTypeormEntity } from '../entities/deal.typeorm.entity';
 import { PipelineStage } from '../../../clients/domain/entities/client.entity';
@@ -150,6 +150,48 @@ export class DealRepositoryImpl implements IDealsRepository {
       .andWhere('d.deleted_at IS NULL')
       .getRawOne<{ forecast: string }>();
     return Number(raw?.forecast) || 0;
+  }
+
+  async findStalledDeals(amberDays: number): Promise<{ deal: DealEntity; daysStalled: number }[]> {
+    const raw: Array<Record<string, unknown>> = await this.repo.manager.query(
+      `SELECT * FROM (
+        SELECT
+          d.id, d.client_id, d.client_name, d.seller_id, d.stage,
+          d.amount, d.probability, d.stage_history, d.created_at, d.updated_at, d.deleted_at,
+          FLOOR(EXTRACT(EPOCH FROM (NOW() -
+            CASE
+              WHEN jsonb_array_length(d.stage_history) > 0
+              THEN (d.stage_history -> (jsonb_array_length(d.stage_history) - 1) ->> 'changedAt')::timestamptz
+              ELSE d.created_at
+            END
+          )) / 86400) as days_stalled
+        FROM deals d
+        WHERE d.deleted_at IS NULL
+          AND d.stage NOT IN ('Cierre', 'Perdido')
+      ) sub
+      WHERE sub.days_stalled >= $1
+      ORDER BY sub.days_stalled DESC`,
+      [amberDays],
+    );
+
+    return raw.map((row) => {
+      const entity = new DealTypeormEntity();
+      entity.id = row.id as string;
+      entity.clientId = row.client_id as string;
+      entity.clientName = row.client_name as string;
+      entity.sellerId = row.seller_id as string;
+      entity.stage = row.stage as PipelineStage;
+      entity.amount = row.amount as number;
+      entity.probability = Number(row.probability);
+      entity.stageHistory = (row.stage_history as StageHistoryEntry[]) ?? [];
+      entity.createdAt = row.created_at as Date;
+      entity.updatedAt = row.updated_at as Date;
+      entity.deletedAt = (row.deleted_at as Date) ?? null;
+      return {
+        deal: this.toDomain(entity),
+        daysStalled: Number(row.days_stalled),
+      };
+    });
   }
 
   private toDomain(entity: DealTypeormEntity): DealEntity {

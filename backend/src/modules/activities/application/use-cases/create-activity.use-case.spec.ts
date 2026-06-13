@@ -26,6 +26,7 @@ const makeMockDealRepo = (): jest.Mocked<IDealsRepository> => ({
   findByClientIdAndSellerId: jest.fn(),
   findDetailedBySellerId: jest.fn(),
   getWeightedForecast: jest.fn(),
+  findStalledDeals: jest.fn(),
 });
 
 const baseInput = {

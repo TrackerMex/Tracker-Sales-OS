@@ -226,11 +226,11 @@
     "id": "20-stalled-deals",
     "name": "Detección de deals estancados",
     "description": "Días en stage actual calculados desde stage_history JSONB. Badge ámbar/rojo en tarjeta Kanban (>7/>14 días, umbrales en Settings). Lista 'Deals en riesgo' en dashboard para Admin/Director.",
-    "status": "pending",
+    "status": "done",
     "priority": 20,
     "backend_modules": ["pipeline", "dashboard", "settings"],
     "frontend_modules": ["pipeline", "dashboard", "settings"],
-    "notes": "Origen: improve_plan.md 1.2. Umbrales: 2 campos nuevos opcionales en Settings."
+    "notes": "Origen: improve_plan.md 1.2. Umbrales: 2 campos nuevos en Settings (stalledAmberDays=7, stalledRedDays=14). Completada 2026-06-13. Review 14/14 PASS (progress/review_20-stalled-deals.md). Backend: findStalledDeals con raw SQL JSONB, GET /dashboard/stalled-deals Admin/Director. Frontend: DealCard badge desde stageHistory, DashboardPage sección Deals en riesgo, SettingsPage campos. tsc backend+frontend exit 0."
   },
   {
     "id": "21-leaderboard",

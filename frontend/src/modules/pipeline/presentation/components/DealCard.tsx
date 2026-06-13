@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import type { Deal } from "../../domain/pipeline.types"
+import { useSettings } from "@/modules/settings/application/hooks/useSettings"
 
 const STAGE_BADGE_COLORS: Record<string, string> = {
   Prospecto: '#002B49',
@@ -30,6 +31,18 @@ export function DealCard({ deal, onClick }: DealCardProps) {
   const ref = useRef<HTMLDivElement>(null)
   const contactInfo = [deal.contactName, deal.contactRole].filter(Boolean).join(' · ')
   const badgeColor = STAGE_BADGE_COLORS[deal.stage] || '#002B49'
+  const { data: settings } = useSettings()
+
+  const lastChange = deal.stageHistory?.length > 0
+    ? deal.stageHistory[deal.stageHistory.length - 1].changedAt
+    : (deal.createdAt as string | undefined)
+  const daysStalled = lastChange
+    ? Math.floor((Date.now() - new Date(lastChange).getTime()) / 86400000)
+    : 0
+  const amberDays = settings?.stalledAmberDays ?? 7
+  const redDays = settings?.stalledRedDays ?? 14
+  const showRed = daysStalled >= redDays
+  const showAmber = !showRed && daysStalled >= amberDays
 
   useEffect(() => {
     const el = ref.current
@@ -93,9 +106,23 @@ export function DealCard({ deal, onClick }: DealCardProps) {
         <span style={{ fontSize: '11px', color: '#94A3B8' }}>
           {deal.sellerName ?? ''}
         </span>
-        <span style={{ fontSize: '11px', color: '#94A3B8' }}>
-          {deal.createdAt ? formatDate(deal.createdAt as unknown as string) : ''}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {(showRed || showAmber) && (
+            <span style={{
+              fontSize: '10px',
+              fontWeight: 700,
+              color: '#fff',
+              background: showRed ? '#ef4444' : '#f59e0b',
+              borderRadius: '10px',
+              padding: '2px 6px',
+            }}>
+              {daysStalled}d
+            </span>
+          )}
+          <span style={{ fontSize: '11px', color: '#94A3B8' }}>
+            {deal.createdAt ? formatDate(deal.createdAt as unknown as string) : ''}
+          </span>
+        </div>
       </div>
     </div>
   )

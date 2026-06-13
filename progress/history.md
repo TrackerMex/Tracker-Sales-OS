@@ -1,5 +1,16 @@
 # History — Tracker Sales OS
 
+## 2026-06-13 — Feature 20: Detección de deals estancados
+
+**Status**: done — Review 14/14 PASS (progress/review_20-stalled-deals.md)
+
+**Qué**: Días en stage actual calculados desde `stage_history` JSONB. Badge ámbar/rojo en DealCard. Lista "Deals en riesgo" en Dashboard (Admin/Director). Umbrales configurables en Settings.
+
+- Backend: `findStalledDeals(amberDays)` en `IDealsRepository` — raw SQL con JSONB extracción del último `changedAt`, excluye Cierre/Perdido. `GetStalledDealsUseCase` inyecta deals repo + settings, calcula severity. Nuevo endpoint `GET /dashboard/stalled-deals` (Admin/Director). `AppSettings` extendida con `stalledAmberDays: 7` y `stalledRedDays: 14`.
+- Frontend: `DealCard` calcula daysStalled desde `stageHistory`, muestra badge con colores (#f59e0b/#ef4444). `DashboardPage` muestra sección "Deals en riesgo" tabla con clientName/stage/sellerName/días. `SettingsPage` con 2 campos nuevos. tsc backend+frontend exit 0.
+
+---
+
 ## 2026-06-13 — Feature 19: Forecast ponderado del pipeline
 
 **Status**: done — Review 6/6 PASS (progress/review_19-pipeline-forecast.md)

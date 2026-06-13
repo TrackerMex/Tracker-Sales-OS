@@ -215,3 +215,17 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] Header del Pipeline (Kanban) muestra "Total bruto" y "Forecast ponderado" derivados de los deals visibles (excluye Perdido)
 - [x] No se crean tablas nuevas
 - [x] `tsc --noEmit` sin errores en backend y frontend
+
+---
+
+## 20-stalled-deals
+
+- [ ] `AppSettings` tiene `stalledAmberDays: number` (default 7) y `stalledRedDays: number` (default 14)
+- [ ] `PATCH /api/settings` acepta y persiste ambos campos nuevos
+- [ ] `IDealsRepository` expone `findStalledDeals(amberDays: number): Promise<{deal: DealEntity, daysStalled: number}[]>` — excluye Cierre/Perdido
+- [ ] `GET /api/dashboard/stalled-deals` retorna `StalledDealDto[]` (solo Admin y Director)
+- [ ] Dashboard muestra sección "Deals en riesgo" con clientName, stage, daysStalled, sellerName (solo Admin/Director)
+- [ ] KanbanCard muestra badge ámbar cuando `daysStalled >= stalledAmberDays`
+- [ ] KanbanCard muestra badge rojo cuando `daysStalled >= stalledRedDays`
+- [ ] Settings page tiene campos para `stalledAmberDays` y `stalledRedDays`
+- [ ] `tsc --noEmit` sin errores en backend y frontend
