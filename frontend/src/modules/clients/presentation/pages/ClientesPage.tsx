@@ -104,6 +104,7 @@ export function ClientesPage() {
   const currentUser = useAppStore((s) => s.currentUser)
   const [view, setView] = useState<View>({ mode: "list" })
   const [q, setQ] = useState("")
+  const [cold, setCold] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [form, setForm] = useState<CreateClientInput>(() => emptyClientForm(currentUser?.sellerId))
@@ -111,8 +112,8 @@ export function ClientesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Client | null>(null)
 
   const filters = useMemo(
-    () => ({ q, limit: 50 }),
-    [q]
+    () => ({ q, limit: 50, cold: cold || undefined }),
+    [q, cold]
   )
 
   const { data, isLoading, isError } = useClients(filters)
@@ -374,6 +375,12 @@ export function ClientesPage() {
             placeholder="Buscar cliente..."
             className="input max-w-[360px]"
           />
+          <button
+            onClick={() => setCold((v) => !v)}
+            className={cold ? "btn-primary whitespace-nowrap" : "btn-ghost whitespace-nowrap"}
+          >
+            Sin contacto
+          </button>
           <button onClick={openCreate} className="btn-primary whitespace-nowrap">
             + Nuevo cliente
           </button>
@@ -399,6 +406,7 @@ export function ClientesPage() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="tag tag-gray text-[9px]">{client.type}</span>
                 <span className={`tag ${stageTag[client.stage]} text-[9px]`}>{client.stage}</span>
+                {client.isCold && <span className="tag tag-red text-[9px]">Fría</span>}
               </div>
               <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{client.pain || "Sin pain registrado"}</p>
               {client.contacts.length > 0 && (
@@ -414,6 +422,9 @@ export function ClientesPage() {
                 <span>{activeSellers.find((s) => s.id === client.sellerId)?.name ?? client.sellerId.slice(0, 8)}</span>
                 {client.nextDate && <span> · {formatDate(client.nextDate)}</span>}
                 {client.nextStep && <span> · {client.nextStep.slice(0, 40)}{client.nextStep.length > 40 ? '…' : ''}</span>}
+                <span className="block mt-0.5">
+                  Última actividad: {client.lastActivityAt ? formatDate(client.lastActivityAt) : "Sin actividad"}
+                </span>
               </div>
               <div className="flex items-center gap-1.5">
                 <button onClick={() => openEdit(client)} className="btn-green">

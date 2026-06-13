@@ -18,6 +18,7 @@ export interface ClientFilters {
   q?: string;
   page?: number;
   limit?: number;
+  coldBefore?: Date;
 }
 
 export interface IClientRepository extends IRepository<ClientEntity> {

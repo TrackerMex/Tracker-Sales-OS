@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
+import { SettingsModule } from '../settings/settings.module';
+import { ActivityTypeormEntity } from '../activities/infrastructure/entities/activity.typeorm.entity';
 import { CLIENT_REPOSITORY } from './domain/repositories/client.repository.interface';
 import { AddContactUseCase } from './application/use-cases/add-contact.use-case';
 import { CreateClientUseCase } from './application/use-cases/create-client.use-case';
@@ -14,8 +16,9 @@ import { ClientsController } from './presentation/clients.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ClientTypeormEntity, ContactTypeormEntity]),
+    TypeOrmModule.forFeature([ClientTypeormEntity, ContactTypeormEntity, ActivityTypeormEntity]),
     AuthModule,
+    SettingsModule,
   ],
   controllers: [ClientsController],
   providers: [

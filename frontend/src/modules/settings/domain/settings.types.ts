@@ -6,6 +6,7 @@ export interface AppSettings {
   sellerMonthlyAmountGoal: number;
   stalledAmberDays: number;
   stalledRedDays: number;
+  coldAccountDays: number;
 }
 
 export interface UpdateSettingsInput {
@@ -16,4 +17,5 @@ export interface UpdateSettingsInput {
   sellerMonthlyAmountGoal?: number;
   stalledAmberDays?: number;
   stalledRedDays?: number;
+  coldAccountDays?: number;
 }

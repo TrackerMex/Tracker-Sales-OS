@@ -298,6 +298,24 @@ export function MiDiaPage() {
               {data.overdueCount !== 1 ? 's' : ''}
             </div>
           )}
+
+          {data.coldAccountsCount > 0 && (
+            <div
+              style={{
+                background: '#FFF7ED',
+                border: '1px solid #FDBA74',
+                borderRadius: 8,
+                padding: '8px 12px',
+                fontSize: 12,
+                color: '#9A3412',
+                marginTop: 12,
+              }}
+            >
+              {data.coldAccountsCount} cuenta{data.coldAccountsCount !== 1 ? 's' : ''} fría
+              {data.coldAccountsCount !== 1 ? 's' : ''} asignada
+              {data.coldAccountsCount !== 1 ? 's' : ''} a ti
+            </div>
+          )}
         </div>
       </div>
     </div>

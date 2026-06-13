@@ -253,3 +253,15 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] Se conserva el coloreado rojo del título en Mi Día y el layout flex existente
 - [x] Sin cambios de backend (`isOverdue` ya lo calcula `task.dto.ts`)
 - [x] `tsc --noEmit` sin errores en frontend
+
+---
+
+## 23-cold-accounts
+
+- [x] `AppSettings` tiene `coldAccountDays` (default 14); `PATCH /api/settings` lo persiste; editable en SettingsPage
+- [x] `ClientDto` expone `lastActivityAt: string | null` e `isCold: boolean`
+- [x] `GET /api/clients` retorna cada cliente con `lastActivityAt` e `isCold` (frío = `max(lastActivity, createdAt) < ahora - coldAccountDays`)
+- [x] `GET /api/clients?cold=true` filtra solo cuentas frías vía `NOT EXISTS` en repo (paginación/total correctos)
+- [x] ClientesPage: columna "última actividad", badge "Fría", toggle "Sin contacto"
+- [x] `GET /api/dashboard/mi-dia/seller/:id` retorna `coldAccountsCount`; MiDiaPage muestra alerta cuando > 0
+- [x] `tsc --noEmit` sin errores en backend y frontend

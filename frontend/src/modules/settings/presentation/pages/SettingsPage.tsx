@@ -15,6 +15,7 @@ const FIELD_LABELS: Record<string, string> = {
   sellerMonthlyAmountGoal: 'Meta mensual por vendedor ($)',
   stalledAmberDays: 'Días ámbar (deals estancados)',
   stalledRedDays: 'Días rojo (deals estancados)',
+  coldAccountDays: 'Días sin contacto para cuenta fría',
 }
 
 export function SettingsPage() {
@@ -32,6 +33,7 @@ export function SettingsPage() {
     sellerMonthlyAmountGoal: 150000,
     stalledAmberDays: 7,
     stalledRedDays: 14,
+    coldAccountDays: 14,
   })
 
   useEffect(() => {
@@ -74,7 +76,7 @@ export function SettingsPage() {
                 value={form[field]}
                 onChange={(e) => handleChange(field, e.target.value)}
                 disabled={!isAdmin}
-                min={['dailyMinPoints', 'dailyCallsGoal', 'stalledAmberDays', 'stalledRedDays'].includes(field) ? 1 : 0}
+                min={['dailyMinPoints', 'dailyCallsGoal', 'stalledAmberDays', 'stalledRedDays', 'coldAccountDays'].includes(field) ? 1 : 0}
                 className={fieldErrors[field] ? 'input input-error' : 'input'}
                 style={!isAdmin ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 {...fieldErrorProps(field, fieldErrors[field])}

@@ -49,6 +49,8 @@ export interface Client {
   nextTime: string | null
   contacts: Contact[]
   createdAt: string
+  lastActivityAt: string | null
+  isCold: boolean
 }
 
 export interface PaginatedClients {
@@ -63,6 +65,7 @@ export interface ClientFilters {
   q?: string
   page?: number
   limit?: number
+  cold?: boolean
 }
 
 export interface CreateContactInput {

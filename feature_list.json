@@ -256,11 +256,11 @@
     "id": "23-cold-accounts",
     "name": "Cuentas frías (data freshness)",
     "description": "Cliente sin actividad en N días = cuenta fría. Columna 'última actividad' + filtro en lista de clientes. Alerta en Mi Día.",
-    "status": "pending",
+    "status": "done",
     "priority": 23,
-    "backend_modules": ["clients", "dashboard"],
-    "frontend_modules": ["clients", "mi-dia"],
-    "notes": "Origen: improve_plan.md 2.1. Query join clients-activities."
+    "backend_modules": ["clients", "dashboard", "settings"],
+    "frontend_modules": ["clients", "mi-dia", "settings"],
+    "notes": "Origen: improve_plan.md 2.1. Completada 2026-06-13. Definicion: frio si max(lastActivityAt, createdAt) < ahora - coldAccountDays (gracia para clientes nuevos). Settings: coldAccountDays=14 nuevo (JSONB merge, sin migracion). Backend clients: ClientDto expone lastActivityAt+isCold; GetClientsUseCase inyecta repo activities (MAX executed_at por batch) + GetSettingsUseCase; filtro ?cold=true via NOT EXISTS en repo (paginacion correcta). Mi-Dia: coldAccountsCount con misma subquery. Frontend: columna 'ultima actividad' + badge 'Fria' + toggle 'Sin contacto' en ClientesPage; alerta naranja en MiDiaPage. tsc backend+frontend exit 0. progress/impl_23-cold-accounts.md. Caveat: cold filter compara executed_at >= coldBefore en TZ de DB."
   },
   {
     "id": "24-client-data-quality",

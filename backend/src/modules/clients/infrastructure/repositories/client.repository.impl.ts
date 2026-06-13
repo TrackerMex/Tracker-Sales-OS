@@ -81,6 +81,14 @@ export class ClientRepositoryImpl implements IClientRepository {
       );
     }
 
+    if (filters.coldBefore) {
+      query
+        .andWhere('client.createdAt < :coldBefore', { coldBefore: filters.coldBefore })
+        .andWhere(
+          'NOT EXISTS (SELECT 1 FROM activities act WHERE act.client_id = client.id::text AND act.deleted_at IS NULL AND act.executed_at >= :coldBefore)',
+        );
+    }
+
     const [data, total] = await query.getManyAndCount();
     return { data: data.map((entity) => this.toDomain(entity)), total };
   }
