@@ -5,6 +5,7 @@ export interface DashboardSummary {
   totalPoints: number;
   avgQuality: number;
   totalSalesCount: number;
+  pipelineForecast: number;
 }
 
 export interface SellerScore {

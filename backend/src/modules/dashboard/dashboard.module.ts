@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { SettingsModule } from '../settings/settings.module';
+import { PipelineModule } from '../pipeline/pipeline.module';
 import { ActivityTypeormEntity } from '../activities/infrastructure/entities/activity.typeorm.entity';
 import { TaskTypeormEntity } from '../tasks/infrastructure/entities/task.typeorm.entity';
 import { SaleTypeormEntity } from '../sales/infrastructure/entities/sale.typeorm.entity';
@@ -25,6 +26,7 @@ import { GetActivityTrendUseCase } from './application/use-cases/get-activity-tr
     ]),
     AuthModule,
     SettingsModule,
+    PipelineModule,
   ],
   controllers: [DashboardController],
   providers: [

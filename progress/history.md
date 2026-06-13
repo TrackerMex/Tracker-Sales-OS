@@ -1,5 +1,18 @@
 # History — Tracker Sales OS
 
+## 2026-06-13 — Feature 19: Forecast ponderado del pipeline
+
+**Status**: done — Review 6/6 PASS (progress/review_19-pipeline-forecast.md)
+
+**Qué**: Forecast ponderado = SUM(amount × probability/100), excluyendo Perdido y soft-deleted.
+
+- Backend: `IDealsRepository.getWeightedForecast()` (QueryBuilder, COALESCE, numeric). DashboardModule importa PipelineModule e inyecta DEAL_REPOSITORY; `pipelineForecast` agregado a `GET /api/dashboard/summary`.
+- Frontend: nuevo helper `shared/lib/format.ts` (formatCurrency); tarjeta "Forecast del mes" en KPIStrip comparada vs `monthlyAmountGoal`; header del Pipeline muestra Total bruto + Forecast ponderado.
+- Sin tablas/migraciones nuevas. tsc backend+frontend exit 0.
+- Fix asociado: stub `getWeightedForecast` en mock de `create-activity.use-case.spec.ts` (interface cambió).
+
+---
+
 ## 2026-06-09 — Bug Fixes & UI Alignment Session
 
 **Status**: done

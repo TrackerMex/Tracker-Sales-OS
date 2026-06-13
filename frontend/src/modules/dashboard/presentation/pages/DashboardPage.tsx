@@ -16,6 +16,8 @@ import { KPIStrip } from "../components/KPIStrip"
 import { SellerSemaphoreTable } from "../components/SellerSemaphoreTable"
 import { AlertsPanel } from "../components/AlertsPanel"
 import type { ActivityTrendItem } from "../../domain/dashboard.types"
+import { useSettings } from "@/modules/settings/application/hooks/useSettings"
+import { formatCurrency } from "@/shared/lib/format"
 
 ChartJS.register(
   CategoryScale,
@@ -25,19 +27,6 @@ ChartJS.register(
   Filler,
   Tooltip
 )
-
-function formatCurrency(value: number): string {
-  // Handle edge cases: null, undefined, NaN, Infinity
-  if (!Number.isFinite(value)) {
-    return "$0.00"
-  }
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.abs(value) > 999999999 ? 999999999 : value)
-}
 
 interface ActivityChartProps {
   data: ActivityTrendItem[];
@@ -93,11 +82,16 @@ export function DashboardPage() {
   const sellers = useSellersSemaphore()
   const overdue = useOverdueTasks()
   const trend = useActivityTrend()
+  const settings = useSettings()
 
   const isLoading = summary.isLoading
   const data = summary.data
 
   const totalOverdue = overdue.data?.length ?? 0
+
+  const goal = settings.data?.monthlyAmountGoal ?? 600000
+  const forecast = data?.pipelineForecast ?? 0
+  const pct = goal > 0 ? Math.round((forecast / goal) * 100) : 0
 
   // Get current time for data freshness indicator
   const now = new Date()
@@ -144,6 +138,8 @@ export function DashboardPage() {
         unitsGoal={150}
         pointsValue={data?.totalPoints ?? 0}
         qualityValue={data?.avgQuality ?? 0}
+        forecastValue={isLoading ? "..." : formatCurrency(forecast)}
+        forecastSubtitle={`${pct}% de meta ${formatCurrency(goal)}`}
         isLoading={isLoading}
         onRetry={() => summary.refetch?.()}
       />

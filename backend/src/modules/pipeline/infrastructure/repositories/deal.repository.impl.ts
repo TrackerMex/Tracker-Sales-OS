@@ -142,6 +142,16 @@ export class DealRepositoryImpl implements IDealsRepository {
     });
   }
 
+  async getWeightedForecast(): Promise<number> {
+    const raw = await this.repo
+      .createQueryBuilder('d')
+      .select('COALESCE(SUM(d.amount * d.probability / 100), 0)', 'forecast')
+      .where('d.stage != :lost', { lost: PipelineStage.Perdido })
+      .andWhere('d.deleted_at IS NULL')
+      .getRawOne<{ forecast: string }>();
+    return Number(raw?.forecast) || 0;
+  }
+
   private toDomain(entity: DealTypeormEntity): DealEntity {
     return Object.assign(new DealEntity(), {
       ...entity,
