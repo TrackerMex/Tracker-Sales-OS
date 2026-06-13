@@ -246,11 +246,11 @@
     "id": "22-overdue-tasks-badge",
     "name": "Indicador de tareas vencidas",
     "description": "Badge rojo en tareas con scheduledAt pasado sin completar, en Agenda y Mi Día.",
-    "status": "pending",
+    "status": "done",
     "priority": 22,
     "backend_modules": [],
     "frontend_modules": ["tasks", "mi-dia"],
-    "notes": "Origen: improve_plan.md 1.4. Pendiente conocido de feature 06."
+    "notes": "Origen: improve_plan.md 1.4. Pendiente conocido de feature 06. Completada 2026-06-13. Solo frontend, sin backend (isOverdue ya lo calcula task.dto.ts). TaskCard: 'Vencida' migrado de texto rojo suelto a badge 'tag tag-red'. MiDiaPage: badge 'tag tag-red' agregado junto al titulo en lista de hoy cuando isOverdue && Pendiente. tsc frontend exit 0. progress/impl_22-overdue-tasks-badge.md."
   },
   {
     "id": "23-cold-accounts",

@@ -54,7 +54,7 @@ export function TaskCard({ task, onComplete, clientName, contactName }: TaskCard
             </span>
           )}
           {isOverdue && (
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#DC2626' }}>Vencida</span>
+            <span className="tag tag-red">Vencida</span>
           )}
         </div>
       </div>

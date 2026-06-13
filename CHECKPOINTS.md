@@ -243,3 +243,13 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [ ] Dashboard muestra sección "Leaderboard del mes" con rank, nombre, puntos, delta (+/-) y racha (solo Admin/Director)
 - [ ] No se crean tablas nuevas
 - [ ] `tsc --noEmit` sin errores en backend y frontend
+
+---
+
+## 22-overdue-tasks-badge
+
+- [x] `TaskCard` muestra badge `tag tag-red` "Vencida" cuando `task.isOverdue && status === Pendiente` (Agenda)
+- [x] `MiDiaPage` muestra badge `tag tag-red` "Vencida" junto al título en tareas vencidas y pendientes de la lista de hoy
+- [x] Se conserva el coloreado rojo del título en Mi Día y el layout flex existente
+- [x] Sin cambios de backend (`isOverdue` ya lo calcula `task.dto.ts`)
+- [x] `tsc --noEmit` sin errores en frontend
