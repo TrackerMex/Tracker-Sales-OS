@@ -512,3 +512,21 @@ Batch 2:
 **Nota**: stub jest.fn() de sumPointsByDayForSellers anadido al mock en create-activity.use-case.spec.ts (necesario para compilar, mismo patron que feature 20).
 
 **Caveat no bloqueante**: TO_CHAR renderiza en TZ de sesion DB mientras el use-case arma claves de dia con hora local de Node; consistente si DB y Node comparten TZ (Docker UTC tipico). Mismo patron que get-sellers-score.
+
+---
+
+## 2026-06-13 — Feature 24: Score de calidad de datos por cliente
+
+**Origen**: improve_plan.md 2.2. Badge de % campos llenos + filtro "datos incompletos". Sin tablas nuevas.
+
+**Backend (clients):**
+- ClientDto.dataQuality: number.
+- GetClientsUseCase.calculateDataQuality: 5 campos x 20% (domain, person, source, contacto con phone, contacto con email). En memoria sobre contactos cargados, sin queries extra.
+- GetClientsQueryDto.incomplete + ClientFilters.incomplete.
+- ClientRepositoryImpl: filtro incomplete con Brackets (domain NULL/'' OR person NULL OR source NULL OR NOT EXISTS phone OR NOT EXISTS email), paginacion correcta.
+
+**Frontend (clients):**
+- Client.dataQuality, ClientFilters.incomplete en clients.types.ts.
+- ClientesPage: toggle "Datos incompletos" + badge "Datos X%" en detalle y cards (verde=100, rojo<60, ambar resto).
+
+**Verificacion**: tsc backend+frontend exit 0. Filtro incomplete consistente con dataQuality<100. progress/impl_24-client-data-quality.md.

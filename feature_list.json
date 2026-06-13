@@ -266,11 +266,11 @@
     "id": "24-client-data-quality",
     "name": "Score de calidad de datos por cliente",
     "description": "% de campos llenos del cliente/contactos (tel, email, dominio, tipo persona, fuente). Badge en detalle + filtro 'datos incompletos'.",
-    "status": "pending",
+    "status": "done",
     "priority": 24,
     "backend_modules": ["clients"],
     "frontend_modules": ["clients"],
-    "notes": "Origen: improve_plan.md 2.2. Mismo patrón que calidad de actividad (campos × peso)."
+    "notes": "Origen: improve_plan.md 2.2. Completada 2026-06-13. dataQuality = 5 campos x 20% (domain, person, source, contacto con phone, contacto con email). Backend: ClientDto.dataQuality, GetClientsUseCase.calculateDataQuality (en memoria, sin queries extra), filtro ?incomplete via Brackets/NOT EXISTS (paginacion correcta). Frontend: badge 'Datos X%' en detalle+cards (verde=100/rojo<60/ambar), toggle 'Datos incompletos'. tsc backend+frontend exit 0. progress/impl_24-client-data-quality.md."
   },
   {
     "id": "25-winloss-analysis",

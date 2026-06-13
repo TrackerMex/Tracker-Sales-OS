@@ -89,6 +89,22 @@ export class ClientRepositoryImpl implements IClientRepository {
         );
     }
 
+    if (filters.incomplete) {
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where("client.domain IS NULL OR client.domain = ''")
+            .orWhere('client.person IS NULL')
+            .orWhere('client.source IS NULL')
+            .orWhere(
+              "NOT EXISTS (SELECT 1 FROM contacts c WHERE c.client_id = client.id AND c.phone <> '' AND c.deleted_at IS NULL)",
+            )
+            .orWhere(
+              "NOT EXISTS (SELECT 1 FROM contacts c WHERE c.client_id = client.id AND c.email <> '' AND c.deleted_at IS NULL)",
+            );
+        }),
+      );
+    }
+
     const [data, total] = await query.getManyAndCount();
     return { data: data.map((entity) => this.toDomain(entity)), total };
   }

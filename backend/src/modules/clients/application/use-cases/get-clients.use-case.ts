@@ -47,6 +47,7 @@ export class GetClientsUseCase
       page: input.query.page,
       limit: input.query.limit,
       coldBefore: input.query.cold ? coldBefore : undefined,
+      incomplete: input.query.incomplete,
     });
 
     const lastMap = await this.getLastActivityMap(data.map((c) => c.id));
@@ -75,6 +76,17 @@ export class GetClientsUseCase
       ...(client as any),
       lastActivityAt: last ? last.toISOString() : null,
       isCold: ref < coldBefore,
+      dataQuality: this.calculateDataQuality(client),
     } as ClientDto;
+  }
+
+  private calculateDataQuality(client: ClientEntity): number {
+    let score = 0;
+    if (client.domain?.trim()) score += 20;
+    if (client.person) score += 20;
+    if (client.source) score += 20;
+    if (client.contacts?.some((c) => c.phone?.trim())) score += 20;
+    if (client.contacts?.some((c) => c.email?.trim())) score += 20;
+    return score;
   }
 }

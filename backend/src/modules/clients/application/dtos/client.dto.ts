@@ -57,6 +57,7 @@ export class ClientDto {
   @ApiProperty({ nullable: true }) deletedAt: Date | null;
   @ApiProperty({ nullable: true }) lastActivityAt: string | null;
   @ApiProperty() isCold: boolean;
+  @ApiProperty() dataQuality: number;
 }
 
 export class CreateContactDto {
@@ -181,6 +182,11 @@ export class GetClientsQueryDto {
   @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   cold?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  incomplete?: boolean;
 }
 
 export class UpdateClientDto {

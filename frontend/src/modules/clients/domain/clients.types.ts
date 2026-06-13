@@ -51,6 +51,7 @@ export interface Client {
   createdAt: string
   lastActivityAt: string | null
   isCold: boolean
+  dataQuality: number
 }
 
 export interface PaginatedClients {
@@ -66,6 +67,7 @@ export interface ClientFilters {
   page?: number
   limit?: number
   cold?: boolean
+  incomplete?: boolean
 }
 
 export interface CreateContactInput {
