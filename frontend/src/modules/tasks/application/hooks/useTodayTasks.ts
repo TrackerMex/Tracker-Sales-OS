@@ -8,9 +8,9 @@ function localDateISO(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-export const useTodayTasks = (date?: string) => {
+export const useTodayTasks = (sellerIdOverride?: string | null, date?: string) => {
   const currentUser = useAppStore((s) => s.currentUser)
-  const sellerId = currentUser?.sellerId ?? currentUser?.id ?? ''
+  const sellerId = sellerIdOverride ?? currentUser?.sellerId ?? currentUser?.id ?? ''
   const localDate = date ?? localDateISO()
 
   return useQuery({
