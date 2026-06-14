@@ -81,6 +81,7 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error }: 
         objective: objective || undefined,
         client: selectedClient?.name,
         contactName: selectedContact?.name,
+        clientId: clientId || undefined,
       })
       setAiTips(res.tips)
     } catch {
