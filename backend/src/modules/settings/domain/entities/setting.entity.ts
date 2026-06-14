@@ -6,6 +6,7 @@ export interface AppSettings {
   sellerMonthlyAmountGoal: number;
   stalledAmberDays: number;
   stalledRedDays: number;
+  coldAccountDays: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -16,4 +17,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   sellerMonthlyAmountGoal: 150000,
   stalledAmberDays: 7,
   stalledRedDays: 14,
+  coldAccountDays: 14,
 };

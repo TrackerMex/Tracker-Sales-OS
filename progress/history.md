@@ -1,5 +1,19 @@
 # History — Tracker Sales OS
 
+## 2026-06-13 — Feature 26: IA Coach con más contexto
+
+**Status**: done — Review Líder 12/12 PASS
+
+**Qué**: Enriquecer el prompt de `POST /api/coaching/suggestion` con contexto real del cliente, deal y vendedor. Mismo endpoint y proveedor LLM, solo mejor prompt. Backend-only, retrocompatible, sin tablas nuevas.
+
+- `SuggestionRequestDto`: nuevos campos opcionales `clientId?`, `sellerId?` (`@IsOptional() @IsString()`).
+- `CoachingController.getSuggestion`: usa `@Request()` y toma `req.user.sellerId` como fallback de `sellerId`.
+- `GenerateSuggestionUseCase`: inyecta `Repository<ActivityTypeormEntity>`, `DEAL_REPOSITORY` y `GetSettingsUseCase`. Método privado `buildContext` (best-effort, try/catch por bloque) anexa al prompt: (a) últimas 3 actividades del cliente, (b) días en etapa actual + `ALERTA` de estancamiento si `>= stalledAmberDays`, (c) calidad promedio del vendedor (30 días). `system` prompt instruye usar el contexto y priorizar deals estancados; `maxTokens` 300→400.
+- `coaching.module.ts`: importa `PipelineModule` para inyectar `DEAL_REPOSITORY`. tsc backend exit 0.
+- Caveat: el enriquecimiento solo se activa cuando el frontend manda `clientId`/`sellerId`; `ActivityForm`/`CreateTaskForm` aún no los envían (wiring futuro). El endpoint queda retrocompatible.
+
+---
+
 ## 2026-06-13 — Feature 20: Detección de deals estancados
 
 **Status**: done — Review 14/14 PASS (progress/review_20-stalled-deals.md)
@@ -512,3 +526,47 @@ Batch 2:
 **Nota**: stub jest.fn() de sumPointsByDayForSellers anadido al mock en create-activity.use-case.spec.ts (necesario para compilar, mismo patron que feature 20).
 
 **Caveat no bloqueante**: TO_CHAR renderiza en TZ de sesion DB mientras el use-case arma claves de dia con hora local de Node; consistente si DB y Node comparten TZ (Docker UTC tipico). Mismo patron que get-sellers-score.
+
+---
+
+## 2026-06-13 — Feature 24: Score de calidad de datos por cliente
+
+**Origen**: improve_plan.md 2.2. Badge de % campos llenos + filtro "datos incompletos". Sin tablas nuevas.
+
+**Backend (clients):**
+- ClientDto.dataQuality: number.
+- GetClientsUseCase.calculateDataQuality: 5 campos x 20% (domain, person, source, contacto con phone, contacto con email). En memoria sobre contactos cargados, sin queries extra.
+- GetClientsQueryDto.incomplete + ClientFilters.incomplete.
+- ClientRepositoryImpl: filtro incomplete con Brackets (domain NULL/'' OR person NULL OR source NULL OR NOT EXISTS phone OR NOT EXISTS email), paginacion correcta.
+
+**Frontend (clients):**
+- Client.dataQuality, ClientFilters.incomplete en clients.types.ts.
+- ClientesPage: toggle "Datos incompletos" + badge "Datos X%" en detalle y cards (verde=100, rojo<60, ambar resto).
+
+**Verificacion**: tsc backend+frontend exit 0. Filtro incomplete consistente con dataQuality<100. progress/impl_24-client-data-quality.md.
+
+---
+
+## 2026-06-13 — Feature 25: Análisis win/loss y conversión por etapa
+
+**Origen**: improve_plan.md 2.3. Funnel de conversión, tiempo por etapa, % perdidos por origen + campo opcional lossReason. Módulos: pipeline, reports. Único feature que "toca schema" (campo opcional dentro de JSONB stage_history, sin columna/migración nueva).
+
+**Backend pipeline (lossReason):**
+- deal.entity.ts: type LossReason ('precio'|'competencia'|'sin_respuesta'|'timing'|'otro'); StageHistoryEntry.lossReason?.
+- ChangeStageDtoBody: lossReason? opcional (@IsOptional @IsIn).
+- ChangeDealStageUseCase: guarda lossReason en history entry SOLO si newStage===Perdido y viene; opcional (no obliga). Controller ya hace {id,...dto}.
+- IDealsRepository.findAllForAnalysis(): todos los deals no borrados con stageHistory.
+
+**Backend reports:**
+- WinLossReportDto (totalDeals/won/lost/open/winRate/funnel/lossesByOrigin/lossReasons).
+- GetWinLossUseCase: in-memory desde findAllForAnalysis. maxStage por deal (current si !=Perdido, sino origin = ultimo non-Perdido de history). reached[i]=#deals con idx(maxStage)>=i (transiciones secuenciales). conversionFromPrevious=reached[i]/reached[i-1]. avgDaysInStage por pares consecutivos de stageHistory. lossesByOrigin agrupado por origin. lossReasons del entry Perdido (sin especificar si falta).
+- GET /api/reports/win-loss (Admin/Director). reports.module importa PipelineModule (DEAL_REPOSITORY), registra GetWinLossUseCase.
+
+**Frontend:**
+- pipeline.types.ts: LossReason, StageHistoryEntry.lossReason?, ChangeStageInput.lossReason?.
+- PipelinePage: al soltar deal en Perdido abre modal "Motivo de pérdida" (select opcional) antes de mutar; otros stages mutan directo.
+- reports.types.ts + reports.api.getWinLoss + hook useWinLoss. ReportsPage: WinLossSection (KPI winRate, tabla funnel, perdidos por origen, motivos) antes de Análisis Ejecutivo IA.
+
+**Verificacion**: Review Líder PASS. tsc backend+frontend exit 0. progress/impl_25-winloss-analysis.md. Stub findAllForAnalysis: jest.fn() en create-activity.use-case.spec.ts (mock, patron features 20/21).
+
+**Caveat no bloqueante**: avgDaysInStage omite dwell del stage inicial (no hay entry de creación en stageHistory) y del stage actual en curso; solo intervalos cerrados entre transiciones. origin de Perdido por defecto Prospecto si stageHistory insuficiente. Mismo limite conocido de feature 18 (stage inicial no registrado).

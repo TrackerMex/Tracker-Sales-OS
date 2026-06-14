@@ -13,6 +13,7 @@ import {
   ALLOWED_TRANSITIONS,
   STAGE_PROBABILITY,
   StageHistoryEntry,
+  LossReason,
 } from '../../domain/entities/deal.entity';
 import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 import { DealDto } from '../dtos/deal.dto';
@@ -21,6 +22,7 @@ interface ChangeDealStageInput {
   id: string;
   newStage: PipelineStage;
   changedBy: string;
+  lossReason?: LossReason;
 }
 
 @Injectable()
@@ -50,6 +52,9 @@ export class ChangeDealStageUseCase implements IUseCase<
       stage: input.newStage,
       changedAt: new Date().toISOString(),
       changedBy: input.changedBy,
+      ...(input.newStage === PipelineStage.Perdido && input.lossReason
+        ? { lossReason: input.lossReason }
+        : {}),
     };
 
     const updated = await this.dealRepo.update(input.id, {

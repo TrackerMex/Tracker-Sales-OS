@@ -8,4 +8,5 @@ export class UpdateSettingsDto {
   @IsOptional() @IsNumber() @Min(0) sellerMonthlyAmountGoal?: number;
   @IsOptional() @IsNumber() @Min(1) stalledAmberDays?: number;
   @IsOptional() @IsNumber() @Min(1) stalledRedDays?: number;
+  @IsOptional() @IsNumber() @Min(1) coldAccountDays?: number;
 }

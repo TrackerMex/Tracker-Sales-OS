@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from '../auth/auth.module';
 import { SettingsModule } from '../settings/settings.module';
+import { PipelineModule } from '../pipeline/pipeline.module';
 import { ActivityTypeormEntity } from '../activities/infrastructure/entities/activity.typeorm.entity';
 import { TaskTypeormEntity } from '../tasks/infrastructure/entities/task.typeorm.entity';
 import { SellerTypeormEntity } from '../sellers/infrastructure/entities/seller.typeorm.entity';
@@ -23,6 +24,7 @@ import { AnthropicAdapter } from './infrastructure/adapters/anthropic.adapter';
     ConfigModule,
     AuthModule,
     SettingsModule,
+    PipelineModule,
   ],
   controllers: [CoachingController],
   providers: [

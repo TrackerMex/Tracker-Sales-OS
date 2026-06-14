@@ -253,3 +253,65 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] Se conserva el coloreado rojo del título en Mi Día y el layout flex existente
 - [x] Sin cambios de backend (`isOverdue` ya lo calcula `task.dto.ts`)
 - [x] `tsc --noEmit` sin errores en frontend
+
+---
+
+## 23-cold-accounts
+
+- [x] `AppSettings` tiene `coldAccountDays` (default 14); `PATCH /api/settings` lo persiste; editable en SettingsPage
+- [x] `ClientDto` expone `lastActivityAt: string | null` e `isCold: boolean`
+- [x] `GET /api/clients` retorna cada cliente con `lastActivityAt` e `isCold` (frío = `max(lastActivity, createdAt) < ahora - coldAccountDays`)
+- [x] `GET /api/clients?cold=true` filtra solo cuentas frías vía `NOT EXISTS` en repo (paginación/total correctos)
+- [x] ClientesPage: columna "última actividad", badge "Fría", toggle "Sin contacto"
+- [x] `GET /api/dashboard/mi-dia/seller/:id` retorna `coldAccountsCount`; MiDiaPage muestra alerta cuando > 0
+- [x] `tsc --noEmit` sin errores en backend y frontend
+
+---
+
+## 24-client-data-quality
+
+- [x] `ClientDto` expone `dataQuality: number` (0-100); 5 campos × 20% (domain, person, source, contacto con phone, contacto con email)
+- [x] `GET /api/clients?incomplete=true` filtra clientes con `dataQuality < 100` vía Brackets/NOT EXISTS (paginación/total correctos)
+- [x] ClientesPage: badge "Datos X%" en detalle y cards (verde=100/rojo<60/ámbar), toggle "Datos incompletos"
+- [x] `tsc --noEmit` sin errores en backend y frontend
+
+---
+
+## 25-winloss-analysis
+
+**Backend — pipeline (lossReason):**
+- [x] `StageHistoryEntry` (deal.entity.ts) extendida con `lossReason?: LossReason`; tipo `LossReason = 'precio'|'competencia'|'sin_respuesta'|'timing'|'otro'`
+- [x] `ChangeStageDtoBody` acepta `lossReason?` opcional (`@IsOptional() @IsIn([...])`)
+- [x] `ChangeDealStageUseCase` almacena `lossReason` en el history entry **solo** cuando `newStage === Perdido` (campo opcional, no obligatorio); lo ignora en otros stages
+- [x] Sin tabla/columna nueva: `lossReason` vive dentro del JSONB `stage_history`
+
+**Backend — reports (análisis):**
+- [x] `IDealsRepository.findAllForAnalysis(): Promise<DealEntity[]>` retorna todos los deals no borrados con `stageHistory`
+- [x] `WinLossReportDto` con: `totalDeals, won, lost, open, winRate, funnel[], lossesByOrigin[], lossReasons[]`
+- [x] `GetWinLossUseCase` calcula in-memory: funnel (reached por stage canónico usando índice, conversión etapa→etapa), tiempo promedio por etapa (pares consecutivos de stageHistory), % perdidos por etapa de origen, breakdown de lossReason
+- [x] `GET /api/reports/win-loss` retorna `WinLossReportDto` (solo Admin/Director)
+- [x] `reports.module.ts` importa `PipelineModule` para inyectar `DEAL_REPOSITORY`
+
+**Frontend:**
+- [x] `pipeline.types.ts`: `LossReason`, `StageHistoryEntry.lossReason?`, `ChangeStageInput.lossReason?`
+- [x] PipelinePage: al soltar deal en "Perdido" abre modal para elegir motivo antes de mutar; otros stages mutan directo
+- [x] `reports.types.ts` + `reports.api.ts` (`getWinLoss`) + hook `useWinLoss`
+- [x] ReportsPage: sección "Win/Loss y conversión por etapa" (funnel: stage, alcanzados, conversión %, días prom; perdidos por origen; motivos), solo Admin/Director
+- [x] `tsc --noEmit` sin errores en backend y frontend
+
+---
+
+## 26-ai-coach-context
+
+**Backend — coaching (mismo endpoint y proveedor, solo prompt enriquecido):**
+- [x] `SuggestionRequestDto` acepta `clientId?` y `sellerId?` opcionales (`@IsOptional() @IsString()`); todos los campos previos siguen funcionando (retrocompatible)
+- [x] `CoachingController.getSuggestion` toma `sellerId` del JWT (`req.user.sellerId`) como fallback cuando el body no lo trae
+- [x] `GenerateSuggestionUseCase` inyecta repo de actividades (`ActivityTypeormEntity`), `DEAL_REPOSITORY` y `GetSettingsUseCase`
+- [x] Si hay `clientId`: anexa al prompt las últimas 3 actividades del cliente (tipo, resultado, resumen truncado, fecha), ordenadas por `executedAt` DESC, excluye soft-deleted
+- [x] Si hay `clientId` + `sellerId`: resuelve el deal vía `findByClientIdAndSellerId` y anexa "días en etapa actual" (desde el último `stageHistory.changedAt`, o `createdAt` si vacío)
+- [x] Si los días en etapa ≥ `settings.stalledAmberDays`: el prompt menciona explícitamente que el deal está estancado
+- [x] Si hay `sellerId`: anexa la calidad promedio del vendedor (AVG `quality`, últimos 30 días, excluye soft-deleted)
+- [x] Toda la recolección de contexto es best-effort: si una consulta falla, la sugerencia se genera igual (no rompe el endpoint)
+- [x] `coaching.module.ts` importa `PipelineModule` para inyectar `DEAL_REPOSITORY`
+- [x] Sin tablas nuevas; sin cambios de frontend
+- [x] `tsc --noEmit` sin errores en backend

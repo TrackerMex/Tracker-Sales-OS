@@ -33,4 +33,14 @@ export class SuggestionRequestDto {
   @IsOptional()
   @IsString()
   contactName?: string;
+
+  @ApiPropertyOptional({ example: 'b3f1c2d4-...' })
+  @IsOptional()
+  @IsString()
+  clientId?: string;
+
+  @ApiPropertyOptional({ example: 'a1b2c3d4-...' })
+  @IsOptional()
+  @IsString()
+  sellerId?: string;
 }

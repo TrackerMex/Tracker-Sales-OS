@@ -43,8 +43,16 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
       throw new NotFoundException(`Seller ${sellerId} not found`);
     }
 
-    const [pointsRaw, callsToday, tomorrowTasksCount, newProspectsToday, overdueCount] =
-      await Promise.all([
+    const coldBefore = new Date(Date.now() - settings.coldAccountDays * 24 * 60 * 60 * 1000);
+
+    const [
+      pointsRaw,
+      callsToday,
+      tomorrowTasksCount,
+      newProspectsToday,
+      overdueCount,
+      coldAccountsCount,
+    ] = await Promise.all([
         this.activityRepo
           .createQueryBuilder('a')
           .select('SUM(a.points)', 'total')
@@ -90,6 +98,16 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
             deletedAt: IsNull(),
           },
         }),
+
+        this.clientRepo
+          .createQueryBuilder('c')
+          .where('c.seller_id = :sellerId', { sellerId })
+          .andWhere('c.deleted_at IS NULL')
+          .andWhere('c.created_at < :coldBefore', { coldBefore })
+          .andWhere(
+            'NOT EXISTS (SELECT 1 FROM activities act WHERE act.client_id = c.id::text AND act.deleted_at IS NULL AND act.executed_at >= :coldBefore)',
+          )
+          .getCount(),
       ]);
 
     const pointsToday = Number(pointsRaw?.total) || 0;
@@ -137,6 +155,7 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
       newProspectsToday,
       newProspectsGoal: 2,
       overdueCount,
+      coldAccountsCount,
       semaphore,
       coachTips,
     };

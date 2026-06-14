@@ -10,6 +10,7 @@ export class MiDiaDto {
   newProspectsToday: number;
   newProspectsGoal: number;
   overdueCount: number;
+  coldAccountsCount: number;
   semaphore: 'verde' | 'ambar' | 'rojo' | 'morado';
   coachTips: string[];
 }

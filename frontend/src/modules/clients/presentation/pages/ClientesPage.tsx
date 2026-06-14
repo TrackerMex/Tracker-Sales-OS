@@ -104,6 +104,8 @@ export function ClientesPage() {
   const currentUser = useAppStore((s) => s.currentUser)
   const [view, setView] = useState<View>({ mode: "list" })
   const [q, setQ] = useState("")
+  const [cold, setCold] = useState(false)
+  const [incomplete, setIncomplete] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [form, setForm] = useState<CreateClientInput>(() => emptyClientForm(currentUser?.sellerId))
@@ -111,8 +113,8 @@ export function ClientesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Client | null>(null)
 
   const filters = useMemo(
-    () => ({ q, limit: 50 }),
-    [q]
+    () => ({ q, limit: 50, cold: cold || undefined, incomplete: incomplete || undefined }),
+    [q, cold, incomplete]
   )
 
   const { data, isLoading, isError } = useClients(filters)
@@ -249,6 +251,9 @@ export function ClientesPage() {
               <h2 className="text-lg font-bold text-white">{selectedClient.name}</h2>
               <div className="flex items-center gap-2 mt-2">
                 <span className={`tag ${stageTag[selectedClient.stage]}`}>{selectedClient.stage}</span>
+                <span className={`tag ${selectedClient.dataQuality === 100 ? "tag-green" : selectedClient.dataQuality < 60 ? "tag-red" : "tag-amber"}`}>
+                  Datos {selectedClient.dataQuality}%
+                </span>
                 <span className="text-[11px] text-slate-400">Seller {selectedClient.sellerId.slice(0, 8)}</span>
               </div>
             </div>
@@ -374,6 +379,18 @@ export function ClientesPage() {
             placeholder="Buscar cliente..."
             className="input max-w-[360px]"
           />
+          <button
+            onClick={() => setCold((v) => !v)}
+            className={cold ? "btn-primary whitespace-nowrap" : "btn-ghost whitespace-nowrap"}
+          >
+            Sin contacto
+          </button>
+          <button
+            onClick={() => setIncomplete((v) => !v)}
+            className={incomplete ? "btn-primary whitespace-nowrap" : "btn-ghost whitespace-nowrap"}
+          >
+            Datos incompletos
+          </button>
           <button onClick={openCreate} className="btn-primary whitespace-nowrap">
             + Nuevo cliente
           </button>
@@ -399,6 +416,10 @@ export function ClientesPage() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="tag tag-gray text-[9px]">{client.type}</span>
                 <span className={`tag ${stageTag[client.stage]} text-[9px]`}>{client.stage}</span>
+                {client.isCold && <span className="tag tag-red text-[9px]">Fría</span>}
+                <span className={`tag text-[9px] ${client.dataQuality === 100 ? "tag-green" : client.dataQuality < 60 ? "tag-red" : "tag-amber"}`}>
+                  Datos {client.dataQuality}%
+                </span>
               </div>
               <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{client.pain || "Sin pain registrado"}</p>
               {client.contacts.length > 0 && (
@@ -414,6 +435,9 @@ export function ClientesPage() {
                 <span>{activeSellers.find((s) => s.id === client.sellerId)?.name ?? client.sellerId.slice(0, 8)}</span>
                 {client.nextDate && <span> · {formatDate(client.nextDate)}</span>}
                 {client.nextStep && <span> · {client.nextStep.slice(0, 40)}{client.nextStep.length > 40 ? '…' : ''}</span>}
+                <span className="block mt-0.5">
+                  Última actividad: {client.lastActivityAt ? formatDate(client.lastActivityAt) : "Sin actividad"}
+                </span>
               </div>
               <div className="flex items-center gap-1.5">
                 <button onClick={() => openEdit(client)} className="btn-green">
