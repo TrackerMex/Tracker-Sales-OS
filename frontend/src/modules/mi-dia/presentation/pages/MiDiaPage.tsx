@@ -8,6 +8,7 @@ import { useTodayTasks } from '../../../tasks/application/hooks/useTodayTasks';
 import { useCompleteTask } from '../../../tasks/application/hooks/useCompleteTask';
 
 type Semaphore = 'verde' | 'ambar' | 'rojo' | 'morado';
+type AlertVariant = 'danger' | 'warning' | 'purple' | 'success';
 
 const SEMAPHORE: Record<Semaphore, { tag: string; label: string; rule: string; desc: string }> = {
   verde: {
@@ -59,57 +60,72 @@ function formatTime(scheduledAt: string | null | undefined): string {
   return d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' });
 }
 
-function Skel({ w, h, bg = '#e2e8f0' }: { w?: string | number; h: number; bg?: string }) {
-  return <div style={{ width: w ?? '100%', height: h, borderRadius: 4, background: bg }} />;
-}
-
 function MiDiaSkeleton() {
   return (
-    <div style={{ padding: 24 }}>
-      <div className="kpi-strip" style={{ marginBottom: 18 }}>
+    <div className="p-6">
+      <div className="kpi-strip mb-[18px] animate-pulse motion-reduce:animate-none">
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className={i === 0 ? 'kpi-cell ac' : 'kpi-cell'}>
-            <Skel h={11} w={70} bg={i === 0 ? 'rgba(255,255,255,0.18)' : '#e2e8f0'} />
-            <div style={{ margin: '8px 0 6px' }}>
-              <Skel h={26} w={48} bg={i === 0 ? 'rgba(255,255,255,0.25)' : '#e2e8f0'} />
+            <div
+              className="rounded"
+              style={{
+                width: 70,
+                height: 11,
+                background: i === 0 ? 'rgba(255,255,255,0.18)' : '#e2e8f0',
+              }}
+            />
+            <div className="my-2">
+              <div
+                className="rounded"
+                style={{
+                  width: 48,
+                  height: 26,
+                  background: i === 0 ? 'rgba(255,255,255,0.25)' : '#e2e8f0',
+                }}
+              />
             </div>
-            <Skel h={10} w={90} bg={i === 0 ? 'rgba(255,255,255,0.12)' : '#f1f5f9'} />
+            <div
+              className="rounded"
+              style={{
+                width: 90,
+                height: 10,
+                background: i === 0 ? 'rgba(255,255,255,0.12)' : '#f1f5f9',
+              }}
+            />
           </div>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 276px', gap: 16 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div className="card" style={{ padding: 20 }}>
-            <Skel h={11} w={140} bg="#e2e8f0" />
-            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="page-grid">
+        <div className="flex flex-col gap-4">
+          <div className="card p-5 animate-pulse motion-reduce:animate-none">
+            <div className="rounded mb-3" style={{ width: 140, height: 11, background: '#e2e8f0' }} />
+            <div className="flex flex-col gap-2">
               {[48, 40].map((h, i) => (
-                <div key={i} style={{ height: h, borderRadius: 8, background: '#f8fafc' }} />
+                <div key={i} className="rounded-lg" style={{ height: h, background: '#f8fafc' }} />
               ))}
             </div>
           </div>
-          <div className="card" style={{ padding: 20 }}>
-            <Skel h={11} w={170} bg="#e2e8f0" />
-            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="card p-5 animate-pulse motion-reduce:animate-none">
+            <div className="rounded mb-3" style={{ width: 170, height: 11, background: '#e2e8f0' }} />
+            <div className="flex flex-col gap-2">
               {[0, 1, 2].map((i) => (
-                <div key={i} style={{ height: 52, borderRadius: 9, border: '1px solid #e2e8f0' }} />
+                <div key={i} className="rounded-[9px] border border-[#e2e8f0]" style={{ height: 52 }} />
               ))}
             </div>
           </div>
         </div>
-        <div className="card" style={{ padding: 20, alignSelf: 'start' }}>
-          <Skel h={11} w={90} bg="#e2e8f0" />
-          <div style={{ marginTop: 12, marginBottom: 14 }}>
-            <Skel h={20} w={60} bg="#f1f5f9" />
+        <div className="card p-5 animate-pulse motion-reduce:animate-none self-start">
+          <div className="rounded mb-3" style={{ width: 90, height: 11, background: '#e2e8f0' }} />
+          <div className="rounded mb-3" style={{ width: 60, height: 20, background: '#f1f5f9' }} />
+          <div className="rounded mb-2" style={{ width: '90%', height: 16, background: '#e2e8f0' }} />
+          <div className="flex flex-col gap-1">
+            {[100, 80, 70].map((w, i) => (
+              <div key={i} className="rounded" style={{ width: `${w}%`, height: 13, background: '#f1f5f9' }} />
+            ))}
           </div>
-          <Skel h={16} w="90%" bg="#e2e8f0" />
-          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <Skel h={13} bg="#f1f5f9" />
-            <Skel h={13} w="80%" bg="#f1f5f9" />
-            <Skel h={13} w="70%" bg="#f1f5f9" />
-          </div>
-          <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <Skel h={32} bg="#e2e8f0" />
-            <Skel h={32} bg="#e2e8f0" />
+          <div className="flex flex-col gap-2 mt-5">
+            <div className="rounded-lg" style={{ height: 32, background: '#e2e8f0' }} />
+            <div className="rounded-lg" style={{ height: 32, background: '#e2e8f0' }} />
           </div>
         </div>
       </div>
@@ -118,55 +134,48 @@ function MiDiaSkeleton() {
 }
 
 function SellerPicker({ onSelect }: { onSelect: (id: string, name: string) => void }) {
-  const { data: sellers, isLoading } = useSellers();
+  const { data: sellers, isLoading, isError, refetch } = useSellers();
   const active = (sellers ?? []).filter((s) => s.active);
 
   return (
-    <div style={{ padding: 24 }}>
-      <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--tracker-text)', marginBottom: 4 }}>
-        Mi Día
-      </p>
-      <p style={{ fontSize: 13, color: 'var(--tracker-text-secondary)', marginBottom: 18 }}>
+    <div className="p-6">
+      <h1 className="page-title mb-1">Mi Día</h1>
+      <p className="page-subtitle mb-[18px]">
         Selecciona un vendedor para ver su estado operativo del día.
       </p>
       {isLoading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+        <div
+          className="grid gap-3 animate-pulse motion-reduce:animate-none"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}
+        >
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} style={{ height: 72, borderRadius: 10, background: '#f1f5f9' }} />
+            <div key={i} className="rounded-[10px]" style={{ height: 72, background: '#f1f5f9' }} />
           ))}
         </div>
+      ) : isError ? (
+        <div className="card p-5 flex items-center justify-between">
+          <p className="text-[13px] m-0" style={{ color: 'var(--tracker-danger)' }}>
+            No se pudo cargar la lista de vendedores.
+          </p>
+          <button className="btn-ghost ml-3" onClick={() => void refetch()}>
+            Reintentar
+          </button>
+        </div>
       ) : active.length === 0 ? (
-        <p style={{ fontSize: 13, color: 'var(--tracker-text-muted)' }}>Sin vendedores activos.</p>
+        <div className="empty-state">Sin vendedores activos.</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+        <div
+          className="grid gap-3"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}
+        >
           {active.map((s) => (
             <button
               key={s.id}
+              className="seller-pick-card"
               onClick={() => onSelect(s.id, s.name)}
-              style={{
-                textAlign: 'left',
-                padding: '14px 16px',
-                borderRadius: 10,
-                border: '1px solid var(--tracker-border)',
-                background: '#fff',
-                cursor: 'pointer',
-                transition: 'border-color 0.15s, box-shadow 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--tracker-primary)';
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--tracker-border)';
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none';
-              }}
             >
-              <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--tracker-text)', margin: '0 0 3px' }}>
-                {s.name}
-              </p>
-              <p style={{ fontSize: 12, color: 'var(--tracker-text-muted)', margin: 0 }}>
-                {s.profile ?? 'Ejecutivo comercial'}
-              </p>
+              <p className="spc-name" title={s.name}>{s.name}</p>
+              <p className="spc-role">{s.profile ?? 'Ejecutivo comercial'}</p>
             </button>
           ))}
         </div>
@@ -182,11 +191,13 @@ export function MiDiaPage() {
     currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Director;
   const [selectedSeller, setSelectedSeller] = useState<{ id: string; name: string } | null>(null);
 
-  const activeSellerId = isAdminOrDirector ? selectedSeller?.id ?? null : currentUser?.sellerId ?? null;
+  const activeSellerId = isAdminOrDirector
+    ? selectedSeller?.id ?? null
+    : currentUser?.sellerId ?? null;
 
-  const { data, isLoading, isError } = useMiDia(activeSellerId);
-  const { data: tasks } = useTodayTasks(activeSellerId);
-  const { mutate: completeTask } = useCompleteTask();
+  const { data, isLoading, isError, refetch } = useMiDia(activeSellerId);
+  const { data: tasks, isError: tasksError } = useTodayTasks(activeSellerId);
+  const { mutate: completeTask, isPending: isCompleting, variables: completingTaskId } = useCompleteTask();
 
   if (isAdminOrDirector && !selectedSeller) {
     return <SellerPicker onSelect={(id, name) => setSelectedSeller({ id, name })} />;
@@ -194,39 +205,28 @@ export function MiDiaPage() {
 
   if (!isAdminOrDirector && !currentUser?.sellerId) {
     return (
-      <div style={{ padding: 24, display: 'flex', justifyContent: 'center', paddingTop: 56 }}>
-        <div className="card" style={{ padding: '32px 40px', maxWidth: 400, textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: 'var(--tracker-text-secondary)' }}>
+      <div className="p-6 flex justify-center pt-14">
+        <div className="card p-10 max-w-sm text-center">
+          <p className="text-sm" style={{ color: 'var(--tracker-text-secondary)' }}>
             Tu cuenta no tiene perfil de vendedor asociado.
           </p>
         </div>
       </div>
     );
   }
+
   if (isLoading) return <MiDiaSkeleton />;
 
   if (isError || !data) {
     return (
-      <div style={{ padding: 24 }}>
-        <div
-          className="card"
-          style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 10 }}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--tracker-danger)"
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v4m0 4h.01" />
-          </svg>
-          <p style={{ fontSize: 13, color: 'var(--tracker-danger)', margin: 0 }}>
-            Error cargando datos de mi día
+      <div className="p-6">
+        <div className="card p-4 flex items-center justify-between gap-2.5">
+          <p className="text-[13px] m-0" style={{ color: 'var(--tracker-danger)' }}>
+            No se pudo cargar los datos de Mi Día.
           </p>
+          <button className="btn-ghost ml-3" onClick={() => void refetch()}>
+            Reintentar
+          </button>
         </div>
       </div>
     );
@@ -239,107 +239,75 @@ export function MiDiaPage() {
       ? Math.min(100, Math.round((data.pointsToday / data.dailyPointsGoal) * 100))
       : 100;
 
-  const alerts: Array<{ color: string; bg: string; text: string }> = [];
+  const alerts: Array<{ variant: AlertVariant; text: string }> = [];
   if (data.overdueCount > 0)
     alerts.push({
-      color: 'var(--tracker-danger)',
-      bg: '#FEF2F2',
+      variant: 'danger',
       text: `${data.overdueCount} seguimiento${data.overdueCount !== 1 ? 's' : ''} vencido${data.overdueCount !== 1 ? 's' : ''}. Atiende lo vencido primero.`,
     });
   if (data.pointsToday < data.dailyPointsGoal)
     alerts.push({
-      color: 'var(--tracker-warning)',
-      bg: '#FFFBEB',
+      variant: 'warning',
       text: `Vas en ${data.pointsToday}/${data.dailyPointsGoal} puntos. Te faltan ${data.dailyPointsGoal - data.pointsToday} para el mínimo.`,
     });
   if (data.callsToday < data.dailyCallsGoal)
     alerts.push({
-      color: 'var(--tracker-warning)',
-      bg: '#FFFBEB',
+      variant: 'warning',
       text: `Llevas ${data.callsToday}/${data.dailyCallsGoal} llamadas. ${data.dailyCallsGoal - data.callsToday} más para cumplir el objetivo.`,
     });
   if (data.tomorrowTasksCount < data.tomorrowTasksGoal)
     alerts.push({
-      color: 'var(--tracker-danger)',
-      bg: '#FEF2F2',
+      variant: 'danger',
       text: `Agenda de mañana baja (${data.tomorrowTasksCount}/${data.tomorrowTasksGoal}). Programa actividades antes de cerrar el día.`,
     });
   if (data.newProspectsToday < data.newProspectsGoal)
     alerts.push({
-      color: 'var(--tracker-purple)',
-      bg: '#F5F3FF',
+      variant: 'purple',
       text: `Prospectos nuevos hoy: ${data.newProspectsToday}/${data.newProspectsGoal}. Alimenta pipeline si la agenda está baja.`,
     });
   if (data.coldAccountsCount > 0)
     alerts.push({
-      color: 'var(--tracker-warning)',
-      bg: '#FFF7ED',
+      variant: 'warning',
       text: `${data.coldAccountsCount} cuenta${data.coldAccountsCount !== 1 ? 's' : ''} fría${data.coldAccountsCount !== 1 ? 's' : ''} asignada${data.coldAccountsCount !== 1 ? 's' : ''}. Reactiva antes de fin de semana.`,
     });
   if (alerts.length === 0)
     alerts.push({
-      color: 'var(--tracker-success-dark)',
-      bg: '#F0FDF4',
+      variant: 'success',
       text: 'Buen ritmo: tienes puntos, llamadas, agenda futura y pipeline activo. Mantén calidad en notas.',
     });
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="p-6">
       {/* SELLER BANNER (admin/director only) */}
       {isAdminOrDirector && selectedSeller && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 14,
-            padding: '8px 14px',
-            background: '#f8fafc',
-            borderRadius: 8,
-            border: '1px solid var(--tracker-border)',
-          }}
-        >
-          <p style={{ fontSize: 13, color: 'var(--tracker-text-secondary)', margin: 0 }}>
-            Viendo Mi Día de{' '}
-            <strong style={{ color: 'var(--tracker-text)' }}>{selectedSeller.name}</strong>
-          </p>
+        <div className="seller-banner">
+          <span>
+            Viendo Mi Día de <strong>{selectedSeller.name}</strong>
+          </span>
           <button
-            className="btn-secondary"
-            style={{ padding: '4px 10px', fontSize: 12 }}
+            className="btn-ghost"
             onClick={() => setSelectedSeller(null)}
+            aria-label={`Cambiar vendedor (actualmente: ${selectedSeller.name})`}
           >
             Cambiar
           </button>
         </div>
       )}
+
       {/* KPI STRIP */}
-      <div className="kpi-strip" style={{ marginBottom: 18 }}>
+      <div className="kpi-strip mb-5">
         <div className="kpi-cell ac">
           <div className="kl">Puntos de hoy</div>
           <div className="kv">
             {data.pointsToday}
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}>
-              /{data.dailyPointsGoal}
-            </span>
+            <span className="kv-sub-light">/{data.dailyPointsGoal}</span>
           </div>
           <div className="ksb">
             <span>Meta de actividad mínima</span>
-            <div
-              style={{
-                height: 3,
-                borderRadius: 2,
-                background: 'rgba(255,255,255,0.15)',
-                overflow: 'hidden',
-                marginTop: 5,
-              }}
-            >
+            <div className="prog mt-1">
               <div
-                style={{
-                  height: '100%',
-                  width: `${ptsPct}%`,
-                  background: 'var(--tracker-green)',
-                  transition: 'width 0.4s',
-                }}
+                className="prog-fill"
+                style={{ width: `${ptsPct}%`, background: 'var(--tracker-green)', transition: 'width 0.4s' }}
               />
             </div>
           </div>
@@ -348,64 +316,38 @@ export function MiDiaPage() {
           <div className="kl">Llamadas hoy</div>
           <div className="kv" style={{ color: metricColor(data.callsToday, data.dailyCallsGoal) }}>
             {data.callsToday}
-            <span style={{ fontSize: 13, color: 'var(--tracker-text-muted)', fontWeight: 400 }}>
-              /{data.dailyCallsGoal}
-            </span>
+            <span className="kv-sub">/{data.dailyCallsGoal}</span>
           </div>
           <div className="ksb">Objetivo recomendado</div>
         </div>
         <div className="kpi-cell">
           <div className="kl">Agenda mañana</div>
-          <div
-            className="kv"
-            style={{ color: metricColor(data.tomorrowTasksCount, data.tomorrowTasksGoal) }}
-          >
+          <div className="kv" style={{ color: metricColor(data.tomorrowTasksCount, data.tomorrowTasksGoal) }}>
             {data.tomorrowTasksCount}
-            <span style={{ fontSize: 13, color: 'var(--tracker-text-muted)', fontWeight: 400 }}>
-              {' '}
-              meta: {data.tomorrowTasksGoal}
-            </span>
+            <span className="kv-sub"> meta: {data.tomorrowTasksGoal}</span>
           </div>
           <div className="ksb">Planeación mínima</div>
         </div>
         <div className="kpi-cell">
           <div className="kl">Prospectos hoy</div>
-          <div
-            className="kv"
-            style={{ color: metricColor(data.newProspectsToday, data.newProspectsGoal) }}
-          >
+          <div className="kv" style={{ color: metricColor(data.newProspectsToday, data.newProspectsGoal) }}>
             {data.newProspectsToday}
-            <span style={{ fontSize: 13, color: 'var(--tracker-text-muted)', fontWeight: 400 }}>
-              /{data.newProspectsGoal}
-            </span>
+            <span className="kv-sub">/{data.newProspectsGoal}</span>
           </div>
           <div className="ksb">Alimenta pipeline si vas bajo</div>
         </div>
       </div>
 
       {/* MAIN GRID */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 276px', gap: 16 }}>
+      <div className="page-grid">
         {/* LEFT */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
+        <div className="flex flex-col gap-4 min-w-0">
           {/* THERMOMETER */}
-          <div className="card" style={{ padding: 20 }}>
-            <p className="slabel" style={{ marginBottom: 12 }}>
-              Termómetro operativo
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="card p-5">
+            <p className="slabel mb-3">Termómetro operativo</p>
+            <div className="flex flex-col gap-2">
               {alerts.map((a, i) => (
-                <div
-                  key={i}
-                  style={{
-                    padding: '11px 13px',
-                    borderRadius: 8,
-                    background: a.bg,
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                    color: a.color,
-                    lineHeight: 1.5,
-                  }}
-                >
+                <div key={i} className={`thermo-alert ${a.variant}`}>
                   {a.text}
                 </div>
               ))}
@@ -415,14 +357,15 @@ export function MiDiaPage() {
           {/* AI COACH TIPS */}
           {data.coachTips.length > 0 && (
             <div className="ai-box">
-              <p className="slabel" style={{ marginBottom: 8, color: 'var(--tracker-purple)' }}>
+              <p className="slabel mb-2" style={{ color: 'var(--tracker-purple)' }}>
                 Coach IA
               </p>
-              <ul style={{ margin: 0, paddingLeft: 16 }}>
+              <ul className="m-0 pl-4">
                 {data.coachTips.map((tip, i) => (
                   <li
                     key={i}
-                    style={{ fontSize: 12.5, marginBottom: i < data.coachTips.length - 1 ? 5 : 0 }}
+                    className="text-[12.5px]"
+                    style={{ marginBottom: i < data.coachTips.length - 1 ? 5 : 0 }}
                   >
                     {tip}
                   </li>
@@ -432,82 +375,49 @@ export function MiDiaPage() {
           )}
 
           {/* TASK LIST */}
-          <div className="card" style={{ padding: 20 }}>
-            <p className="slabel" style={{ marginBottom: 13 }}>
-              Agenda de hoy y pendientes
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {taskList.length === 0 ? (
-                <p style={{ fontSize: 13, color: 'var(--tracker-text-muted)', margin: 0 }}>
+          <div className="card p-5">
+            <p className="slabel mb-3">Agenda de hoy y pendientes</p>
+            <div className="flex flex-col gap-2">
+              {tasksError ? (
+                <div className="empty-state" style={{ color: 'var(--tracker-danger)' }}>
+                  No se pudo cargar la agenda.
+                </div>
+              ) : taskList.length === 0 ? (
+                <div className="empty-state">
                   Sin tareas abiertas. Crea agenda para mañana antes de cerrar el día.
-                </p>
+                </div>
               ) : (
                 taskList.map((task) => {
                   const isOverdue = task.isOverdue && task.status === 'Pendiente';
                   const isCompleted = task.status === 'Completado';
+                  const isThisTaskPending = isCompleting && completingTaskId === task.id;
+                  const cls = [
+                    'task-item',
+                    isOverdue ? 'is-overdue' : '',
+                    isCompleted ? 'is-completed' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
                   return (
-                    <div
-                      key={task.id}
-                      style={{
-                        padding: 13,
-                        borderRadius: 9,
-                        border: `1px solid ${isOverdue ? '#FCA5A5' : 'var(--tracker-border)'}`,
-                        background: isOverdue ? '#FFF5F5' : '#fff',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-start',
-                        gap: 12,
-                        opacity: isCompleted ? 0.55 : 1,
-                        transition: 'opacity 0.15s',
-                      }}
-                    >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            marginBottom: 2,
-                          }}
-                        >
-                          <p
-                            style={{
-                              fontSize: 13,
-                              fontWeight: 600,
-                              color: isOverdue
-                                ? 'var(--tracker-danger)'
-                                : 'var(--tracker-text)',
-                              textDecoration: isCompleted ? 'line-through' : 'none',
-                              margin: 0,
-                            }}
-                          >
-                            {task.title}
-                          </p>
+                    <div key={task.id} className={cls}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <p className="ti-title">{task.title}</p>
                           {isOverdue && <span className="tag tag-red">Vencida</span>}
                         </div>
                         {task.scheduledAt && (
-                          <p
-                            style={{
-                              fontSize: 11,
-                              color: isOverdue
-                                ? 'var(--tracker-danger)'
-                                : 'var(--tracker-success-dark)',
-                              fontWeight: 500,
-                              margin: 0,
-                            }}
-                          >
-                            {formatTime(task.scheduledAt)}
-                          </p>
+                          <p className="ti-time">{formatTime(task.scheduledAt)}</p>
                         )}
                       </div>
                       {task.status === 'Pendiente' && !isAdminOrDirector && (
                         <button
-                          className="btn-green"
-                          style={{ padding: '5px 10px', fontSize: 11, whiteSpace: 'nowrap' }}
+                          className="btn-green btn-sm"
                           onClick={() => completeTask(task.id)}
+                          disabled={isThisTaskPending}
                           aria-label={`Completar: ${task.title}`}
+                          aria-busy={isThisTaskPending}
                         >
-                          Completar
+                          {isThisTaskPending ? '...' : 'Completar'}
                         </button>
                       )}
                     </div>
@@ -519,44 +429,21 @@ export function MiDiaPage() {
         </div>
 
         {/* RIGHT SIDEBAR */}
-        <div className="card" style={{ padding: 20, alignSelf: 'start' }}>
-          <p className="slabel" style={{ marginBottom: 11 }}>
-            Regla del día
-          </p>
-          <div style={{ marginBottom: 12 }}>
+        <div className="card p-5 self-start">
+          <p className="slabel mb-3">Regla del día</p>
+          <div className="mb-3">
             <span className={`tag tag-${semaph.tag}`}>{semaph.label}</span>
           </div>
-          <p
-            style={{
-              fontSize: 14,
-              fontWeight: 700,
-              color: 'var(--tracker-text)',
-              lineHeight: 1.45,
-              marginBottom: 8,
-            }}
-          >
-            {semaph.rule}
-          </p>
-          <p
-            style={{
-              fontSize: 12,
-              color: 'var(--tracker-text-secondary)',
-              lineHeight: 1.65,
-              marginBottom: 20,
-            }}
-          >
-            {semaph.desc}
-          </p>
+          <p className="rule-title">{semaph.rule}</p>
+          <p className="rule-desc">{semaph.desc}</p>
           <button
-            className="btn-green"
-            style={{ width: '100%', justifyContent: 'center', marginBottom: 8 }}
+            className="btn-green w-full justify-center mb-2"
             onClick={() => void navigate({ to: '/agenda' })}
           >
             + Crear tarea
           </button>
           <button
-            className="btn-primary"
-            style={{ width: '100%', justifyContent: 'center' }}
+            className="btn-primary w-full justify-center"
             onClick={() => void navigate({ to: '/clientes' })}
           >
             + Nuevo prospecto

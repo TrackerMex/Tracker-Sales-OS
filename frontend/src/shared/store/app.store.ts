@@ -18,17 +18,25 @@ export const useAppStore = create<AppState>()(
       accessToken: null,
       sidebarOpen: true,
       setAuth: (user, token) => {
-        localStorage.setItem("accessToken", token)
+        sessionStorage.setItem("accessToken", token)
         set({ currentUser: user, accessToken: token })
       },
       clearAuth: () => {
-        localStorage.removeItem("accessToken")
+        sessionStorage.removeItem("accessToken")
         set({ currentUser: null, accessToken: null })
       },
       toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
     }),
     {
       name: "tracker-sales-app",
+      storage: {
+        getItem: (key) => {
+          const value = sessionStorage.getItem(key)
+          return value ? JSON.parse(value) : null
+        },
+        setItem: (key, value) => sessionStorage.setItem(key, JSON.stringify(value)),
+        removeItem: (key) => sessionStorage.removeItem(key),
+      },
       partialize: (s) => ({ currentUser: s.currentUser }),
     }
   )

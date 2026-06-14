@@ -13,9 +13,9 @@ function rankBadgeClass(rank: number): string {
 }
 
 function formatDelta(delta: number): { label: string; color: string } {
-  if (delta > 0) return { label: `+${delta.toLocaleString('es-MX')}`, color: '#82bc00' };
-  if (delta < 0) return { label: delta.toLocaleString('es-MX'), color: '#EF4444' };
-  return { label: '0', color: '#94A3B8' };
+  if (delta > 0) return { label: `+${delta.toLocaleString('es-MX')}`, color: 'var(--tracker-green)' };
+  if (delta < 0) return { label: delta.toLocaleString('es-MX'), color: 'var(--tracker-danger)' };
+  return { label: '0', color: 'var(--tracker-text-muted)' };
 }
 
 export function LeaderboardTable({ entries, isLoading }: LeaderboardTableProps) {
@@ -25,8 +25,7 @@ export function LeaderboardTable({ entries, isLoading }: LeaderboardTableProps) 
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="h-10 rounded-lg bg-slate-100"
-            style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
+            className="h-10 rounded-lg bg-slate-100 animate-pulse motion-reduce:animate-none"
           />
         ))}
       </div>
@@ -36,7 +35,7 @@ export function LeaderboardTable({ entries, isLoading }: LeaderboardTableProps) 
   if (entries.length === 0) {
     return (
       <div className="p-5">
-        <p className="text-sm text-slate-500">Sin datos del mes</p>
+        <div className="empty-state">Sin datos del mes</div>
       </div>
     );
   }
@@ -48,9 +47,9 @@ export function LeaderboardTable({ entries, isLoading }: LeaderboardTableProps) 
           <tr>
             <th style={{ width: 56 }}>#</th>
             <th>Vendedor</th>
-            <th style={{ textAlign: 'right' }}>Puntos mes</th>
-            <th style={{ textAlign: 'right' }}>Delta</th>
-            <th style={{ textAlign: 'right' }}>Racha</th>
+            <th className="text-right">Puntos mes</th>
+            <th className="text-right">Delta</th>
+            <th className="text-right">Racha</th>
           </tr>
         </thead>
         <tbody>
@@ -63,21 +62,25 @@ export function LeaderboardTable({ entries, isLoading }: LeaderboardTableProps) 
                   {badgeClass ? (
                     <span className={badgeClass}>{entry.rank}</span>
                   ) : (
-                    <span style={{ color: '#94A3B8', fontWeight: 600 }}>{entry.rank}</span>
+                    <span className="font-semibold" style={{ color: 'var(--tracker-text-muted)' }}>
+                      {entry.rank}
+                    </span>
                   )}
                 </td>
-                <td style={{ color: '#002B49', fontWeight: 600 }}>{entry.sellerName}</td>
-                <td style={{ textAlign: 'right', color: '#475569' }}>
+                <td className="font-semibold" style={{ color: 'var(--tracker-blue)' }}>
+                  {entry.sellerName}
+                </td>
+                <td className="text-right" style={{ color: 'var(--tracker-text-dim)' }}>
                   {entry.monthlyPoints.toLocaleString('es-MX')}
                 </td>
-                <td style={{ textAlign: 'right', color: delta.color, fontWeight: 600 }}>
+                <td className="text-right font-semibold" style={{ color: delta.color }}>
                   {delta.label}
                 </td>
-                <td style={{ textAlign: 'right' }}>
+                <td className="text-right">
                   {entry.streakDays > 0 ? (
                     <span className="tag tag-green">{entry.streakDays} d</span>
                   ) : (
-                    <span style={{ color: '#94A3B8' }}>0 d</span>
+                    <span style={{ color: 'var(--tracker-text-muted)' }}>0 d</span>
                   )}
                 </td>
               </tr>
