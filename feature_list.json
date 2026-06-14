@@ -286,10 +286,10 @@
     "id": "26-ai-coach-context",
     "name": "IA Coach con más contexto",
     "description": "Enriquecer prompt de POST /api/coaching/suggestion con últimas 3 actividades del cliente, días en stage actual, calidad promedio del vendedor. Mencionar deals estancados.",
-    "status": "pending",
+    "status": "done",
     "priority": 26,
     "backend_modules": ["coaching"],
     "frontend_modules": [],
-    "notes": "Origen: improve_plan.md 2.4. Mismo endpoint y proveedor, solo mejor prompt. Depende de 20-stalled-deals para señal de estancamiento."
+    "notes": "Origen: improve_plan.md 2.4. Mismo endpoint y proveedor, solo mejor prompt. Completada 2026-06-13. Review Líder 12/12 PASS, tsc backend exit 0. DTO SuggestionRequestDto + clientId?/sellerId? opcionales (retrocompatible). Controller toma sellerId del JWT como fallback. GenerateSuggestionUseCase.buildContext (best-effort, try/catch por bloque) anexa al prompt: ultimas 3 actividades del cliente (clientId), dias en etapa actual + ALERTA estancamiento si >= stalledAmberDays (clientId+sellerId via findByClientIdAndSellerId), calidad promedio vendedor 30d (sellerId). system prompt instruye usar contexto y priorizar deals estancados, maxTokens 300->400. coaching.module importa PipelineModule (DEAL_REPOSITORY). Sin tablas nuevas, sin frontend. progress/impl_26-ai-coach-context.md. Caveat: enriquecimiento solo aplica cuando el frontend manda clientId/sellerId; ActivityForm/CreateTaskForm aun no los envian (wiring futuro), pero el endpoint queda retrocompatible."
   }
 ]

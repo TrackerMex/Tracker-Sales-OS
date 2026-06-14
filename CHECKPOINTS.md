@@ -298,3 +298,20 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] `reports.types.ts` + `reports.api.ts` (`getWinLoss`) + hook `useWinLoss`
 - [x] ReportsPage: sección "Win/Loss y conversión por etapa" (funnel: stage, alcanzados, conversión %, días prom; perdidos por origen; motivos), solo Admin/Director
 - [x] `tsc --noEmit` sin errores en backend y frontend
+
+---
+
+## 26-ai-coach-context
+
+**Backend — coaching (mismo endpoint y proveedor, solo prompt enriquecido):**
+- [x] `SuggestionRequestDto` acepta `clientId?` y `sellerId?` opcionales (`@IsOptional() @IsString()`); todos los campos previos siguen funcionando (retrocompatible)
+- [x] `CoachingController.getSuggestion` toma `sellerId` del JWT (`req.user.sellerId`) como fallback cuando el body no lo trae
+- [x] `GenerateSuggestionUseCase` inyecta repo de actividades (`ActivityTypeormEntity`), `DEAL_REPOSITORY` y `GetSettingsUseCase`
+- [x] Si hay `clientId`: anexa al prompt las últimas 3 actividades del cliente (tipo, resultado, resumen truncado, fecha), ordenadas por `executedAt` DESC, excluye soft-deleted
+- [x] Si hay `clientId` + `sellerId`: resuelve el deal vía `findByClientIdAndSellerId` y anexa "días en etapa actual" (desde el último `stageHistory.changedAt`, o `createdAt` si vacío)
+- [x] Si los días en etapa ≥ `settings.stalledAmberDays`: el prompt menciona explícitamente que el deal está estancado
+- [x] Si hay `sellerId`: anexa la calidad promedio del vendedor (AVG `quality`, últimos 30 días, excluye soft-deleted)
+- [x] Toda la recolección de contexto es best-effort: si una consulta falla, la sugerencia se genera igual (no rompe el endpoint)
+- [x] `coaching.module.ts` importa `PipelineModule` para inyectar `DEAL_REPOSITORY`
+- [x] Sin tablas nuevas; sin cambios de frontend
+- [x] `tsc --noEmit` sin errores en backend

@@ -1,5 +1,19 @@
 # History — Tracker Sales OS
 
+## 2026-06-13 — Feature 26: IA Coach con más contexto
+
+**Status**: done — Review Líder 12/12 PASS
+
+**Qué**: Enriquecer el prompt de `POST /api/coaching/suggestion` con contexto real del cliente, deal y vendedor. Mismo endpoint y proveedor LLM, solo mejor prompt. Backend-only, retrocompatible, sin tablas nuevas.
+
+- `SuggestionRequestDto`: nuevos campos opcionales `clientId?`, `sellerId?` (`@IsOptional() @IsString()`).
+- `CoachingController.getSuggestion`: usa `@Request()` y toma `req.user.sellerId` como fallback de `sellerId`.
+- `GenerateSuggestionUseCase`: inyecta `Repository<ActivityTypeormEntity>`, `DEAL_REPOSITORY` y `GetSettingsUseCase`. Método privado `buildContext` (best-effort, try/catch por bloque) anexa al prompt: (a) últimas 3 actividades del cliente, (b) días en etapa actual + `ALERTA` de estancamiento si `>= stalledAmberDays`, (c) calidad promedio del vendedor (30 días). `system` prompt instruye usar el contexto y priorizar deals estancados; `maxTokens` 300→400.
+- `coaching.module.ts`: importa `PipelineModule` para inyectar `DEAL_REPOSITORY`. tsc backend exit 0.
+- Caveat: el enriquecimiento solo se activa cuando el frontend manda `clientId`/`sellerId`; `ActivityForm`/`CreateTaskForm` aún no los envían (wiring futuro). El endpoint queda retrocompatible.
+
+---
+
 ## 2026-06-13 — Feature 20: Detección de deals estancados
 
 **Status**: done — Review 14/14 PASS (progress/review_20-stalled-deals.md)
