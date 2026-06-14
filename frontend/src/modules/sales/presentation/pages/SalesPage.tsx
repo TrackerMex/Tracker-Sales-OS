@@ -68,7 +68,9 @@ export function SalesPage() {
   const atcErrors = useApiFormErrors(createAtcSale.error);
 
   const { data: clientsData } = useClients({ limit: 200 });
-  const { data, isLoading: loadingList, isError } = useSales({});
+  const { data, isLoading: loadingList, isError } = useSales(
+    !isAdminOrDirector ? { sellerId } : {},
+  );
 
   function handleSellerSubmit(e: FormEvent) {
     e.preventDefault();
