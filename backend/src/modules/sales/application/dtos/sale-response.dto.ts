@@ -1,9 +1,14 @@
-import { SaleEntity, SaleType, PaymentMethod, SaleSource } from '../../domain/entities/sale.entity';
+import {
+  SaleEntity,
+  SaleType,
+  PaymentMethod,
+  SaleSource,
+} from '../../domain/entities/sale.entity';
 
 export class SaleResponseDto {
   id: string;
   sellerId: string;
-  clientId: string;
+  clientId: string | null;
   clientName: string;
   clientType: 'Nuevo' | 'Existente';
   product: string;
@@ -29,7 +34,10 @@ export class SaleResponseDto {
     dto.amount = e.amount;
     dto.pay = e.pay;
     dto.source = e.source;
-    dto.date = e.date instanceof Date ? e.date.toISOString().split('T')[0] : String(e.date);
+    dto.date =
+      e.date instanceof Date
+        ? e.date.toISOString().split('T')[0]
+        : String(e.date);
     dto.notes = e.notes;
     dto.type = e.type;
     dto.createdAt = e.createdAt;

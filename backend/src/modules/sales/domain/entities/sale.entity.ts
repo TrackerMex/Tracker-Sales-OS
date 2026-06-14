@@ -26,7 +26,7 @@ export enum SaleSource {
 
 export class SaleEntity extends BaseEntity {
   sellerId: string;
-  clientId: string;
+  clientId: string | null;
   clientName: string;
   clientType: 'Nuevo' | 'Existente';
   product: string;
