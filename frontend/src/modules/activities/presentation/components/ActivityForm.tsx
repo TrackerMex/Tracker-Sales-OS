@@ -98,6 +98,7 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError 
         objective: summary || undefined,
         client: selectedClient?.name,
         dealStage: stage || undefined,
+        clientId: clientId || undefined,
       })
       setAiTips(res.tips)
     } catch {

@@ -15,6 +15,8 @@ export const coachingApi = {
     client?: string;
     dealStage?: string;
     contactName?: string;
+    clientId?: string;
+    sellerId?: string;
   }): Promise<{ tips: string[]; source: string }> => {
     const res = await api.post<{ tips: string[]; source: string }>('/coaching/suggestion', dto);
     return res.data;

@@ -6,40 +6,46 @@ product
 
 ## Users
 
-**Dual-role user base:**
+**Directores y administradores de ventas** — Supervisan equipos de 3-20 vendedores B2B en México. Acceden desde escritorio durante la jornada laboral. Misión: detectar quién necesita atención antes de que el día termine.
 
-- **Sales representatives** (individual contributors): Using the app daily to track deals, log activities, manage personal pipeline, see daily coaching & tasks, monitor their own progress toward quota.
-- **Sales managers**: Overseeing team performance through KPI dashboards, overdue task lists, seller semaphore (at-a-glance team health), coaching records, team import/export.
-
-Both roles access the same app but see different dashboards and have different permissions (team data vs. personal data).
+**Vendedores individuales** — Registran actividades (llamadas, visitas, propuestas) a lo largo del día. Consultan su semáforo, puntos y agenda. Frecuencia: varias sesiones cortas por día, en despacho o en campo.
 
 ## Product Purpose
 
-A **sales operations tracker** that consolidates the daily rhythms of a sales organization: deal pipeline management, activity logging, coaching moments, team oversight, and sales performance reporting. Success means managers know team health in seconds (semaphore view) and reps stay on top of their daily moves (coaching, tasks, activity tracking).
+Tracker Sales OS es el sistema operativo diario de un equipo comercial. Registra actividades, calcula puntos por esfuerzo, muestra el semáforo operativo de cada vendedor, y detecta señales de riesgo (seguimientos vencidos, cuentas frías, deals estancados) antes de que se conviertan en pérdidas.
+
+El éxito es que el director sepa, antes de las 10 AM, qué vendedor necesita intervención hoy. El vendedor sabe, en todo momento, si va bien o mal respecto a su meta diaria.
 
 ## Brand Personality
 
-**Professional, focused, no-nonsense.**
+**Operativo · Directo · Confiable**
 
-The UI should feel like a tool built *for* a sales team, not *at* them. Clean, scannable, data-first. Confident but not flashy. Serious about the work.
+Tono instruccional, no motivacional. No "¡Vas genial!", sino "Llevas 4/8 llamadas. Te faltan 4." El producto confía en que el usuario es un profesional que no necesita aplausos, sino datos precisos.
+
+## References
+
+- **Linear** — densidad funcional, tipografía apretada, cero decoración, estado siempre visible.
+- **Notion** — jerarquía clara, contenido como protagonista, whitespace con propósito.
+- **Retool** — herramienta antes que experiencia; el dato prima sobre el envoltorio.
+- **HubSpot CRM** — familiaridad para equipos de ventas; flujo CRM reconocible sin ser pesado.
 
 ## Anti-references
 
-Explicitly avoid:
-- **Overly corporate SaaS templating** (the blue-and-gray-button monotony of Enterprise ™)
-- **Flashy gamification** (progress bars disguised as achievement systems, celebratory animations for every action, fake urgency)
-- **Minimal/sterile** (gray on white, endless whitespace, personality stripped for "elegance")
+- **Salesforce / Microsoft Dynamics** — corporativo, pesado, menús infinitos, formularios de 30 campos. Tracker es lo contrario: una pantalla, una acción, un resultado.
+- **SaaS genérico de 2024** — cards idénticas, gradientes decorativos, copy de startup. Tracker habla de números reales, no de "empoderamiento".
+- **Dashboard de BI puro** — 12 gráficas sin contexto de acción. Tracker muestra métricas solo cuando conducen a un paso siguiente.
 
 ## Design Principles
 
-1. **Data visibility first** — users need to see status (pipeline stage, overdue count, team semaphore) without digging. Dashboard should be glanceable.
-2. **Role-aware by default** — reps see their deals & tasks; managers see team aggregates. No confusion about "is this my data or my team's?"
-3. **Actionable, not decorative** — every color, badge, or visual signal should have semantic meaning. No flourish without function.
-4. **Workflow respect** — forms and inputs should match how sales actually works (batch logging, quick edits, copy-paste flows). Don't force ceremony.
-5. **Earned confidence** — the app should feel like it was built by people who understand sales ops, not generalists guessing at workflows.
+1. **Estado antes que historia** — El vendedor debe saber su semáforo sin buscar. La información de estado es el primer elemento visible, no el último.
+2. **Densidad funcional** — Cada pixel trabaja. No hay whitespace "para respirar" si no aporta jerarquía. La app se usa en medio de una jornada, no para contemplarse.
+3. **Un foco por pantalla** — Cada ruta tiene una acción primaria. Si el usuario no sabe qué hacer en 3 segundos, la pantalla falló.
+4. **Datos que actúan** — Ninguna métrica aparece sin contexto de acción. No "Llamadas: 4", sino "Llamadas: 4/8 — te faltan 4 para el objetivo."
+5. **Confianza en el usuario** — Sin microtextos de advertencia innecesarios, sin confirmaciones dobles para acciones reversibles. El usuario es un profesional.
 
 ## Accessibility & Inclusion
 
-- **WCAG 2.1 Level AA** (4.5:1 contrast minimum, keyboard navigation, screen reader compatible)
-- **Reduced motion support** — respect `prefers-reduced-motion` for users with vestibular sensitivity
-- **Inclusive data visualization** — tables and charts should not rely on color alone to communicate status
+- WCAG AA mínimo (4.5:1 contraste en texto, navegación por teclado).
+- Reduced motion respetado globalmente en index.css.
+- Soporte teclado en formularios críticos (registrar actividad, completar tarea).
+- Textos en español MX; sin anglicismos de UI donde exista equivalente natural.

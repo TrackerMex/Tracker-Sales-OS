@@ -163,6 +163,31 @@
   --tracker-warning: #d97706;
   --tracker-warning-dark: #b45309;
   --tracker-purple: #6d28d9;
+
+  /* shadcn sidebar — Tracker dark theme override */
+  --sidebar: #001524;
+  --sidebar-foreground: rgba(255, 255, 255, 0.85);
+  --sidebar-primary: #82bc00;
+  --sidebar-primary-foreground: #001524;
+  --sidebar-accent: rgba(130, 188, 0, 0.13);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-ring: #82bc00;
+
+  /* 4pt spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* Layout */
+  --sidebar-width: 276px;
+  --page-gap: var(--sp-4);
 }
 
 /* Utility classes */
@@ -268,15 +293,34 @@
 
 /* KPI Strip */
 .kpi-strip {
-  @apply grid grid-cols-4 overflow-hidden;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  overflow: hidden;
   border: 1px solid var(--tracker-border);
   border-radius: 12px;
   background: var(--tracker-border);
   gap: 1px;
 }
+@media (max-width: 640px) {
+  .kpi-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 .kpi-cell {
-  @apply px-5 py-[18px];
+  padding: 18px var(--sp-5);
   background: #fff;
+}
+
+/* Page layout */
+.page-grid {
+  display: grid;
+  gap: var(--page-gap);
+  grid-template-columns: 1fr var(--sidebar-width);
+}
+@media (max-width: 900px) {
+  .page-grid {
+    grid-template-columns: 1fr;
+  }
 }
 .kpi-cell.ac {
   background: var(--tracker-dark);
@@ -484,6 +528,189 @@ body {
 .alert-item.red { background: #FEF2F2; }
 .alert-item.amber { background: #FFFBEB; }
 
+/* === PAGE HEADER === */
+.page-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--tracker-blue);
+}
+.page-subtitle {
+  font-size: 12px;
+  color: var(--tracker-text-muted);
+  margin-top: 2px;
+}
+.page-timestamp {
+  font-size: 11px;
+  color: var(--tracker-text-muted);
+  text-align: right;
+  line-height: 1.5;
+}
+
+/* === CARD HEADER / BODY === */
+.card-header {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--tracker-border);
+}
+.card-h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tracker-blue);
+  margin: 0;
+}
+.card-meta {
+  font-size: 11px;
+  color: var(--tracker-text-muted);
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+.card-body {
+  padding: 16px 20px;
+}
+
+/* === SELLER BANNER (admin/director viewing mode) === */
+.seller-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding: 8px 14px;
+  background: var(--tracker-surface-alt);
+  border-radius: 8px;
+  border: 1px solid var(--tracker-border);
+  font-size: 13px;
+  color: var(--tracker-text-secondary);
+}
+.seller-banner strong {
+  color: var(--tracker-text);
+  font-weight: 600;
+}
+
+/* === SELLER PICK CARD (Mi Día admin picker) === */
+.seller-pick-card {
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--tracker-border);
+  background: var(--tracker-surface);
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.seller-pick-card:hover {
+  border-color: var(--tracker-green);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.seller-pick-card .spc-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tracker-text);
+  margin: 0 0 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.seller-pick-card .spc-role {
+  font-size: 12px;
+  color: var(--tracker-text-muted);
+  margin: 0;
+}
+
+/* === TASK ITEM === */
+.task-item {
+  padding: 13px;
+  border-radius: 9px;
+  border: 1px solid var(--tracker-border);
+  background: var(--tracker-surface);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  transition: opacity 0.15s;
+}
+.task-item.is-overdue {
+  border-color: #FCA5A5;
+  background: #FFF5F5;
+}
+.task-item.is-completed {
+  opacity: 0.55;
+}
+.task-item .ti-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tracker-text);
+  margin: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.task-item.is-overdue .ti-title {
+  color: var(--tracker-danger);
+}
+.task-item.is-completed .ti-title {
+  text-decoration: line-through;
+}
+.task-item .ti-time {
+  font-size: 11px;
+  font-weight: 500;
+  margin: 2px 0 0;
+  color: var(--tracker-success-dark);
+}
+.task-item.is-overdue .ti-time {
+  color: var(--tracker-danger);
+}
+
+/* === THERMOMETER ALERTS (Mi Día) === */
+.thermo-alert {
+  padding: 11px 13px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.thermo-alert.danger { background: #FEF2F2; color: var(--tracker-danger); }
+.thermo-alert.warning { background: #FFFBEB; color: var(--tracker-warning); }
+.thermo-alert.purple { background: #F5F3FF; color: var(--tracker-purple); }
+.thermo-alert.success { background: #F0FDF4; color: var(--tracker-success-dark); }
+
+/* === BTN VARIANTS === */
+.btn-danger:hover { background: #fecaca; }
+
+/* === BTN SIZE MODIFIER === */
+.btn-sm {
+  padding: 5px 10px !important;
+  font-size: 11px !important;
+  white-space: nowrap;
+}
+
+/* === SELLER ROW: cursor === */
+.seller-row { cursor: pointer; }
+
+/* === RULE CARD (Mi Día sidebar) === */
+.rule-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--tracker-text);
+  line-height: 1.45;
+  margin: 0 0 8px;
+}
+.rule-desc {
+  font-size: 12px;
+  color: var(--tracker-text-secondary);
+  line-height: 1.65;
+  margin: 0 0 20px;
+}
+
+/* === KPI SUB VALUE === */
+.kv-sub {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--tracker-text-muted);
+}
+.kv-sub-light {
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+}
+
 /* === HARDENING: REDUCED MOTION === */
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -498,6 +725,15 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.seller-banner strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+  display: inline-block;
+  vertical-align: bottom;
 }
 
 .kpi-cell .kv {
@@ -515,4 +751,57 @@ body {
 .prog-fill {
   min-width: 2px;
   max-width: 100%;
+}
+
+/* === MOBILE: RESPONSIVE OVERRIDES === */
+@media (max-width: 767px) {
+  /* Tighter page padding */
+  main {
+    padding: var(--sp-3) !important;
+  }
+
+  /* KPI values smaller */
+  .kpi-cell .kv {
+    font-size: 18px;
+  }
+
+  /* Card sections tighter */
+  .card-header {
+    padding: 10px 14px;
+  }
+  .card-body {
+    padding: 12px 14px;
+  }
+
+  /* Touch targets — 40px minimum */
+  .btn-green,
+  .btn-primary,
+  .btn-ghost {
+    min-height: 40px;
+    padding: 10px 14px;
+  }
+  .btn-sm {
+    min-height: 36px !important;
+  }
+
+  /* Task items — touch-friendly */
+  .task-item {
+    padding: 14px;
+  }
+
+  /* Seller pick cards */
+  .seller-pick-card {
+    min-height: 64px;
+  }
+
+  /* Page title */
+  .page-title {
+    font-size: 16px;
+  }
+}
+
+/* Data tables — horizontal scroll on mobile */
+.dt-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }

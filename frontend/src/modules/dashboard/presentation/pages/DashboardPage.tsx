@@ -109,29 +109,22 @@ export function DashboardPage() {
   return (
     <div>
       {/* Title */}
-      <div className="mb-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 style={{ fontSize: 18, fontWeight: 700, color: "#002B49" }}>
-              Dashboard de ventas
-            </h1>
-            <p style={{ marginTop: 2, fontSize: 12, color: "#94A3B8" }}>
-              Resumen del desempeño del equipo de hoy
-            </p>
-          </div>
-          <p style={{ fontSize: 11, color: "#94A3B8", textAlign: 'right' }}>
-            Actualizado<br />a las {timeString}
-          </p>
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h1 className="page-title">Dashboard de ventas</h1>
+          <p className="page-subtitle">Resumen del desempeño del equipo de hoy</p>
         </div>
+        <p className="page-timestamp">
+          Actualizado<br />a las {timeString}
+        </p>
       </div>
 
       {summary.isError && (
-        <div className="mb-4 flex items-center justify-between rounded-lg bg-red-50 p-3 text-sm text-red-700 border border-red-200">
-          <p>No se pudo cargar el resumen. Verifica tu conexión e intenta de nuevo.</p>
-          <button
-            onClick={() => summary.refetch?.()}
-            className="ml-3 rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
-          >
+        <div className="mb-4 flex items-center justify-between rounded-lg p-3 border" style={{ background: '#FEF2F2', borderColor: '#FCA5A5' }}>
+          <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
+            No se pudo cargar el resumen. Verifica tu conexión e intenta de nuevo.
+          </p>
+          <button onClick={() => summary.refetch?.()} className="btn-ghost ml-3">
             Reintentar
           </button>
         </div>
@@ -154,36 +147,26 @@ export function DashboardPage() {
       />
 
       {/* 2-column: Activity + Alerts */}
-      <div
-        className="mt-4 grid gap-4"
-        style={{ gridTemplateColumns: "1fr 276px" }}
-      >
+      <div className="mt-4 page-grid">
         {/* Activity chart */}
         <div className="card">
-          <div className="border-b border-[#E2E8F0] px-5 py-3">
-            <h3
-              style={{ fontSize: 13, fontWeight: 700, color: "#002B49" }}
-              id="activity-chart-title"
-            >
+          <div className="card-header">
+            <h3 className="card-h3" id="activity-chart-title">
               Actividad — últimos 14 días
             </h3>
-            <p style={{ fontSize: 11, marginTop: 4, color: "#94A3B8" }}>
-              Muestra llamadas, emails y reuniones registradas
-            </p>
+            <p className="card-meta">Muestra llamadas, emails y reuniones registradas</p>
           </div>
-          <div className="p-4" aria-labelledby="activity-chart-title">
+          <div className="card-body" aria-labelledby="activity-chart-title">
             <ActivityChart data={trend.data ?? []} />
           </div>
         </div>
 
         {/* Alerts panel */}
         <div className="card">
-          <div className="border-b border-[#E2E8F0] px-5 py-3">
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#002B49" }}>
-              Alertas operativas
-            </h3>
+          <div className="card-header">
+            <h3 className="card-h3">Alertas operativas</h3>
           </div>
-          <div className="p-4">
+          <div className="card-body">
             <AlertsPanel
               alerts={[
                 {
@@ -214,10 +197,8 @@ export function DashboardPage() {
 
       {/* Team performance */}
       <div className="card mt-4">
-        <div className="border-b border-[#E2E8F0] px-5 py-3">
-          <h3 style={{ fontSize: 13, fontWeight: 700, color: "#002B49" }}>
-            Desempeño del equipo
-          </h3>
+        <div className="card-header">
+          <h3 className="card-h3">Desempeño del equipo</h3>
         </div>
         <SellerSemaphoreTable
           sellers={sellers.data ?? []}
@@ -225,11 +206,10 @@ export function DashboardPage() {
         />
         {sellers.isError && (
           <div className="flex items-center justify-between px-5 pb-4">
-            <p className="text-sm text-red-600">No se pudo cargar el desempeño del equipo.</p>
-            <button
-              onClick={() => sellers.refetch?.()}
-              className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
-            >
+            <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
+              No se pudo cargar el desempeño del equipo.
+            </p>
+            <button onClick={() => sellers.refetch?.()} className="btn-ghost ml-3">
               Reintentar
             </button>
           </div>
@@ -239,21 +219,16 @@ export function DashboardPage() {
       {/* Leaderboard del mes — Admin/Director only */}
       {isAdminOrDirector && (
         <div className="card mt-4">
-          <div className="border-b border-[#E2E8F0] px-5 py-3">
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#002B49" }}>
-              Leaderboard del mes
-            </h3>
-            <p style={{ fontSize: 11, marginTop: 4, color: "#94A3B8" }}>
-              Ranking por puntos acumulados este mes
-            </p>
+          <div className="card-header">
+            <h3 className="card-h3">Leaderboard del mes</h3>
+            <p className="card-meta">Ranking por puntos acumulados este mes</p>
           </div>
           {leaderboard.isError ? (
             <div className="flex items-center justify-between px-5 py-4">
-              <p className="text-sm text-red-600">No se pudo cargar el leaderboard.</p>
-              <button
-                onClick={() => leaderboard.refetch?.()}
-                className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
-              >
+              <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
+                No se pudo cargar el leaderboard.
+              </p>
+              <button onClick={() => leaderboard.refetch?.()} className="btn-ghost ml-3">
                 Reintentar
               </button>
             </div>
@@ -269,61 +244,63 @@ export function DashboardPage() {
       {/* Stalled deals — Admin/Director only */}
       {isAdminOrDirector && (
         <div className="card mt-4">
-          <div className="border-b border-[#E2E8F0] px-5 py-3">
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#002B49" }}>
-              Deals en riesgo
-            </h3>
-            <p style={{ fontSize: 11, marginTop: 4, color: "#94A3B8" }}>
-              Oportunidades sin movimiento de etapa
-            </p>
+          <div className="card-header">
+            <h3 className="card-h3">Deals en riesgo</h3>
+            <p className="card-meta">Oportunidades sin movimiento de etapa</p>
           </div>
-          <div className="p-4">
+          <div className="card-body">
             {stalledDeals.isLoading && (
-              <p style={{ fontSize: 13, color: "#94A3B8" }}>Cargando...</p>
+              <p className="text-[13px]" style={{ color: 'var(--tracker-text-muted)' }}>
+                Cargando...
+              </p>
             )}
             {stalledDeals.isError && (
-              <p style={{ fontSize: 13, color: "#EF4444" }}>No se pudo cargar los deals estancados.</p>
+              <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
+                No se pudo cargar los deals estancados.
+              </p>
             )}
             {!stalledDeals.isLoading && !stalledDeals.isError && (
               stalledDeals.data?.length === 0 ? (
-                <p style={{ fontSize: 13, color: "#94A3B8" }}>No hay deals estancados</p>
+                <div className="empty-state">No hay deals estancados</div>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <div className="dt-scroll">
+                <table className="dt">
                   <thead>
-                    <tr style={{ borderBottom: "1px solid #E2E8F0" }}>
-                      <th style={{ textAlign: "left", padding: "6px 8px", color: "#64748B", fontWeight: 600, fontSize: 11 }}>Cliente</th>
-                      <th style={{ textAlign: "left", padding: "6px 8px", color: "#64748B", fontWeight: 600, fontSize: 11 }}>Stage</th>
-                      <th style={{ textAlign: "left", padding: "6px 8px", color: "#64748B", fontWeight: 600, fontSize: 11 }}>Vendedor</th>
-                      <th style={{ textAlign: "right", padding: "6px 8px", color: "#64748B", fontWeight: 600, fontSize: 11 }}>Monto</th>
-                      <th style={{ textAlign: "right", padding: "6px 8px", color: "#64748B", fontWeight: 600, fontSize: 11 }}>Días estancado</th>
-                      <th style={{ textAlign: "center", padding: "6px 8px", color: "#64748B", fontWeight: 600, fontSize: 11 }}>Severidad</th>
+                    <tr>
+                      <th>Cliente</th>
+                      <th>Stage</th>
+                      <th>Vendedor</th>
+                      <th className="text-right">Monto</th>
+                      <th className="text-right">Días estancado</th>
+                      <th className="text-center">Severidad</th>
                     </tr>
                   </thead>
                   <tbody>
                     {stalledDeals.data?.map((item) => (
-                      <tr key={item.dealId} style={{ borderBottom: "1px solid #F1F5F9" }}>
-                        <td style={{ padding: "8px", color: "#002B49", fontWeight: 500 }}>{item.clientName}</td>
-                        <td style={{ padding: "8px", color: "#475569" }}>{item.stage}</td>
-                        <td style={{ padding: "8px", color: "#475569" }}>{item.sellerName || "—"}</td>
-                        <td style={{ padding: "8px", textAlign: "right", color: "#475569" }}>{formatCurrency(item.amount)}</td>
-                        <td style={{ padding: "8px", textAlign: "right", color: "#475569" }}>{item.daysStalled}</td>
-                        <td style={{ padding: "8px", textAlign: "center" }}>
-                          <span style={{
-                            display: "inline-block",
-                            padding: "2px 10px",
-                            borderRadius: "10px",
-                            fontSize: 11,
-                            fontWeight: 700,
-                            color: "#fff",
-                            background: item.severity === "red" ? "#ef4444" : "#f59e0b",
-                          }}>
-                            {item.severity === "red" ? "Rojo" : "Ámbar"}
+                      <tr key={item.dealId}>
+                        <td className="font-medium" style={{ color: 'var(--tracker-blue)' }}>
+                          {item.clientName}
+                        </td>
+                        <td style={{ color: 'var(--tracker-text-dim)' }}>{item.stage}</td>
+                        <td style={{ color: 'var(--tracker-text-dim)' }}>{item.sellerName || '—'}</td>
+                        <td className="text-right" style={{ color: 'var(--tracker-text-dim)' }}>
+                          {formatCurrency(item.amount)}
+                        </td>
+                        <td className="text-right" style={{ color: 'var(--tracker-text-dim)' }}>
+                          {item.daysStalled}
+                        </td>
+                        <td className="text-center">
+                          <span
+                            className={`tag ${item.severity === 'red' ? 'tag-red' : 'tag-amber'}`}
+                          >
+                            {item.severity === 'red' ? 'Rojo' : 'Ámbar'}
                           </span>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                </div>
               )
             )}
           </div>

@@ -4,6 +4,7 @@ import { useCreateSale } from '../../application/hooks/useCreateSale';
 import { useSales } from '../../application/hooks/useSales';
 import { useClients } from '../../../clients/application/hooks/useClients';
 import type { CreateSaleInput, PaymentMethod, SaleSource } from '../../domain/sales.types';
+import { UserRole } from '@/core/domain/types/common.types';
 import { useApiFormErrors } from '@/shared/lib/api-errors';
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary';
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError';
@@ -31,6 +32,7 @@ function formatCurrency(value: number): string {
 export function SalesPage() {
   const currentUser = useAppStore((s) => s.currentUser);
   const sellerId = currentUser?.sellerId ?? currentUser?.id ?? '';
+  const isAdminOrDirector = currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Director;
 
   // Seller form state
   const [sellerClientId, setSellerClientId] = useState('');
@@ -66,7 +68,9 @@ export function SalesPage() {
   const atcErrors = useApiFormErrors(createAtcSale.error);
 
   const { data: clientsData } = useClients({ limit: 200 });
-  const { data, isLoading: loadingList, isError } = useSales({});
+  const { data, isLoading: loadingList, isError } = useSales(
+    !isAdminOrDirector ? { sellerId } : {},
+  );
 
   function handleSellerSubmit(e: FormEvent) {
     e.preventDefault();
@@ -160,11 +164,11 @@ export function SalesPage() {
         <p className="mt-1 text-sm text-slate-500">Registro de cierres por tipo</p>
       </div>
 
-      {/* 3 columnas */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+      {/* columnas según rol */}
+      <div style={{ display: 'grid', gridTemplateColumns: isAdminOrDirector ? '1fr 1fr' : '1fr', gap: 16 }}>
 
-        {/* Columna izquierda: Vendedor */}
-        <div className="card p-5">
+        {/* Columna vendedor — solo Seller */}
+        {!isAdminOrDirector && <div className="card p-5">
           <h3 className="mb-4 text-sm font-black text-[#002B49]">Registrar venta del día</h3>
           <form ref={sellerErrors.formRef} onSubmit={handleSellerSubmit} className="space-y-3">
             <FormErrorSummary error={sellerErrors.summary} />
@@ -309,10 +313,10 @@ export function SalesPage() {
               {createSellerSale.isPending ? 'Guardando...' : 'Guardar venta vendedor'}
             </button>
           </form>
-        </div>
+        </div>}
 
-        {/* Columna central: Dirección */}
-        <div style={{ background: '#001524', borderRadius: 12, padding: 20 }}>
+        {/* Columna central: Dirección — solo Admin/Director */}
+        {isAdminOrDirector && <div style={{ background: '#001524', borderRadius: 12, padding: 20 }}>
           <h3 className="mb-1 text-sm font-black text-white">Ventas Dirección</h3>
           <p className="mb-4 text-xs text-slate-400">
             Cuentas cerradas directamente por Dirección Comercial
@@ -411,10 +415,10 @@ export function SalesPage() {
               {createDirSale.isPending ? 'Guardando...' : 'Guardar Venta Dirección'}
             </button>
           </form>
-        </div>
+        </div>}
 
-        {/* Columna derecha: ATC */}
-        <div className="card p-5">
+        {/* Columna derecha: ATC — solo Admin/Director */}
+        {isAdminOrDirector && <div className="card p-5">
           <h3 className="mb-1 text-sm font-black text-[#002B49]">Registrar ATC</h3>
           <p className="mb-4 text-xs text-slate-500">ATC solo registra clientes existentes</p>
           <form ref={atcErrors.formRef} onSubmit={handleAtcSubmit} className="space-y-3">
@@ -483,7 +487,7 @@ export function SalesPage() {
               {createAtcSale.isPending ? 'Guardando...' : 'Guardar ATC'}
             </button>
           </form>
-        </div>
+        </div>}
       </div>
 
       {/* VENTAS REGISTRADAS */}
