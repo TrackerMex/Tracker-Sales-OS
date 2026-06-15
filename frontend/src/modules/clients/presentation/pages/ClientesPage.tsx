@@ -603,7 +603,7 @@ export function ClientesPage() {
               <input
                 type="number"
                 min="0"
-                value={form.units}
+                value={form.units || ''}
                 onChange={(e) => updateForm("units", Number(e.target.value))}
                 placeholder="Unidades potenciales"
                 className={fieldErrors.units ? "input input-error" : "input"}
@@ -615,7 +615,7 @@ export function ClientesPage() {
               <input
                 type="number"
                 min="0"
-                value={form.expectedAmount}
+                value={form.expectedAmount || ''}
                 onChange={(e) => updateForm("expectedAmount", Number(e.target.value))}
                 placeholder="Monto esperado"
                 className={fieldErrors.expectedAmount ? "input input-error" : "input"}

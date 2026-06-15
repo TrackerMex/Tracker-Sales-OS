@@ -31,8 +31,8 @@ const defaultValues = {
   clientName: '',
   clientType: 'Nuevo' as 'Nuevo' | 'Existente',
   product: '',
-  units: 1,
-  amount: 0,
+  units: '' as number | '',
+  amount: '' as number | '',
   pay: 'Pagado' as PaymentMethod,
   source: 'Prospección propia' as SaleSource,
   date: new Date().toISOString().split('T')[0],
@@ -78,8 +78,8 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading, submitError 
       clientName,
       clientType,
       product,
-      units,
-      amount,
+      units: Number(units),
+      amount: Number(amount),
       pay,
       source,
       date,
@@ -159,7 +159,7 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading, submitError 
             min="1"
             className={inputClass('units')}
             value={units}
-            onChange={(e) => { setUnits(Number(e.target.value)); clearField('units'); }}
+            onChange={(e) => { setUnits(e.target.value === '' ? '' : Number(e.target.value)); clearField('units'); }}
             required
             {...fieldErrorProps('units', fieldErrors.units)}
           />
@@ -173,7 +173,7 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading, submitError 
             step="0.01"
             className={inputClass('amount')}
             value={amount}
-            onChange={(e) => { setAmount(Number(e.target.value)); clearField('amount'); }}
+            onChange={(e) => { setAmount(e.target.value === '' ? '' : Number(e.target.value)); clearField('amount'); }}
             required
             {...fieldErrorProps('amount', fieldErrors.amount)}
           />

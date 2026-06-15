@@ -73,7 +73,7 @@ export function SettingsPage() {
               <label className="slabel mb-1 block">{FIELD_LABELS[field]}</label>
               <input
                 type="number"
-                value={form[field]}
+                value={form[field] || ''}
                 onChange={(e) => handleChange(field, e.target.value)}
                 disabled={!isAdmin}
                 min={['dailyMinPoints', 'dailyCallsGoal', 'stalledAmberDays', 'stalledRedDays', 'coldAccountDays'].includes(field) ? 1 : 0}

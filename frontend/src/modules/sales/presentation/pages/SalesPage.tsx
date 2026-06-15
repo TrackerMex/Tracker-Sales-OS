@@ -39,8 +39,8 @@ export function SalesPage() {
   const [sellerClientName, setSellerClientName] = useState('');
   const [sellerClientType, setSellerClientType] = useState<'Nuevo' | 'Existente'>('Existente');
   const [sellerProduct, setSellerProduct] = useState('');
-  const [sellerUnits, setSellerUnits] = useState(1);
-  const [sellerAmount, setSellerAmount] = useState(0);
+  const [sellerUnits, setSellerUnits] = useState<number | ''>('');
+  const [sellerAmount, setSellerAmount] = useState<number | ''>('');
   const [sellerDate, setSellerDate] = useState(today());
   const [sellerPay, setSellerPay] = useState<PaymentMethod>('Pagado');
   const [sellerSource, setSellerSource] = useState<SaleSource>('Cliente existente');
@@ -48,14 +48,14 @@ export function SalesPage() {
 
   // Direction form state
   const [dirProject, setDirProject] = useState('');
-  const [dirUnits, setDirUnits] = useState(1);
-  const [dirAmount, setDirAmount] = useState(0);
+  const [dirUnits, setDirUnits] = useState<number | ''>('');
+  const [dirAmount, setDirAmount] = useState<number | ''>('');
   const [dirDate, setDirDate] = useState(today());
   const [dirNotes, setDirNotes] = useState('');
 
   // ATC form state
-  const [atcUnits, setAtcUnits] = useState(1);
-  const [atcAmount, setAtcAmount] = useState(0);
+  const [atcUnits, setAtcUnits] = useState<number | ''>('');
+  const [atcAmount, setAtcAmount] = useState<number | ''>('');
   const [atcDate, setAtcDate] = useState(today());
   const [atcNotes, setAtcNotes] = useState('');
 
@@ -80,8 +80,8 @@ export function SalesPage() {
       clientName: sellerClientName,
       clientType: sellerClientType,
       product: sellerProduct,
-      units: sellerUnits,
-      amount: sellerAmount,
+      units: Number(sellerUnits),
+      amount: Number(sellerAmount),
       pay: sellerPay,
       source: sellerSource,
       date: sellerDate,
@@ -94,8 +94,8 @@ export function SalesPage() {
         setSellerClientName('');
         setSellerClientType('Existente');
         setSellerProduct('');
-        setSellerUnits(1);
-        setSellerAmount(0);
+        setSellerUnits('');
+        setSellerAmount('');
         setSellerDate(today());
         setSellerNotes('');
       },
@@ -110,8 +110,8 @@ export function SalesPage() {
       clientName: dirProject,
       clientType: 'Existente',
       product: dirProject,
-      units: dirUnits,
-      amount: dirAmount,
+      units: Number(dirUnits),
+      amount: Number(dirAmount),
       pay: 'Pagado',
       source: 'Dirección Comercial',
       date: dirDate,
@@ -121,8 +121,8 @@ export function SalesPage() {
     createDirSale.mutate(input, {
       onSuccess: () => {
         setDirProject('');
-        setDirUnits(1);
-        setDirAmount(0);
+        setDirUnits('');
+        setDirAmount('');
         setDirDate(today());
         setDirNotes('');
       },
@@ -137,8 +137,8 @@ export function SalesPage() {
       clientName: 'ATC',
       clientType: 'Existente',
       product: 'ATC',
-      units: atcUnits,
-      amount: atcAmount,
+      units: Number(atcUnits),
+      amount: Number(atcAmount),
       pay: 'Pagado',
       source: 'Cliente existente',
       date: atcDate,
@@ -147,8 +147,8 @@ export function SalesPage() {
     };
     createAtcSale.mutate(input, {
       onSuccess: () => {
-        setAtcUnits(1);
-        setAtcAmount(0);
+        setAtcUnits('');
+        setAtcAmount('');
         setAtcDate(today());
         setAtcNotes('');
       },
@@ -222,7 +222,7 @@ export function SalesPage() {
                   min="1"
                   className={sellerErrors.fieldErrors.units ? 'input input-error' : 'input'}
                   value={sellerUnits}
-                  onChange={(e) => { setSellerUnits(Number(e.target.value)); sellerErrors.clearField('units'); }}
+                  onChange={(e) => { setSellerUnits(e.target.value === '' ? '' : Number(e.target.value)); sellerErrors.clearField('units'); }}
                   required
                   {...fieldErrorProps('units', sellerErrors.fieldErrors.units)}
                 />
@@ -236,7 +236,7 @@ export function SalesPage() {
                   step="0.01"
                   className={sellerErrors.fieldErrors.amount ? 'input input-error' : 'input'}
                   value={sellerAmount}
-                  onChange={(e) => { setSellerAmount(Number(e.target.value)); sellerErrors.clearField('amount'); }}
+                  onChange={(e) => { setSellerAmount(e.target.value === '' ? '' : Number(e.target.value)); sellerErrors.clearField('amount'); }}
                   required
                   {...fieldErrorProps('amount', sellerErrors.fieldErrors.amount)}
                 />
@@ -368,7 +368,7 @@ export function SalesPage() {
                 min="1"
                 className={dirErrors.fieldErrors.units ? 'input input-error' : 'input'}
                 value={dirUnits}
-                onChange={(e) => { setDirUnits(Number(e.target.value)); dirErrors.clearField('units'); }}
+                onChange={(e) => { setDirUnits(e.target.value === '' ? '' : Number(e.target.value)); dirErrors.clearField('units'); }}
                 required
                 {...fieldErrorProps('units', dirErrors.fieldErrors.units)}
               />
@@ -385,7 +385,7 @@ export function SalesPage() {
                 step="0.01"
                 className={dirErrors.fieldErrors.amount ? 'input input-error' : 'input'}
                 value={dirAmount}
-                onChange={(e) => { setDirAmount(Number(e.target.value)); dirErrors.clearField('amount'); }}
+                onChange={(e) => { setDirAmount(e.target.value === '' ? '' : Number(e.target.value)); dirErrors.clearField('amount'); }}
                 required
                 {...fieldErrorProps('amount', dirErrors.fieldErrors.amount)}
               />
@@ -444,7 +444,7 @@ export function SalesPage() {
                 min="1"
                 className={atcErrors.fieldErrors.units ? 'input input-error' : 'input'}
                 value={atcUnits}
-                onChange={(e) => { setAtcUnits(Number(e.target.value)); atcErrors.clearField('units'); }}
+                onChange={(e) => { setAtcUnits(e.target.value === '' ? '' : Number(e.target.value)); atcErrors.clearField('units'); }}
                 required
                 {...fieldErrorProps('units', atcErrors.fieldErrors.units)}
               />
@@ -459,7 +459,7 @@ export function SalesPage() {
                 step="0.01"
                 className={atcErrors.fieldErrors.amount ? 'input input-error' : 'input'}
                 value={atcAmount}
-                onChange={(e) => { setAtcAmount(Number(e.target.value)); atcErrors.clearField('amount'); }}
+                onChange={(e) => { setAtcAmount(e.target.value === '' ? '' : Number(e.target.value)); atcErrors.clearField('amount'); }}
                 required
                 {...fieldErrorProps('amount', atcErrors.fieldErrors.amount)}
               />
