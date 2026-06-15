@@ -6,7 +6,7 @@ export const appLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: '_app',
   beforeLoad: () => {
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     if (!token) throw redirect({ to: '/login' });
   },
   component: AppLayout,
