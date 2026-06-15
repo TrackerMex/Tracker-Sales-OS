@@ -15,7 +15,7 @@ function rankBadgeClass(rank: number): string {
 function formatDelta(delta: number): { label: string; color: string } {
   if (delta > 0) return { label: `+${delta.toLocaleString('es-MX')}`, color: 'var(--tracker-green)' };
   if (delta < 0) return { label: delta.toLocaleString('es-MX'), color: 'var(--tracker-danger)' };
-  return { label: '0', color: 'var(--tracker-text-muted)' };
+  return { label: '0', color: 'var(--tracker-text-secondary)' };
 }
 
 export function LeaderboardTable({ entries, isLoading }: LeaderboardTableProps) {
@@ -62,7 +62,7 @@ export function LeaderboardTable({ entries, isLoading }: LeaderboardTableProps) 
                   {badgeClass ? (
                     <span className={badgeClass}>{entry.rank}</span>
                   ) : (
-                    <span className="font-semibold" style={{ color: 'var(--tracker-text-muted)' }}>
+                    <span className="font-semibold" style={{ color: 'var(--tracker-text-secondary)' }}>
                       {entry.rank}
                     </span>
                   )}
@@ -80,7 +80,7 @@ export function LeaderboardTable({ entries, isLoading }: LeaderboardTableProps) 
                   {entry.streakDays > 0 ? (
                     <span className="tag tag-green">{entry.streakDays} d</span>
                   ) : (
-                    <span style={{ color: 'var(--tracker-text-muted)' }}>0 d</span>
+                    <span style={{ color: 'var(--tracker-text-secondary)' }}>0 d</span>
                   )}
                 </td>
               </tr>

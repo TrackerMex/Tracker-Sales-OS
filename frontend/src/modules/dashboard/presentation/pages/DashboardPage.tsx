@@ -250,7 +250,7 @@ export function DashboardPage() {
           </div>
           <div className="card-body">
             {stalledDeals.isLoading && (
-              <p className="text-[13px]" style={{ color: 'var(--tracker-text-muted)' }}>
+              <p className="text-[13px]" style={{ color: 'var(--tracker-text-secondary)' }}>
                 Cargando...
               </p>
             )}

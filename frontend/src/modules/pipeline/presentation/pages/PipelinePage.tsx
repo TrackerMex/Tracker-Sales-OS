@@ -147,7 +147,7 @@ export function PipelinePage() {
   }
 
   if (selectedDeal) {
-    return <ClientDetailPage deal={selectedDeal} />
+    return <ClientDetailPage deal={selectedDeal} onBack={() => setSelectedDeal(null)} />
   }
 
   const allDeals = grouped ? Object.values(grouped).flat() : []

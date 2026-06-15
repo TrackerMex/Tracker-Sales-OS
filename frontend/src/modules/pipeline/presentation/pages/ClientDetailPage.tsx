@@ -7,6 +7,11 @@ import { useChangeStage } from "../../application/hooks/useChangeStage"
 import type { Deal, PipelineStage } from "../../domain/pipeline.types"
 import type { Activity } from "@/modules/activities/domain/activities.types"
 
+interface Props {
+  deal: Deal
+  onBack: () => void
+}
+
 const PIPELINE_STAGES: PipelineStage[] = [
   "Prospecto", "Contactado", "Interesado", "Propuesta",
   "Negociación", "Cierre", "Perdido",
@@ -38,11 +43,7 @@ function formatCaptured(isoStr: string): string {
   })
 }
 
-interface Props {
-  deal: Deal
-}
-
-export function ClientDetailPage({ deal }: Props) {
+export function ClientDetailPage({ deal, onBack }: Props) {
   const navigate = useNavigate()
   const currentUser = useAppStore((s) => s.currentUser)
   const username = currentUser?.username ?? ""
@@ -73,10 +74,13 @@ export function ClientDetailPage({ deal }: Props) {
   return (
     <div className="space-y-4">
       <button
-        onClick={() => navigate({ to: "/pipeline" })}
-        style={{ fontSize: 13, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+        className="btn-ghost"
+        onClick={onBack}
       >
-        &lt; Volver al pipeline
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        Volver al pipeline
       </button>
 
       <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>

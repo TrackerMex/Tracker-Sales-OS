@@ -80,7 +80,7 @@ export function SellerSemaphoreTable({ sellers, isLoading }: SellerSemaphoreTabl
               aria-label={`Progreso: ${seller.score}%`}
             />
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs" style={{ color: 'var(--tracker-text-muted)' }}>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs" style={{ color: 'var(--tracker-text-secondary)' }}>
             <span className="flex-shrink-0">{seller.pointsToday} pts hoy</span>
             <span className="flex-shrink-0">{seller.avgQualityToday}% calidad</span>
             <span className="flex-shrink-0">{seller.monthlyPoints} pts mes</span>
