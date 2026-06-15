@@ -37,7 +37,7 @@ export const useAppStore = create<AppState>()(
         setItem: (key, value) => sessionStorage.setItem(key, JSON.stringify(value)),
         removeItem: (key) => sessionStorage.removeItem(key),
       },
-      partialize: (s) => ({ currentUser: s.currentUser }),
+      partialize: (s) => ({ currentUser: s.currentUser }) as AppState,
     }
   )
 )
