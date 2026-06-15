@@ -19,10 +19,10 @@ export default defineConfig({
     target: 'es2020',
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['@tanstack/react-router', '@tanstack/react-query'],
-          charts: ['chart.js', 'react-chartjs-2'],
+        manualChunks(id) {
+          if (id.includes('react-dom') || (id.includes('react') && !id.includes('@tanstack'))) return 'vendor'
+          if (id.includes('@tanstack')) return 'router'
+          if (id.includes('chart.js') || id.includes('react-chartjs-2')) return 'charts'
         },
       },
     },
