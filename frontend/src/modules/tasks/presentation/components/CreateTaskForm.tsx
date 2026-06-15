@@ -189,7 +189,6 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error }: 
             <FieldError name="title" message={fieldErrors.title} />
           </div>
 
-          {/* fecha | hora */}
           <div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <input
@@ -239,12 +238,6 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error }: 
           {showOutlookReminder && (
             <div style={{ padding: '11px 13px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1D4ED8' }}>
               Recordatorio: si es videoconferencia o cita, regístrala también en Outlook.
-            </div>
-          )}
-
-          {error && (
-            <div style={{ padding: '10px 13px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, fontSize: 12, color: '#B91C1C' }}>
-              {error}
             </div>
           )}
 
