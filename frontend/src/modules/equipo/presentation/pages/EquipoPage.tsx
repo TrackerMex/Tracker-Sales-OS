@@ -1,5 +1,6 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
+import { toast } from "sonner"
 import { useAppStore } from "../../../../shared/store/app.store"
 import { UserRole } from "../../../../core/domain/types/common.types"
 import { useUsers } from "../../application/hooks/useUsers"
@@ -38,7 +39,13 @@ export function EquipoPage() {
     e.preventDefault()
     createSeller.mutate(
       { name: sellerName, profile: sellerProfile || undefined },
-      { onSuccess: () => { setSellerName(""); setSellerProfile("") } }
+      {
+        onSuccess: () => {
+          setSellerName(""); setSellerProfile("")
+          toast.success("Vendedor creado")
+        },
+        onError: () => toast.error("No se pudo crear el vendedor"),
+      }
     )
   }
 
@@ -56,7 +63,9 @@ export function EquipoPage() {
         onSuccess: () => {
           setUserUsername(""); setUserPassword(""); setUserName("")
           setUserRole("Seller"); setUserSellerId("")
+          toast.success("Usuario creado")
         },
+        onError: () => toast.error("No se pudo crear el usuario"),
       }
     )
   }

@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { toast } from 'sonner';
 import { useAppStore } from '@/shared/store/app.store';
 import { UserRole } from '@/core/domain/types/common.types';
 import { useExportData } from '../../application/hooks/useExportData';
@@ -38,6 +39,7 @@ export function ImportExportPage() {
 
     if (!file.name.endsWith('.json')) {
       setError('El archivo debe ser un archivo .json');
+      toast.error('El archivo debe ser un archivo .json');
       return;
     }
 
@@ -47,12 +49,15 @@ export function ImportExportPage() {
         const json = JSON.parse(ev.target?.result as string);
         const missing = REQUIRED_KEYS.filter((k) => !(k in json));
         if (missing.length > 0) {
-          setError(`Faltan las siguientes secciones: ${missing.join(', ')}`);
+          const msg = `Faltan las siguientes secciones: ${missing.join(', ')}`;
+          setError(msg);
+          toast.error(msg);
           return;
         }
         setPreview(json as ExportData);
       } catch {
         setError('El archivo no contiene JSON válido');
+        toast.error('El archivo no contiene JSON válido');
       }
     };
     reader.readAsText(file);
@@ -64,7 +69,9 @@ export function ImportExportPage() {
       onSuccess: () => {
         setPreview(null);
         if (fileRef.current) fileRef.current.value = '';
+        toast.success('Datos importados correctamente');
       },
+      onError: () => toast.error('No se pudo importar el archivo'),
     });
   }
 

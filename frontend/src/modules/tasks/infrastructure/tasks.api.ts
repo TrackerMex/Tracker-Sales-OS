@@ -1,5 +1,5 @@
 import { api } from '@/shared/lib/axios'
-import type { Task, CreateTaskInput } from '../domain/tasks.types'
+import type { Task, CreateTaskInput, UpdateTaskInput } from '../domain/tasks.types'
 
 export const tasksApi = {
   createTask: (sellerId: string, input: CreateTaskInput): Promise<Task> =>
@@ -10,4 +10,10 @@ export const tasksApi = {
 
   completeTask: (taskId: string, sellerId: string): Promise<Task> =>
     api.patch<Task>(`/tasks/${taskId}/complete`, { sellerId }).then((r) => r.data),
+
+  updateTask: (taskId: string, sellerId: string, input: UpdateTaskInput): Promise<Task> =>
+    api.patch<Task>(`/tasks/${taskId}`, { ...input, sellerId }).then((r) => r.data),
+
+  reactivateTask: (taskId: string, sellerId: string): Promise<Task> =>
+    api.patch<Task>(`/tasks/${taskId}/reactivate`, { sellerId }).then((r) => r.data),
 }

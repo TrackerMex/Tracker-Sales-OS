@@ -46,13 +46,21 @@ export class UpdateClientUseCase implements IUseCase<UpdateClientInput, ClientDt
       }
     }
 
+    const { contacts, ...fields } = input.dto;
     const patch =
       input.user.role === UserRole.Seller
-        ? { ...input.dto, sellerId: current.sellerId }
-        : input.dto;
+        ? { ...fields, sellerId: current.sellerId }
+        : fields;
 
-    const updated = await this.clientRepo.update(input.id, patch);
-    return this.toDto(updated);
+    await this.clientRepo.update(input.id, patch);
+
+    if (contacts !== undefined) {
+      const validContacts = contacts.filter((c) => c.name?.trim());
+      await this.clientRepo.syncContacts(input.id, validContacts);
+    }
+
+    const updated = await this.clientRepo.findById(input.id);
+    return this.toDto(updated!);
   }
 
   private assertCanAccess(client: ClientEntity, user: RequestUserDto): void {

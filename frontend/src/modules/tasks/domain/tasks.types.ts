@@ -24,3 +24,12 @@ export interface CreateTaskInput {
   description?: string
   scheduledAt: string
 }
+
+export interface UpdateTaskInput {
+  clientId?: string
+  type?: string
+  contactId?: string
+  title?: string
+  description?: string
+  scheduledAt?: string
+}
