@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import type { FormEvent } from "react"
+import { toast } from "sonner"
 import { useQuery } from "@tanstack/react-query"
 import { UserRole } from "@/core/domain/types/common.types"
 import { useAppStore } from "@/shared/store/app.store"
@@ -207,11 +208,15 @@ export function ClientesPage() {
     if (editingClient) {
       updateClient.mutate(
         { id: editingClient.id, payload },
-        { onSuccess: () => setShowModal(false) }
+        {
+          onSuccess: () => { setShowModal(false); toast.success("Cliente actualizado") },
+          onError: () => toast.error("No se pudo actualizar el cliente"),
+        }
       )
     } else {
       createClient.mutate(payload, {
-        onSuccess: () => setShowModal(false),
+        onSuccess: () => { setShowModal(false); toast.success("Cliente creado") },
+        onError: () => toast.error("No se pudo crear el cliente"),
       })
     }
   }
@@ -221,10 +226,12 @@ export function ClientesPage() {
     deleteClient.mutate(deleteTarget.id, {
       onSuccess: () => {
         setDeleteTarget(null)
+        toast.success("Cliente eliminado")
         if (view.mode === "detail" && view.clientId === deleteTarget.id) {
           setView({ mode: "list" })
         }
       },
+      onError: () => toast.error("No se pudo eliminar el cliente"),
     })
   }
 

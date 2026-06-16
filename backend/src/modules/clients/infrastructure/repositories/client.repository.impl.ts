@@ -200,6 +200,18 @@ export class ClientRepositoryImpl implements IClientRepository {
     return (await this.findById(clientId)) as ClientEntity;
   }
 
+  async syncContacts(clientId: string, contacts: Partial<ContactEntity>[]): Promise<ClientEntity> {
+    await this.contactRepo.softDelete({ clientId });
+    if (contacts.length) {
+      await this.contactRepo.save(
+        contacts.map((c) =>
+          this.contactRepo.create({ ...this.cleanContact(c), clientId }),
+        ),
+      );
+    }
+    return (await this.findById(clientId)) as ClientEntity;
+  }
+
   private toDomain(entity: ClientTypeormEntity): ClientEntity {
     const client = Object.assign(new ClientEntity(), {
       ...entity,

@@ -16,7 +16,10 @@ import { UserRole } from '../../auth/domain/entities/user.entity';
 import { CreateTaskUseCase } from '../application/use-cases/create-task.use-case';
 import { GetTodayTasksUseCase } from '../application/use-cases/get-today-tasks.use-case';
 import { CompleteTaskUseCase } from '../application/use-cases/complete-task.use-case';
+import { UpdateTaskUseCase } from '../application/use-cases/update-task.use-case';
+import { ReactivateTaskUseCase } from '../application/use-cases/reactivate-task.use-case';
 import { CreateTaskDto } from '../application/dtos/create-task.dto';
+import { UpdateTaskDto } from '../application/dtos/update-task.dto';
 
 @ApiTags('tasks')
 @ApiBearerAuth()
@@ -27,6 +30,8 @@ export class TasksController {
     private readonly createTask: CreateTaskUseCase,
     private readonly getTodayTasks: GetTodayTasksUseCase,
     private readonly completeTask: CompleteTaskUseCase,
+    private readonly updateTask: UpdateTaskUseCase,
+    private readonly reactivateTask: ReactivateTaskUseCase,
   ) {}
 
   @Post()
@@ -48,5 +53,23 @@ export class TasksController {
   @ApiOperation({ summary: 'Mark a task as completed' })
   complete(@Param('id') taskId: string, @Body('sellerId') sellerId: string) {
     return this.completeTask.execute({ taskId, sellerId });
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
+  @ApiOperation({ summary: 'Update a task' })
+  update(
+    @Param('id') taskId: string,
+    @Body('sellerId') sellerId: string,
+    @Body() dto: UpdateTaskDto,
+  ) {
+    return this.updateTask.execute({ taskId, sellerId, ...dto });
+  }
+
+  @Patch(':id/reactivate')
+  @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
+  @ApiOperation({ summary: 'Reactivate a completed task' })
+  reactivate(@Param('id') taskId: string, @Body('sellerId') sellerId: string) {
+    return this.reactivateTask.execute({ taskId, sellerId });
   }
 }

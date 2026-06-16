@@ -111,4 +111,5 @@ export interface UpdateClientInput {
   nextStep?: string
   nextDate?: string
   nextTime?: string
+  contacts?: CreateContactInput[]
 }

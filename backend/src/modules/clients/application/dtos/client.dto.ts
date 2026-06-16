@@ -250,6 +250,11 @@ export class UpdateClientDto {
   @IsOptional()
   @IsString()
   nextTime?: string;
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreateContactDto)
+  contacts?: CreateContactDto[];
 }
 
 export class RequestUserDto {

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { toast } from 'sonner';
 import { useAppStore } from '@/shared/store/app.store';
 import { useCreateSale } from '../../application/hooks/useCreateSale';
 import { useSales } from '../../application/hooks/useSales';
@@ -90,6 +91,7 @@ export function SalesPage() {
     };
     createSellerSale.mutate(input, {
       onSuccess: () => {
+        toast.success('Venta registrada');
         setSellerClientId('');
         setSellerClientName('');
         setSellerClientType('Existente');
@@ -99,6 +101,7 @@ export function SalesPage() {
         setSellerDate(today());
         setSellerNotes('');
       },
+      onError: () => toast.error('No se pudo registrar la venta'),
     });
   }
 
@@ -120,12 +123,14 @@ export function SalesPage() {
     };
     createDirSale.mutate(input, {
       onSuccess: () => {
+        toast.success('Venta registrada');
         setDirProject('');
         setDirUnits('');
         setDirAmount('');
         setDirDate(today());
         setDirNotes('');
       },
+      onError: () => toast.error('No se pudo registrar la venta'),
     });
   }
 
@@ -147,11 +152,13 @@ export function SalesPage() {
     };
     createAtcSale.mutate(input, {
       onSuccess: () => {
+        toast.success('Venta registrada');
         setAtcUnits('');
         setAtcAmount('');
         setAtcDate(today());
         setAtcNotes('');
       },
+      onError: () => toast.error('No se pudo registrar la venta'),
     });
   }
 

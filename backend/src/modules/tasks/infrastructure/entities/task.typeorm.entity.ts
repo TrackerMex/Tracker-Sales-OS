@@ -20,7 +20,7 @@ export class TaskTypeormEntity {
 
   @Column({ name: 'contact_id', type: 'varchar', nullable: true }) contactId: string | null;
 
-  @Column({ type: 'varchar', length: 200 }) title: string;
+  @Column({ type: 'text' }) title: string;
 
   @Column({ type: 'text', nullable: true }) description: string | null;
 

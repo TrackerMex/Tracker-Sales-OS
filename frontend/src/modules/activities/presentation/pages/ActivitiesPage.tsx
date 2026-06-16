@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useSearch } from "@tanstack/react-router"
+import { toast } from "sonner"
 import { useDailyActivities } from "../../application/hooks/useDailyActivities"
 import { useCreateActivity } from "../../application/hooks/useCreateActivity"
 import { ActivityForm } from "../components/ActivityForm"
@@ -20,7 +21,11 @@ export function ActivitiesPage() {
 
   function handleSubmit(input: CreateActivityInput) {
     mutate(input, {
-      onSuccess: () => setShowForm(false),
+      onSuccess: () => {
+        setShowForm(false)
+        toast.success("Actividad registrada")
+      },
+      onError: () => toast.error("No se pudo registrar la actividad"),
     })
   }
 

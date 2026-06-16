@@ -27,4 +27,5 @@ export interface IClientRepository extends IRepository<ClientEntity> {
   findWithFilters(filters: ClientFilters): Promise<{ data: ClientEntity[]; total: number }>;
   checkDuplicates(params: DuplicateCheckParams): Promise<ClientEntity | null>;
   addContact(clientId: string, contact: Partial<ClientEntity['contacts'][number]>): Promise<ClientEntity>;
+  syncContacts(clientId: string, contacts: Partial<ClientEntity['contacts'][number]>[]): Promise<ClientEntity>;
 }

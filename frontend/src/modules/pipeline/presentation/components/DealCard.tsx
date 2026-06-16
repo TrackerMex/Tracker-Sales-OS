@@ -97,7 +97,16 @@ export function DealCard({ deal, onClick }: DealCardProps) {
       )}
 
       {deal.painPoint && (
-        <p style={{ fontSize: '11px', color: '#475569', marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{
+          fontSize: '11px',
+          color: '#475569',
+          marginBottom: '6px',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          lineHeight: '1.4',
+        }}>
           {deal.painPoint}
         </p>
       )}

@@ -13,7 +13,7 @@ export class CreateTaskDto {
   @ApiPropertyOptional() @IsOptional() @IsUUID() clientId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(50) type?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() contactId?: string;
-  @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(200) title: string;
+  @ApiProperty() @IsString() @IsNotEmpty() title: string;
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
