@@ -3,12 +3,14 @@ import { toast } from 'sonner';
 import { useAppStore } from '@/shared/store/app.store';
 import { useCreateSale } from '../../application/hooks/useCreateSale';
 import { useSales } from '../../application/hooks/useSales';
+import { useDeleteSale } from '../../application/hooks/useDeleteSale';
 import { useClients } from '../../../clients/application/hooks/useClients';
-import type { CreateSaleInput, PaymentMethod, SaleSource } from '../../domain/sales.types';
+import type { CreateSaleInput, PaymentMethod, SaleSource, Sale } from '../../domain/sales.types';
 import { UserRole } from '@/core/domain/types/common.types';
 import { useApiFormErrors } from '@/shared/lib/api-errors';
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary';
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError';
+import { EditSaleModal } from '../components/EditSaleModal';
 
 const PAYMENT_METHODS: PaymentMethod[] = ['Pagado', 'Crédito', '50% anticipo', 'Pendiente'];
 const SALE_SOURCES: SaleSource[] = [
@@ -60,9 +62,12 @@ export function SalesPage() {
   const [atcDate, setAtcDate] = useState(today());
   const [atcNotes, setAtcNotes] = useState('');
 
+  const [editingSale, setEditingSale] = useState<Sale | null>(null);
+
   const createSellerSale = useCreateSale();
   const createDirSale = useCreateSale();
   const createAtcSale = useCreateSale();
+  const { mutate: deleteSale } = useDeleteSale();
 
   const sellerErrors = useApiFormErrors(createSellerSale.error);
   const dirErrors = useApiFormErrors(createDirSale.error);
@@ -580,6 +585,28 @@ export function SalesPage() {
                     <span className="text-sm font-bold text-[#82bc00]">
                       {formatCurrency(sale.amount)}
                     </span>
+                    {isAdminOrDirector && (
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button
+                          className="btn-ghost"
+                          style={{ padding: '2px 8px', fontSize: 12 }}
+                          onClick={() => setEditingSale(sale)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className="btn-ghost"
+                          style={{ padding: '2px 8px', fontSize: 12, color: '#ef4444' }}
+                          onClick={() => {
+                            if (confirm(`¿Eliminar esta venta de ${sale.clientName}?`)) {
+                              deleteSale(sale.id);
+                            }
+                          }}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -587,6 +614,14 @@ export function SalesPage() {
           )}
         </div>
       </div>
+
+      {editingSale && (
+        <EditSaleModal
+          sale={editingSale}
+          isOpen={!!editingSale}
+          onClose={() => setEditingSale(null)}
+        />
+      )}
     </div>
   );
 }

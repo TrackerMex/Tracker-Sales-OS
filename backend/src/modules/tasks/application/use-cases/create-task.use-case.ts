@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, ConflictException } from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
 import { TaskDto } from '../dtos/task.dto';
 import { CreateTaskDto } from '../dtos/create-task.dto';
@@ -16,6 +16,16 @@ export class CreateTaskUseCase implements IUseCase<CreateTaskDto, TaskDto> {
   ) {}
 
   async execute(input: CreateTaskDto): Promise<TaskDto> {
+    const scheduledAt = new Date(input.scheduledAt);
+    const conflict = await this.taskRepo.findConflictingTask(input.sellerId, scheduledAt);
+    if (conflict) {
+      const fecha = scheduledAt.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const hora = scheduledAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+      throw new ConflictException(
+        `Ya tienes una tarea programada para el ${fecha} a las ${hora}: "${conflict.title}"`,
+      );
+    }
+
     const entity = await this.taskRepo.create({
       sellerId: input.sellerId,
       clientId: input.clientId ?? null,
@@ -23,7 +33,7 @@ export class CreateTaskUseCase implements IUseCase<CreateTaskDto, TaskDto> {
       contactId: input.contactId ?? null,
       title: input.title,
       description: input.description ?? null,
-      scheduledAt: new Date(input.scheduledAt),
+      scheduledAt,
       completedAt: null,
       status: TaskStatus.Pending,
     });

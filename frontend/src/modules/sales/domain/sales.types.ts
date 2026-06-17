@@ -45,6 +45,19 @@ export interface CreateSaleInput {
   type: SaleType;
 }
 
+export interface UpdateSaleInput {
+  clientId?: string;
+  clientName?: string;
+  clientType?: 'Nuevo' | 'Existente';
+  product?: string;
+  units?: number;
+  amount?: number;
+  pay?: PaymentMethod;
+  source?: SaleSource;
+  date?: string;
+  notes?: string;
+}
+
 export interface SaleFilters {
   month?: string;
   sellerId?: string;

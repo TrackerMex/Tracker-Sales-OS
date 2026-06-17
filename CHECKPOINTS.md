@@ -315,3 +315,23 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] `coaching.module.ts` importa `PipelineModule` para inyectar `DEAL_REPOSITORY`
 - [x] Sin tablas nuevas; sin cambios de frontend
 - [x] `tsc --noEmit` sin errores en backend
+
+---
+
+## 27-task-time-overlap
+
+**Backend — tasks (validación anti-solapamiento):**
+- [ ] `ITaskRepository` expone `findConflictingTask(sellerId: string, scheduledAt: Date, excludeTaskId?: string): Promise<TaskEntity | null>` — busca tareas no completadas del mismo vendedor con `scheduledAt` idéntico (año, mes, día, hora, minuto)
+- [ ] `CreateTaskUseCase` valida anti-solapamiento antes de crear: si hay conflicto, lanza `ConflictException` con mensaje `"Ya tienes una tarea programada para el ${fecha} a las ${hora}: ${tarea.title}"`
+- [ ] `UpdateTaskUseCase` valida anti-solapamiento antes de actualizar (solo si `scheduledAt` cambió): excluye el `taskId` actual de la búsqueda de conflictos
+- [ ] `POST /api/tasks` retorna 409 Conflict con mensaje descriptivo cuando hay solapamiento
+- [ ] `PATCH /api/tasks/:id` retorna 409 Conflict con mensaje descriptivo cuando el nuevo horario solapa
+- [ ] Sin tablas nuevas; sin columnas nuevas
+- [ ] `tsc --noEmit` sin errores en backend
+
+**Frontend — tasks (error handling):**
+- [ ] `CreateTaskForm` captura error 409 de `createTask` y muestra mensaje de error amigable en el formulario (usando componente de error o toast)
+- [ ] `EditTaskForm` (si existe) captura error 409 de `updateTask` y muestra mensaje de error amigable
+- [ ] El mensaje de error incluye la información del conflicto (fecha, hora, título de la tarea existente)
+- [ ] La UI permite al usuario corregir el horario y reintentar sin recargar la página
+- [ ] `tsc --noEmit` sin errores en frontend

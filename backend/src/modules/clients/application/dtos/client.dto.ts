@@ -75,6 +75,7 @@ export class CreateContactDto {
   phone?: string;
 
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value))
   @IsEmail()
   email?: string;
 

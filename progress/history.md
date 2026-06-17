@@ -1,5 +1,22 @@
 # History — Tracker Sales OS
 
+## 2026-06-16 — Feature 27: Anti-solapamiento de horarios de tareas
+
+**Status**: done — Review 6/6 PASS (progress/review_27-task-time-overlap.md)
+
+**Qué**: Validación que impide registrar dos tareas del mismo vendedor en el mismo minuto exacto. Error 409 con mensaje descriptivo. Sin tablas nuevas. Frontend sin cambios (FormErrorSummary ya maneja 409).
+
+- `ITaskRepository.findConflictingTask(sellerId, scheduledAt, excludeTaskId?)`: nuevo método en interfaz.
+- `task.repository.impl.ts`: QueryBuilder con `date_trunc('minute', scheduled_at) = date_trunc('minute', :scheduledAt::timestamptz)`, filtra status='Pendiente' y deleted_at IS NULL, excluye taskId cuando se pasa.
+- `CreateTaskUseCase`: llama `findConflictingTask` antes de crear; `ConflictException` con mensaje `"Ya tienes una tarea programada para el ${fecha} a las ${hora}: '${title}'"`.
+- `UpdateTaskUseCase`: mismo check solo si `input.scheduledAt` está presente, pasa `taskId` como `excludeTaskId`.
+- Frontend: sin cambios — `FormErrorSummary` con `kind: 'unknown'` muestra el `serverMessage` del 409 directamente. Usuario puede corregir hora y reintentar.
+- tsc backend exit 0.
+
+**Caveats no bloqueantes**: (1) `scheduled_at` es TIMESTAMP WITHOUT TZ pero se castea a `::timestamptz`; si DB session TZ ≠ UTC puede drift (mismo patrón que otras features). (2) `toLocaleDateString('es-MX')` requiere ICU completo en Node (OK en imágenes estándar).
+
+---
+
 ## 2026-06-13 — Feature 26: IA Coach con más contexto
 
 **Status**: done — Review Líder 12/12 PASS
