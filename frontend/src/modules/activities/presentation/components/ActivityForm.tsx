@@ -1,9 +1,11 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ACTIVITY_TYPES, TASK_POINTS, REQUIRES_NEXT_STEP, PIPELINE_STAGES, NON_COMMERCIAL_TYPES } from "@/shared/lib/constants"
 import type { ActivityType, PipelineStage } from "@/shared/lib/constants"
 import type { ActivityResult, CreateActivityInput } from "../../domain/activities.types"
 import type { Client } from "@/modules/clients/domain/clients.types"
 import { useClients } from "@/modules/clients/application/hooks/useClients"
+import { usePipeline } from "@/modules/pipeline/application/hooks/usePipeline"
+import { useAppStore } from "@/shared/store/app.store"
 import { coachingApi } from '@/modules/coaching/infrastructure/coaching.api'
 import { useApiFormErrors } from '@/shared/lib/api-errors'
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
@@ -42,13 +44,15 @@ interface Props {
   isLoading: boolean
   programmedTask?: string
   submitError?: unknown
+  initialClientId?: string
+  taskId?: string
 }
 
 function nowStamp(): string {
   return new Date().toLocaleString('es-MX', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })
 }
 
-export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError }: Props) {
+export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError, initialClientId, taskId }: Props) {
   const { summary: errorSummary, fieldErrors, clearField, formRef } = useApiFormErrors(submitError)
   const now = new Date()
   const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
@@ -59,9 +63,12 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError 
   const { data: clientsResponse } = useClients({ limit: 100 })
   const clients: Client[] = clientsResponse?.data ?? []
 
+  const currentUser = useAppStore((s) => s.currentUser)
+  const sellerId = currentUser?.sellerId ?? currentUser?.id ?? ''
+
   const [aiTips, setAiTips] = useState<string[]>([])
   const [aiLoading, setAiLoading] = useState(false)
-  const [clientId, setClientId] = useState("")
+  const [clientId, setClientId] = useState(initialClientId ?? "")
   const [contactId, setContactId] = useState("")
   const [type, setType] = useState<ActivityType>(ACTIVITY_TYPES[0])
   const [result, setResult] = useState<ActivityResult>(ACTIVITY_RESULTS[0])
@@ -75,10 +82,24 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError 
   const [nextTime, setNextTime] = useState("")
   const [executedAt, setExecutedAt] = useState(localNow)
 
+  const { data: pipelineGrouped } = usePipeline(sellerId || null)
+
+  const currentDeal = pipelineGrouped && clientId
+    ? Object.values(pipelineGrouped).flat().find((d) => d.clientId === clientId) ?? null
+    : null
+
   const selectedClient = clients.find((c) => c.id === clientId)
   const contacts = selectedClient?.contacts ?? []
   const needsNextStep = REQUIRES_NEXT_STEP.includes(type)
   const isNonCommercial = NON_COMMERCIAL_TYPES.includes(type)
+
+  useEffect(() => {
+    if (currentDeal?.stage && !isNonCommercial) {
+      setStage(currentDeal.stage)
+    } else if (!currentDeal) {
+      setStage("")
+    }
+  }, [currentDeal?.stage, isNonCommercial])
   const quality = calcQuality({ summary, discovery, agreement, nextStep, nextDate, nextTime })
 
   function getCoachMessage(): string {
@@ -126,6 +147,7 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError 
     if (nextDate) input.nextDate = nextDate
     if (nextTime) input.nextTime = nextTime
     if (stage) input.stage = stage as PipelineStage
+    if (taskId) input.taskId = taskId
     onSubmit(input)
   }
 
@@ -251,6 +273,12 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError 
         {/* Stage */}
         <div>
           <label className="slabel">Etapa del pipeline</label>
+          {currentDeal && !isNonCommercial && (
+            <p style={{ fontSize: 11, color: '#64748B', marginBottom: 4 }}>
+              Deal actual en: <strong style={{ color: '#002B49' }}>{currentDeal.stage}</strong>
+              {' — cambia el stage aquí para avanzar el deal'}
+            </p>
+          )}
           <select
             className="input"
             value={stage}

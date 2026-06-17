@@ -27,6 +27,8 @@ export interface Activity {
   nextTime: string | null
   points: number
   quality: number
+  stage?: string | null
+  taskId?: string | null
   executedAt: string
   capturedAt: string
   delayMinutes: number
@@ -41,6 +43,7 @@ export interface DailyActivitiesResponse {
 export interface CreateActivityInput {
   clientId?: ID
   contactId?: ID
+  taskId?: string
   type: ActivityType
   result: ActivityResult
   summary: string

@@ -26,6 +26,7 @@ const makeMockDealRepo = (): jest.Mocked<IDealsRepository> => ({
   findByStage: jest.fn(),
   findByClientIdAndSellerId: jest.fn(),
   findDetailedBySellerId: jest.fn(),
+  findDetailedAllSellers: jest.fn(),
   getWeightedForecast: jest.fn(),
   findStalledDeals: jest.fn(),
   findAllForAnalysis: jest.fn(),

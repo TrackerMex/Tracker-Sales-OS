@@ -346,7 +346,7 @@
     "id": "32-tasks-calendar-view",
     "name": "Vista calendario mensual de tareas",
     "description": "Añadir toggle Lista/Calendario en la página de Tareas. Vista calendario mensual: cada día muestra chips con 'HH:MM - [Tipo] - [Cliente]'. Click en chip abre edición. Día actual resaltado. Ayuda al vendedor a planificar su mes.",
-    "status": "pending",
+    "status": "done",
     "priority": 32,
     "backend_modules": [],
     "frontend_modules": ["tasks"],
@@ -381,5 +381,25 @@
     "backend_modules": [],
     "frontend_modules": ["tasks"],
     "notes": "Origen: feedback cliente 16-Jun-2026 p.7. Solo frontend. Al montar CreateTaskForm/EditTaskForm, hacer GET /api/tasks?date=YYYY-MM-DD&sellerId=X para obtener tareas del día seleccionado. Renderizar mini-lista ordenada por hora. Cuando el usuario cambia el campo fecha, re-fetch. No mostrar la tarea que se está editando en la propia lista. UI: panel a la derecha del form (desktop) o accordion debajo (mobile). Los datos ya existen — es solo consulta y visualización."
+  },
+  {
+    "id": "37-activity-task-stage-traceability",
+    "name": "Trazabilidad tarea→actividad + stage snapshot en pipeline",
+    "description": "FK taskId en actividad, auto-fill del stage actual del deal al registrar actividad para un cliente, snapshot inmutable del stage en cada actividad, syncPipeline solo cuando el stage cambia. Botón 'Registrar avance' en ClientDetailPage pasa clientId.",
+    "status": "done",
+    "priority": 37,
+    "backend_modules": ["activities"],
+    "frontend_modules": ["activities", "pipeline", "tasks"],
+    "notes": "Backend: taskId nullable en ActivityTypeormEntity; stage snapshot fallback en CreateActivityUseCase (si clientId presente pero stage no → usar stage actual del deal, no avanzar deal); syncPipeline solo si stage provisto Y diferente al actual. Frontend: validateSearch de /actividades/nueva agrega clientId y taskId; ActivitiesPage pasa ambos a ActivityForm; ActivityForm auto-fill clientId desde prop, usa usePipeline para derivar stage actual del deal cuando cambia clientId; AgendaPage pasa taskId en navigate; ClientDetailPage 'Registrar avance' pasa clientId; historial muestra badge de stage por actividad."
+  },
+  {
+    "id": "36-pipeline-team-view",
+    "name": "Pipeline: vista equipo completo para Admin/Director",
+    "description": "Admin y Director ven el pipeline de todos los vendedores con un selector 'Todos / Vendedor X'. Cada DealCard muestra badge del vendedor. Header muestra forecast desglosado por seller. Seller sigue viendo solo el suyo.",
+    "status": "done",
+    "priority": 36,
+    "backend_modules": ["pipeline"],
+    "frontend_modules": ["pipeline"],
+    "notes": "Backend: añadir GET /api/pipeline/team (Admin/Director only) que llama findDetailedAllSellers() — variante de findDetailedBySellerId sin filtro de sellerId. También se puede reutilizar el endpoint existente pasando sellerId='all' con lógica condicional en el use-case, pero endpoint separado es más limpio. Frontend: (1) usePipeline acepta sellerIdOverride opcional; (2) PipelinePage detecta rol Admin/Director y muestra dropdown con sellers + opción 'Todos'; selección persiste en localStorage; (3) DealCard muestra badge de vendedor cuando está en modo equipo; (4) header muestra totalGross y forecast del conjunto visible. Sin tablas nuevas."
   }
 ]

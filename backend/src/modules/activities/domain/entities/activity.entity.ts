@@ -58,6 +58,7 @@ export class ActivityEntity extends BaseEntity {
   sellerId: string;
   clientId: string | null;
   contactId: string | null;
+  taskId: string | null;
   type: ActivityType;
   result: ActivityResult;
   summary: string;

@@ -10,6 +10,7 @@ export class ActivityTypeormEntity {
   @Column({ name: 'seller_id' }) sellerId: string;
   @Column({ name: 'client_id', type: 'varchar', nullable: true }) clientId: string | null;
   @Column({ name: 'contact_id', type: 'varchar', nullable: true }) contactId: string | null;
+  @Column({ name: 'task_id', type: 'varchar', nullable: true }) taskId: string | null;
   @Column({ type: 'enum', enum: ActivityType }) type: ActivityType;
   @Column({ type: 'enum', enum: ActivityResult }) result: ActivityResult;
   @Column({ type: 'text' }) summary: string;

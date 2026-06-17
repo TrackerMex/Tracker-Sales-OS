@@ -135,7 +135,7 @@ export function ClientDetailPage({ deal, onBack }: Props) {
             </div>
 
             <button
-              onClick={() => navigate({ to: "/actividades/nueva" })}
+              onClick={() => navigate({ to: "/actividades/nueva", search: { clientId: deal.clientId } })}
               style={{
                 width: '100%', padding: '10px 0', background: '#82bc00', color: '#fff',
                 border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
@@ -182,6 +182,15 @@ export function ClientDetailPage({ deal, onBack }: Props) {
                     <div>
                       <p style={{ fontSize: 14, fontWeight: 700, color: '#002B49' }}>
                         {activity.type} · {activity.result}
+                        {activity.stage && (
+                          <span style={{
+                            marginLeft: 8, fontSize: 11, fontWeight: 600,
+                            background: '#F1F5F9', color: '#475569',
+                            borderRadius: 4, padding: '2px 6px',
+                          }}>
+                            {activity.stage}
+                          </span>
+                        )}
                       </p>
                       {activity.contactId && (
                         <p style={{ fontSize: 12, color: '#64748B' }}>Contacto: {activity.contactId}</p>

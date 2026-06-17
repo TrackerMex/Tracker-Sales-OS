@@ -15,6 +15,7 @@ import { Roles } from '../../auth/presentation/decorators/roles.decorator';
 import { UserRole } from '../../auth/domain/entities/user.entity';
 import { CreateDealUseCase } from '../application/use-cases/create-deal.use-case';
 import { GetPipelineBySellerUseCase } from '../application/use-cases/get-pipeline-by-seller.use-case';
+import { GetPipelineTeamUseCase } from '../application/use-cases/get-pipeline-team.use-case';
 import { ChangeDealStageUseCase } from '../application/use-cases/change-deal-stage.use-case';
 import { CreateDealDto } from '../application/dtos/create-deal.dto';
 import { ChangeStageDtoBody } from '../application/dtos/change-stage.dto';
@@ -28,7 +29,15 @@ export class PipelineController {
   constructor(
     private readonly createDeal: CreateDealUseCase,
     private readonly getPipelineBySeller: GetPipelineBySellerUseCase,
+    private readonly getPipelineTeam: GetPipelineTeamUseCase,
   ) {}
+
+  @Get('team')
+  @Roles(UserRole.Admin, UserRole.Director)
+  @ApiOperation({ summary: 'Get pipeline for all sellers (Admin/Director only)' })
+  getTeam() {
+    return this.getPipelineTeam.execute();
+  }
 
   @Get('seller/:id')
   @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)

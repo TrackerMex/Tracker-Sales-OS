@@ -14,8 +14,10 @@ function getPointsBarColor(pct: number): string {
 
 export function ActivitiesPage() {
   const search = useSearch({ strict: false })
+  const clientId = (search as { clientId?: string }).clientId
   const taskTitle = (search as { taskTitle?: string }).taskTitle
-  const [showForm, setShowForm] = useState(false)
+  const taskId = (search as { taskId?: string }).taskId
+  const [showForm, setShowForm] = useState(() => !!(clientId || taskId))
   const { data, isLoading } = useDailyActivities()
   const { mutate, isPending, error: createError, reset: resetCreate } = useCreateActivity()
 
@@ -69,7 +71,14 @@ export function ActivitiesPage() {
       {showForm && (
         <div className="card p-5">
           <div className="slabel mb-4">Registrar actividad</div>
-          <ActivityForm onSubmit={handleSubmit} isLoading={isPending} programmedTask={taskTitle} submitError={createError} />
+          <ActivityForm
+            onSubmit={handleSubmit}
+            isLoading={isPending}
+            programmedTask={taskTitle}
+            submitError={createError}
+            initialClientId={clientId}
+            taskId={taskId}
+          />
         </div>
       )}
 

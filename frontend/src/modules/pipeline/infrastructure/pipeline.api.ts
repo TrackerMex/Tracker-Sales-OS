@@ -12,6 +12,9 @@ export const pipelineApi = {
       .get<PipelineGrouped>(`/pipeline/seller/${sellerId}`)
       .then((r) => r.data),
 
+  getPipelineTeam: (): Promise<PipelineGrouped> =>
+    api.get<PipelineGrouped>('/pipeline/team').then((r) => r.data),
+
   createDeal: (input: CreateDealInput): Promise<Deal> =>
     api.post<Deal>("/pipeline/deals", input).then((r) => r.data),
 

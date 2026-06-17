@@ -19,6 +19,17 @@ export interface IDealsRepository extends IRepository<DealEntity> {
     clientNextDate: string | null;
     clientNextTime: string | null;
   }[]>;
+  findDetailedAllSellers(): Promise<{
+    deal: DealEntity;
+    clientName: string;
+    contactName: string | null;
+    contactRole: string | null;
+    painPoint: string | null;
+    sellerName: string | null;
+    clientNextStep: string | null;
+    clientNextDate: string | null;
+    clientNextTime: string | null;
+  }[]>;
   getWeightedForecast(): Promise<number>;
   findStalledDeals(amberDays: number): Promise<{ deal: DealEntity; daysStalled: number }[]>;
   findAllForAnalysis(): Promise<DealEntity[]>;

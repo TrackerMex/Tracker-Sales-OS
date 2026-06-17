@@ -24,9 +24,10 @@ function formatDate(dateStr: string): string {
 interface DealCardProps {
   deal: Deal
   onClick: (deal: Deal) => void
+  teamMode?: boolean
 }
 
-export function DealCard({ deal, onClick }: DealCardProps) {
+export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
   const [isDragging, setIsDragging] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const contactInfo = [deal.contactName, deal.contactRole].filter(Boolean).join(' · ')
@@ -112,9 +113,13 @@ export function DealCard({ deal, onClick }: DealCardProps) {
       )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-        <span style={{ fontSize: '11px', color: '#94A3B8' }}>
-          {deal.sellerName ?? ''}
-        </span>
+        {deal.sellerName && (
+          teamMode ? (
+            <span className="tag tag-navy" style={{ fontSize: 10 }}>{deal.sellerName}</span>
+          ) : (
+            <span style={{ fontSize: '11px', color: '#94A3B8' }}>{deal.sellerName}</span>
+          )
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {(showRed || showAmber) && (
             <span style={{

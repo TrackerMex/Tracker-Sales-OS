@@ -32,17 +32,44 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
     const points = TASK_POINTS[input.type];
     const quality = this.calculateQuality(input);
 
+    // Stage snapshot + conditional pipeline sync
+    let resolvedStage: string | null = input.stage ?? null;
+
+    if (input.clientId) {
+      const existingDeal = await this.dealRepo.findByClientIdAndSellerId(
+        input.clientId,
+        input.sellerId,
+      );
+
+      if (existingDeal && !input.stage) {
+        // Auto-snapshot: usar stage actual del deal sin avanzarlo
+        resolvedStage = existingDeal.stage;
+      }
+
+      if (input.stage) {
+        if (!existingDeal) {
+          // Crear nuevo deal en el stage indicado
+          await this.syncPipeline(input.clientId, input.sellerId, input.stage);
+        } else if (input.stage !== existingDeal.stage) {
+          // Solo avanzar si el stage es diferente al actual
+          await this.syncPipeline(input.clientId, input.sellerId, input.stage);
+        }
+        // Si input.stage === existingDeal.stage → no avanzar, solo snapshot
+      }
+    }
+
     const entity = await this.activityRepo.create({
       ...input,
       clientId: input.clientId ?? null,
       contactId: input.contactId ?? null,
+      taskId: input.taskId ?? null,
       discovery: input.discovery ?? null,
       agreement: input.agreement ?? null,
       nextStep: input.nextStep ?? null,
       nextObjective: input.nextObjective ?? null,
       nextDate: input.nextDate ?? null,
       nextTime: input.nextTime ?? null,
-      stage: input.stage ?? null,
+      stage: resolvedStage,
       programmedAt: input.programmedAt ? new Date(input.programmedAt) : null,
       executedAt,
       capturedAt,
@@ -50,10 +77,6 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
       points,
       quality,
     });
-
-    if (input.stage && input.clientId) {
-      await this.syncPipeline(input.clientId, input.sellerId, input.stage);
-    }
 
     return ActivityDto.fromEntity(entity);
   }
