@@ -85,6 +85,23 @@ export class TaskRepositoryImpl implements ITaskRepository {
     return data.map((e) => this.toDomain(e));
   }
 
+  async findConflictingTask(sellerId: string, scheduledAt: Date, excludeTaskId?: string): Promise<TaskEntity | null> {
+    const qb = this.repo
+      .createQueryBuilder('task')
+      .where('task.sellerId = :sellerId', { sellerId })
+      .andWhere('task.status = :status', { status: TaskStatus.Pending })
+      .andWhere('task.deletedAt IS NULL')
+      .andWhere(
+        "date_trunc('minute', task.scheduled_at) = date_trunc('minute', :scheduledAt::timestamptz)",
+        { scheduledAt },
+      );
+    if (excludeTaskId) {
+      qb.andWhere('task.id != :excludeTaskId', { excludeTaskId });
+    }
+    const entity = await qb.getOne();
+    return entity ? this.toDomain(entity) : null;
+  }
+
   private toDomain(entity: TaskTypeormEntity): TaskEntity {
     return Object.assign(new TaskEntity(), entity);
   }

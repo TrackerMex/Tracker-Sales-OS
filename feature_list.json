@@ -296,7 +296,7 @@
     "id": "27-task-time-overlap",
     "name": "Anti-solapamiento de horarios de tareas",
     "description": "Validación que impide registrar tareas para un mismo vendedor en rangos horarios que se solapen. Al crear/actualizar tarea con scheduledAt, verificar que no exista otra tarea del mismo vendedor con fecha/hora conflictiva. Mostrar error amigable al usuario indicando el conflicto.",
-    "status": "pending",
+    "status": "done",
     "priority": 27,
     "backend_modules": ["tasks"],
     "frontend_modules": ["tasks"],
