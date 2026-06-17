@@ -1,11 +1,14 @@
-import { IsEnum, IsString, IsNotEmpty, IsOptional, IsDateString, IsUUID } from 'class-validator';
+import { IsEnum, IsString, IsNotEmpty, IsOptional, IsDateString, IsUUID, ValidateIf } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ActivityType, ActivityResult } from '../../domain/entities/activity.entity';
 import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 
 export class CreateActivityDto {
   @ApiProperty() @IsUUID() sellerId: string;
-  @ApiProperty() @IsUUID() clientId: string;
+  @ApiPropertyOptional()
+  @ValidateIf((o) => !['Solicitud de factura/servicio', 'Junta interna', 'Prospección'].includes(o.type))
+  @IsUUID()
+  clientId?: string;
   @ApiPropertyOptional() @IsOptional() @IsUUID() contactId?: string;
   @ApiProperty({ enum: ActivityType }) @IsEnum(ActivityType) type: ActivityType;
   @ApiProperty({ enum: ActivityResult }) @IsEnum(ActivityResult) result: ActivityResult;

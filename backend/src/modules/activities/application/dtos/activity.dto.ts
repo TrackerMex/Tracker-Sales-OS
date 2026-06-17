@@ -3,7 +3,7 @@ import { ActivityEntity, ActivityType, ActivityResult } from '../../domain/entit
 export class ActivityDto {
   id: string;
   sellerId: string;
-  clientId: string;
+  clientId: string | null;
   contactId: string | null;
   type: ActivityType;
   result: ActivityResult;

@@ -12,6 +12,9 @@ export enum ActivityType {
   Propuesta = 'Propuesta',
   Seguimiento = 'Seguimiento',
   Cierre = 'Cierre',
+  SolicitudFactura = 'Solicitud de factura/servicio',
+  JuntaInterna = 'Junta interna',
+  Prospeccion = 'Prospección',
 }
 
 export enum ActivityResult {
@@ -37,6 +40,9 @@ export const TASK_POINTS: Record<ActivityType, number> = {
   [ActivityType.Propuesta]: 8,
   [ActivityType.Seguimiento]: 3,
   [ActivityType.Cierre]: 25,
+  [ActivityType.SolicitudFactura]: 0,
+  [ActivityType.JuntaInterna]: 0,
+  [ActivityType.Prospeccion]: 2,
 };
 
 export const REQUIRES_NEXT_STEP = new Set([
@@ -50,7 +56,7 @@ export const REQUIRES_NEXT_STEP = new Set([
 
 export class ActivityEntity extends BaseEntity {
   sellerId: string;
-  clientId: string;
+  clientId: string | null;
   contactId: string | null;
   type: ActivityType;
   result: ActivityResult;

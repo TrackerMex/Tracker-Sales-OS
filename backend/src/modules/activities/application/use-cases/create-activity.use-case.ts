@@ -34,6 +34,7 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
 
     const entity = await this.activityRepo.create({
       ...input,
+      clientId: input.clientId ?? null,
       contactId: input.contactId ?? null,
       discovery: input.discovery ?? null,
       agreement: input.agreement ?? null,
@@ -50,7 +51,7 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
       quality,
     });
 
-    if (input.stage) {
+    if (input.stage && input.clientId) {
       await this.syncPipeline(input.clientId, input.sellerId, input.stage);
     }
 

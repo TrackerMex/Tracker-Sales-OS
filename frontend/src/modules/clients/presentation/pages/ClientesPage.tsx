@@ -201,7 +201,7 @@ export function ClientesPage() {
       expectedAmount: Number(form.expectedAmount ?? 0),
       units: Number(form.units ?? 0),
       contacts: (form.contacts ?? [])
-        .filter((c) => c.name.trim() || c.phone?.trim() || c.email?.trim())
+        .filter((c) => c.name.trim().length >= 2)
         .map(cleanContact),
     }
 

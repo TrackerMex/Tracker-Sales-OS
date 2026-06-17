@@ -14,7 +14,7 @@ export type ActivityResult =
 export interface Activity {
   id: ID
   sellerId: ID
-  clientId: ID
+  clientId: ID | null
   contactId: ID | null
   type: ActivityType
   result: ActivityResult
@@ -39,7 +39,7 @@ export interface DailyActivitiesResponse {
 }
 
 export interface CreateActivityInput {
-  clientId: ID
+  clientId?: ID
   contactId?: ID
   type: ActivityType
   result: ActivityResult

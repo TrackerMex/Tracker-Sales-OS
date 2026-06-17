@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ACTIVITY_TYPES, TASK_POINTS, REQUIRES_NEXT_STEP, PIPELINE_STAGES } from "@/shared/lib/constants"
+import { ACTIVITY_TYPES, TASK_POINTS, REQUIRES_NEXT_STEP, PIPELINE_STAGES, NON_COMMERCIAL_TYPES } from "@/shared/lib/constants"
 import type { ActivityType, PipelineStage } from "@/shared/lib/constants"
 import type { ActivityResult, CreateActivityInput } from "../../domain/activities.types"
 import type { Client } from "@/modules/clients/domain/clients.types"
@@ -78,6 +78,7 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError 
   const selectedClient = clients.find((c) => c.id === clientId)
   const contacts = selectedClient?.contacts ?? []
   const needsNextStep = REQUIRES_NEXT_STEP.includes(type)
+  const isNonCommercial = NON_COMMERCIAL_TYPES.includes(type)
   const quality = calcQuality({ summary, discovery, agreement, nextStep, nextDate, nextTime })
 
   function getCoachMessage(): string {
@@ -111,7 +112,7 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const input: CreateActivityInput = {
-      clientId,
+      ...(clientId ? { clientId } : {}),
       type,
       result,
       summary,
@@ -182,10 +183,10 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError 
             className={fieldErrors.clientId ? "input input-error" : "input"}
             value={clientId}
             onChange={(e) => { setClientId(e.target.value); setContactId(""); clearField("clientId") }}
-            required
+            required={!isNonCommercial}
             {...fieldErrorProps("clientId", fieldErrors.clientId)}
           >
-            <option value="">Seleccionar cliente...</option>
+            <option value="">Sin cliente</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}

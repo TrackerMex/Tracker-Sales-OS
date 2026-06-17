@@ -17,6 +17,9 @@ const TASK_TYPES = [
   'Propuesta',
   'Seguimiento',
   'Cierre',
+  'Solicitud de factura/servicio',
+  'Junta interna',
+  'Prospección',
 ]
 
 const OUTLOOK_TYPES = new Set(['Videoconferencia', 'Reunión virtual', 'Visita física', 'Reunión presencial'])
@@ -50,6 +53,7 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
   const [objective, setObjective] = useState(task.title)
   const [date, setDate] = useState(toDateInput(task.scheduledAt))
   const [time, setTime] = useState(toTimeInput(task.scheduledAt))
+  const [description, setDescription] = useState(task.description ?? '')
 
   const selectedClient = useMemo(() => clients.find((c) => c.id === clientId), [clients, clientId])
   const contacts = selectedClient?.contacts ?? []
@@ -65,6 +69,7 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
       contactId: contactId || undefined,
       title: objective.trim(),
       scheduledAt,
+      description: description.trim() || undefined,
     })
   }
 
@@ -147,6 +152,23 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
               {...fieldErrorProps('title', fieldErrors.title)}
             />
             <FieldError name="title" message={fieldErrors.title} />
+          </div>
+
+          <div>
+            {task.status === 'Completado' ? (
+              <div style={{ padding: '10px 12px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 12, color: '#64748B' }}>
+                <span style={{ fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Resultado esperado</span>
+                {description || <em style={{ color: '#94A3B8' }}>Sin resultado registrado</em>}
+              </div>
+            ) : (
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                style={{ height: 72 }}
+                placeholder="¿Cuál es el resultado esperado de esta tarea?"
+                className="input resize-none"
+              />
+            )}
           </div>
 
           <div>

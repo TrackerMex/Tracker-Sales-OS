@@ -27,10 +27,10 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
 
   async execute(sellerId: string): Promise<MiDiaDto> {
     const now = new Date();
-    const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    const todayEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const tomorrowStart = todayEnd;
-    const tomorrowEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 2));
+    const tomorrowEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
 
     const [seller, settings] = await Promise.all([
       this.sellerRepo.findOne({

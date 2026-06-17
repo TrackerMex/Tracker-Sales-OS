@@ -1,10 +1,13 @@
 import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useClients } from '../../../clients/application/hooks/useClients'
 import type { CreateTaskInput } from '../../domain/tasks.types'
 import { coachingApi } from '../../../coaching/infrastructure/coaching.api'
+import { tasksApi } from '../../infrastructure/tasks.api'
 import { useApiFormErrors } from '@/shared/lib/api-errors'
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
+import { useAppStore } from '@/shared/store/app.store'
 
 const TASK_TYPES = [
   'Chat',
@@ -18,6 +21,9 @@ const TASK_TYPES = [
   'Propuesta',
   'Seguimiento',
   'Cierre',
+  'Solicitud de factura/servicio',
+  'Junta interna',
+  'Prospección',
 ]
 
 const OUTLOOK_TYPES = new Set(['Videoconferencia', 'Reunión virtual', 'Visita física', 'Reunión presencial'])
@@ -63,9 +69,28 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error }: 
   const [date, setDate] = useState(todayISO)
   const [time, setTime] = useState('09:00')
 
+  const currentUser = useAppStore((s) => s.currentUser)
+  const sellerId = currentUser?.sellerId ?? currentUser?.id ?? ''
+
+  const { data: dayTasks } = useQuery({
+    queryKey: ['tasks-day', sellerId, date],
+    queryFn: () => tasksApi.getTodayTasks(sellerId, date),
+    enabled: !!sellerId && !!date,
+  })
+
+  const scheduledToday = (dayTasks ?? [])
+    .filter((t) => t.status !== 'Completado')
+    .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))
+
   const selectedClient = useMemo(() => clients.find((c) => c.id === clientId), [clients, clientId])
   const contacts = selectedClient?.contacts ?? []
   const selectedContact = useMemo(() => contacts.find((c) => c.id === contactId), [contacts, contactId])
+
+  function formatScheduleTime(iso: string): string {
+    const d = new Date(iso)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  }
 
   const showOutlookReminder = OUTLOOK_TYPES.has(type)
   const aiComment = useMemo(
@@ -208,6 +233,26 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error }: 
             </div>
             <FieldError name="scheduledAt" message={fieldErrors.scheduledAt} />
           </div>
+
+          {scheduledToday.length > 0 && (
+            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 12px' }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                Ocupado ese día ({scheduledToday.length})
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {scheduledToday.map((t) => {
+                  const clientName = t.clientId ? (clients.find((c) => c.id === t.clientId)?.name ?? null) : null
+                  return (
+                    <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+                      <span style={{ fontWeight: 700, color: '#0F172A', minWidth: 42 }}>{formatScheduleTime(t.scheduledAt)}</span>
+                      {t.type && <span className="tag tag-gray" style={{ fontSize: 10 }}>{t.type}</span>}
+                      {clientName && <span style={{ color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientName}</span>}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* AI box */}
           <div className="ai-box">

@@ -8,7 +8,7 @@ import { ActivityType, ActivityResult } from '../../domain/entities/activity.ent
 export class ActivityTypeormEntity {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Column({ name: 'seller_id' }) sellerId: string;
-  @Column({ name: 'client_id' }) clientId: string;
+  @Column({ name: 'client_id', type: 'varchar', nullable: true }) clientId: string | null;
   @Column({ name: 'contact_id', type: 'varchar', nullable: true }) contactId: string | null;
   @Column({ type: 'enum', enum: ActivityType }) type: ActivityType;
   @Column({ type: 'enum', enum: ActivityResult }) result: ActivityResult;
