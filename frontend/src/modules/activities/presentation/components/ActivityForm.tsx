@@ -10,6 +10,7 @@ import { coachingApi } from '@/modules/coaching/infrastructure/coaching.api'
 import { useApiFormErrors } from '@/shared/lib/api-errors'
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
+import { useTodayTasks } from "@/modules/tasks/application/hooks/useTodayTasks"
 
 const ACTIVITY_RESULTS: ActivityResult[] = [
   "Interesado",
@@ -48,18 +49,12 @@ interface Props {
   taskId?: string
 }
 
-function nowStamp(): string {
-  return new Date().toLocaleString('es-MX', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })
-}
-
 export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError, initialClientId, taskId }: Props) {
   const { summary: errorSummary, fieldErrors, clearField, formRef } = useApiFormErrors(submitError)
   const now = new Date()
   const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
     .toISOString()
     .slice(0, 16)
-  const capturedStamp = nowStamp()
-
   const { data: clientsResponse } = useClients({ limit: 100 })
   const clients: Client[] = clientsResponse?.data ?? []
 
@@ -81,8 +76,12 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
   const [nextDate, setNextDate] = useState("")
   const [nextTime, setNextTime] = useState("")
   const [executedAt, setExecutedAt] = useState(localNow)
+  const [programmedAt, setProgrammedAt] = useState(localNow)
+  const [internalTaskId, setInternalTaskId] = useState(taskId ?? "")
 
   const { data: pipelineGrouped } = usePipeline(sellerId || null)
+  const { data: todayTasks } = useTodayTasks()
+  const pendingTasks = (todayTasks ?? []).filter((t) => t.status === 'Pendiente')
 
   const currentDeal = pipelineGrouped && clientId
     ? Object.values(pipelineGrouped).flat().find((d) => d.clientId === clientId) ?? null
@@ -147,7 +146,8 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
     if (nextDate) input.nextDate = nextDate
     if (nextTime) input.nextTime = nextTime
     if (stage) input.stage = stage as PipelineStage
-    if (taskId) input.taskId = taskId
+    if (internalTaskId) input.taskId = internalTaskId
+    if (programmedAt) input.programmedAt = new Date(programmedAt).toISOString()
     onSubmit(input)
   }
 
@@ -168,31 +168,49 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
     <form ref={formRef} onSubmit={handleSubmit} className="card p-6 space-y-4">
       <div>
         <h2 className="text-lg font-bold text-slate-900">Registrar actividad comercial</h2>
-        <p className="text-sm text-slate-500 mt-1">La hora de captura queda registrada automáticamente. Llamadas, videoconferencias, visitas y propuestas requieren siguiente paso.</p>
+        <p className="text-sm text-slate-500 mt-1">Vincula una tarea pendiente o ajusta la hora de captura. Llamadas, videoconferencias, visitas y propuestas requieren siguiente paso.</p>
       </div>
 
       <FormErrorSummary error={errorSummary} />
 
-      {/* Info readonly row */}
+      {/* Task + capture time row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="slabel">Tarea programada</label>
-          <input
-            type="text"
-            className="input"
-            value={programmedTask ?? 'Sin tarea vinculada'}
-            readOnly
-            style={{ background: '#F8FAFC', color: '#94A3B8' }}
-          />
+          {programmedTask ? (
+            <input
+              type="text"
+              className="input"
+              value={programmedTask}
+              readOnly
+              style={{ background: '#F8FAFC', color: '#94A3B8' }}
+            />
+          ) : (
+            <select
+              className="input"
+              value={internalTaskId}
+              onChange={(e) => {
+                const task = pendingTasks.find((t) => t.id === e.target.value)
+                setInternalTaskId(e.target.value)
+                if (task?.scheduledAt) {
+                  setProgrammedAt(task.scheduledAt.slice(0, 16))
+                }
+              }}
+            >
+              <option value="">Sin tarea vinculada</option>
+              {pendingTasks.map((t) => (
+                <option key={t.id} value={t.id}>{t.title}</option>
+              ))}
+            </select>
+          )}
         </div>
         <div>
           <label className="slabel">Hora de captura</label>
           <input
-            type="text"
+            type="datetime-local"
             className="input"
-            value={`Captura: ${capturedStamp}`}
-            readOnly
-            style={{ background: '#F8FAFC', color: '#94A3B8' }}
+            value={programmedAt}
+            onChange={(e) => setProgrammedAt(e.target.value)}
           />
         </div>
       </div>

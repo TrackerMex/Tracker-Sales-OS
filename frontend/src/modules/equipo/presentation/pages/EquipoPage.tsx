@@ -164,8 +164,8 @@ export function EquipoPage() {
                   style={{ background: "#F8FAFC", opacity: user.active ? 1 : 0.5 }}
                 >
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: "#0F172A" }}>{user.username}</p>
-                    <p className="text-xs" style={{ color: "#94A3B8" }}>{user.role}</p>
+                    <p className="text-sm font-semibold" style={{ color: "#0F172A" }}>{user.name || user.username}</p>
+                    <p className="text-xs" style={{ color: "#94A3B8" }}>{user.username} · {user.role}</p>
                   </div>
                   <button
                     onClick={() => blockUser.mutate(user.id)}

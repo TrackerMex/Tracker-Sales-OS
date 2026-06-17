@@ -193,7 +193,9 @@ export function ClientDetailPage({ deal, onBack }: Props) {
                         )}
                       </p>
                       {activity.contactId && (
-                        <p style={{ fontSize: 12, color: '#64748B' }}>Contacto: {activity.contactId}</p>
+                        <p style={{ fontSize: 12, color: '#64748B' }}>
+                          Contacto: {client?.contacts.find((c) => c.id === activity.contactId)?.name ?? activity.contactId}
+                        </p>
                       )}
                     </div>
                     <span style={{ fontSize: 11, color: '#94A3B8', flexShrink: 0 }}>
