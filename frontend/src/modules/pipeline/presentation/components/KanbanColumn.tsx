@@ -61,7 +61,7 @@ export function KanbanColumn({
           {deals.length}
         </span>
       </div>
-      <div style={{ maxHeight: 'calc(100vh - 220px)', overflowY: 'auto', paddingRight: '4px' }}>
+      <div className="pipe-col-body">
         {deals.length === 0 ? (
           <p style={{ padding: '16px 0', textAlign: 'center', fontSize: '12px', color: '#CBD5E1' }}>
             Sin oportunidades
