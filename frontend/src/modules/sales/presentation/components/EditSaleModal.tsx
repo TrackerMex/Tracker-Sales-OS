@@ -4,6 +4,13 @@ import { useUpdateSale } from '../../application/hooks/useUpdateSale';
 import { useApiFormErrors } from '@/shared/lib/api-errors';
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary';
 import type { Sale, PaymentMethod, SaleSource } from '../../domain/sales.types';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 const PAYMENT_METHODS: PaymentMethod[] = ['Pagado', 'Crédito', '50% anticipo', 'Pendiente'];
 const SALE_SOURCES: SaleSource[] = [
@@ -36,8 +43,6 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
   const [source, setSource] = useState<SaleSource>(sale.source);
   const [notes, setNotes] = useState(sale.notes ?? '');
 
-  if (!isOpen) return null;
-
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     updateSale.mutate(
@@ -65,24 +70,11 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 50,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(0,0,0,0.4)',
-      }}
-      onClick={onClose}
-    >
-      <div
-        className="card"
-        style={{ width: '100%', maxWidth: 480, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="mb-4 text-sm font-black text-[#002B49]">Editar venta</h3>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar venta</DialogTitle>
+        </DialogHeader>
 
         <form ref={errors.formRef} onSubmit={handleSubmit} className="space-y-3">
           <FormErrorSummary error={errors.summary} />
@@ -197,16 +189,16 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
             />
           </div>
 
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <DialogFooter>
             <button type="button" className="btn-ghost" onClick={onClose}>
               Cancelar
             </button>
             <button type="submit" className="btn-primary" disabled={updateSale.isPending}>
               {updateSale.isPending ? 'Guardando...' : 'Guardar cambios'}
             </button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

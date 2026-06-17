@@ -74,6 +74,31 @@ modules/<name>/
 
 ---
 
+## Componentes UI — shadcn/ui (OBLIGATORIO)
+
+El proyecto usa **shadcn/ui**. Los componentes están en `frontend/src/components/ui/`.
+
+**Regla**: Antes de crear cualquier elemento de UI, verificar si existe el componente shadcn.
+
+| Necesitas | Usa |
+|-----------|-----|
+| Modal / overlay | `Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter` |
+| Botón | `Button` de `@/components/ui/button` |
+| Input / Select / Textarea | `Input`, `Select`, `Textarea` de `@/components/ui/` |
+| Alerta de confirmación | `AlertDialog, AlertDialogContent, AlertDialogAction, AlertDialogCancel` |
+| Menú desplegable | `DropdownMenu` |
+| Tooltip | `Tooltip` |
+| Tabs | `Tabs, TabsList, TabsTrigger, TabsContent` |
+
+**NUNCA crear**:
+- Overlays custom con `position: fixed` + `z-index` manual
+- `confirm()` / `alert()` nativos del browser
+- Modales con divs y estados de visibilidad propios cuando ya existe `Dialog`
+
+**Import path**: `@/components/ui/<nombre>`
+
+---
+
 ## Módulo frontend: cómo agregar una feature
 
 1. Definir tipos en `domain/<name>.types.ts`
