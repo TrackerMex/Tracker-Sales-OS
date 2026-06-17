@@ -301,5 +301,85 @@
     "backend_modules": ["tasks"],
     "frontend_modules": ["tasks"],
     "notes": "Validación de colisión horaria: misma fecha (día) + misma hora (al minuto). Scope: solo para tareas no completadas del mismo vendedor. Error: 409 Conflict con mensaje descriptivo indicando la tarea existente y su horario. Frontend muestra el error de forma amigable en el formulario."
+  },
+  {
+    "id": "28-bug-task-create-email",
+    "name": "BUG: Crear tarea tipo Correo falla con 'No se pudo conectar'",
+    "description": "Al guardar una tarea nueva con tipo=Correo, el frontend muestra 'No se pudo conectar. Tus datos siguen aquí, reintenta.' aunque los datos están completos. Funcionaba en la mañana del 16-Jun-2026, se rompió en la tarde.",
+    "status": "pending",
+    "priority": 28,
+    "backend_modules": ["tasks"],
+    "frontend_modules": ["tasks"],
+    "notes": "Origen: feedback cliente 16-Jun-2026 p.1. Prioridad crítica — bloquea flujo diario del vendedor. Investigar: (1) si el error es de red (timeout/502) o de validación (400/422); (2) si el enum TaskType en backend incluye 'Correo' o cambió; (3) si hay un deployment parcial entre mañana y tarde que introdujo regresión. Revisar logs backend en horario de falla. El texto 'Tus datos siguen aquí' viene del error handler del frontend — agregar logging de status HTTP y response body para diagnosticar."
+  },
+  {
+    "id": "29-pipeline-kanban-scroll",
+    "name": "Pipeline Kanban: scroll por columna para ver todos los deals",
+    "description": "Las columnas del Kanban truncan deals cuando hay más de ~3-4 por etapa. Con 17 deals, el vendedor solo ve los primeros 4. Cada columna debe tener scroll vertical independiente con altura máxima fija, sin afectar el drag-and-drop.",
+    "status": "pending",
+    "priority": 29,
+    "backend_modules": [],
+    "frontend_modules": ["pipeline"],
+    "notes": "Origen: feedback cliente 16-Jun-2026 p.4. Solo CSS/frontend. Solución: añadir max-height (ej. calc(100vh - 280px)) + overflow-y: auto a cada columna del Kanban. Verificar que @dnd-kit (o librería usada) no se rompa con overflow en contenedor padre. Mostrar contador de deals por columna en el header de la columna. Sin cambios backend."
+  },
+  {
+    "id": "30-bug-client-create-fails",
+    "name": "BUG: Crear nuevo cliente falla / prospectos nuevos no se contabilizan",
+    "description": "Al guardar un cliente nuevo con múltiples contactos, backend retorna 'No se pudo crear el cliente'. Además, aunque existen 17 clientes creados hoy, el widget 'Prospectos Hoy' en Mi Día muestra 0/2.",
+    "status": "pending",
+    "priority": 30,
+    "backend_modules": ["clients", "dashboard"],
+    "frontend_modules": ["clients", "mi-dia"],
+    "notes": "Origen: feedback cliente 16-Jun-2026 p.5. Dos bugs distintos: (1) POST /api/clients falla — posible validación estricta en contactos (tel vacío, email vacío que no pasa @IsEmail/IsOptional), o campo requerido sin valor. Revisar CreateClientDto con los datos del screenshot (Facebook URL, Prospección propia, múltiples contactos). (2) 'PROSPECTOS HOY' cuenta clients.created_at >= hoy — verificar que el timezone del query coincide con TZ del servidor; también verificar que el stage 'Nuevo' se asigna al crear. Testear con seed de cliente mínimo para aislar el campo que falla."
+  },
+  {
+    "id": "31-agenda-client-name-prominent",
+    "name": "Agenda del día: mostrar cliente y hora/fecha prominentes",
+    "description": "En la vista 'Agenda de hoy y pendientes', cada tarjeta solo muestra el texto del objetivo sin indicar el cliente al que pertenece. La hora/fecha es muy pequeña. Mostrar: nombre del cliente (empresa) como subtitle visible, hora en font grande, y tipo de actividad con badge/ícono.",
+    "status": "pending",
+    "priority": 31,
+    "backend_modules": [],
+    "frontend_modules": ["tasks"],
+    "notes": "Origen: feedback cliente 16-Jun-2026 p.3. Solo frontend. TaskCard en agenda debe mostrar: (1) empresa del cliente en texto destacado (ya viene en task.clientName o task.client.name), (2) hora scheduledAt en tamaño grande (ej. text-lg font-bold), (3) badge del tipo de actividad (Llamada, Correo, etc.) con color. La hora ya existe en el DTO — es ajuste de UI/layout del componente TaskCard."
+  },
+  {
+    "id": "32-tasks-calendar-view",
+    "name": "Vista calendario mensual de tareas",
+    "description": "Añadir toggle Lista/Calendario en la página de Tareas. Vista calendario mensual: cada día muestra chips con 'HH:MM - [Tipo] - [Cliente]'. Click en chip abre edición. Día actual resaltado. Ayuda al vendedor a planificar su mes.",
+    "status": "pending",
+    "priority": 32,
+    "backend_modules": [],
+    "frontend_modules": ["tasks"],
+    "notes": "Origen: feedback cliente 16-Jun-2026 p.2. Solo frontend. Usar librería ligera de calendario mensual (react-big-calendar o construir grid manual con CSS Grid). Backend ya retorna scheduledAt por tarea. Datos necesarios por chip: scheduledAt (hora), taskType, clientName. Toggle persiste en localStorage. Navegar mes prev/next. No requiere nuevos endpoints — usar GET /api/tasks con rango de fechas del mes visible. Letras más grandes que en la vista lista."
+  },
+  {
+    "id": "33-extra-activity-types",
+    "name": "Tipos de actividad no-comercial: factura, junta interna, prospección",
+    "description": "Añadir 3 nuevos tipos al catálogo de actividades: 'Solicitud de factura/servicio' (0 pts), 'Junta interna' (0 pts), 'Prospección' (2 pts). Estos tipos no requieren cliente (clientId opcional). Permiten al vendedor registrar tiempo invertido en tareas que no son visitas/llamadas directas.",
+    "status": "pending",
+    "priority": 33,
+    "backend_modules": ["activities"],
+    "frontend_modules": ["activities"],
+    "notes": "Origen: feedback cliente 16-Jun-2026 p.6. Backend: ampliar enum/constante TASK_TYPES y TASK_POINTS map. Si clientId es requerido actualmente en CreateActivityDto, hacerlo opcional (@IsOptional) solo para estos 3 tipos nuevos. Frontend: actualizar dropdown de tipo en ActivityForm + CreateTaskForm. Sin migraciones de DB si los tipos son validados en DTO no en columna enum de PostgreSQL. Validar que el score de calidad no se rompa para actividades sin cliente."
+  },
+  {
+    "id": "34-task-edit-show-objective-result",
+    "name": "Editar tarea: mostrar objetivo y resultado en el mismo panel",
+    "description": "El modal 'Editar tarea' solo muestra empresa/tipo/descripción/fecha. Añadir campo 'Objetivo' editable (qué resultado se espera de esta tarea). Si la tarea está completada, mostrar también el 'Resultado' registrado en la actividad derivada, en modo solo-lectura.",
+    "status": "pending",
+    "priority": 34,
+    "backend_modules": ["tasks"],
+    "frontend_modules": ["tasks"],
+    "notes": "Origen: feedback cliente 16-Jun-2026 p.6. El campo 'objetivo' ya existe en Task (es el description/objetivo del CreateTaskForm). Verificar si hay campo separado 'objective' en TaskEntity o si description cumple ese rol. Si Task no tiene campo objetivo separado, añadir columna objective (text, nullable) a TaskEntity + UpdateTaskDto. Resultado: buscar actividad relacionada (task.activityId o activity.taskId FK) y mostrar activity.resumen o activity.acuerdo como 'Resultado'. Requiere JOIN en GetTaskByIdUseCase."
+  },
+  {
+    "id": "35-task-create-schedule-sidebar",
+    "name": "Panel de horario al crear tarea: ver ocupación del día",
+    "description": "Al crear o editar una tarea, mostrar un panel lateral (o sección expandible) con las tareas ya agendadas para el día seleccionado: lista compacta de 'HH:MM – [Tipo] – [Cliente]'. Se actualiza dinámicamente al cambiar la fecha. Complementa la validación de solapamiento (feature 27) con visibilidad previa.",
+    "status": "pending",
+    "priority": 35,
+    "backend_modules": [],
+    "frontend_modules": ["tasks"],
+    "notes": "Origen: feedback cliente 16-Jun-2026 p.7. Solo frontend. Al montar CreateTaskForm/EditTaskForm, hacer GET /api/tasks?date=YYYY-MM-DD&sellerId=X para obtener tareas del día seleccionado. Renderizar mini-lista ordenada por hora. Cuando el usuario cambia el campo fecha, re-fetch. No mostrar la tarea que se está editando en la propia lista. UI: panel a la derecha del form (desktop) o accordion debajo (mobile). Los datos ya existen — es solo consulta y visualización."
   }
 ]
