@@ -86,15 +86,16 @@ export class TaskRepositoryImpl implements ITaskRepository {
   }
 
   async findConflictingTask(sellerId: string, scheduledAt: Date, excludeTaskId?: string): Promise<TaskEntity | null> {
+    const minuteStart = new Date(scheduledAt);
+    minuteStart.setSeconds(0, 0);
+    const minuteEnd = new Date(minuteStart.getTime() + 60 * 1000);
+
     const qb = this.repo
       .createQueryBuilder('task')
       .where('task.sellerId = :sellerId', { sellerId })
       .andWhere('task.status = :status', { status: TaskStatus.Pending })
       .andWhere('task.deletedAt IS NULL')
-      .andWhere(
-        "date_trunc('minute', task.scheduled_at) = date_trunc('minute', :scheduledAt::timestamptz)",
-        { scheduledAt },
-      );
+      .andWhere('task.scheduledAt >= :minuteStart AND task.scheduledAt < :minuteEnd', { minuteStart, minuteEnd });
     if (excludeTaskId) {
       qb.andWhere('task.id != :excludeTaskId', { excludeTaskId });
     }
