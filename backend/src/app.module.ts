@@ -36,10 +36,7 @@ import { ImportExportModule } from './modules/import-export/import-export.module
         synchronize:
           config.get<string>('TYPEORM_SYNCHRONIZE', 'false') === 'true',
         logging: config.get<string>('TYPEORM_LOGGING', 'false') === 'true',
-        ssl:
-          config.get<string>('NODE_ENV') !== 'development'
-            ? { rejectUnauthorized: true }
-            : false,
+        ssl: false,
         extra: {
           max: 20,
           min: 2,
