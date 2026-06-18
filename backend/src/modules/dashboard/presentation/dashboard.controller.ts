@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/infrastructure/guards/roles.guard';
@@ -28,27 +28,41 @@ export class DashboardController {
   ) {}
 
   @Get('summary')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.Admin, UserRole.Director)
   getSummary() {
     return this.getDashboardSummary.execute();
   }
 
   @Get('sellers-score')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.Admin, UserRole.Director)
   fetchSellersScore() {
     return this.getSellersScoreUseCase.execute();
   }
 
   @Get('overdue-tasks')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.Admin, UserRole.Director)
   fetchOverdueTasks() {
     return this.getOverdueTasksUseCase.execute();
   }
 
   @Get('activity-trend')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.Admin, UserRole.Director)
   getActivityTrend(): Promise<ActivityTrendItem[]> {
     return this.getActivityTrendUseCase.execute();
   }
 
   @Get('mi-dia/seller/:id')
-  getMiDia(@Param('id') sellerId: string) {
+  getMiDia(
+    @Param('id') sellerId: string,
+    @Request() req: { user: { role: string; sellerId: string | null } },
+  ) {
+    if (req.user.role === UserRole.Seller && req.user.sellerId !== sellerId) {
+      throw new ForbiddenException();
+    }
     return this.getMiDiaUseCase.execute(sellerId);
   }
 

@@ -101,11 +101,11 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
 
         this.clientRepo
           .createQueryBuilder('c')
-          .where('c.seller_id = :sellerId', { sellerId })
+          .where('c.seller_id = :sellerId::uuid', { sellerId })
           .andWhere('c.deleted_at IS NULL')
           .andWhere('c.created_at < :coldBefore', { coldBefore })
           .andWhere(
-            'NOT EXISTS (SELECT 1 FROM activities act WHERE act.client_id = c.id::text AND act.deleted_at IS NULL AND act.executed_at >= :coldBefore)',
+            'NOT EXISTS (SELECT 1 FROM activities act WHERE act.client_id = c.id AND act.deleted_at IS NULL AND act.executed_at >= :coldBefore)',
           )
           .getCount(),
       ]);

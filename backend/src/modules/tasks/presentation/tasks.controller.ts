@@ -7,6 +7,8 @@ import {
   Param,
   Query,
   UseGuards,
+  Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
@@ -44,7 +46,14 @@ export class TasksController {
   @Get('seller/:id/today')
   @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
   @ApiOperation({ summary: 'Get today tasks for a seller' })
-  getToday(@Param('id') sellerId: string, @Query('date') date?: string) {
+  getToday(
+    @Param('id') sellerId: string,
+    @Query('date') date: string | undefined,
+    @Request() req: { user: { role: string; sellerId: string | null } },
+  ) {
+    if (req.user.role === UserRole.Seller && req.user.sellerId !== sellerId) {
+      throw new ForbiddenException();
+    }
     return this.getTodayTasks.execute({ sellerId, date });
   }
 

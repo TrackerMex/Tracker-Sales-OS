@@ -6,7 +6,7 @@ export const dashboardRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/dashboard',
   beforeLoad: () => {
-    const stored = localStorage.getItem('tracker-sales-app');
+    const stored = sessionStorage.getItem('tracker-sales-app');
     if (!stored) return;
     let role: string | undefined;
     try {

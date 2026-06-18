@@ -99,6 +99,7 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
   const [showDiscovery, setShowDiscovery] = useState(false)
   const [showAgreement, setShowAgreement] = useState(false)
   const [showAiCoach, setShowAiCoach] = useState(false)
+  const [clientError, setClientError] = useState("")
 
   useEffect(() => {
     if (discovery.length > 0) setShowDiscovery(true)
@@ -161,6 +162,11 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!isNonCommercial && !clientId) {
+      setClientError("Selecciona un cliente para actividades comerciales.")
+      return
+    }
+    setClientError("")
     const input: CreateActivityInput = {
       ...(clientId ? { clientId } : {}),
       type,
@@ -220,9 +226,9 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
               setContactId("")
               setSelectedOpportunityId("")
               setNewOpportunityName("")
+              setClientError("")
               clearField("clientId")
             }}
-            required={!isNonCommercial}
             {...fieldErrorProps("clientId", fieldErrors.clientId)}
           >
             <option value="">Sin cliente</option>
@@ -230,6 +236,7 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
+          {clientError && <p style={{ fontSize: 12, color: '#EF4444', marginTop: 4 }}>{clientError}</p>}
           <FieldError name="clientId" message={fieldErrors.clientId} />
         </div>
 
@@ -295,7 +302,12 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
           <select
             className={fieldErrors.type ? "input input-error" : "input"}
             value={type}
-            onChange={(e) => { setType(e.target.value as ActivityType); clearField("type") }}
+            onChange={(e) => {
+              const t = e.target.value as ActivityType
+              setType(t)
+              if (NON_COMMERCIAL_TYPES.includes(t)) setClientError("")
+              clearField("type")
+            }}
             {...fieldErrorProps("type", fieldErrors.type)}
           >
             {ACTIVITY_TYPES.map((t) => (

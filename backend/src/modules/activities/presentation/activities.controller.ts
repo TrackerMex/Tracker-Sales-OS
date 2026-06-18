@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Inject, Request, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Inject, Request, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { IsString, IsIn, IsOptional } from 'class-validator';
 import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
@@ -42,14 +42,28 @@ export class ActivitiesController {
   @Get('seller/:id/daily')
   @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
   @ApiOperation({ summary: 'Get daily activities and points for a seller' })
-  getDailyPoints(@Param('id') sellerId: string, @Query() query: GetActivitiesQueryDto) {
+  getDailyPoints(
+    @Param('id') sellerId: string,
+    @Query() query: GetActivitiesQueryDto,
+    @Request() req: { user: { role: string; sellerId: string | null } },
+  ) {
+    if (req.user.role === UserRole.Seller && req.user.sellerId !== sellerId) {
+      throw new ForbiddenException();
+    }
     return this.getDailyActivities.execute({ sellerId, date: query.date });
   }
 
   @Get('seller/:id')
   @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
   @ApiOperation({ summary: 'Get all activities for a seller with pagination' })
-  findBySeller(@Param('id') sellerId: string, @Query() query: GetActivitiesQueryDto) {
+  findBySeller(
+    @Param('id') sellerId: string,
+    @Query() query: GetActivitiesQueryDto,
+    @Request() req: { user: { role: string; sellerId: string | null } },
+  ) {
+    if (req.user.role === UserRole.Seller && req.user.sellerId !== sellerId) {
+      throw new ForbiddenException();
+    }
     return this.getSellerActivities.execute({ sellerId, ...query });
   }
 

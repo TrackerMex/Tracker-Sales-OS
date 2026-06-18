@@ -18,7 +18,7 @@ export class ActivityTypeormEntity {
   @ManyToOne(() => SellerTypeormEntity, { onDelete: 'RESTRICT', nullable: false })
   @JoinColumn({ name: 'seller_id' })
   seller?: SellerTypeormEntity;
-  @Column({ name: 'client_id', type: 'varchar', nullable: true }) clientId: string | null;
+  @Column({ name: 'client_id', type: 'uuid', nullable: true }) clientId: string | null;
   @ManyToOne(() => ClientTypeormEntity, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'client_id' })
   client?: ClientTypeormEntity;
