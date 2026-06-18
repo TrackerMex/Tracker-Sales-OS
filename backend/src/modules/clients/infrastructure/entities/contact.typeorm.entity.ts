@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -10,6 +11,7 @@ import {
 } from 'typeorm';
 import { ClientTypeormEntity } from './client.typeorm.entity';
 
+@Index('idx_contacts_client_id', ['clientId'])
 @Entity('contacts')
 export class ContactTypeormEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -39,12 +41,12 @@ export class ContactTypeormEntity {
   @Column({ name: 'is_decision_maker', default: false })
   isDecisionMaker: boolean;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 
-  @DeleteDateColumn({ name: 'deleted_at' })
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
   deletedAt: Date | null;
 }

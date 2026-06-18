@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository, In, IsNull } from 'typeorm';
+import { FindOptionsWhere, Repository, In, IsNull, MoreThanOrEqual } from 'typeorm';
 import { DealEntity, StageHistoryEntry } from '../../domain/entities/deal.entity';
 import { IDealsRepository } from '../../domain/repositories/deal.repository.interface';
 import { DealTypeormEntity } from '../entities/deal.typeorm.entity';
@@ -264,8 +264,16 @@ export class DealRepositoryImpl implements IDealsRepository {
     });
   }
 
-  async findAllForAnalysis(): Promise<DealEntity[]> {
-    const data = await this.repo.find({ order: { createdAt: 'DESC' } });
+  async findAllForAnalysis(fromDate?: Date): Promise<DealEntity[]> {
+    const where: FindOptionsWhere<DealTypeormEntity> = {};
+    if (fromDate) {
+      where.createdAt = MoreThanOrEqual(fromDate);
+    }
+    const data = await this.repo.find({
+      where,
+      order: { createdAt: 'DESC' },
+      take: 500,
+    });
     return data.map((e) => this.toDomain(e));
   }
 

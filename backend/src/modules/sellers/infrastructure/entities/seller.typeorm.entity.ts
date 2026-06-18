@@ -24,7 +24,7 @@ export class SellerTypeormEntity {
   @Column({ default: true })
   active: boolean;
 
-  @CreateDateColumn({ name: 'created_at' }) createdAt: Date;
-  @UpdateDateColumn({ name: 'updated_at' }) updatedAt: Date;
-  @DeleteDateColumn({ name: 'deleted_at' }) deletedAt: Date | null;
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt: Date;
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' }) updatedAt: Date;
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' }) deletedAt: Date | null;
 }

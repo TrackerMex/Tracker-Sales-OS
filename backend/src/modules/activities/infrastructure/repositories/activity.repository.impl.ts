@@ -115,10 +115,12 @@ export class ActivityRepositoryImpl implements IActivityRepository {
   async updateStatus(id: string, status: string, historyEntry: ActivityHistoryEntry): Promise<ActivityEntity> {
     const existing = await this.repo.findOne({ where: { id } });
     if (!existing) throw new Error('Activity not found');
-    existing.status = status;
-    existing.activityHistory = [...(existing.activityHistory ?? []), historyEntry];
-    const saved = await this.repo.save(existing);
-    return this.toDomain(saved);
+    await this.repo.manager.query(
+      `UPDATE activities SET activity_history = activity_history || $1::jsonb, status = $2, updated_at = NOW() WHERE id = $3`,
+      [JSON.stringify([historyEntry]), status, id],
+    );
+    const saved = await this.repo.findOne({ where: { id } });
+    return this.toDomain(saved!);
   }
 
   async findByClientId(clientId: string): Promise<ActivityEntity[]> {

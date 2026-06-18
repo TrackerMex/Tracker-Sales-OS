@@ -5,16 +5,31 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  Index,
+  JoinColumn,
+  ManyToOne,
 } from 'typeorm';
 import { PaymentMethod, SaleSource, SaleType } from '../../domain/entities/sale.entity';
+import { SellerTypeormEntity } from '../../../sellers/infrastructure/entities/seller.typeorm.entity';
+import { ClientTypeormEntity } from '../../../clients/infrastructure/entities/client.typeorm.entity';
 
+@Index('idx_sales_seller_id', ['sellerId'])
+@Index('idx_sales_client_id', ['clientId'])
 @Entity('sales')
 export class SaleTypeormEntity {
   @PrimaryGeneratedColumn('uuid') id: string;
 
   @Column({ name: 'seller_id', type: 'uuid' }) sellerId: string;
 
+  @ManyToOne(() => SellerTypeormEntity, { onDelete: 'RESTRICT', nullable: false })
+  @JoinColumn({ name: 'seller_id' })
+  seller?: SellerTypeormEntity;
+
   @Column({ name: 'client_id', type: 'uuid', nullable: true }) clientId: string | null;
+
+  @ManyToOne(() => ClientTypeormEntity, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'client_id' })
+  client?: ClientTypeormEntity;
 
   @Column({ name: 'client_name', type: 'varchar' }) clientName: string;
 
@@ -36,9 +51,9 @@ export class SaleTypeormEntity {
 
   @Column({ type: 'text', nullable: true }) notes: string | null;
 
-  @CreateDateColumn({ name: 'created_at' }) createdAt: Date;
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' }) updatedAt: Date;
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' }) updatedAt: Date;
 
-  @DeleteDateColumn({ name: 'deleted_at' }) deletedAt: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' }) deletedAt: Date | null;
 }

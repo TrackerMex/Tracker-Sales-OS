@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, Fragment } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { clientsApi } from "@/modules/clients/infrastructure/clients.api"
@@ -9,22 +9,10 @@ import { useChangeStage } from "../../application/hooks/useChangeStage"
 import type { Deal, PipelineStage } from "../../domain/pipeline.types"
 import type { Activity } from "@/modules/activities/domain/activities.types"
 
-const STATUS_CLASSES: Record<string, string> = {
-  Pendiente: "tag tag-yellow",
-  "En curso": "tag tag-blue",
-  Completada: "tag tag-green",
-  Cancelada: "tag",
-}
-
 interface Props {
   deal: Deal
   onBack: () => void
 }
-
-const PIPELINE_STAGES: PipelineStage[] = [
-  "Prospecto", "Contactado", "Interesado", "Propuesta",
-  "Negociación", "Cierre", "Perdido",
-]
 
 const STAGE_COLORS: Record<string, string> = {
   Prospecto: '#002B49',
@@ -36,21 +24,9 @@ const STAGE_COLORS: Record<string, string> = {
   Perdido: '#DC2626',
 }
 
-function formatDateTime(dateStr: string): string {
-  const d = new Date(dateStr)
-  return d.toLocaleString('es-MX', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit',
-  })
-}
-
-function formatCaptured(isoStr: string): string {
-  const d = new Date(isoStr)
-  return d.toLocaleString('es-MX', {
-    day: '2-digit', month: '2-digit', year: '2-digit',
-    hour: '2-digit', minute: '2-digit',
-  })
-}
+const STAGE_ORDER: PipelineStage[] = [
+  'Prospecto', 'Contactado', 'Interesado', 'Propuesta', 'Negociación', 'Cierre',
+]
 
 export function ClientDetailPage({ deal, onBack }: Props) {
   const navigate = useNavigate()
@@ -75,6 +51,8 @@ export function ClientDetailPage({ deal, onBack }: Props) {
     (a) => a.sellerId === deal.sellerId,
   )
 
+  const currentIdx = STAGE_ORDER.indexOf(deal.stage as PipelineStage)
+
   function handleStageChange(newStage: PipelineStage) {
     changeStage.mutate({
       dealId: deal.id,
@@ -83,180 +61,214 @@ export function ClientDetailPage({ deal, onBack }: Props) {
   }
 
   return (
-    <div className="space-y-4">
-      <button
-        className="btn-ghost"
-        onClick={onBack}
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          <path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        Volver al pipeline
-      </button>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Header sticky */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '16px 20px', borderBottom: '1px solid #E2E8F0',
+        position: 'sticky', top: 0, background: '#fff', zIndex: 10,
+      }}>
+        <div>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#002B49' }}>{deal.clientName}</h2>
+          <p style={{ fontSize: 11, color: '#64748B' }}>
+            {deal.sellerName ?? ''}{deal.sellerName ? ' · ' : ''}Oportunidad principal
+          </p>
+        </div>
+        <button
+          onClick={onBack}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#94A3B8', lineHeight: 1 }}
+        >
+          ×
+        </button>
+      </div>
 
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-        {/* Sidebar */}
-        <div style={{ width: 320, flexShrink: 0 }}>
-          <div className="card" style={{ padding: 20, background: '#001524', color: '#fff' }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{deal.clientName}</h2>
-            <p style={{ fontSize: 12, fontWeight: 600, color: '#82bc00', textTransform: 'uppercase', marginBottom: 16 }}>
-              {deal.stage} · {deal.sellerName ?? ''}
-            </p>
+      {/* Stage Stepper */}
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0' }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 12 }}>
+          Etapa actual
+        </p>
 
-            {/* Contacts */}
-            <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Contactos</p>
-              {client?.contacts && client.contacts.length > 0 ? (
-                client.contacts.map((c) => (
-                  <div key={c.id} style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 12px', marginBottom: 4 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600 }}>{c.name}</p>
-                    <p style={{ fontSize: 11, color: '#94A3B8' }}>{c.role}{c.isDecisionMaker ? ' · Contacto principal' : ''}</p>
-                  </div>
-                ))
-              ) : (
-                <p style={{ fontSize: 12, color: '#64748B' }}>Sin contactos</p>
-              )}
-            </div>
-
-            {/* Pain */}
-            <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Dolor</p>
-              <p style={{ fontSize: 13 }}>{client?.pain ?? deal.painPoint ?? '-'}</p>
-            </div>
-
-            {/* Provider */}
-            <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Proveedor actual</p>
-              <p style={{ fontSize: 13 }}>{client?.provider ?? '-'}</p>
-            </div>
-
-            {/* Next Step */}
-            <div style={{ marginBottom: 20 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Próximo paso</p>
-              {deal.nextStep ? (
-                <>
-                  <p style={{ fontSize: 13, color: '#82bc00', fontWeight: 600 }}>{deal.nextStep}</p>
-                  {deal.nextDate && (
-                    <p style={{ fontSize: 12, color: '#94A3B8' }}>{deal.nextDate}{deal.nextTime ? ` ${deal.nextTime}` : ''}</p>
-                  )}
-                </>
-              ) : (
-                <p style={{ fontSize: 13 }}>-</p>
-              )}
-            </div>
-
-            <button
-              onClick={() => navigate({ to: "/actividades/nueva", search: { clientId: deal.clientId } })}
-              style={{
-                width: '100%', padding: '10px 0', background: '#82bc00', color: '#fff',
-                border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              }}
-            >
-              Registrar avance
-            </button>
-          </div>
-
-          {/* Update Stage */}
-          <div className="card" style={{ padding: 16, marginTop: 12 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 10 }}>Actualizar fase</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              {PIPELINE_STAGES.map((s) => (
+        {/* Dots + connectors */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+          {STAGE_ORDER.map((s, idx) => {
+            const isPast = idx < currentIdx
+            const isCurrent = idx === currentIdx
+            return (
+              <Fragment key={s}>
                 <button
-                  key={s}
+                  title={s}
                   onClick={() => handleStageChange(s)}
-                  disabled={s === deal.stage}
+                  disabled={isCurrent}
                   style={{
-                    padding: '6px 0', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid #E2E8F0',
-                    background: s === deal.stage ? STAGE_COLORS[s] ?? '#002B49' : '#fff',
-                    color: s === deal.stage ? '#fff' : '#475569',
-                    cursor: s === deal.stage ? 'default' : 'pointer',
-                    opacity: s === deal.stage ? 1 : 0.8,
+                    width: 28, height: 28, borderRadius: '50%', border: 'none',
+                    cursor: isCurrent ? 'default' : 'pointer',
+                    background: isCurrent ? (STAGE_COLORS[s] ?? '#002B49') : isPast ? '#94A3B8' : '#E2E8F0',
+                    color: (isCurrent || isPast) ? '#fff' : '#94A3B8',
+                    fontSize: 10, fontWeight: 700, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >
-                  {s}
+                  {idx + 1}
                 </button>
-              ))}
-            </div>
-          </div>
+                {idx < STAGE_ORDER.length - 1 && (
+                  <div style={{ flex: 1, height: 2, background: isPast ? '#94A3B8' : '#E2E8F0', minWidth: 8 }} />
+                )}
+              </Fragment>
+            )
+          })}
+          <div style={{ width: 16 }} />
+          {/* Perdido button */}
+          <button
+            title="Perdido"
+            onClick={() => handleStageChange('Perdido')}
+            disabled={deal.stage === 'Perdido'}
+            style={{
+              width: 28, height: 28, borderRadius: '50%', border: '1px solid #FCA5A5',
+              cursor: deal.stage === 'Perdido' ? 'default' : 'pointer',
+              background: deal.stage === 'Perdido' ? '#DC2626' : '#FEF2F2',
+              color: deal.stage === 'Perdido' ? '#fff' : '#DC2626',
+              fontSize: 14, fontWeight: 700, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            ×
+          </button>
         </div>
 
-        {/* Historial comercial */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h3 style={{ fontSize: 12, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 12 }}>Historial comercial</h3>
-          {clientActivities.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#94A3B8' }}>Sin actividades registradas</p>
+        {/* Labels */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {STAGE_ORDER.map((s, idx) => (
+            <Fragment key={s}>
+              <span style={{
+                fontSize: 9,
+                color: idx === currentIdx ? '#002B49' : '#94A3B8',
+                fontWeight: idx === currentIdx ? 700 : 400,
+                textAlign: 'center', width: 28, flexShrink: 0,
+                overflow: 'hidden', lineHeight: 1.2,
+              }}>
+                {s.slice(0, 4)}
+              </span>
+              {idx < STAGE_ORDER.length - 1 && <div style={{ flex: 1, minWidth: 8 }} />}
+            </Fragment>
+          ))}
+        </div>
+
+        <p style={{ marginTop: 8, fontSize: 12, color: '#64748B' }}>
+          <strong style={{ color: '#002B49' }}>{deal.stage}</strong>
+          {deal.amount ? ` · ${deal.amount.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 })}` : ''}
+          {deal.probability !== undefined ? ` · ${deal.probability}% prob` : ''}
+        </p>
+      </div>
+
+      {/* Client info — 2 cols */}
+      <div style={{
+        padding: '16px 20px', borderBottom: '1px solid #E2E8F0',
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
+      }}>
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>
+            Contactos
+          </p>
+          {client?.contacts && client.contacts.length > 0 ? (
+            client.contacts.map((c) => (
+              <div key={c.id} style={{ marginBottom: 6 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>{c.name}</p>
+                <p style={{ fontSize: 11, color: '#94A3B8' }}>
+                  {c.role}{c.isDecisionMaker ? ' · Principal' : ''}
+                </p>
+              </div>
+            ))
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontSize: 12, color: '#94A3B8' }}>Sin contactos</p>
+          )}
+        </div>
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Dolor</p>
+          <p style={{ fontSize: 12, color: '#334155', marginBottom: 12 }}>{client?.pain ?? deal.painPoint ?? '-'}</p>
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Proveedor</p>
+          <p style={{ fontSize: 12, color: '#334155' }}>{client?.provider ?? '-'}</p>
+        </div>
+      </div>
+
+      {/* Activity Timeline */}
+      <div style={{ padding: '16px 20px', flex: 1 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 12 }}>
+          Historial comercial
+        </p>
+
+        {clientActivities.length === 0 ? (
+          <p style={{ fontSize: 12, color: '#94A3B8' }}>Sin actividades registradas</p>
+        ) : (
+          <div style={{ position: 'relative' }}>
+            <div style={{
+              position: 'absolute', left: 9, top: 8, bottom: 8,
+              width: 2, background: '#E2E8F0',
+            }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {clientActivities.map((activity) => (
-                <div key={activity.id} className="card" style={{ padding: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: '#002B49' }}>
-                        {activity.type} · {activity.result}
+                <div key={activity.id} style={{ display: 'flex', gap: 16, position: 'relative' }}>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                    background: activity.status === 'Completada' ? '#82bc00'
+                      : activity.status === 'Cancelada' ? '#94A3B8' : '#E2E8F0',
+                    border: '2px solid #fff', zIndex: 1, marginTop: 2,
+                  }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }}>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span className="tag tag-navy" style={{ fontSize: 10 }}>{activity.type}</span>
                         {activity.stage && (
-                          <span style={{
-                            marginLeft: 8, fontSize: 11, fontWeight: 600,
-                            background: '#F1F5F9', color: '#475569',
-                            borderRadius: 4, padding: '2px 6px',
-                          }}>
-                            {activity.stage}
-                          </span>
+                          <span className="tag" style={{ fontSize: 10 }}>{activity.stage}</span>
                         )}
-                      </p>
-                      <span className={STATUS_CLASSES[activity.status ?? 'Pendiente'] ?? 'tag'} style={{ alignSelf: 'flex-start' }}>
-                        {activity.status ?? 'Pendiente'}
+                      </div>
+                      <span style={{ fontSize: 11, color: '#94A3B8', flexShrink: 0, marginLeft: 8 }}>
+                        {new Date(activity.executedAt).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' })}
                       </span>
-                      {activity.contactId && (
-                        <p style={{ fontSize: 12, color: '#64748B' }}>
-                          Contacto: {client?.contacts.find((c) => c.id === activity.contactId)?.name ?? activity.contactId}
-                        </p>
-                      )}
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-                      <span style={{ fontSize: 11, color: '#94A3B8' }}>
-                        {new Date(activity.executedAt).toLocaleDateString('es-MX')}
+                    {activity.summary && (
+                      <p style={{ fontSize: 12, color: '#334155', marginBottom: 4, lineHeight: 1.4 }}>
+                        {activity.summary.length > 100 ? activity.summary.slice(0, 100) + '...' : activity.summary}
+                      </p>
+                    )}
+                    {activity.nextStep && (
+                      <p style={{ fontSize: 11, color: '#82bc00', fontWeight: 600 }}>
+                        → {activity.nextStep}
+                      </p>
+                    )}
+                    <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+                      <span style={{ fontSize: 10, color: '#94A3B8' }}>
+                        +{activity.points}pts · {activity.quality}% cal.
                       </span>
                       <button
                         className="btn-ghost"
-                        style={{ fontSize: 11, padding: '3px 8px' }}
+                        style={{ fontSize: 10, padding: '1px 6px' }}
                         onClick={() => setSelectedActivityId(activity.id)}
                       >
-                        Ver historial
+                        Detalle
                       </button>
                     </div>
-                  </div>
-                  <p style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>
-                    Ejecutada: {formatDateTime(activity.executedAt)} · Capturada: {formatCaptured(activity.capturedAt)}
-                  </p>
-                  {activity.summary && (
-                    <p style={{ fontSize: 12, color: '#334155', marginBottom: 2 }}>
-                      <strong>Qué ocurrió:</strong> {activity.summary}
-                    </p>
-                  )}
-                  {activity.discovery && (
-                    <p style={{ fontSize: 12, color: '#334155', marginBottom: 2 }}>
-                      <strong>Descubrí:</strong> {activity.discovery}
-                    </p>
-                  )}
-                  {activity.agreement && (
-                    <p style={{ fontSize: 12, color: '#334155', marginBottom: 2 }}>
-                      <strong>Acordamos:</strong> {activity.agreement}
-                    </p>
-                  )}
-                  {activity.nextStep && (
-                    <p style={{ fontSize: 12, color: '#82bc00', fontWeight: 600, marginTop: 6 }}>
-                      Siguiente paso: {activity.nextStep}{activity.nextDate ? ` · ${activity.nextDate}` : ''}{activity.nextTime ? ` ${activity.nextTime}` : ''}
-                    </p>
-                  )}
-                  <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 11, color: '#94A3B8' }}>
-                    <span>Calidad: {activity.quality}%</span>
-                    <span>Puntos: {activity.points}</span>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
+
+      {/* Sticky footer */}
+      <div style={{
+        padding: '16px 20px', borderTop: '1px solid #E2E8F0',
+        position: 'sticky', bottom: 0, background: '#fff',
+      }}>
+        <button
+          onClick={() => navigate({ to: "/actividades/nueva", search: { clientId: deal.clientId } })}
+          style={{
+            width: '100%', padding: '10px 0', background: '#82bc00', color: '#fff',
+            border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          Registrar avance
+        </button>
       </div>
 
       <ActivityHistoryModal

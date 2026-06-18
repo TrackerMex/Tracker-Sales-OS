@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
+import type { CSSProperties } from "react"
 import { ACTIVITY_TYPES, TASK_POINTS, REQUIRES_NEXT_STEP, PIPELINE_STAGES, NON_COMMERCIAL_TYPES } from "@/shared/lib/constants"
 import type { ActivityType, PipelineStage } from "@/shared/lib/constants"
 import type { ActivityResult, CreateActivityInput } from "../../domain/activities.types"
 import type { Client } from "@/modules/clients/domain/clients.types"
 import { useClients } from "@/modules/clients/application/hooks/useClients"
-import { usePipeline } from "@/modules/pipeline/application/hooks/usePipeline"
 import { useAppStore } from "@/shared/store/app.store"
 import { coachingApi } from '@/modules/coaching/infrastructure/coaching.api'
 import { useApiFormErrors } from '@/shared/lib/api-errors'
@@ -12,6 +12,7 @@ import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
 import { useTodayTasks } from "@/modules/tasks/application/hooks/useTodayTasks"
 import { useClientDeals } from "@/modules/pipeline/application/hooks/useClientDeals"
+import { usePipeline } from "@/modules/pipeline/application/hooks/usePipeline"
 
 const ACTIVITY_RESULTS: ActivityResult[] = [
   "Interesado",
@@ -50,18 +51,30 @@ interface Props {
   taskId?: string
 }
 
+const TOGGLE_STYLE: CSSProperties = {
+  background: 'none',
+  border: 'none',
+  color: '#002B49',
+  fontSize: 12,
+  cursor: 'pointer',
+  padding: '4px 0',
+  fontWeight: 600,
+}
+
 export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError, initialClientId, taskId }: Props) {
   const { summary: errorSummary, fieldErrors, clearField, formRef } = useApiFormErrors(submitError)
   const now = new Date()
   const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
     .toISOString()
     .slice(0, 16)
+
   const { data: clientsResponse } = useClients({ limit: 100 })
   const clients: Client[] = clientsResponse?.data ?? []
 
   const currentUser = useAppStore((s) => s.currentUser)
   const sellerId = currentUser?.sellerId ?? currentUser?.id ?? ''
 
+  // form state
   const [aiTips, setAiTips] = useState<string[]>([])
   const [aiLoading, setAiLoading] = useState(false)
   const [clientId, setClientId] = useState(initialClientId ?? "")
@@ -81,6 +94,15 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
   const [internalTaskId, setInternalTaskId] = useState(taskId ?? "")
   const [selectedOpportunityId, setSelectedOpportunityId] = useState("")
   const [newOpportunityName, setNewOpportunityName] = useState("")
+
+  // UI expand/collapse state
+  const [showDiscovery, setShowDiscovery] = useState(false)
+  const [showAgreement, setShowAgreement] = useState(false)
+  const [showAiCoach, setShowAiCoach] = useState(false)
+
+  useEffect(() => {
+    if (discovery.length > 0) setShowDiscovery(true)
+  }, [discovery])
 
   const { data: pipelineGrouped } = usePipeline(sellerId || null)
   const { data: todayTasks } = useTodayTasks()
@@ -105,7 +127,9 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
       setStage("")
     }
   }, [currentDeal?.stage, isNonCommercial])
+
   const quality = calcQuality({ summary, discovery, agreement, nextStep, nextDate, nextTime })
+  const qualityColor = quality >= 80 ? '#82bc00' : quality >= 40 ? '#F59E0B' : '#EF4444'
 
   function getCoachMessage(): string {
     if (needsNextStep) {
@@ -114,7 +138,7 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
       }
       return "Esta actividad requiere siguiente paso, fecha y hora."
     }
-    return "Suma 1 punto. No requiere siguiente paso obligatorio."
+    return `Suma ${TASK_POINTS[type]} punto(s). ${needsNextStep ? '' : 'No requiere siguiente paso obligatorio.'}`
   }
 
   async function fetchAiSuggestions() {
@@ -176,55 +200,16 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
     <form ref={formRef} onSubmit={handleSubmit} className="card p-6 space-y-4">
       <div>
         <h2 className="text-lg font-bold text-slate-900">Registrar actividad comercial</h2>
-        <p className="text-sm text-slate-500 mt-1">Vincula una tarea pendiente o ajusta la hora de captura. Llamadas, videoconferencias, visitas y propuestas requieren siguiente paso.</p>
+        <p className="text-sm text-slate-500 mt-1">
+          Llamadas, videoconferencias, visitas y propuestas requieren siguiente paso.
+        </p>
       </div>
 
       <FormErrorSummary error={errorSummary} />
 
-      {/* Task + capture time row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label className="slabel">Tarea programada</label>
-          {programmedTask ? (
-            <input
-              type="text"
-              className="input"
-              value={programmedTask}
-              readOnly
-              style={{ background: '#F8FAFC', color: '#94A3B8' }}
-            />
-          ) : (
-            <select
-              className="input"
-              value={internalTaskId}
-              onChange={(e) => {
-                const task = pendingTasks.find((t) => t.id === e.target.value)
-                setInternalTaskId(e.target.value)
-                if (task?.scheduledAt) {
-                  setProgrammedAt(task.scheduledAt.slice(0, 16))
-                }
-              }}
-            >
-              <option value="">Sin tarea vinculada</option>
-              {pendingTasks.map((t) => (
-                <option key={t.id} value={t.id}>{t.title}</option>
-              ))}
-            </select>
-          )}
-        </div>
-        <div>
-          <label className="slabel">Hora de captura</label>
-          <input
-            type="datetime-local"
-            className="input"
-            value={programmedAt}
-            onChange={(e) => setProgrammedAt(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {/* Client dropdown */}
+      {/* Sección 1 — Contexto */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        {/* Cliente */}
         <div>
           <label className="slabel">Cliente *</label>
           <select
@@ -248,9 +233,31 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
           <FieldError name="clientId" message={fieldErrors.clientId} />
         </div>
 
-        {/* Opportunity selector */}
+        {/* Contacto */}
+        <div>
+          <label className="slabel">Contacto</label>
+          <select
+            className={fieldErrors.contactId ? "input input-error" : "input"}
+            value={contactId}
+            onChange={(e) => { setContactId(e.target.value); clearField("contactId") }}
+            disabled={!clientId || contacts.length === 0}
+            {...fieldErrorProps("contactId", fieldErrors.contactId)}
+          >
+            <option value="">
+              {!clientId ? "Selecciona un cliente primero" : contacts.length === 0 ? "Sin contactos" : "Seleccionar contacto..."}
+            </option>
+            {contacts.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} — {c.role}{c.isDecisionMaker ? " (Decisor)" : ""}
+              </option>
+            ))}
+          </select>
+          <FieldError name="contactId" message={fieldErrors.contactId} />
+        </div>
+
+        {/* Oportunidad (span 2 cols, solo si hay cliente y no es no-comercial) */}
         {clientId && !isNonCommercial && (
-          <div className="sm:col-span-2">
+          <div style={{ gridColumn: '1 / -1' }}>
             <label className="slabel">Oportunidad / Proyecto</label>
             <select
               className="input"
@@ -282,29 +289,7 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
           </div>
         )}
 
-        {/* Contact dropdown */}
-        <div>
-          <label className="slabel">Contacto</label>
-          <select
-            className={fieldErrors.contactId ? "input input-error" : "input"}
-            value={contactId}
-            onChange={(e) => { setContactId(e.target.value); clearField("contactId") }}
-            disabled={!clientId || contacts.length === 0}
-            {...fieldErrorProps("contactId", fieldErrors.contactId)}
-          >
-            <option value="">
-              {!clientId ? "Selecciona un cliente primero" : contacts.length === 0 ? "Sin contactos registrados" : "Seleccionar contacto..."}
-            </option>
-            {contacts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} — {c.role}{c.isDecisionMaker ? " (Decisor)" : ""}
-              </option>
-            ))}
-          </select>
-          <FieldError name="contactId" message={fieldErrors.contactId} />
-        </div>
-
-        {/* Activity type */}
+        {/* Tipo de actividad */}
         <div>
           <label className="slabel">Tipo de actividad</label>
           <select
@@ -314,13 +299,13 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
             {...fieldErrorProps("type", fieldErrors.type)}
           >
             {ACTIVITY_TYPES.map((t) => (
-              <option key={t} value={t}>{t} ({TASK_POINTS[t]} pts)</option>
+              <option key={t} value={t}>{t} · {TASK_POINTS[t]}pts</option>
             ))}
           </select>
           <FieldError name="type" message={fieldErrors.type} />
         </div>
 
-        {/* Result */}
+        {/* Resultado */}
         <div>
           <label className="slabel">Resultado</label>
           <select
@@ -336,30 +321,9 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
           <FieldError name="result" message={fieldErrors.result} />
         </div>
 
-        {/* Stage */}
+        {/* Fecha + hora ejecución */}
         <div>
-          <label className="slabel">Etapa del pipeline</label>
-          {currentDeal && !isNonCommercial && (
-            <p style={{ fontSize: 11, color: '#64748B', marginBottom: 4 }}>
-              Deal actual en: <strong style={{ color: '#002B49' }}>{currentDeal.stage}</strong>
-              {' — cambia el stage aquí para avanzar el deal'}
-            </p>
-          )}
-          <select
-            className="input"
-            value={stage}
-            onChange={(e) => setStage(e.target.value)}
-          >
-            <option value="">Sin cambio</option>
-            {PIPELINE_STAGES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Execution date + time */}
-        <div>
-          <div className="grid grid-cols-2 gap-2">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <div>
               <label className="slabel">Fecha de ejecución</label>
               <input
@@ -385,146 +349,229 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
           <FieldError name="executedAt" message={fieldErrors.executedAt} />
         </div>
 
-        {/* Summary */}
-        <div className="sm:col-span-2">
-          <label className="slabel">Resumen *</label>
-          <textarea
-            className={fieldErrors.summary ? "input input-error" : "input"}
-            style={{ height: 90 }}
-            value={summary}
-            onChange={(e) => { setSummary(e.target.value); clearField("summary") }}
-            required
-            {...fieldErrorProps("summary", fieldErrors.summary)}
-          />
-          <FieldError name="summary" message={fieldErrors.summary} />
+        {/* Etapa pipeline */}
+        <div>
+          <label className="slabel">Etapa del pipeline</label>
+          {currentDeal && !isNonCommercial && (
+            <p style={{ fontSize: 11, color: '#64748B', marginBottom: 4 }}>
+              Actual: <strong style={{ color: '#002B49' }}>{currentDeal.stage}</strong>
+            </p>
+          )}
+          <select
+            className="input"
+            value={stage}
+            onChange={(e) => setStage(e.target.value)}
+          >
+            <option value="">Sin cambio</option>
+            {PIPELINE_STAGES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
         </div>
 
-        {/* Discovery */}
-        <div className="sm:col-span-2">
-          <label className="slabel">Descubrimiento</label>
-          <textarea
-            className={fieldErrors.discovery ? "input input-error" : "input"}
-            style={{ height: 80 }}
-            value={discovery}
-            onChange={(e) => { setDiscovery(e.target.value); clearField("discovery") }}
-            {...fieldErrorProps("discovery", fieldErrors.discovery)}
-          />
-          <FieldError name="discovery" message={fieldErrors.discovery} />
+        {/* Tarea vinculada */}
+        <div>
+          <label className="slabel">Tarea vinculada</label>
+          {programmedTask ? (
+            <input
+              type="text"
+              className="input"
+              value={programmedTask}
+              readOnly
+              style={{ background: '#F8FAFC', color: '#94A3B8' }}
+            />
+          ) : (
+            <select
+              className="input"
+              value={internalTaskId}
+              onChange={(e) => {
+                const task = pendingTasks.find((t) => t.id === e.target.value)
+                setInternalTaskId(e.target.value)
+                if (task?.scheduledAt) {
+                  setProgrammedAt(task.scheduledAt.slice(0, 16))
+                }
+              }}
+            >
+              <option value="">Sin tarea vinculada</option>
+              {pendingTasks.map((t) => (
+                <option key={t.id} value={t.id}>{t.title}</option>
+              ))}
+            </select>
+          )}
         </div>
 
-        {/* Agreement */}
-        <div className="sm:col-span-2">
-          <label className="slabel">Acuerdo</label>
-          <textarea
-            className={fieldErrors.agreement ? "input input-error" : "input"}
-            style={{ height: 80 }}
-            value={agreement}
-            onChange={(e) => { setAgreement(e.target.value); clearField("agreement") }}
-            {...fieldErrorProps("agreement", fieldErrors.agreement)}
+        {/* Hora de captura */}
+        <div>
+          <label className="slabel">Hora de captura</label>
+          <input
+            type="datetime-local"
+            className="input"
+            value={programmedAt}
+            onChange={(e) => setProgrammedAt(e.target.value)}
           />
-          <FieldError name="agreement" message={fieldErrors.agreement} />
         </div>
+      </div>
 
-        {/* Next step fields */}
-        {needsNextStep && (
-          <div className="sm:col-span-2 space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="slabel">Siguiente paso concreto *</label>
-                <input
-                  type="text"
-                  className={fieldErrors.nextStep ? "input input-error" : "input"}
-                  value={nextStep}
-                  onChange={(e) => { setNextStep(e.target.value); clearField("nextStep") }}
-                  placeholder="Siguiente paso concreto"
-                  required
-                  {...fieldErrorProps("nextStep", fieldErrors.nextStep)}
-                />
-                <FieldError name="nextStep" message={fieldErrors.nextStep} />
-              </div>
-              <div>
-                <label className="slabel">Objetivo del siguiente paso</label>
-                <input
-                  type="text"
-                  className={fieldErrors.nextObjective ? "input input-error" : "input"}
-                  value={nextObjective}
-                  onChange={(e) => { setNextObjective(e.target.value); clearField("nextObjective") }}
-                  placeholder="Objetivo del siguiente paso"
-                  {...fieldErrorProps("nextObjective", fieldErrors.nextObjective)}
-                />
-                <FieldError name="nextObjective" message={fieldErrors.nextObjective} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="slabel">Fecha próxima *</label>
-                <input
-                  type="date"
-                  className={fieldErrors.nextDate ? "input input-error" : "input"}
-                  value={nextDate}
-                  onChange={(e) => { setNextDate(e.target.value); clearField("nextDate") }}
-                  required
-                  {...fieldErrorProps("nextDate", fieldErrors.nextDate)}
-                />
-                <FieldError name="nextDate" message={fieldErrors.nextDate} />
-              </div>
-              <div>
-                <label className="slabel">Hora próxima *</label>
-                <input
-                  type="time"
-                  className={fieldErrors.nextTime ? "input input-error" : "input"}
-                  value={nextTime}
-                  onChange={(e) => { setNextTime(e.target.value); clearField("nextTime") }}
-                  required
-                  {...fieldErrorProps("nextTime", fieldErrors.nextTime)}
-                />
-                <FieldError name="nextTime" message={fieldErrors.nextTime} />
-              </div>
-            </div>
+      {/* Sección 2 — ¿Qué pasó? (siempre visible) */}
+      <div>
+        <label className="slabel">¿Qué pasó? *</label>
+        <textarea
+          className={fieldErrors.summary ? "input input-error" : "input"}
+          style={{ height: 100 }}
+          value={summary}
+          onChange={(e) => { setSummary(e.target.value); clearField("summary") }}
+          required
+          {...fieldErrorProps("summary", fieldErrors.summary)}
+        />
+        <FieldError name="summary" message={fieldErrors.summary} />
+        <div className="prog" style={{ marginTop: 6 }}>
+          <div className="prog-fill" style={{ width: `${quality}%`, backgroundColor: qualityColor }} />
+        </div>
+        <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+          Calidad estimada: <span style={{ fontWeight: 600, color: qualityColor }}>{quality}%</span>
+        </p>
+      </div>
+
+      {/* Sección 3 — Campos expandibles */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {!showDiscovery ? (
+          <button type="button" onClick={() => setShowDiscovery(true)} style={TOGGLE_STYLE}>
+            + Agregar descubrimiento
+          </button>
+        ) : (
+          <div>
+            <label className="slabel">¿Qué descubrí?</label>
+            <textarea
+              className={fieldErrors.discovery ? "input input-error" : "input"}
+              style={{ height: 80 }}
+              value={discovery}
+              onChange={(e) => { setDiscovery(e.target.value); clearField("discovery") }}
+              {...fieldErrorProps("discovery", fieldErrors.discovery)}
+            />
+            <FieldError name="discovery" message={fieldErrors.discovery} />
+            <button type="button" onClick={() => setShowDiscovery(false)} style={TOGGLE_STYLE}>
+              - Ocultar
+            </button>
           </div>
         )}
 
-        {/* AI Coach */}
-        <div className="sm:col-span-2 ai-box">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <p className="text-sm font-medium text-purple-900">Coach IA</p>
-            <button
-              type="button"
-              onClick={fetchAiSuggestions}
-              disabled={aiLoading}
-              style={{ fontSize: 11, fontWeight: 600, color: '#7c3aed', background: 'none', border: '1px solid #c4b5fd', borderRadius: 6, padding: '2px 10px', cursor: 'pointer' }}
-            >
-              {aiLoading ? 'Cargando...' : 'Obtener sugerencias'}
+        {!showAgreement ? (
+          <button type="button" onClick={() => setShowAgreement(true)} style={TOGGLE_STYLE}>
+            + Agregar acuerdo
+          </button>
+        ) : (
+          <div>
+            <label className="slabel">¿Qué acordamos?</label>
+            <textarea
+              className={fieldErrors.agreement ? "input input-error" : "input"}
+              style={{ height: 80 }}
+              value={agreement}
+              onChange={(e) => { setAgreement(e.target.value); clearField("agreement") }}
+              {...fieldErrorProps("agreement", fieldErrors.agreement)}
+            />
+            <FieldError name="agreement" message={fieldErrors.agreement} />
+            <button type="button" onClick={() => setShowAgreement(false)} style={TOGGLE_STYLE}>
+              - Ocultar
             </button>
           </div>
-          {aiTips.length > 0 ? (
-            <ul style={{ marginTop: 8, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {aiTips.map((tip, i) => (
-                <li key={i} style={{ fontSize: 12, color: '#6d28d9' }}>{tip}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-purple-700 mt-1">{getCoachMessage()}</p>
-          )}
-          <p className="text-xs text-purple-500 mt-2">
-            Calidad estimada:{" "}
-            <span className={quality >= 80 ? "font-semibold text-green-600" : quality >= 40 ? "font-semibold text-amber-600" : "font-semibold text-red-500"}>
-              {quality}%
-            </span>
-          </p>
-        </div>
-
-        {/* Save button */}
-        <div className="sm:col-span-2">
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="btn-green w-full"
-          >
-            {isLoading ? "Guardando..." : "Registrar actividad"}
-          </button>
-        </div>
+        )}
       </div>
+
+      {/* Sección 4 — Siguiente paso (callout condicional) */}
+      {needsNextStep && (
+        <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: 16 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: '#1D4ED8', marginBottom: 12 }}>
+            Siguiente paso requerido para {type}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label className="slabel">Siguiente paso concreto *</label>
+              <input
+                type="text"
+                className={fieldErrors.nextStep ? "input input-error" : "input"}
+                value={nextStep}
+                onChange={(e) => { setNextStep(e.target.value); clearField("nextStep") }}
+                placeholder="Siguiente paso concreto"
+                required
+                {...fieldErrorProps("nextStep", fieldErrors.nextStep)}
+              />
+              <FieldError name="nextStep" message={fieldErrors.nextStep} />
+            </div>
+            <div>
+              <label className="slabel">Objetivo del siguiente paso</label>
+              <input
+                type="text"
+                className={fieldErrors.nextObjective ? "input input-error" : "input"}
+                value={nextObjective}
+                onChange={(e) => { setNextObjective(e.target.value); clearField("nextObjective") }}
+                placeholder="Objetivo del siguiente paso"
+                {...fieldErrorProps("nextObjective", fieldErrors.nextObjective)}
+              />
+              <FieldError name="nextObjective" message={fieldErrors.nextObjective} />
+            </div>
+            <div>
+              <label className="slabel">Fecha próxima *</label>
+              <input
+                type="date"
+                className={fieldErrors.nextDate ? "input input-error" : "input"}
+                value={nextDate}
+                onChange={(e) => { setNextDate(e.target.value); clearField("nextDate") }}
+                required
+                {...fieldErrorProps("nextDate", fieldErrors.nextDate)}
+              />
+              <FieldError name="nextDate" message={fieldErrors.nextDate} />
+            </div>
+            <div>
+              <label className="slabel">Hora próxima *</label>
+              <input
+                type="time"
+                className={fieldErrors.nextTime ? "input input-error" : "input"}
+                value={nextTime}
+                onChange={(e) => { setNextTime(e.target.value); clearField("nextTime") }}
+                required
+                {...fieldErrorProps("nextTime", fieldErrors.nextTime)}
+              />
+              <FieldError name="nextTime" message={fieldErrors.nextTime} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sección 5 — AI Coach (colapsado por defecto) */}
+      <div>
+        <button type="button" onClick={() => setShowAiCoach(v => !v)} style={TOGGLE_STYLE}>
+          Coach IA {showAiCoach ? '▲' : '▼'}
+        </button>
+        {showAiCoach && (
+          <div className="ai-box" style={{ marginTop: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p className="text-sm font-medium text-purple-900">Sugerencias IA</p>
+              <button
+                type="button"
+                onClick={fetchAiSuggestions}
+                disabled={aiLoading}
+                style={{ fontSize: 11, fontWeight: 600, color: '#7c3aed', background: 'none', border: '1px solid #c4b5fd', borderRadius: 6, padding: '2px 10px', cursor: 'pointer' }}
+              >
+                {aiLoading ? 'Cargando...' : 'Obtener sugerencias'}
+              </button>
+            </div>
+            {aiTips.length > 0 ? (
+              <ul style={{ marginTop: 8, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {aiTips.map((tip, i) => (
+                  <li key={i} style={{ fontSize: 12, color: '#6d28d9' }}>{tip}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-purple-700 mt-1">{getCoachMessage()}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Sección 6 — Submit */}
+      <button type="submit" disabled={isLoading} className="btn-green w-full">
+        {isLoading ? "Guardando..." : `Registrar · +${TASK_POINTS[type]}pts`}
+      </button>
     </form>
   )
 }

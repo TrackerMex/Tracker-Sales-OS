@@ -1,14 +1,27 @@
 import {
   Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn, DeleteDateColumn,
+  CreateDateColumn, UpdateDateColumn, DeleteDateColumn, Index,
+  JoinColumn, ManyToOne, VersionColumn,
 } from 'typeorm';
 import { ActivityType, ActivityResult, ActivityHistoryEntry } from '../../domain/entities/activity.entity';
+import { SellerTypeormEntity } from '../../../sellers/infrastructure/entities/seller.typeorm.entity';
+import { ClientTypeormEntity } from '../../../clients/infrastructure/entities/client.typeorm.entity';
 
+@Index('idx_activities_seller_executed', ['sellerId', 'executedAt'])
+@Index('idx_activities_executed_at', ['executedAt'])
+@Index('idx_activities_seller_id', ['sellerId'])
+@Index('idx_activities_client_id', ['clientId'])
 @Entity('activities')
 export class ActivityTypeormEntity {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Column({ name: 'seller_id' }) sellerId: string;
+  @ManyToOne(() => SellerTypeormEntity, { onDelete: 'RESTRICT', nullable: false })
+  @JoinColumn({ name: 'seller_id' })
+  seller?: SellerTypeormEntity;
   @Column({ name: 'client_id', type: 'varchar', nullable: true }) clientId: string | null;
+  @ManyToOne(() => ClientTypeormEntity, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'client_id' })
+  client?: ClientTypeormEntity;
   @Column({ name: 'contact_id', type: 'varchar', nullable: true }) contactId: string | null;
   @Column({ name: 'task_id', type: 'varchar', nullable: true }) taskId: string | null;
   @Column({ type: 'enum', enum: ActivityType }) type: ActivityType;
@@ -29,7 +42,8 @@ export class ActivityTypeormEntity {
   @Column({ name: 'programmed_at', type: 'timestamptz', nullable: true }) programmedAt: Date | null;
   @Column({ name: 'captured_at', type: 'timestamptz' }) capturedAt: Date;
   @Column({ name: 'delay_minutes', type: 'int' }) delayMinutes: number;
-  @CreateDateColumn({ name: 'created_at' }) createdAt: Date;
-  @UpdateDateColumn({ name: 'updated_at' }) updatedAt: Date;
-  @DeleteDateColumn({ name: 'deleted_at' }) deletedAt: Date | null;
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt: Date;
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' }) updatedAt: Date;
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' }) deletedAt: Date | null;
+  @VersionColumn({ default: 1 }) version: number;
 }

@@ -2,9 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+@Index('idx_audit_logs_entity', ['entityName', 'entityId'])
+@Index('idx_audit_logs_user_id', ['userId'])
 @Entity('audit_logs')
 export class AuditLogTypeormEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -28,6 +31,6 @@ export class AuditLogTypeormEntity {
   @Column({ name: 'new_values', type: 'jsonb', nullable: true })
   newValues: Record<string, unknown> | null;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }

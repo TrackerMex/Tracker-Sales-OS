@@ -147,10 +147,6 @@ export function PipelinePage() {
     setSelectedDeal(deal)
   }
 
-  if (selectedDeal) {
-    return <ClientDetailPage deal={selectedDeal} onBack={() => setSelectedDeal(null)} />
-  }
-
   const allDeals = activeGrouped ? Object.values(activeGrouped).flat() : []
   const openDeals = allDeals.filter((d) => d.stage !== "Perdido")
   const totalGross = openDeals.reduce((s, d) => s + (d.amount ?? 0), 0)
@@ -249,6 +245,27 @@ export function PipelinePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Deal Peek Panel — slide-over */}
+      {selectedDeal && (
+        <>
+          <div
+            onClick={() => setSelectedDeal(null)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 40,
+              background: 'rgba(0,0,0,0.25)',
+            }}
+          />
+          <div style={{
+            position: 'fixed', top: 0, right: 0, height: '100vh',
+            width: 480, zIndex: 50,
+            background: '#fff', boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
+            overflowY: 'auto', display: 'flex', flexDirection: 'column',
+          }}>
+            <ClientDetailPage deal={selectedDeal} onBack={() => setSelectedDeal(null)} />
+          </div>
+        </>
       )}
     </div>
   )

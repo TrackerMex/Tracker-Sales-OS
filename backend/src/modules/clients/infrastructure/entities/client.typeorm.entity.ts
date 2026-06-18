@@ -3,10 +3,14 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { SellerTypeormEntity } from '../../../sellers/infrastructure/entities/seller.typeorm.entity';
 import {
   ClientSource,
   ClientType,
@@ -15,6 +19,8 @@ import {
 } from '../../domain/entities/client.entity';
 import { ContactTypeormEntity } from './contact.typeorm.entity';
 
+@Index('idx_clients_seller_id', ['sellerId'])
+@Index('idx_clients_seller_stage', ['sellerId', 'stage'])
 @Entity('clients')
 export class ClientTypeormEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -34,6 +40,10 @@ export class ClientTypeormEntity {
 
   @Column({ name: 'seller_id', type: 'uuid' })
   sellerId: string;
+
+  @ManyToOne(() => SellerTypeormEntity, { onDelete: 'RESTRICT', nullable: false })
+  @JoinColumn({ name: 'seller_id' })
+  seller?: SellerTypeormEntity;
 
   @Column({ type: 'enum', enum: ClientSource })
   source: ClientSource;
@@ -67,12 +77,12 @@ export class ClientTypeormEntity {
   })
   contacts: ContactTypeormEntity[];
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 
-  @DeleteDateColumn({ name: 'deleted_at' })
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
   deletedAt: Date | null;
 }
