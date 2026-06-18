@@ -46,3 +46,22 @@
 
 - Backend: PASS (no errors)
 - Frontend: PASS (no errors)
+
+---
+
+## Fix: TS6133 en AgendaPage.tsx (2026-06-18)
+
+Se ha resuelto el error de TypeScript `TS6133: 'handleSelectedDateChange' is declared but its value is never read` en `AgendaPage.tsx`.
+
+### Cambios realizados
+
+- **CalendarView.tsx**:
+    - Se agregó `onSelectedDateChange?: (date: Date) => void` a la interfaz `CalendarViewProps`.
+    - Se actualizó el componente `CalendarView` para invocar este callback cuando cambia la fecha seleccionada internamente (en los métodos `handlePrevWeek`, `handleNextWeek`, `handlePrevDay`, `handleNextDay` y al hacer clic en un día del mes).
+- **AgendaPage.tsx**:
+    - Se vinculó la función `handleSelectedDateChange` al prop `onSelectedDateChange` del componente `CalendarView`.
+
+### Verificación
+
+- Se ejecutó `npx tsc --noEmit -p frontend/tsconfig.json` y no se reportaron errores.
+- El error de diagnóstico `TS6133` en `AgendaPage.tsx` ha sido resuelto.

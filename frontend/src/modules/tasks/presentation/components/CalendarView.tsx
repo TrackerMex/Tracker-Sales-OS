@@ -1,7 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
-import type { Task } from '../../domain/tasks.types'
-import type { Client } from '@/modules/clients/domain/clients.types'
+import { useEffect, useRef, useState } from "react"
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card"
+import type { Task } from "../../domain/tasks.types"
+import type { Client } from "@/modules/clients/domain/clients.types"
 
 interface CalendarViewProps {
   year: number
@@ -11,37 +15,45 @@ interface CalendarViewProps {
   onEdit: (task: Task) => void
   onPrevMonth: () => void
   onNextMonth: () => void
-  viewMode?: 'month' | 'week' | 'day'
+  viewMode?: "month" | "week" | "day"
   selectedDate?: Date
-  onViewModeChange?: (mode: 'month' | 'week' | 'day') => void
+  onViewModeChange?: (mode: "month" | "week" | "day") => void
+  onSelectedDateChange?: (date: Date) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
   onDayClick?: (date: Date) => void
 }
 
 const TYPE_TAG: Record<string, string> = {
-  'Llamada': 'tag-navy',
-  'Videoconf': 'tag-navy',
-  'Reunión virtual': 'tag-navy',
-  'Visita': 'tag-green',
-  'Reunión presencial': 'tag-green',
-  'Propuesta': 'tag-amber',
-  'Seguimiento': 'tag-amber',
-  'Cierre': 'tag-green',
-  'Chat': 'tag-gray',
-  'WA': 'tag-gray',
-  'Correo': 'tag-gray',
+  Llamada: "tag-navy",
+  Videoconf: "tag-navy",
+  "Reunión virtual": "tag-navy",
+  Visita: "tag-green",
+  "Reunión presencial": "tag-green",
+  Propuesta: "tag-amber",
+  Seguimiento: "tag-amber",
+  Cierre: "tag-green",
+  Chat: "tag-gray",
+  WA: "tag-gray",
+  Correo: "tag-gray",
 }
 
-const DAY_NAMES = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const DAY_NAMES = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
 const MAX_CHIPS_VISIBLE = 3
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString("es-MX", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 }
 
 function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-MX', {
-    weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  return new Date(iso).toLocaleDateString("es-MX", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
   })
 }
 
@@ -72,37 +84,40 @@ function getHourSlots(): number[] {
 function getTasksForHour(hour: number, tasks: Task[]): Task[] {
   return tasks
     .filter((t) => new Date(t.scheduledAt).getHours() === hour)
-    .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+    .sort(
+      (a, b) =>
+        new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+    )
 }
 
 function CalendarViewToggle({
-  viewMode = 'month',
+  viewMode = "month",
   onChange,
 }: {
-  viewMode?: 'month' | 'week' | 'day'
-  onChange?: (mode: 'month' | 'week' | 'day') => void
+  viewMode?: "month" | "week" | "day"
+  onChange?: (mode: "month" | "week" | "day") => void
 }) {
   if (!onChange) return null
   const modes = [
-    { id: 'month', label: 'Mes' },
-    { id: 'week', label: 'Semana' },
-    { id: 'day', label: 'Día' },
+    { id: "month", label: "Mes" },
+    { id: "week", label: "Semana" },
+    { id: "day", label: "Día" },
   ] as const
 
   return (
-    <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+    <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
       {modes.map(({ id, label }) => (
         <button
           key={id}
           onClick={() => onChange(id)}
           style={{
-            padding: '6px 12px',
-            border: viewMode === id ? '2px solid #3B82F6' : '1px solid #E2E8F0',
+            padding: "6px 12px",
+            border: viewMode === id ? "2px solid #3B82F6" : "1px solid #E2E8F0",
             borderRadius: 6,
-            backgroundColor: viewMode === id ? '#EFF6FF' : '#FFFFFF',
-            color: viewMode === id ? '#2563EB' : '#475569',
+            backgroundColor: viewMode === id ? "#EFF6FF" : "#FFFFFF",
+            color: viewMode === id ? "#2563EB" : "#475569",
             fontWeight: viewMode === id ? 600 : 500,
-            cursor: 'pointer',
+            cursor: "pointer",
             fontSize: 13,
           }}
         >
@@ -130,13 +145,14 @@ function TaskChip({ task, client, isDragging, onEdit }: TaskChipProps) {
 
     const setupDragAndDrop = async () => {
       try {
-        const module = await import('@atlaskit/pragmatic-drag-and-drop/element/adapter')
+        const module =
+          await import("@atlaskit/pragmatic-drag-and-drop/element/adapter")
         const { draggable } = module
-        if (typeof draggable === 'undefined') return
+        if (typeof draggable === "undefined") return
 
         return draggable({
           element: el,
-          getInitialData: () => ({ taskId: task.id, type: 'calendar-task' }),
+          getInitialData: () => ({ taskId: task.id, type: "calendar-task" }),
           onDragStart: () => setInternalDragging(true),
           onDrop: () => setInternalDragging(false),
         })
@@ -148,14 +164,14 @@ function TaskChip({ task, client, isDragging, onEdit }: TaskChipProps) {
     setupDragAndDrop()
   }, [task.id])
 
-  const tagClass = task.type ? (TYPE_TAG[task.type] ?? 'tag-gray') : 'tag-gray'
+  const tagClass = task.type ? (TYPE_TAG[task.type] ?? "tag-gray") : "tag-gray"
   const chipLabel = [
     formatTime(task.scheduledAt),
     task.type ?? null,
     client?.name ?? null,
   ]
     .filter(Boolean)
-    .join(' · ')
+    .join(" · ")
 
   return (
     <HoverCard openDelay={200} closeDelay={100}>
@@ -166,46 +182,92 @@ function TaskChip({ task, client, isDragging, onEdit }: TaskChipProps) {
           className={`tag ${tagClass}`}
           style={{
             fontSize: 11,
-            cursor: 'grab',
-            textAlign: 'left',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            maxWidth: '100%',
-            border: 'none',
-            display: 'block',
-            width: '100%',
-            opacity: internalDragging || isDragging ? 0.5 : task.status === 'Completado' ? 0.5 : 1,
+            cursor: "grab",
+            textAlign: "left",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "100%",
+            border: "none",
+            display: "block",
+            width: "100%",
+            opacity:
+              internalDragging || isDragging
+                ? 0.5
+                : task.status === "Completado"
+                  ? 0.5
+                  : 1,
           }}
         >
           {chipLabel}
         </button>
       </HoverCardTrigger>
-      <HoverCardContent side="right" align="start" className="w-64 p-0 overflow-hidden">
-        <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      <HoverCardContent
+        side="right"
+        align="start"
+        className="w-64 overflow-hidden p-0"
+      >
+        <div
+          style={{
+            padding: "12px 14px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 8,
+            }}
+          >
             {task.type && (
-              <span className={`tag ${tagClass}`} style={{ fontSize: 11 }}>{task.type}</span>
+              <span className={`tag ${tagClass}`} style={{ fontSize: 11 }}>
+                {task.type}
+              </span>
             )}
             <span
-              className={`tag ${task.status === 'Completado' ? 'tag-gray' : task.isOverdue ? 'tag-red' : 'tag-green'}`}
-              style={{ fontSize: 11, marginLeft: 'auto' }}
+              className={`tag ${task.status === "Completado" ? "tag-gray" : task.isOverdue ? "tag-red" : "tag-green"}`}
+              style={{ fontSize: 11, marginLeft: "auto" }}
             >
-              {task.status === 'Completado' ? 'Completada' : task.isOverdue ? 'Vencida' : 'Pendiente'}
+              {task.status === "Completado"
+                ? "Completada"
+                : task.isOverdue
+                  ? "Vencida"
+                  : "Pendiente"}
             </span>
           </div>
-          <p style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', lineHeight: 1.3, margin: 0 }}>
+          <p
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#0F172A",
+              lineHeight: 1.3,
+              margin: 0,
+            }}
+          >
             {task.title}
           </p>
           {client && (
-            <p style={{ fontSize: 12, color: '#334155', margin: 0 }}>{client.name}</p>
+            <p style={{ fontSize: 12, color: "#334155", margin: 0 }}>
+              {client.name}
+            </p>
           )}
           {task.description && (
-            <p style={{ fontSize: 11.5, color: '#64748B', margin: 0, lineHeight: 1.4 }}>
+            <p
+              style={{
+                fontSize: 11.5,
+                color: "#64748B",
+                margin: 0,
+                lineHeight: 1.4,
+              }}
+            >
               {task.description}
             </p>
           )}
-          <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }}>
+          <p style={{ fontSize: 11, color: "#94A3B8", margin: 0 }}>
             {formatDateTime(task.scheduledAt)}
           </p>
         </div>
@@ -224,7 +286,15 @@ interface MonthViewProps {
   onDayClick?: (date: Date) => void
 }
 
-function MonthView({ year, month, tasks, clients, onEdit, onTaskReschedule, onDayClick }: MonthViewProps) {
+function MonthView({
+  year,
+  month,
+  tasks,
+  clients,
+  onEdit,
+  onTaskReschedule,
+  onDayClick,
+}: MonthViewProps) {
   const daysInMonth = getDaysInMonth(year, month)
   const firstDay = new Date(year, month - 1, 1)
   const leadingEmpty = mondayBasedWeekday(firstDay)
@@ -238,29 +308,60 @@ function MonthView({ year, month, tasks, clients, onEdit, onTaskReschedule, onDa
   function getTasksForDay(day: number): Task[] {
     return tasks
       .filter((t) => new Date(t.scheduledAt).getDate() === day)
-      .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+      .sort(
+        (a, b) =>
+          new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+      )
   }
 
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 2 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          gap: 2,
+          marginBottom: 2,
+        }}
+      >
         {DAY_NAMES.map((name) => (
           <div
             key={name}
-            style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#94A3B8', padding: '4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+            style={{
+              textAlign: "center",
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#94A3B8",
+              padding: "4px 0",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+            }}
           >
             {name}
           </div>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          gap: 2,
+        }}
+      >
         {Array.from({ length: totalCells }, (_, i) => {
           const dayNum = i - leadingEmpty + 1
           const isValidDay = dayNum >= 1 && dayNum <= daysInMonth
-          const isToday = isValidDay && year === todayY && month === todayM && dayNum === todayD
+          const isToday =
+            isValidDay &&
+            year === todayY &&
+            month === todayM &&
+            dayNum === todayD
           const dayTasks = isValidDay ? getTasksForDay(dayNum) : []
-          const overflow = dayTasks.length > MAX_CHIPS_VISIBLE ? dayTasks.length - MAX_CHIPS_VISIBLE : 0
+          const overflow =
+            dayTasks.length > MAX_CHIPS_VISIBLE
+              ? dayTasks.length - MAX_CHIPS_VISIBLE
+              : 0
           const visibleTasks = dayTasks.slice(0, MAX_CHIPS_VISIBLE)
           const cellDate = isValidDay ? new Date(year, month - 1, dayNum) : null
 
@@ -300,7 +401,19 @@ interface MonthDayCellProps {
   onDayClick?: () => void
 }
 
-function MonthDayCell({ dayNum, year, month, isValidDay, isToday, visibleTasks, overflow, clients, onEdit, onTaskReschedule, onDayClick }: MonthDayCellProps) {
+function MonthDayCell({
+  dayNum,
+  year,
+  month,
+  isValidDay,
+  isToday,
+  visibleTasks,
+  overflow,
+  clients,
+  onEdit,
+  onTaskReschedule,
+  onDayClick,
+}: MonthDayCellProps) {
   const cellRef = useRef<HTMLDivElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
 
@@ -310,9 +423,10 @@ function MonthDayCell({ dayNum, year, month, isValidDay, isToday, visibleTasks, 
 
     const setupDropZone = async () => {
       try {
-        const module = await import('@atlaskit/pragmatic-drag-and-drop/element/adapter')
+        const module =
+          await import("@atlaskit/pragmatic-drag-and-drop/element/adapter")
         const { dropTargetForElements } = module
-        if (typeof dropTargetForElements === 'undefined') return
+        if (typeof dropTargetForElements === "undefined") return
 
         const cellDate = new Date(year, month - 1, dayNum)
 
@@ -321,7 +435,11 @@ function MonthDayCell({ dayNum, year, month, isValidDay, isToday, visibleTasks, 
           getData: () => ({ date: cellDate.toISOString() }),
           onDragEnter: () => setIsDragOver(true),
           onDragLeave: () => setIsDragOver(false),
-          onDrop: ({ source }: { source: { data: Record<string, unknown> } }) => {
+          onDrop: ({
+            source,
+          }: {
+            source: { data: Record<string, unknown> }
+          }) => {
             const taskId = source.data.taskId as string
             if (taskId && onTaskReschedule && isValidDay) {
               onTaskReschedule(taskId, cellDate.toISOString())
@@ -343,12 +461,18 @@ function MonthDayCell({ dayNum, year, month, isValidDay, isToday, visibleTasks, 
       onClick={onDayClick}
       style={{
         minHeight: 90,
-        border: isToday ? '2px solid #3B82F6' : '1px solid #E2E8F0',
+        border: isToday ? "2px solid #3B82F6" : "1px solid #E2E8F0",
         borderRadius: 6,
-        backgroundColor: isDragOver ? '#F0F9FF' : isToday ? '#EFF6FF' : isValidDay ? '#FFFFFF' : '#F8FAFC',
+        backgroundColor: isDragOver
+          ? "#F0F9FF"
+          : isToday
+            ? "#EFF6FF"
+            : isValidDay
+              ? "#FFFFFF"
+              : "#F8FAFC",
         padding: 4,
-        overflow: 'hidden',
-        cursor: onDayClick ? 'pointer' : 'default',
+        overflow: "hidden",
+        cursor: onDayClick ? "pointer" : "default",
       }}
     >
       {isValidDay && (
@@ -357,14 +481,14 @@ function MonthDayCell({ dayNum, year, month, isValidDay, isToday, visibleTasks, 
             style={{
               fontSize: 12,
               fontWeight: isToday ? 700 : 500,
-              color: isToday ? '#2563EB' : '#475569',
+              color: isToday ? "#2563EB" : "#475569",
               marginBottom: 3,
               lineHeight: 1,
             }}
           >
             {dayNum}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {visibleTasks.map((task) => {
               const client = clients.find((c) => c.id === task.clientId)
               return (
@@ -377,7 +501,9 @@ function MonthDayCell({ dayNum, year, month, isValidDay, isToday, visibleTasks, 
               )
             })}
             {overflow > 0 && (
-              <span style={{ fontSize: 10, color: '#94A3B8', paddingLeft: 2 }}>+{overflow} más</span>
+              <span style={{ fontSize: 10, color: "#94A3B8", paddingLeft: 2 }}>
+                +{overflow} más
+              </span>
             )}
           </div>
         </>
@@ -396,40 +522,102 @@ interface WeekViewProps {
   onNextWeek: () => void
 }
 
-function WeekView({ selectedDate, tasks, clients, onEdit, onTaskReschedule, onPrevWeek, onNextWeek }: WeekViewProps) {
+function WeekView({
+  selectedDate,
+  tasks,
+  clients,
+  onEdit,
+  onTaskReschedule,
+  onPrevWeek,
+  onNextWeek,
+}: WeekViewProps) {
   const weekDates = getWeekDates(selectedDate)
-  const weekStart = weekDates[0].toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
-  const weekEnd = weekDates[6].toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
+  const weekStart = weekDates[0].toLocaleDateString("es-MX", {
+    day: "numeric",
+    month: "short",
+  })
+  const weekEnd = weekDates[6].toLocaleDateString("es-MX", {
+    day: "numeric",
+    month: "short",
+  })
   const weekLabel = `${weekStart} - ${weekEnd}`
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 16,
+        }}
+      >
         <button
           onClick={onPrevWeek}
-          style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: 6, cursor: 'pointer', padding: '5px 10px', color: '#475569', fontWeight: 600, fontSize: 14 }}
+          style={{
+            background: "none",
+            border: "1px solid #E2E8F0",
+            borderRadius: 6,
+            cursor: "pointer",
+            padding: "5px 10px",
+            color: "#475569",
+            fontWeight: 600,
+            fontSize: 14,
+          }}
         >
           ←
         </button>
-        <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', minWidth: 200, textAlign: 'center' }}>
+        <span
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            color: "#0F172A",
+            minWidth: 200,
+            textAlign: "center",
+          }}
+        >
           {weekLabel}
         </span>
         <button
           onClick={onNextWeek}
-          style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: 6, cursor: 'pointer', padding: '5px 10px', color: '#475569', fontWeight: 600, fontSize: 14 }}
+          style={{
+            background: "none",
+            border: "1px solid #E2E8F0",
+            borderRadius: 6,
+            cursor: "pointer",
+            padding: "5px 10px",
+            color: "#475569",
+            fontWeight: 600,
+            fontSize: 14,
+          }}
         >
           →
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 2 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          gap: 2,
+          marginBottom: 2,
+        }}
+      >
         {weekDates.map((date) => {
-          const dayName = date.toLocaleDateString('es-MX', { weekday: 'short' })
+          const dayName = date.toLocaleDateString("es-MX", { weekday: "short" })
           const dayNum = date.getDate()
           return (
             <div
               key={date.toISOString()}
-              style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#94A3B8', padding: '4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+              style={{
+                textAlign: "center",
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#94A3B8",
+                padding: "4px 0",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
             >
               {dayName} {dayNum}
             </div>
@@ -437,16 +625,24 @@ function WeekView({ selectedDate, tasks, clients, onEdit, onTaskReschedule, onPr
         })}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          gap: 2,
+        }}
+      >
         {weekDates.map((date) => (
           <WeekDayColumn
             key={date.toISOString()}
             date={date}
             tasks={tasks.filter((t) => {
               const tDate = new Date(t.scheduledAt)
-              return tDate.getDate() === date.getDate() &&
+              return (
+                tDate.getDate() === date.getDate() &&
                 tDate.getMonth() === date.getMonth() &&
                 tDate.getFullYear() === date.getFullYear()
+              )
             })}
             clients={clients}
             onEdit={onEdit}
@@ -466,7 +662,13 @@ interface WeekDayColumnProps {
   onTaskReschedule?: (taskId: string, newDate: string) => void
 }
 
-function WeekDayColumn({ date, tasks, clients, onEdit, onTaskReschedule }: WeekDayColumnProps) {
+function WeekDayColumn({
+  date,
+  tasks,
+  clients,
+  onEdit,
+  onTaskReschedule,
+}: WeekDayColumnProps) {
   const colRef = useRef<HTMLDivElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
 
@@ -476,16 +678,21 @@ function WeekDayColumn({ date, tasks, clients, onEdit, onTaskReschedule }: WeekD
 
     const setupDropZone = async () => {
       try {
-        const module = await import('@atlaskit/pragmatic-drag-and-drop/element/adapter')
+        const module =
+          await import("@atlaskit/pragmatic-drag-and-drop/element/adapter")
         const { dropTargetForElements } = module
-        if (typeof dropTargetForElements === 'undefined') return
+        if (typeof dropTargetForElements === "undefined") return
 
         return dropTargetForElements({
           element: el,
           getData: () => ({ date: date.toISOString() }),
           onDragEnter: () => setIsDragOver(true),
           onDragLeave: () => setIsDragOver(false),
-          onDrop: ({ source }: { source: { data: Record<string, unknown> } }) => {
+          onDrop: ({
+            source,
+          }: {
+            source: { data: Record<string, unknown> }
+          }) => {
             const taskId = source.data.taskId as string
             if (taskId && onTaskReschedule) {
               onTaskReschedule(taskId, date.toISOString())
@@ -506,14 +713,14 @@ function WeekDayColumn({ date, tasks, clients, onEdit, onTaskReschedule }: WeekD
       ref={colRef}
       style={{
         minHeight: 150,
-        border: '1px solid #E2E8F0',
+        border: "1px solid #E2E8F0",
         borderRadius: 6,
-        backgroundColor: isDragOver ? '#F0F9FF' : '#FFFFFF',
+        backgroundColor: isDragOver ? "#F0F9FF" : "#FFFFFF",
         padding: 4,
-        overflow: 'hidden',
+        overflow: "hidden",
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {tasks.map((task) => {
           const client = clients.find((c) => c.id === task.clientId)
           return (
@@ -540,33 +747,80 @@ interface DayViewProps {
   onNextDay: () => void
 }
 
-function DayView({ selectedDate, tasks, clients, onEdit, onTaskReschedule, onPrevDay, onNextDay }: DayViewProps) {
-  const dayLabel = selectedDate.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+function DayView({
+  selectedDate,
+  tasks,
+  clients,
+  onEdit,
+  onTaskReschedule,
+  onPrevDay,
+  onNextDay,
+}: DayViewProps) {
+  const dayLabel = selectedDate.toLocaleDateString("es-MX", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 16,
+        }}
+      >
         <button
           onClick={onPrevDay}
-          style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: 6, cursor: 'pointer', padding: '5px 10px', color: '#475569', fontWeight: 600, fontSize: 14 }}
+          style={{
+            background: "none",
+            border: "1px solid #E2E8F0",
+            borderRadius: 6,
+            cursor: "pointer",
+            padding: "5px 10px",
+            color: "#475569",
+            fontWeight: 600,
+            fontSize: 14,
+          }}
         >
           ←
         </button>
-        <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', minWidth: 300, textAlign: 'center', textTransform: 'capitalize' }}>
+        <span
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            color: "#0F172A",
+            minWidth: 300,
+            textAlign: "center",
+            textTransform: "capitalize",
+          }}
+        >
           {dayLabel}
         </span>
         <button
           onClick={onNextDay}
-          style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: 6, cursor: 'pointer', padding: '5px 10px', color: '#475569', fontWeight: 600, fontSize: 14 }}
+          style={{
+            background: "none",
+            border: "1px solid #E2E8F0",
+            borderRadius: 6,
+            cursor: "pointer",
+            padding: "5px 10px",
+            color: "#475569",
+            fontWeight: 600,
+            fontSize: 14,
+          }}
         >
           →
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr', gap: 2 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "60px 1fr", gap: 2 }}>
         {getHourSlots().map((hour) => {
           const hourTasks = getTasksForHour(hour, tasks)
-          const timeLabel = `${String(hour).padStart(2, '0')}:00`
+          const timeLabel = `${String(hour).padStart(2, "0")}:00`
           return (
             <DayHourRow
               key={hour}
@@ -595,7 +849,15 @@ interface DayHourRowProps {
   onTaskReschedule?: (taskId: string, newDate: string) => void
 }
 
-function DayHourRow({ hour, timeLabel, tasks, date, clients, onEdit, onTaskReschedule }: DayHourRowProps) {
+function DayHourRow({
+  hour,
+  timeLabel,
+  tasks,
+  date,
+  clients,
+  onEdit,
+  onTaskReschedule,
+}: DayHourRowProps) {
   const rowRef = useRef<HTMLDivElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
 
@@ -607,16 +869,21 @@ function DayHourRow({ hour, timeLabel, tasks, date, clients, onEdit, onTaskResch
 
     const setupDropZone = async () => {
       try {
-        const module = await import('@atlaskit/pragmatic-drag-and-drop/element/adapter')
+        const module =
+          await import("@atlaskit/pragmatic-drag-and-drop/element/adapter")
         const { dropTargetForElements } = module
-        if (typeof dropTargetForElements === 'undefined') return
+        if (typeof dropTargetForElements === "undefined") return
 
         return dropTargetForElements({
           element: el,
           getData: () => ({ date: newDate.toISOString() }),
           onDragEnter: () => setIsDragOver(true),
           onDragLeave: () => setIsDragOver(false),
-          onDrop: ({ source }: { source: { data: Record<string, unknown> } }) => {
+          onDrop: ({
+            source,
+          }: {
+            source: { data: Record<string, unknown> }
+          }) => {
             const taskId = source.data.taskId as string
             if (taskId && onTaskReschedule) {
               onTaskReschedule(taskId, newDate.toISOString())
@@ -634,19 +901,28 @@ function DayHourRow({ hour, timeLabel, tasks, date, clients, onEdit, onTaskResch
 
   return (
     <>
-      <div style={{ textAlign: 'right', fontSize: 11, color: '#94A3B8', fontWeight: 600, padding: '4px 8px', borderRight: '1px solid #E2E8F0' }}>
+      <div
+        style={{
+          textAlign: "right",
+          fontSize: 11,
+          color: "#94A3B8",
+          fontWeight: 600,
+          padding: "4px 8px",
+          borderRight: "1px solid #E2E8F0",
+        }}
+      >
         {timeLabel}
       </div>
       <div
         ref={rowRef}
         style={{
           minHeight: 50,
-          border: '1px solid #E2E8F0',
+          border: "1px solid #E2E8F0",
           borderRadius: 4,
-          backgroundColor: isDragOver ? '#F0F9FF' : '#FFFFFF',
+          backgroundColor: isDragOver ? "#F0F9FF" : "#FFFFFF",
           padding: 4,
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           gap: 2,
         }}
       >
@@ -674,16 +950,21 @@ export function CalendarView({
   onEdit,
   onPrevMonth,
   onNextMonth,
-  viewMode = 'month',
+  viewMode = "month",
   selectedDate,
   onViewModeChange,
+  onSelectedDateChange,
   onTaskReschedule,
   onDayClick,
 }: CalendarViewProps) {
-  const [currentViewMode, setCurrentViewMode] = useState<'month' | 'week' | 'day'>(viewMode)
-  const [currentSelectedDate, setCurrentSelectedDate] = useState<Date>(selectedDate || new Date())
+  const [currentViewMode, setCurrentViewMode] = useState<
+    "month" | "week" | "day"
+  >(viewMode)
+  const [currentSelectedDate, setCurrentSelectedDate] = useState<Date>(
+    selectedDate || new Date()
+  )
 
-  const handleViewModeChange = (mode: 'month' | 'week' | 'day') => {
+  const handleViewModeChange = (mode: "month" | "week" | "day") => {
     setCurrentViewMode(mode)
     onViewModeChange?.(mode)
   }
@@ -692,48 +973,92 @@ export function CalendarView({
     const prev = new Date(currentSelectedDate)
     prev.setDate(prev.getDate() - 7)
     setCurrentSelectedDate(prev)
+    onSelectedDateChange?.(prev)
   }
 
   const handleNextWeek = () => {
     const next = new Date(currentSelectedDate)
     next.setDate(next.getDate() + 7)
     setCurrentSelectedDate(next)
+    onSelectedDateChange?.(next)
   }
 
   const handlePrevDay = () => {
     const prev = new Date(currentSelectedDate)
     prev.setDate(prev.getDate() - 1)
     setCurrentSelectedDate(prev)
+    onSelectedDateChange?.(prev)
   }
 
   const handleNextDay = () => {
     const next = new Date(currentSelectedDate)
     next.setDate(next.getDate() + 1)
     setCurrentSelectedDate(next)
+    onSelectedDateChange?.(next)
   }
 
   const firstDay = new Date(year, month - 1, 1)
-  const monthLabel = firstDay.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })
+  const monthLabel = firstDay.toLocaleDateString("es-MX", {
+    month: "long",
+    year: "numeric",
+  })
 
   return (
     <div>
-      <CalendarViewToggle viewMode={currentViewMode} onChange={handleViewModeChange} />
+      <CalendarViewToggle
+        viewMode={currentViewMode}
+        onChange={handleViewModeChange}
+      />
 
-      {currentViewMode === 'month' && (
+      {currentViewMode === "month" && (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
             <button
               onClick={onPrevMonth}
-              style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: 6, cursor: 'pointer', padding: '5px 10px', color: '#475569', fontWeight: 600, fontSize: 14 }}
+              style={{
+                background: "none",
+                border: "1px solid #E2E8F0",
+                borderRadius: 6,
+                cursor: "pointer",
+                padding: "5px 10px",
+                color: "#475569",
+                fontWeight: 600,
+                fontSize: 14,
+              }}
             >
               ←
             </button>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', textTransform: 'capitalize', minWidth: 160, textAlign: 'center' }}>
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#0F172A",
+                textTransform: "capitalize",
+                minWidth: 160,
+                textAlign: "center",
+              }}
+            >
               {monthLabel}
             </span>
             <button
               onClick={onNextMonth}
-              style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: 6, cursor: 'pointer', padding: '5px 10px', color: '#475569', fontWeight: 600, fontSize: 14 }}
+              style={{
+                background: "none",
+                border: "1px solid #E2E8F0",
+                borderRadius: 6,
+                cursor: "pointer",
+                padding: "5px 10px",
+                color: "#475569",
+                fontWeight: 600,
+                fontSize: 14,
+              }}
             >
               →
             </button>
@@ -748,12 +1073,13 @@ export function CalendarView({
             onDayClick={(date) => {
               setCurrentSelectedDate(date)
               onDayClick?.(date)
+              onSelectedDateChange?.(date)
             }}
           />
         </>
       )}
 
-      {currentViewMode === 'week' && (
+      {currentViewMode === "week" && (
         <WeekView
           selectedDate={currentSelectedDate}
           tasks={tasks}
@@ -765,7 +1091,7 @@ export function CalendarView({
         />
       )}
 
-      {currentViewMode === 'day' && (
+      {currentViewMode === "day" && (
         <DayView
           selectedDate={currentSelectedDate}
           tasks={tasks}
