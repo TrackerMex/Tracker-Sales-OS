@@ -33,9 +33,13 @@ import { ImportExportModule } from './modules/import-export/import-export.module
         password: config.get<string>('POSTGRES_PASSWORD'),
         database: config.get<string>('POSTGRES_DB', 'tracker_sales_os'),
         autoLoadEntities: true,
-        synchronize: config.get<string>('TYPEORM_SYNCHRONIZE', 'false') === 'true',
+        synchronize:
+          config.get<string>('TYPEORM_SYNCHRONIZE', 'false') === 'true',
         logging: config.get<string>('TYPEORM_LOGGING', 'false') === 'true',
-        ssl: config.get<string>('NODE_ENV') !== 'development' ? { rejectUnauthorized: true } : false,
+        ssl:
+          config.get<string>('NODE_ENV') !== 'development'
+            ? { rejectUnauthorized: true }
+            : false,
         extra: {
           max: 20,
           min: 2,
@@ -59,8 +63,6 @@ import { ImportExportModule } from './modules/import-export/import-export.module
     ImportExportModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-  ],
+  providers: [AppService],
 })
 export class AppModule {}

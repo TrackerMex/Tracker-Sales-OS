@@ -33,3 +33,11 @@ export interface UpdateTaskInput {
   description?: string
   scheduledAt?: string
 }
+
+export type CalendarViewMode = 'month' | 'week' | 'day'
+
+export interface CalendarViewContext {
+  viewMode: CalendarViewMode
+  selectedDate: Date
+  prefilledDate?: Date
+}

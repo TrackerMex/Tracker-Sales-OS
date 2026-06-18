@@ -53,9 +53,10 @@ interface CreateTaskFormProps {
   onClose: () => void
   isLoading?: boolean
   error?: unknown
+  initialDate?: Date
 }
 
-export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error }: CreateTaskFormProps) {
+export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, initialDate }: CreateTaskFormProps) {
   const { data: clientsData } = useClients({ limit: 200 })
   const clients = clientsData?.data ?? []
   const { summary: errorSummary, fieldErrors, clearField, formRef } = useApiFormErrors(error)
@@ -66,7 +67,14 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error }: 
   const [type, setType] = useState('Llamada')
   const [contactId, setContactId] = useState('')
   const [objective, setObjective] = useState('')
-  const [date, setDate] = useState(todayISO)
+  const [date, setDate] = useState(() => {
+    if (initialDate) {
+      const d = initialDate
+      const pad = (n: number) => String(n).padStart(2, '0')
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    }
+    return todayISO()
+  })
   const [time, setTime] = useState('09:00')
 
   const currentUser = useAppStore((s) => s.currentUser)

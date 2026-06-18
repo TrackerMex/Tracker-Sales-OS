@@ -24,6 +24,20 @@ export function AgendaPage() {
   const [calYear, setCalYear] = useState(todayInit.getFullYear())
   const [calMonth, setCalMonth] = useState(todayInit.getMonth() + 1)
 
+  const [calendarViewMode, setCalendarViewMode] = useState<'month' | 'week' | 'day'>(() => {
+    return (localStorage.getItem('calendar_view_mode') as 'month' | 'week' | 'day') ?? 'month'
+  })
+
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const stored = localStorage.getItem('calendar_selected_date')
+    if (stored) {
+      return new Date(stored)
+    }
+    return new Date()
+  })
+
+  const [prefilledDate, setPrefilledDate] = useState<Date | undefined>()
+
   const { data: tasks = [], isLoading } = useTodayTasks()
   const { mutate: createTask, isPending: isCreating, error: createError, reset: resetCreateTask } = useCreateTask()
   const { mutate: completeTask } = useCompleteTask()
@@ -37,6 +51,47 @@ export function AgendaPage() {
   function handleToggleView(mode: 'list' | 'calendar') {
     setViewMode(mode)
     localStorage.setItem('agenda_view_mode', mode)
+  }
+
+  function handleCalendarViewModeChange(mode: 'month' | 'week' | 'day') {
+    setCalendarViewMode(mode)
+    localStorage.setItem('calendar_view_mode', mode)
+  }
+
+  function handleSelectedDateChange(date: Date) {
+    setSelectedDate(date)
+    localStorage.setItem('calendar_selected_date', date.toISOString())
+  }
+
+  function handleTaskReschedule(taskId: string, newDateISO: string) {
+    const task = monthTasks.find((t) => t.id === taskId)
+    if (!task) return
+
+    const newDate = new Date(newDateISO)
+    const oldTime = new Date(task.scheduledAt)
+
+    // Mantener la hora original de la tarea
+    const combined = new Date(
+      newDate.getFullYear(),
+      newDate.getMonth(),
+      newDate.getDate(),
+      oldTime.getHours(),
+      oldTime.getMinutes(),
+    )
+
+    updateTask(
+      { taskId, input: { scheduledAt: combined.toISOString() } },
+      {
+        onSuccess: () => toast.success('Tarea reprogramada'),
+        onError: () => toast.error('No se pudo reprogramar la tarea'),
+      }
+    )
+  }
+
+  function handleDayClick(date: Date) {
+    setPrefilledDate(date)
+    setShowCreateModal(true)
+    resetCreateTask()
   }
 
   function handleComplete(taskId: string) {
@@ -181,15 +236,25 @@ export function AgendaPage() {
             if (calMonth === 12) { setCalYear((y) => y + 1); setCalMonth(1) }
             else setCalMonth((m) => m + 1)
           }}
+          viewMode={calendarViewMode}
+          selectedDate={selectedDate}
+          onViewModeChange={handleCalendarViewModeChange}
+          onTaskReschedule={handleTaskReschedule}
+          onDayClick={handleDayClick}
         />
       )}
 
       {showCreateModal && (
         <CreateTaskForm
           onSubmit={handleCreateTask}
-          onClose={() => { setShowCreateModal(false); resetCreateTask() }}
+          onClose={() => {
+            setShowCreateModal(false)
+            resetCreateTask()
+            setPrefilledDate(undefined)
+          }}
           isLoading={isCreating}
           error={createError}
+          initialDate={prefilledDate}
         />
       )}
 
