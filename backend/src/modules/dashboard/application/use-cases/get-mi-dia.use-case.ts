@@ -27,10 +27,10 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
 
   async execute(sellerId: string): Promise<MiDiaDto> {
     const now = new Date();
-    const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    const todayEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const tomorrowStart = todayEnd;
-    const tomorrowEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 2));
+    const tomorrowEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
 
     const [seller, settings] = await Promise.all([
       this.sellerRepo.findOne({
@@ -101,11 +101,11 @@ export class GetMiDiaUseCase implements IUseCase<string, MiDiaDto> {
 
         this.clientRepo
           .createQueryBuilder('c')
-          .where('c.seller_id = :sellerId', { sellerId })
+          .where('c.seller_id = :sellerId::uuid', { sellerId })
           .andWhere('c.deleted_at IS NULL')
           .andWhere('c.created_at < :coldBefore', { coldBefore })
           .andWhere(
-            'NOT EXISTS (SELECT 1 FROM activities act WHERE act.client_id = c.id::text AND act.deleted_at IS NULL AND act.executed_at >= :coldBefore)',
+            'NOT EXISTS (SELECT 1 FROM activities act WHERE act.client_id = c.id AND act.deleted_at IS NULL AND act.executed_at >= :coldBefore)',
           )
           .getCount(),
       ]);

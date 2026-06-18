@@ -1,6 +1,16 @@
 import type { ID } from "@/core/domain/types/common.types"
 import type { ActivityType, PipelineStage } from "@/shared/lib/constants"
 
+export type ActivityStatus = 'Pendiente' | 'En curso' | 'Completada' | 'Cancelada'
+
+export interface ActivityHistoryEntry {
+  changedAt: string
+  oldStatus: string
+  newStatus: string
+  changedBy: string
+  comment?: string
+}
+
 export type ActivityResult =
   | "Interesado"
   | "No contestó"
@@ -14,7 +24,7 @@ export type ActivityResult =
 export interface Activity {
   id: ID
   sellerId: ID
-  clientId: ID
+  clientId: ID | null
   contactId: ID | null
   type: ActivityType
   result: ActivityResult
@@ -27,6 +37,10 @@ export interface Activity {
   nextTime: string | null
   points: number
   quality: number
+  stage?: string | null
+  taskId?: string | null
+  status?: ActivityStatus
+  activityHistory?: ActivityHistoryEntry[]
   executedAt: string
   capturedAt: string
   delayMinutes: number
@@ -39,8 +53,9 @@ export interface DailyActivitiesResponse {
 }
 
 export interface CreateActivityInput {
-  clientId: ID
+  clientId?: ID
   contactId?: ID
+  taskId?: string
   type: ActivityType
   result: ActivityResult
   summary: string
@@ -53,4 +68,5 @@ export interface CreateActivityInput {
   executedAt: string
   programmedAt?: string
   stage?: PipelineStage
+  opportunityName?: string
 }

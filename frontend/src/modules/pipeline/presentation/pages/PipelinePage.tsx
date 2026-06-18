@@ -3,9 +3,12 @@ import { toast } from "sonner"
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element"
 import { useAppStore } from "@/shared/store/app.store"
 import { usePipeline } from "../../application/hooks/usePipeline"
+import { useTeamPipeline } from "../../application/hooks/useTeamPipeline"
 import { useChangeStage } from "../../application/hooks/useChangeStage"
+import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
 import { KanbanColumn } from "../components/KanbanColumn"
 import { ClientDetailPage } from "./ClientDetailPage"
+import { UserRole } from "@/core/domain/types/common.types"
 import type { PipelineStage, Deal, PipelineGrouped, LossReason } from "../../domain/pipeline.types"
 import { formatCurrency } from "@/shared/lib/format"
 
@@ -33,9 +36,10 @@ interface KanbanBoardProps {
   grouped: PipelineGrouped
   onChangeStage: (dealId: string, newStage: PipelineStage) => void
   onDealClick: (deal: Deal) => void
+  teamMode?: boolean
 }
 
-function KanbanBoard({ grouped, onChangeStage, onDealClick }: KanbanBoardProps) {
+function KanbanBoard({ grouped, onChangeStage, onDealClick, teamMode }: KanbanBoardProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -54,6 +58,7 @@ function KanbanBoard({ grouped, onChangeStage, onDealClick }: KanbanBoardProps) 
             deals={grouped[stage] ?? []}
             onChangeStage={onChangeStage}
             onDealClick={onDealClick}
+            teamMode={teamMode}
           />
         ))}
       </div>
@@ -73,12 +78,41 @@ export function PipelinePage() {
   const currentUser = useAppStore((s) => s.currentUser)
   const username = currentUser?.username ?? ""
 
-  const { data: grouped, isLoading, isError } = usePipeline()
+  const role = currentUser?.role
+  const isAdminOrDirector = role === UserRole.Admin || role === UserRole.Director
+
+  const [selectedSeller, setSelectedSeller] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('pipeline_seller_filter') ?? 'all'
+    }
+    return 'all'
+  })
+
+  const { data: sellers = [] } = useSellers()
+
+  const isTeamMode = isAdminOrDirector && selectedSeller === 'all'
+
+  const sellerIdForQuery = isTeamMode
+    ? null
+    : (selectedSeller !== 'all' ? selectedSeller : (currentUser?.sellerId ?? currentUser?.id ?? ''))
+
+  const { data: grouped, isLoading, isError } = usePipeline(isTeamMode ? null : sellerIdForQuery)
+  const { data: teamGrouped, isLoading: isTeamLoading, isError: isTeamError } = useTeamPipeline(isTeamMode)
+
+  const activeGrouped = isTeamMode ? teamGrouped : grouped
+  const activeLoading = isTeamMode ? isTeamLoading : isLoading
+  const activeError = isTeamMode ? isTeamError : isError
+
   const changeStage = useChangeStage()
 
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null)
   const [lossModal, setLossModal] = useState<{ dealId: string } | null>(null)
   const [lossReason, setLossReason] = useState<LossReason | "">("")
+
+  function handleSellerChange(value: string) {
+    setSelectedSeller(value)
+    localStorage.setItem('pipeline_seller_filter', value)
+  }
 
   function handleChangeStage(dealId: string, newStage: PipelineStage) {
     if (newStage === "Perdido") {
@@ -113,11 +147,7 @@ export function PipelinePage() {
     setSelectedDeal(deal)
   }
 
-  if (selectedDeal) {
-    return <ClientDetailPage deal={selectedDeal} onBack={() => setSelectedDeal(null)} />
-  }
-
-  const allDeals = grouped ? Object.values(grouped).flat() : []
+  const allDeals = activeGrouped ? Object.values(activeGrouped).flat() : []
   const openDeals = allDeals.filter((d) => d.stage !== "Perdido")
   const totalGross = openDeals.reduce((s, d) => s + (d.amount ?? 0), 0)
   const forecast = openDeals.reduce((s, d) => s + (d.amount ?? 0) * (d.probability ?? 0) / 100, 0)
@@ -129,30 +159,46 @@ export function PipelinePage() {
           <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Pipeline</h1>
           <p style={{ marginTop: 2, fontSize: 12, color: '#94A3B8' }}>Fases comerciales por oportunidad</p>
         </div>
-        {grouped && (
-          <div className="flex gap-6 text-right">
-            <div>
-              <div style={{ fontSize: 11, color: '#94A3B8' }}>Total bruto</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#002B49' }}>{formatCurrency(totalGross)}</div>
+        <div className="flex items-center gap-4">
+          {isAdminOrDirector && (
+            <select
+              value={selectedSeller}
+              onChange={(e) => handleSellerChange(e.target.value)}
+              className="input"
+              style={{ fontSize: 12, padding: '5px 10px', minWidth: 160 }}
+            >
+              <option value="all">Todos los vendedores</option>
+              {sellers.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          )}
+          {activeGrouped && (
+            <div className="flex gap-6 text-right">
+              <div>
+                <div style={{ fontSize: 11, color: '#94A3B8' }}>Total bruto</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#002B49' }}>{formatCurrency(totalGross)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: '#94A3B8' }}>Forecast ponderado</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#002B49' }}>{formatCurrency(forecast)}</div>
+              </div>
             </div>
-            <div>
-              <div style={{ fontSize: 11, color: '#94A3B8' }}>Forecast ponderado</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#002B49' }}>{formatCurrency(forecast)}</div>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {isLoading && <SkeletonColumns />}
-      {isError && (
+      {activeLoading && <SkeletonColumns />}
+      {activeError && (
         <p style={{ fontSize: 13, color: '#EF4444' }}>No se pudo cargar el pipeline.</p>
       )}
 
-      {!isLoading && !isError && grouped && (
+      {!activeLoading && !activeError && activeGrouped && (
         <KanbanBoard
-          grouped={grouped}
+          grouped={activeGrouped}
           onChangeStage={handleChangeStage}
           onDealClick={handleDealClick}
+          teamMode={isTeamMode}
         />
       )}
 
@@ -199,6 +245,27 @@ export function PipelinePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Deal Peek Panel — slide-over */}
+      {selectedDeal && (
+        <>
+          <div
+            onClick={() => setSelectedDeal(null)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 40,
+              background: 'rgba(0,0,0,0.25)',
+            }}
+          />
+          <div style={{
+            position: 'fixed', top: 0, right: 0, height: '100vh',
+            width: 480, zIndex: 50,
+            background: '#fff', boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
+            overflowY: 'auto', display: 'flex', flexDirection: 'column',
+          }}>
+            <ClientDetailPage deal={selectedDeal} onBack={() => setSelectedDeal(null)} />
+          </div>
+        </>
       )}
     </div>
   )

@@ -3,11 +3,13 @@ import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { useClients } from '@/modules/clients/application/hooks/useClients'
 import { useTodayTasks } from '../../application/hooks/useTodayTasks'
+import { useMonthTasks } from '../../application/hooks/useMonthTasks'
 import { useCreateTask } from '../../application/hooks/useCreateTask'
 import { useCompleteTask } from '../../application/hooks/useCompleteTask'
 import { useUpdateTask } from '../../application/hooks/useUpdateTask'
 import { useReactivateTask } from '../../application/hooks/useReactivateTask'
 import { TaskCard } from '../components/TaskCard'
+import { CalendarView } from '../components/CalendarView'
 import { CreateTaskForm } from '../components/CreateTaskForm'
 import { EditTaskForm } from '../components/EditTaskForm'
 import type { CreateTaskInput, UpdateTaskInput, Task } from '../../domain/tasks.types'
@@ -15,6 +17,12 @@ import type { CreateTaskInput, UpdateTaskInput, Task } from '../../domain/tasks.
 export function AgendaPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>(() => {
+    return (localStorage.getItem('agenda_view_mode') as 'list' | 'calendar') ?? 'list'
+  })
+  const todayInit = new Date()
+  const [calYear, setCalYear] = useState(todayInit.getFullYear())
+  const [calMonth, setCalMonth] = useState(todayInit.getMonth() + 1)
 
   const { data: tasks = [], isLoading } = useTodayTasks()
   const { mutate: createTask, isPending: isCreating, error: createError, reset: resetCreateTask } = useCreateTask()
@@ -24,6 +32,12 @@ export function AgendaPage() {
   const { data: clientsData } = useClients({ limit: 200 })
   const clients = clientsData?.data ?? []
   const navigate = useNavigate()
+  const { data: monthTasks = [] } = useMonthTasks(calYear, calMonth)
+
+  function handleToggleView(mode: 'list' | 'calendar') {
+    setViewMode(mode)
+    localStorage.setItem('agenda_view_mode', mode)
+  }
 
   function handleComplete(taskId: string) {
     const task = tasks.find((t) => t.id === taskId)
@@ -35,6 +49,7 @@ export function AgendaPage() {
           search: {
             ...(completedTask.clientId ? { clientId: completedTask.clientId } : {}),
             ...(task?.title ? { taskTitle: task.title } : {}),
+            taskId: taskId,
           },
         })
       },
@@ -74,48 +89,99 @@ export function AgendaPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Compromisos comerciales</h1>
-        <button onClick={() => { resetCreateTask(); setShowCreateModal(true) }} className="btn-primary">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-          Crear tarea
-        </button>
-      </div>
-
-      {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 animate-pulse rounded-lg bg-slate-100" />
-          ))}
-        </div>
-      ) : tasks.length === 0 ? (
-        <div className="empty-state">
-          <p>Sin tareas registradas</p>
-          <button
-            onClick={() => { resetCreateTask(); setShowCreateModal(true) }}
-            style={{ marginTop: 8, fontSize: 12, color: '#002B49', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            Crear una tarea
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', border: '1px solid #E2E8F0', borderRadius: 6, overflow: 'hidden' }}>
+            <button
+              onClick={() => handleToggleView('list')}
+              style={{
+                padding: '5px 12px',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: 'none',
+                backgroundColor: viewMode === 'list' ? '#0F172A' : '#FFFFFF',
+                color: viewMode === 'list' ? '#FFFFFF' : '#475569',
+              }}
+            >
+              Lista
+            </button>
+            <button
+              onClick={() => handleToggleView('calendar')}
+              style={{
+                padding: '5px 12px',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: 'none',
+                borderLeft: '1px solid #E2E8F0',
+                backgroundColor: viewMode === 'calendar' ? '#0F172A' : '#FFFFFF',
+                color: viewMode === 'calendar' ? '#FFFFFF' : '#475569',
+              }}
+            >
+              Calendario
+            </button>
+          </div>
+          <button onClick={() => { resetCreateTask(); setShowCreateModal(true) }} className="btn-primary">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            Crear tarea
           </button>
         </div>
+      </div>
+
+      {viewMode === 'list' ? (
+        isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-20 animate-pulse rounded-lg bg-slate-100" />
+            ))}
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="empty-state">
+            <p>Sin tareas registradas</p>
+            <button
+              onClick={() => { resetCreateTask(); setShowCreateModal(true) }}
+              style={{ marginTop: 8, fontSize: 12, color: '#002B49', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              Crear una tarea
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {tasks.map((task) => {
+              const client = clients.find((c) => c.id === task.clientId)
+              const contact = client?.contacts.find((c) => c.id === task.contactId)
+              return (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  clientName={client?.name ?? null}
+                  contactName={contact?.name ?? null}
+                  onComplete={handleComplete}
+                  onEdit={(t) => { resetUpdateTask(); setEditingTask(t) }}
+                  onReactivate={handleReactivate}
+                />
+              )
+            })}
+          </div>
+        )
       ) : (
-        <div className="space-y-3">
-          {tasks.map((task) => {
-            const client = clients.find((c) => c.id === task.clientId)
-            const contact = client?.contacts.find((c) => c.id === task.contactId)
-            return (
-              <TaskCard
-                key={task.id}
-                task={task}
-                clientName={client?.name ?? null}
-                contactName={contact?.name ?? null}
-                onComplete={handleComplete}
-                onEdit={(t) => { resetUpdateTask(); setEditingTask(t) }}
-                onReactivate={handleReactivate}
-              />
-            )
-          })}
-        </div>
+        <CalendarView
+          year={calYear}
+          month={calMonth}
+          tasks={monthTasks}
+          clients={clients}
+          onEdit={(t) => { resetUpdateTask(); setEditingTask(t) }}
+          onPrevMonth={() => {
+            if (calMonth === 1) { setCalYear((y) => y - 1); setCalMonth(12) }
+            else setCalMonth((m) => m - 1)
+          }}
+          onNextMonth={() => {
+            if (calMonth === 12) { setCalYear((y) => y + 1); setCalMonth(1) }
+            else setCalMonth((m) => m + 1)
+          }}
+        />
       )}
 
       {showCreateModal && (

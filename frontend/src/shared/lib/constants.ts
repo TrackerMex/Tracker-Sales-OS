@@ -10,11 +10,20 @@ export const TASK_POINTS = {
   Propuesta: 8,
   Seguimiento: 3,
   Cierre: 25,
+  'Solicitud de factura/servicio': 0,
+  'Junta interna': 0,
+  'Prospección': 2,
 } as const;
 
 export type ActivityType = keyof typeof TASK_POINTS;
 
 export const ACTIVITY_TYPES = Object.keys(TASK_POINTS) as ActivityType[];
+
+export const NON_COMMERCIAL_TYPES: ActivityType[] = [
+  'Solicitud de factura/servicio',
+  'Junta interna',
+  'Prospección',
+]
 
 export const REQUIRES_NEXT_STEP: ActivityType[] = [
   'Llamada',

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository, In } from 'typeorm';
+import { FindOptionsWhere, Repository, In, IsNull, MoreThanOrEqual } from 'typeorm';
 import { DealEntity, StageHistoryEntry } from '../../domain/entities/deal.entity';
 import { IDealsRepository } from '../../domain/repositories/deal.repository.interface';
 import { DealTypeormEntity } from '../entities/deal.typeorm.entity';
@@ -87,6 +87,21 @@ export class DealRepositoryImpl implements IDealsRepository {
     return entity ? this.toDomain(entity) : null;
   }
 
+  async findAllByClientAndSeller(clientId: string, sellerId: string): Promise<DealEntity[]> {
+    const data = await this.repo.find({
+      where: { clientId, sellerId } as FindOptionsWhere<DealTypeormEntity>,
+      order: { createdAt: 'ASC' },
+    });
+    return data.map((e) => this.toDomain(e));
+  }
+
+  async findByOpportunity(clientId: string, sellerId: string, opportunityName: string): Promise<DealEntity | null> {
+    const entity = await this.repo.findOne({
+      where: { clientId, sellerId, opportunityName } as FindOptionsWhere<DealTypeormEntity>,
+    });
+    return entity ? this.toDomain(entity) : null;
+  }
+
   async findDetailedBySellerId(sellerId: string): Promise<{
     deal: DealEntity;
     clientName: string;
@@ -100,6 +115,61 @@ export class DealRepositoryImpl implements IDealsRepository {
   }[]> {
     const deals = await this.repo.find({
       where: { sellerId } as FindOptionsWhere<DealTypeormEntity>,
+      order: { createdAt: 'DESC' },
+    });
+
+    const clientIds = [...new Set(deals.map((d) => d.clientId))];
+    const sellerIds = [...new Set(deals.map((d) => d.sellerId))];
+
+    const clients = clientIds.length > 0
+      ? await this.clientRepo.findBy({ id: In(clientIds) })
+      : [];
+    const clientMap = new Map(clients.map((c) => [c.id, c]));
+
+    const contacts = clientIds.length > 0
+      ? await this.contactRepo.createQueryBuilder('contact')
+          .where('contact.client_id IN (:...clientIds)', { clientIds })
+          .andWhere('contact.is_decision_maker = :isDM', { isDM: true })
+          .getMany()
+      : [];
+    const contactMap = new Map(contacts.map((c) => [c.clientId, c]));
+
+    const sellers = sellerIds.length > 0
+      ? await this.sellerRepo.findBy({ id: In(sellerIds) })
+      : [];
+    const sellerMap = new Map(sellers.map((s) => [s.id, s]));
+
+    return deals.map((deal) => {
+      const client = clientMap.get(deal.clientId);
+      const contact = contactMap.get(deal.clientId);
+      const seller = sellerMap.get(deal.sellerId);
+      return {
+        deal: this.toDomain(deal),
+        clientName: client?.name ?? deal.clientName,
+        contactName: contact?.name ?? null,
+        contactRole: contact?.role ?? null,
+        painPoint: client?.pain ?? null,
+        sellerName: seller?.name ?? null,
+        clientNextStep: client?.nextStep ?? null,
+        clientNextDate: client?.nextDate ?? null,
+        clientNextTime: client?.nextTime ?? null,
+      };
+    });
+  }
+
+  async findDetailedAllSellers(): Promise<{
+    deal: DealEntity;
+    clientName: string;
+    contactName: string | null;
+    contactRole: string | null;
+    painPoint: string | null;
+    sellerName: string | null;
+    clientNextStep: string | null;
+    clientNextDate: string | null;
+    clientNextTime: string | null;
+  }[]> {
+    const deals = await this.repo.find({
+      where: { deletedAt: IsNull() } as FindOptionsWhere<DealTypeormEntity>,
       order: { createdAt: 'DESC' },
     });
 
@@ -194,8 +264,16 @@ export class DealRepositoryImpl implements IDealsRepository {
     });
   }
 
-  async findAllForAnalysis(): Promise<DealEntity[]> {
-    const data = await this.repo.find({ order: { createdAt: 'DESC' } });
+  async findAllForAnalysis(fromDate?: Date): Promise<DealEntity[]> {
+    const where: FindOptionsWhere<DealTypeormEntity> = {};
+    if (fromDate) {
+      where.createdAt = MoreThanOrEqual(fromDate);
+    }
+    const data = await this.repo.find({
+      where,
+      order: { createdAt: 'DESC' },
+      take: 500,
+    });
     return data.map((e) => this.toDomain(e));
   }
 
@@ -203,6 +281,7 @@ export class DealRepositoryImpl implements IDealsRepository {
     return Object.assign(new DealEntity(), {
       ...entity,
       amount: Number(entity.amount),
+      opportunityName: entity.opportunityName ?? null,
     });
   }
 }

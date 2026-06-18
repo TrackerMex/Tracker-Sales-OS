@@ -32,16 +32,43 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
     const points = TASK_POINTS[input.type];
     const quality = this.calculateQuality(input);
 
+    // Stage snapshot + conditional pipeline sync
+    let resolvedStage: string | null = input.stage ?? null;
+
+    if (input.clientId) {
+      const existingDeal = input.opportunityName
+        ? await this.dealRepo.findByOpportunity(input.clientId, input.sellerId, input.opportunityName)
+        : await this.dealRepo.findByClientIdAndSellerId(input.clientId, input.sellerId);
+
+      if (existingDeal && !input.stage) {
+        // Auto-snapshot: usar stage actual del deal sin avanzarlo
+        resolvedStage = existingDeal.stage;
+      }
+
+      if (input.stage) {
+        if (!existingDeal) {
+          // Crear nuevo deal (con o sin opportunityName)
+          await this.syncPipeline(input.clientId, input.sellerId, input.stage, input.opportunityName);
+        } else if (input.stage !== existingDeal.stage) {
+          // Avanzar SOLO el deal de esta oportunidad
+          await this.syncPipelineForDeal(existingDeal.id, input.stage, input.sellerId);
+        }
+        // Si input.stage === existingDeal.stage → no avanzar, solo snapshot
+      }
+    }
+
     const entity = await this.activityRepo.create({
       ...input,
+      clientId: input.clientId ?? null,
       contactId: input.contactId ?? null,
+      taskId: input.taskId ?? null,
       discovery: input.discovery ?? null,
       agreement: input.agreement ?? null,
       nextStep: input.nextStep ?? null,
       nextObjective: input.nextObjective ?? null,
       nextDate: input.nextDate ?? null,
       nextTime: input.nextTime ?? null,
-      stage: input.stage ?? null,
+      stage: resolvedStage,
       programmedAt: input.programmedAt ? new Date(input.programmedAt) : null,
       executedAt,
       capturedAt,
@@ -50,43 +77,34 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
       quality,
     });
 
-    if (input.stage) {
-      await this.syncPipeline(input.clientId, input.sellerId, input.stage);
-    }
-
     return ActivityDto.fromEntity(entity);
   }
 
-  private async syncPipeline(clientId: string, sellerId: string, stage: PipelineStage): Promise<void> {
-    const existingDeal = await this.dealRepo.findByClientIdAndSellerId(clientId, sellerId);
+  private async syncPipeline(clientId: string, sellerId: string, stage: PipelineStage, opportunityName?: string): Promise<void> {
+    await this.dealRepo.create({
+      clientId,
+      sellerId,
+      stage,
+      amount: 0,
+      probability: STAGE_PROBABILITY[stage],
+      stageHistory: [],
+      opportunityName: opportunityName ?? null,
+    });
+  }
 
-    if (existingDeal) {
-      const allowed = ALLOWED_TRANSITIONS[existingDeal.stage] ?? [];
-      if (!allowed.includes(stage)) {
-        return;
-      }
-      await this.dealRepo.update(existingDeal.id, {
-        stage,
-        probability: STAGE_PROBABILITY[stage],
-        stageHistory: [
-          ...existingDeal.stageHistory,
-          {
-            stage,
-            changedAt: new Date().toISOString(),
-            changedBy: sellerId,
-          },
-        ],
-      });
-    } else {
-      await this.dealRepo.create({
-        clientId,
-        sellerId,
-        stage,
-        amount: 0,
-        probability: STAGE_PROBABILITY[stage],
-        stageHistory: [],
-      });
-    }
+  private async syncPipelineForDeal(dealId: string, stage: PipelineStage, sellerId: string): Promise<void> {
+    const deal = await this.dealRepo.findById(dealId);
+    if (!deal) return;
+    const allowed = ALLOWED_TRANSITIONS[deal.stage] ?? [];
+    if (!allowed.includes(stage)) return;
+    await this.dealRepo.update(dealId, {
+      stage,
+      probability: STAGE_PROBABILITY[stage],
+      stageHistory: [
+        ...deal.stageHistory,
+        { stage, changedAt: new Date().toISOString(), changedBy: sellerId },
+      ],
+    });
   }
 
   private calculateQuality(input: CreateActivityDto): number {

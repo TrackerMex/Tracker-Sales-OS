@@ -24,9 +24,10 @@ function formatDate(dateStr: string): string {
 interface DealCardProps {
   deal: Deal
   onClick: (deal: Deal) => void
+  teamMode?: boolean
 }
 
-export function DealCard({ deal, onClick }: DealCardProps) {
+export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
   const [isDragging, setIsDragging] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const contactInfo = [deal.contactName, deal.contactRole].filter(Boolean).join(' · ')
@@ -71,9 +72,16 @@ export function DealCard({ deal, onClick }: DealCardProps) {
       onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '' }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
-        <p style={{ fontSize: '13px', lineHeight: '1.3', fontWeight: 700, color: '#002B49', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {deal.clientName}
-        </p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: '13px', lineHeight: '1.3', fontWeight: 700, color: '#002B49', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {deal.clientName}
+          </p>
+          {deal.opportunityName && (
+            <p style={{ fontSize: '11px', color: '#7C3AED', fontWeight: 600, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {deal.opportunityName}
+            </p>
+          )}
+        </div>
         <span
           style={{
             flexShrink: 0,
@@ -112,9 +120,13 @@ export function DealCard({ deal, onClick }: DealCardProps) {
       )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-        <span style={{ fontSize: '11px', color: '#94A3B8' }}>
-          {deal.sellerName ?? ''}
-        </span>
+        {deal.sellerName && (
+          teamMode ? (
+            <span className="tag tag-navy" style={{ fontSize: 10 }}>{deal.sellerName}</span>
+          ) : (
+            <span style={{ fontSize: '11px', color: '#94A3B8' }}>{deal.sellerName}</span>
+          )
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {(showRed || showAmber) && (
             <span style={{

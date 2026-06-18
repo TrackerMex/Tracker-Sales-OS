@@ -1,5 +1,15 @@
 import { BaseEntity } from '../../../../core/domain/base.entity';
 
+export type ActivityStatus = 'Pendiente' | 'En curso' | 'Completada' | 'Cancelada';
+
+export interface ActivityHistoryEntry {
+  changedAt: string;
+  oldStatus: string;
+  newStatus: string;
+  changedBy: string;
+  comment?: string;
+}
+
 export enum ActivityType {
   Chat = 'Chat',
   WhatsApp = 'WhatsApp',
@@ -12,6 +22,9 @@ export enum ActivityType {
   Propuesta = 'Propuesta',
   Seguimiento = 'Seguimiento',
   Cierre = 'Cierre',
+  SolicitudFactura = 'Solicitud de factura/servicio',
+  JuntaInterna = 'Junta interna',
+  Prospeccion = 'Prospección',
 }
 
 export enum ActivityResult {
@@ -37,6 +50,9 @@ export const TASK_POINTS: Record<ActivityType, number> = {
   [ActivityType.Propuesta]: 8,
   [ActivityType.Seguimiento]: 3,
   [ActivityType.Cierre]: 25,
+  [ActivityType.SolicitudFactura]: 0,
+  [ActivityType.JuntaInterna]: 0,
+  [ActivityType.Prospeccion]: 2,
 };
 
 export const REQUIRES_NEXT_STEP = new Set([
@@ -50,8 +66,9 @@ export const REQUIRES_NEXT_STEP = new Set([
 
 export class ActivityEntity extends BaseEntity {
   sellerId: string;
-  clientId: string;
+  clientId: string | null;
   contactId: string | null;
+  taskId: string | null;
   type: ActivityType;
   result: ActivityResult;
   summary: string;
@@ -64,6 +81,8 @@ export class ActivityEntity extends BaseEntity {
   points: number;
   quality: number;
   stage: string | null;
+  status: ActivityStatus;
+  activityHistory: ActivityHistoryEntry[];
   executedAt: Date;
   programmedAt: Date | null;
   capturedAt: Date;

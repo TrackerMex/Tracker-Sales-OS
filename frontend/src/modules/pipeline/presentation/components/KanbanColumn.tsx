@@ -8,6 +8,7 @@ interface KanbanColumnProps {
   deals: Deal[]
   onChangeStage: (dealId: string, newStage: PipelineStage) => void
   onDealClick: (deal: Deal) => void
+  teamMode?: boolean
 }
 
 export function KanbanColumn({
@@ -15,6 +16,7 @@ export function KanbanColumn({
   deals,
   onChangeStage,
   onDealClick,
+  teamMode,
 }: KanbanColumnProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const columnRef = useRef<HTMLDivElement>(null)
@@ -68,7 +70,7 @@ export function KanbanColumn({
           </p>
         ) : (
           deals.map((deal) => (
-            <DealCard key={deal.id} deal={deal} onClick={onDealClick} />
+            <DealCard key={deal.id} deal={deal} onClick={onDealClick} teamMode={teamMode} />
           ))
         )}
       </div>

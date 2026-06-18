@@ -41,6 +41,7 @@ Al lanzar un subagente Implementer, el prompt DEBE incluir:
 **Debe hacer**:
 - Leer los archivos de `core/` antes de implementar
 - Seguir las convenciones de `docs/conventions.md`
+- Usar componentes de **shadcn/ui** (`frontend/src/components/ui/`) para TODA la UI — ver sección "Componentes UI" en conventions.md
 - Escribir el resumen de lo que creó en `progress/impl_<feature-id>.md`
 - Correr `tsc --noEmit` al finalizar
 
@@ -48,6 +49,7 @@ Al lanzar un subagente Implementer, el prompt DEBE incluir:
 - Editar archivos en `core/` (esos ya existen)
 - Cambiar la estructura de carpetas establecida
 - Agregar dependencias sin consultar al Líder
+- Crear overlays/modales custom ni usar `confirm()` / `alert()` del browser
 
 ---
 

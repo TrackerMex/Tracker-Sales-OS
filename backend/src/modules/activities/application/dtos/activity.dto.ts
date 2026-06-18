@@ -1,9 +1,9 @@
-import { ActivityEntity, ActivityType, ActivityResult } from '../../domain/entities/activity.entity';
+import { ActivityEntity, ActivityType, ActivityResult, ActivityHistoryEntry } from '../../domain/entities/activity.entity';
 
 export class ActivityDto {
   id: string;
   sellerId: string;
-  clientId: string;
+  clientId: string | null;
   contactId: string | null;
   type: ActivityType;
   result: ActivityResult;
@@ -16,6 +16,10 @@ export class ActivityDto {
   nextTime: string | null;
   points: number;
   quality: number;
+  stage: string | null;
+  status: string;
+  activityHistory: ActivityHistoryEntry[];
+  taskId: string | null;
   executedAt: Date;
   programmedAt: Date | null;
   capturedAt: Date;
@@ -40,6 +44,10 @@ export class ActivityDto {
     dto.nextTime = entity.nextTime;
     dto.points = entity.points;
     dto.quality = entity.quality;
+    dto.stage = entity.stage;
+    dto.status = entity.status ?? 'Pendiente';
+    dto.activityHistory = entity.activityHistory ?? [];
+    dto.taskId = entity.taskId;
     dto.executedAt = entity.executedAt;
     dto.programmedAt = entity.programmedAt;
     dto.capturedAt = entity.capturedAt;

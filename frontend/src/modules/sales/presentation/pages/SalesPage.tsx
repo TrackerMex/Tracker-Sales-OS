@@ -11,6 +11,14 @@ import { useApiFormErrors } from '@/shared/lib/api-errors';
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary';
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError';
 import { EditSaleModal } from '../components/EditSaleModal';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 const PAYMENT_METHODS: PaymentMethod[] = ['Pagado', 'Crédito', '50% anticipo', 'Pendiente'];
 const SALE_SOURCES: SaleSource[] = [
@@ -63,6 +71,7 @@ export function SalesPage() {
   const [atcNotes, setAtcNotes] = useState('');
 
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [deletingSale, setDeletingSale] = useState<Sale | null>(null);
 
   const createSellerSale = useCreateSale();
   const createDirSale = useCreateSale();
@@ -597,11 +606,7 @@ export function SalesPage() {
                         <button
                           className="btn-ghost"
                           style={{ padding: '2px 8px', fontSize: 12, color: '#ef4444' }}
-                          onClick={() => {
-                            if (confirm(`¿Eliminar esta venta de ${sale.clientName}?`)) {
-                              deleteSale(sale.id);
-                            }
-                          }}
+                          onClick={() => setDeletingSale(sale)}
                         >
                           Eliminar
                         </button>
@@ -622,6 +627,34 @@ export function SalesPage() {
           onClose={() => setEditingSale(null)}
         />
       )}
+
+      <Dialog open={!!deletingSale} onOpenChange={(open) => { if (!open) setDeletingSale(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Eliminar venta</DialogTitle>
+            <DialogDescription>
+              ¿Eliminar la venta de <strong>{deletingSale?.clientName}</strong>? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button className="btn-ghost" onClick={() => setDeletingSale(null)}>
+              Cancelar
+            </button>
+            <button
+              className="btn-primary"
+              style={{ background: '#ef4444' }}
+              onClick={() => {
+                if (deletingSale) {
+                  deleteSale(deletingSale.id);
+                  setDeletingSale(null);
+                }
+              }}
+            >
+              Eliminar
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

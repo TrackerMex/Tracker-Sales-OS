@@ -35,13 +35,24 @@ function getAiComment(task: Task, clientName: string | null): string | null {
   return `Revisa: ¿esta tarea tiene un resultado medible? Si solo es "seguimiento", redefine con ${name}.`
 }
 
+const TYPE_TAG: Record<string, string> = {
+  'Llamada': 'tag-navy',
+  'Videoconf': 'tag-navy',
+  'Reunión virtual': 'tag-navy',
+  'Visita': 'tag-green',
+  'Reunión presencial': 'tag-green',
+  'Propuesta': 'tag-amber',
+  'Seguimiento': 'tag-amber',
+  'Cierre': 'tag-green',
+  'Chat': 'tag-gray',
+  'WA': 'tag-gray',
+  'Correo': 'tag-gray',
+}
+
 export function TaskCard({ task, onComplete, onEdit, onReactivate, clientName, contactName }: TaskCardProps) {
   const isOverdue = task.isOverdue && task.status === 'Pendiente'
   const aiComment = getAiComment(task, clientName ?? null)
-
-  const header = [clientName || 'Sin cliente', task.type, contactName]
-    .filter(Boolean)
-    .join(' · ')
+  const typeTagClass = task.type ? (TYPE_TAG[task.type] ?? 'tag-gray') : null
 
   return (
     <div
@@ -49,27 +60,39 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, clientName, c
       style={{ padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, opacity: task.status === 'Completado' ? 0.5 : 1 }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginBottom: 2 }}>{header}</p>
-        <p style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>{task.title}</p>
-        {aiComment && (
-          <p style={{ fontSize: 11.5, color: '#6D28D9', fontWeight: 500, marginBottom: 4 }}>IA: {aiComment}</p>
+        {/* Row 1: time + type badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+          <span style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', lineHeight: 1 }}>
+            {formatTime(task.scheduledAt)}
+          </span>
+          {typeTagClass && (
+            <span className={`tag ${typeTagClass}`}>{task.type}</span>
+          )}
+        </div>
+
+        {/* Row 2: client name */}
+        {clientName && (
+          <p style={{ fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 2 }}>{clientName}</p>
         )}
-        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, color: '#94A3B8' }}>
-            Programada: {formatDate(task.scheduledAt)} {formatTime(task.scheduledAt)}
-          </span>
-          <span style={{ fontSize: 11, color: '#94A3B8' }}>
-            Creada: {formatDate(task.createdAt)}
-          </span>
-          {task.completedAt && (
-            <span style={{ fontSize: 11, color: '#94A3B8' }}>
-              Capturada: {formatDate(task.completedAt)}
-            </span>
+
+        {/* Row 3: task title */}
+        <p style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>{task.title}</p>
+
+        {/* Row 4: date + contact + overdue badge */}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: aiComment ? 4 : 0 }}>
+          <span style={{ fontSize: 11, color: '#94A3B8' }}>{formatDate(task.scheduledAt)}</span>
+          {contactName && (
+            <span style={{ fontSize: 11, color: '#94A3B8' }}>{contactName}</span>
           )}
           {isOverdue && (
             <span className="tag tag-red">Vencida</span>
           )}
         </div>
+
+        {/* AI comment */}
+        {aiComment && (
+          <p style={{ fontSize: 11.5, color: '#6D28D9', fontWeight: 500 }}>IA: {aiComment}</p>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>

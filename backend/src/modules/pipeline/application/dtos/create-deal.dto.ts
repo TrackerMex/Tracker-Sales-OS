@@ -1,4 +1,4 @@
-import { IsUUID, IsNumber, IsOptional, IsEnum, Min } from 'class-validator';
+import { IsUUID, IsNumber, IsOptional, IsEnum, IsString, Min, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 
@@ -17,4 +17,10 @@ export class CreateDealDto {
   @IsOptional()
   @IsEnum(PipelineStage)
   stage?: PipelineStage;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  opportunityName?: string;
 }

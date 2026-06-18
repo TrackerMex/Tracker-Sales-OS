@@ -516,7 +516,6 @@ body {
   border-radius: 10px;
   padding: 12px;
   flex-shrink: 0;
-  overflow: hidden;
 }
 .pipe-col-body {
   max-height: calc(100vh - 260px);

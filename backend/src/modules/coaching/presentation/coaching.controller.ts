@@ -6,9 +6,11 @@ import {
   Param,
   UseGuards,
   Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
+import { UserRole } from '../../auth/domain/entities/user.entity';
 import { GetCoachingDailyUseCase } from '../application/use-cases/get-coaching-daily.use-case';
 import { GenerateSuggestionUseCase } from '../application/use-cases/generate-suggestion.use-case';
 import { SuggestionRequestDto } from '../application/dtos/suggestion-request.dto';
@@ -24,7 +26,13 @@ export class CoachingController {
   ) {}
 
   @Get('seller/:id/daily')
-  getDailyReport(@Param('id') sellerId: string) {
+  getDailyReport(
+    @Param('id') sellerId: string,
+    @Request() req: { user: { role: string; sellerId: string | null } },
+  ) {
+    if (req.user.role === UserRole.Seller && req.user.sellerId !== sellerId) {
+      throw new ForbiddenException();
+    }
     return this.getCoachingDaily.execute(sellerId);
   }
 

@@ -12,9 +12,15 @@ export const pipelineApi = {
       .get<PipelineGrouped>(`/pipeline/seller/${sellerId}`)
       .then((r) => r.data),
 
+  getPipelineTeam: (): Promise<PipelineGrouped> =>
+    api.get<PipelineGrouped>('/pipeline/team').then((r) => r.data),
+
   createDeal: (input: CreateDealInput): Promise<Deal> =>
     api.post<Deal>("/pipeline/deals", input).then((r) => r.data),
 
   changeStage: (dealId: string, input: ChangeStageInput): Promise<Deal> =>
     api.patch<Deal>(`/deals/${dealId}/stage`, input).then((r) => r.data),
+
+  getClientDeals: (clientId: string, sellerId: string): Promise<Deal[]> =>
+    api.get<Deal[]>(`/pipeline/client/${clientId}/seller/${sellerId}/deals`).then((r) => r.data),
 }
