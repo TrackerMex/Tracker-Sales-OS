@@ -21,6 +21,7 @@ export interface Deal {
   amount: number
   probability: number
   stageHistory: StageHistoryEntry[]
+  opportunityName: string | null
   contactName?: string
   contactRole?: string
   painPoint?: string
@@ -36,6 +37,7 @@ export interface CreateDealInput {
   sellerId: string
   amount?: number
   stage?: PipelineStage
+  opportunityName?: string
 }
 
 export interface ChangeStageInput {

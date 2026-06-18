@@ -1,5 +1,18 @@
 # History — Tracker Sales OS
 
+## 2026-06-17 — Feature 38: Ciclo de vida por actividad + historial individual
+
+**Status**: done — Review 19/19 PASS (progress/review_38-activity-lifecycle.md)
+
+**Qué**: Cada actividad tiene status propio (Pendiente→En curso→Completada|Cancelada). JSONB activity_history registra cada cambio. Click en actividad → modal con historial SOLO de esa actividad. 5 actividades del mismo cliente comparten 1 deal; deal avanza manual en Kanban (Opción A).
+
+- DB: columnas `status` (varchar, default Pendiente) + `activity_history` (JSONB, default []) — sin tablas nuevas, TYPEORM_SYNCHRONIZE las crea.
+- `UpdateActivityStatusUseCase`: valida `VALID_TRANSITIONS`, appends history entry, lanza 400 si transición inválida.
+- `changedBy` del JWT (anti-spoofing). `newStatus` validado con `@IsIn` en DTO.
+- Endpoints nuevos: `PATCH /api/activities/:id/status`, `GET /api/activities/:id`, `GET /api/activities/client/:clientId`.
+- Frontend: status badge en lista de actividades + `ActivityHistoryModal` (Dialog shadcn) por actividad individual.
+- tsc backend+frontend exit 0.
+
 ## 2026-06-16 — Feature 27: Anti-solapamiento de horarios de tareas
 
 **Status**: done — Review 6/6 PASS (progress/review_27-task-time-overlap.md)

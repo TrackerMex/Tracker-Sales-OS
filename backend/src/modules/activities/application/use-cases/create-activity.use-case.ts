@@ -36,10 +36,9 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
     let resolvedStage: string | null = input.stage ?? null;
 
     if (input.clientId) {
-      const existingDeal = await this.dealRepo.findByClientIdAndSellerId(
-        input.clientId,
-        input.sellerId,
-      );
+      const existingDeal = input.opportunityName
+        ? await this.dealRepo.findByOpportunity(input.clientId, input.sellerId, input.opportunityName)
+        : await this.dealRepo.findByClientIdAndSellerId(input.clientId, input.sellerId);
 
       if (existingDeal && !input.stage) {
         // Auto-snapshot: usar stage actual del deal sin avanzarlo
@@ -48,11 +47,11 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
 
       if (input.stage) {
         if (!existingDeal) {
-          // Crear nuevo deal en el stage indicado
-          await this.syncPipeline(input.clientId, input.sellerId, input.stage);
+          // Crear nuevo deal (con o sin opportunityName)
+          await this.syncPipeline(input.clientId, input.sellerId, input.stage, input.opportunityName);
         } else if (input.stage !== existingDeal.stage) {
-          // Solo avanzar si el stage es diferente al actual
-          await this.syncPipeline(input.clientId, input.sellerId, input.stage);
+          // Avanzar SOLO el deal de esta oportunidad
+          await this.syncPipelineForDeal(existingDeal.id, input.stage, input.sellerId);
         }
         // Si input.stage === existingDeal.stage → no avanzar, solo snapshot
       }
@@ -81,36 +80,31 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
     return ActivityDto.fromEntity(entity);
   }
 
-  private async syncPipeline(clientId: string, sellerId: string, stage: PipelineStage): Promise<void> {
-    const existingDeal = await this.dealRepo.findByClientIdAndSellerId(clientId, sellerId);
+  private async syncPipeline(clientId: string, sellerId: string, stage: PipelineStage, opportunityName?: string): Promise<void> {
+    await this.dealRepo.create({
+      clientId,
+      sellerId,
+      stage,
+      amount: 0,
+      probability: STAGE_PROBABILITY[stage],
+      stageHistory: [],
+      opportunityName: opportunityName ?? null,
+    });
+  }
 
-    if (existingDeal) {
-      const allowed = ALLOWED_TRANSITIONS[existingDeal.stage] ?? [];
-      if (!allowed.includes(stage)) {
-        return;
-      }
-      await this.dealRepo.update(existingDeal.id, {
-        stage,
-        probability: STAGE_PROBABILITY[stage],
-        stageHistory: [
-          ...existingDeal.stageHistory,
-          {
-            stage,
-            changedAt: new Date().toISOString(),
-            changedBy: sellerId,
-          },
-        ],
-      });
-    } else {
-      await this.dealRepo.create({
-        clientId,
-        sellerId,
-        stage,
-        amount: 0,
-        probability: STAGE_PROBABILITY[stage],
-        stageHistory: [],
-      });
-    }
+  private async syncPipelineForDeal(dealId: string, stage: PipelineStage, sellerId: string): Promise<void> {
+    const deal = await this.dealRepo.findById(dealId);
+    if (!deal) return;
+    const allowed = ALLOWED_TRANSITIONS[deal.stage] ?? [];
+    if (!allowed.includes(stage)) return;
+    await this.dealRepo.update(dealId, {
+      stage,
+      probability: STAGE_PROBABILITY[stage],
+      stageHistory: [
+        ...deal.stageHistory,
+        { stage, changedAt: new Date().toISOString(), changedBy: sellerId },
+      ],
+    });
   }
 
   private calculateQuality(input: CreateActivityDto): number {

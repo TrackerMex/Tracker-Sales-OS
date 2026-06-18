@@ -2,7 +2,7 @@ import {
   Entity, PrimaryGeneratedColumn, Column,
   CreateDateColumn, UpdateDateColumn, DeleteDateColumn,
 } from 'typeorm';
-import { ActivityType, ActivityResult } from '../../domain/entities/activity.entity';
+import { ActivityType, ActivityResult, ActivityHistoryEntry } from '../../domain/entities/activity.entity';
 
 @Entity('activities')
 export class ActivityTypeormEntity {
@@ -23,6 +23,8 @@ export class ActivityTypeormEntity {
   @Column({ type: 'int' }) points: number;
   @Column({ type: 'int' }) quality: number;
   @Column({ type: 'varchar', nullable: true }) stage: string | null;
+  @Column({ type: 'varchar', default: 'Pendiente' }) status: string;
+  @Column({ name: 'activity_history', type: 'jsonb', default: [] }) activityHistory: ActivityHistoryEntry[];
   @Column({ name: 'executed_at', type: 'timestamptz' }) executedAt: Date;
   @Column({ name: 'programmed_at', type: 'timestamptz', nullable: true }) programmedAt: Date | null;
   @Column({ name: 'captured_at', type: 'timestamptz' }) capturedAt: Date;

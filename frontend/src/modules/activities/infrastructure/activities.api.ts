@@ -14,4 +14,13 @@ export const activitiesApi = {
     params?: { page?: number; limit?: number; type?: string },
   ): Promise<PaginatedResponse<Activity>> =>
     api.get(`/activities/seller/${sellerId}`, { params }).then((r) => r.data),
+
+  getActivityById: (id: string): Promise<Activity> =>
+    api.get(`/activities/${id}`).then((r) => r.data),
+
+  getClientActivities: (clientId: string): Promise<Activity[]> =>
+    api.get(`/activities/client/${clientId}`).then((r) => r.data),
+
+  updateActivityStatus: (id: string, data: { newStatus: string; comment?: string }): Promise<Activity> =>
+    api.patch(`/activities/${id}/status`, data).then((r) => r.data),
 }

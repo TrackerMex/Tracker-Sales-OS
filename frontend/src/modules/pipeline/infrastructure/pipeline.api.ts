@@ -20,4 +20,7 @@ export const pipelineApi = {
 
   changeStage: (dealId: string, input: ChangeStageInput): Promise<Deal> =>
     api.patch<Deal>(`/deals/${dealId}/stage`, input).then((r) => r.data),
+
+  getClientDeals: (clientId: string, sellerId: string): Promise<Deal[]> =>
+    api.get<Deal[]>(`/pipeline/client/${clientId}/seller/${sellerId}/deals`).then((r) => r.data),
 }

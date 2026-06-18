@@ -29,6 +29,9 @@ export class DealTypeormEntity {
   @Column({ name: 'stage_history', type: 'jsonb', default: [] })
   stageHistory: StageHistoryEntry[];
 
+  @Column({ name: 'opportunity_name', type: 'varchar', length: 200, nullable: true })
+  opportunityName: string | null;
+
   @CreateDateColumn({ name: 'created_at' }) createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' }) updatedAt: Date;

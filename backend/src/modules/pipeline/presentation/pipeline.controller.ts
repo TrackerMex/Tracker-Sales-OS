@@ -17,6 +17,7 @@ import { CreateDealUseCase } from '../application/use-cases/create-deal.use-case
 import { GetPipelineBySellerUseCase } from '../application/use-cases/get-pipeline-by-seller.use-case';
 import { GetPipelineTeamUseCase } from '../application/use-cases/get-pipeline-team.use-case';
 import { ChangeDealStageUseCase } from '../application/use-cases/change-deal-stage.use-case';
+import { GetClientDealsUseCase } from '../application/use-cases/get-client-deals.use-case';
 import { CreateDealDto } from '../application/dtos/create-deal.dto';
 import { ChangeStageDtoBody } from '../application/dtos/change-stage.dto';
 import { AuditInterceptor } from '../infrastructure/interceptors/audit.interceptor';
@@ -30,6 +31,7 @@ export class PipelineController {
     private readonly createDeal: CreateDealUseCase,
     private readonly getPipelineBySeller: GetPipelineBySellerUseCase,
     private readonly getPipelineTeam: GetPipelineTeamUseCase,
+    private readonly getClientDealsUC: GetClientDealsUseCase,
   ) {}
 
   @Get('team')
@@ -51,6 +53,13 @@ export class PipelineController {
   @ApiOperation({ summary: 'Create a new deal' })
   create(@Body() dto: CreateDealDto) {
     return this.createDeal.execute(dto);
+  }
+
+  @Get('client/:clientId/seller/:sellerId/deals')
+  @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
+  @ApiOperation({ summary: 'Get all deals for a client-seller pair' })
+  getClientDeals(@Param('clientId') clientId: string, @Param('sellerId') sellerId: string) {
+    return this.getClientDealsUC.execute({ clientId, sellerId });
   }
 }
 

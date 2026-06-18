@@ -6,17 +6,18 @@
 
 ## Plan de la sesion
 
-Feature `04-clients` implementada y revisada.
+Feature `38-activity-lifecycle` completada.
 
 ## Decisiones tomadas
 
-- Se acepto `q` como filtro adicional para busqueda full-text de frontend.
-- Admin/Director pueden filtrar por `seller`; Seller queda restringido a su propio `sellerId`.
+- status = varchar default 'Pendiente' (no PG enum)
+- Opción A: 5 actividades del mismo cliente → 1 deal compartido; deal avanza manual en Kanban
+- changedBy del JWT, newStatus validado con @IsIn en DTO
 
 ## Bloqueantes
 
-_(issues o dudas que requieren input del usuario)_
+_(ninguno)_
 
 ## Proximos pasos
 
-Arrancar `05-activities` siguiendo `CHECKPOINTS.md` y `docs/conventions.md`.
+Commit de la feature y continuar con siguiente item del backlog.

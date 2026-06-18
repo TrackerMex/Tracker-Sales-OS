@@ -11,6 +11,7 @@ import { CreateDealUseCase } from './application/use-cases/create-deal.use-case'
 import { GetPipelineBySellerUseCase } from './application/use-cases/get-pipeline-by-seller.use-case';
 import { GetPipelineTeamUseCase } from './application/use-cases/get-pipeline-team.use-case';
 import { ChangeDealStageUseCase } from './application/use-cases/change-deal-stage.use-case';
+import { GetClientDealsUseCase } from './application/use-cases/get-client-deals.use-case';
 import {
   PipelineController,
   DealsController,
@@ -37,6 +38,7 @@ import { ClientsModule } from '../clients/clients.module';
     GetPipelineBySellerUseCase,
     GetPipelineTeamUseCase,
     ChangeDealStageUseCase,
+    GetClientDealsUseCase,
   ],
   exports: [DEAL_REPOSITORY, GetPipelineTeamUseCase],
 })

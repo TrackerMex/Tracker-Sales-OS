@@ -6,6 +6,7 @@ import { ACTIVITY_REPOSITORY } from './domain/repositories/activity.repository.i
 import { CreateActivityUseCase } from './application/use-cases/create-activity.use-case';
 import { GetDailyActivitiesUseCase } from './application/use-cases/get-daily-activities.use-case';
 import { GetSellerActivitiesUseCase } from './application/use-cases/get-seller-activities.use-case';
+import { UpdateActivityStatusUseCase } from './application/use-cases/update-activity-status.use-case';
 import { ActivitiesController } from './presentation/activities.controller';
 import { AuthModule } from '../auth/auth.module';
 import { PipelineModule } from '../pipeline/pipeline.module';
@@ -18,6 +19,7 @@ import { PipelineModule } from '../pipeline/pipeline.module';
     CreateActivityUseCase,
     GetDailyActivitiesUseCase,
     GetSellerActivitiesUseCase,
+    UpdateActivityStatusUseCase,
   ],
   exports: [ACTIVITY_REPOSITORY],
 })

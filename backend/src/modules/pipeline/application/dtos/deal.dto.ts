@@ -13,6 +13,7 @@ export class DealDto {
   amount: number;
   probability: number;
   stageHistory: StageHistoryEntry[];
+  opportunityName: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -35,6 +36,7 @@ export class DealDto {
     dto.amount = entity.amount;
     dto.probability = entity.probability;
     dto.stageHistory = entity.stageHistory;
+    dto.opportunityName = entity.opportunityName ?? null;
     dto.createdAt = entity.createdAt;
     dto.updatedAt = entity.updatedAt;
     dto.deletedAt = entity.deletedAt;

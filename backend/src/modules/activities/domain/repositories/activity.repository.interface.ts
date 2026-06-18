@@ -1,5 +1,5 @@
 import { IRepository } from '../../../../core/domain/repository.interface';
-import { ActivityEntity } from '../entities/activity.entity';
+import { ActivityEntity, ActivityHistoryEntry } from '../entities/activity.entity';
 
 export const ACTIVITY_REPOSITORY = 'ACTIVITY_REPOSITORY';
 
@@ -11,4 +11,6 @@ export interface IActivityRepository extends IRepository<ActivityEntity> {
     from: Date,
     to: Date,
   ): Promise<{ sellerId: string; day: string; points: number }[]>;
+  updateStatus(id: string, status: string, historyEntry: ActivityHistoryEntry): Promise<ActivityEntity>;
+  findByClientId(clientId: string): Promise<ActivityEntity[]>;
 }

@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { useDailyActivities } from "../../application/hooks/useDailyActivities"
 import { useCreateActivity } from "../../application/hooks/useCreateActivity"
 import { ActivityForm } from "../components/ActivityForm"
+import { ActivityHistoryModal } from "../components/ActivityHistoryModal"
 import type { CreateActivityInput } from "../../domain/activities.types"
 
 function getPointsBarColor(pct: number): string {
@@ -18,6 +19,7 @@ export function ActivitiesPage() {
   const taskTitle = (search as { taskTitle?: string }).taskTitle
   const taskId = (search as { taskId?: string }).taskId
   const [showForm, setShowForm] = useState(() => !!(clientId || taskId))
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null)
   const { data, isLoading } = useDailyActivities()
   const { mutate, isPending, error: createError, reset: resetCreate } = useCreateActivity()
 
@@ -106,10 +108,26 @@ export function ActivitiesPage() {
                 </div>
                 <p style={{ marginTop: 2, fontSize: 11, color: '#94A3B8' }}>Calidad: {activity.quality}%</p>
               </div>
+              <div className="flex flex-col items-end gap-1.5">
+                <span className={`tag ${activity.status === 'Completada' ? 'tag-green' : activity.status === 'En curso' ? 'tag-blue' : activity.status === 'Cancelada' ? '' : 'tag-yellow'}`}>
+                  {activity.status ?? 'Pendiente'}
+                </span>
+                <button
+                  className="btn-ghost"
+                  style={{ fontSize: 11, padding: '2px 8px' }}
+                  onClick={() => setSelectedActivityId(activity.id)}
+                >
+                  Ver historial
+                </button>
+              </div>
             </div>
           ))}
         </div>
       )}
+      <ActivityHistoryModal
+        activityId={selectedActivityId}
+        onClose={() => setSelectedActivityId(null)}
+      />
     </div>
   )
 }

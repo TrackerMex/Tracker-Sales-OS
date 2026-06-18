@@ -1,5 +1,15 @@
 import { BaseEntity } from '../../../../core/domain/base.entity';
 
+export type ActivityStatus = 'Pendiente' | 'En curso' | 'Completada' | 'Cancelada';
+
+export interface ActivityHistoryEntry {
+  changedAt: string;
+  oldStatus: string;
+  newStatus: string;
+  changedBy: string;
+  comment?: string;
+}
+
 export enum ActivityType {
   Chat = 'Chat',
   WhatsApp = 'WhatsApp',
@@ -71,6 +81,8 @@ export class ActivityEntity extends BaseEntity {
   points: number;
   quality: number;
   stage: string | null;
+  status: ActivityStatus;
+  activityHistory: ActivityHistoryEntry[];
   executedAt: Date;
   programmedAt: Date | null;
   capturedAt: Date;

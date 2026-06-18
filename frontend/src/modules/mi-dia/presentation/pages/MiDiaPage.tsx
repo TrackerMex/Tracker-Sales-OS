@@ -233,6 +233,8 @@ export function MiDiaPage() {
   }
 
   const taskList = tasks ?? [];
+  const pendingCount = taskList.filter((t) => t.status === 'Pendiente').length;
+  const completedCount = taskList.filter((t) => t.status === 'Completado').length;
   const semaph = SEMAPHORE[data.semaphore] ?? SEMAPHORE.ambar;
   const ptsPct =
     data.dailyPointsGoal > 0
@@ -335,6 +337,18 @@ export function MiDiaPage() {
             <span className="kv-sub">/{data.newProspectsGoal}</span>
           </div>
           <div className="ksb">Alimenta pipeline si vas bajo</div>
+        </div>
+        <div className="kpi-cell">
+          <div className="kl">Tareas hoy</div>
+          <div className="kv" style={{ color: metricColor(completedCount, taskList.length) }}>
+            {completedCount}
+            <span className="kv-sub">/{taskList.length}</span>
+          </div>
+          <div className="ksb">
+            <span style={{ color: pendingCount > 0 ? 'var(--tracker-warning)' : 'var(--tracker-text-secondary)' }}>
+              {pendingCount} pendiente{pendingCount !== 1 ? 's' : ''}
+            </span>
+          </div>
         </div>
       </div>
 

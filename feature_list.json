@@ -306,11 +306,11 @@
     "id": "28-bug-task-create-email",
     "name": "BUG: Crear tarea tipo Correo falla con 'No se pudo conectar'",
     "description": "Al guardar una tarea nueva con tipo=Correo, el frontend muestra 'No se pudo conectar. Tus datos siguen aquí, reintenta.' aunque los datos están completos. Funcionaba en la mañana del 16-Jun-2026, se rompió en la tarde.",
-    "status": "pending",
+    "status": "done",
     "priority": 28,
     "backend_modules": ["tasks"],
     "frontend_modules": ["tasks"],
-    "notes": "Origen: feedback cliente 16-Jun-2026 p.1. Prioridad crítica — bloquea flujo diario del vendedor. Investigar: (1) si el error es de red (timeout/502) o de validación (400/422); (2) si el enum TaskType en backend incluye 'Correo' o cambió; (3) si hay un deployment parcial entre mañana y tarde que introdujo regresión. Revisar logs backend en horario de falla. El texto 'Tus datos siguen aquí' viene del error handler del frontend — agregar logging de status HTTP y response body para diagnosticar."
+    "notes": "Origen: feedback cliente 16-Jun-2026 p.1. FIXED 2026-06-17 (commit cd18917). Causa raíz: date_trunc('minute', task.scheduled_at) raw SQL en findConflictingTask causaba QueryFailedError 500 en TODA creación de tarea (no solo 'Correo'). Fix: reemplazar date_trunc con rango JS minuteStart/minuteEnd usando propiedad TypeORM task.scheduledAt. El tipo varchar tasks.type nunca tuvo enum restriction."
   },
   {
     "id": "29-pipeline-kanban-scroll",
@@ -401,5 +401,15 @@
     "backend_modules": ["pipeline"],
     "frontend_modules": ["pipeline"],
     "notes": "Backend: añadir GET /api/pipeline/team (Admin/Director only) que llama findDetailedAllSellers() — variante de findDetailedBySellerId sin filtro de sellerId. También se puede reutilizar el endpoint existente pasando sellerId='all' con lógica condicional en el use-case, pero endpoint separado es más limpio. Frontend: (1) usePipeline acepta sellerIdOverride opcional; (2) PipelinePage detecta rol Admin/Director y muestra dropdown con sellers + opción 'Todos'; selección persiste en localStorage; (3) DealCard muestra badge de vendedor cuando está en modo equipo; (4) header muestra totalGross y forecast del conjunto visible. Sin tablas nuevas."
+  },
+  {
+    "id": "38-activity-lifecycle",
+    "name": "Ciclo de vida por actividad + historial individual",
+    "description": "Cada actividad registrada tiene status propio (Pendiente→En curso→Completada|Cancelada). Historial JSONB por actividad. Click en actividad muestra SOLO el historial de esa actividad. 5 actividades de un cliente comparten 1 deal (Opción A); deal avanza manual en Kanban.",
+    "status": "done",
+    "priority": 38,
+    "backend_modules": ["activities"],
+    "frontend_modules": ["activities"],
+    "notes": "Completada 2026-06-17. Review 19/19 PASS (progress/review_38-activity-lifecycle.md). DB: status (varchar, default Pendiente) + activity_history (JSONB, default []) — sin tablas nuevas. Transiciones: Pendiente→{En curso, Cancelada}, En curso→{Completada, Cancelada}. Terminales bloqueados en use-case y UI. changedBy del JWT (anti-spoofing). PATCH /api/activities/:id/status + GET /api/activities/:id + GET /api/activities/client/:clientId. Frontend: status badge en lista + ActivityHistoryModal por actividad individual. tsc backend+frontend exit 0."
   }
 ]

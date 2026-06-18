@@ -1,11 +1,20 @@
+import { useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { clientsApi } from "@/modules/clients/infrastructure/clients.api"
 import { activitiesApi } from "@/modules/activities/infrastructure/activities.api"
+import { ActivityHistoryModal } from "@/modules/activities/presentation/components/ActivityHistoryModal"
 import { useAppStore } from "@/shared/store/app.store"
 import { useChangeStage } from "../../application/hooks/useChangeStage"
 import type { Deal, PipelineStage } from "../../domain/pipeline.types"
 import type { Activity } from "@/modules/activities/domain/activities.types"
+
+const STATUS_CLASSES: Record<string, string> = {
+  Pendiente: "tag tag-yellow",
+  "En curso": "tag tag-blue",
+  Completada: "tag tag-green",
+  Cancelada: "tag",
+}
 
 interface Props {
   deal: Deal
@@ -48,6 +57,7 @@ export function ClientDetailPage({ deal, onBack }: Props) {
   const currentUser = useAppStore((s) => s.currentUser)
   const username = currentUser?.username ?? ""
   const changeStage = useChangeStage()
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null)
 
   const { data: client } = useQuery({
     queryKey: ["clients", deal.clientId],
@@ -55,14 +65,15 @@ export function ClientDetailPage({ deal, onBack }: Props) {
     enabled: !!deal.clientId,
   })
 
-  const { data: activitiesData } = useQuery({
-    queryKey: ["activities", "seller", deal.sellerId],
-    queryFn: () => activitiesApi.getSellerActivities(deal.sellerId, { limit: 50 }),
-    enabled: !!deal.sellerId,
+  const { data: dealActivities } = useQuery({
+    queryKey: ["activities", "client", deal.clientId, deal.sellerId],
+    queryFn: () => activitiesApi.getClientActivities(deal.clientId!),
+    enabled: !!deal.clientId,
   })
 
-  const activities: Activity[] = activitiesData?.data ?? []
-  const clientActivities = activities.filter((a) => a.clientId === deal.clientId)
+  const clientActivities: Activity[] = (dealActivities ?? []).filter(
+    (a) => a.sellerId === deal.sellerId,
+  )
 
   function handleStageChange(newStage: PipelineStage) {
     changeStage.mutate({
@@ -179,7 +190,7 @@ export function ClientDetailPage({ deal, onBack }: Props) {
               {clientActivities.map((activity) => (
                 <div key={activity.id} className="card" style={{ padding: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                    <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <p style={{ fontSize: 14, fontWeight: 700, color: '#002B49' }}>
                         {activity.type} · {activity.result}
                         {activity.stage && (
@@ -192,18 +203,30 @@ export function ClientDetailPage({ deal, onBack }: Props) {
                           </span>
                         )}
                       </p>
+                      <span className={STATUS_CLASSES[activity.status ?? 'Pendiente'] ?? 'tag'} style={{ alignSelf: 'flex-start' }}>
+                        {activity.status ?? 'Pendiente'}
+                      </span>
                       {activity.contactId && (
                         <p style={{ fontSize: 12, color: '#64748B' }}>
                           Contacto: {client?.contacts.find((c) => c.id === activity.contactId)?.name ?? activity.contactId}
                         </p>
                       )}
                     </div>
-                    <span style={{ fontSize: 11, color: '#94A3B8', flexShrink: 0 }}>
-                      {new Date(activity.executedAt).toLocaleDateString('es-MX')}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                      <span style={{ fontSize: 11, color: '#94A3B8' }}>
+                        {new Date(activity.executedAt).toLocaleDateString('es-MX')}
+                      </span>
+                      <button
+                        className="btn-ghost"
+                        style={{ fontSize: 11, padding: '3px 8px' }}
+                        onClick={() => setSelectedActivityId(activity.id)}
+                      >
+                        Ver historial
+                      </button>
+                    </div>
                   </div>
                   <p style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>
-                    Programada: N/A · Ejecutada: {formatDateTime(activity.executedAt)} · Capturada: {formatCaptured(activity.capturedAt)}
+                    Ejecutada: {formatDateTime(activity.executedAt)} · Capturada: {formatCaptured(activity.capturedAt)}
                   </p>
                   {activity.summary && (
                     <p style={{ fontSize: 12, color: '#334155', marginBottom: 2 }}>
@@ -235,6 +258,11 @@ export function ClientDetailPage({ deal, onBack }: Props) {
           )}
         </div>
       </div>
+
+      <ActivityHistoryModal
+        activityId={selectedActivityId}
+        onClose={() => setSelectedActivityId(null)}
+      />
     </div>
   )
 }

@@ -87,6 +87,21 @@ export class DealRepositoryImpl implements IDealsRepository {
     return entity ? this.toDomain(entity) : null;
   }
 
+  async findAllByClientAndSeller(clientId: string, sellerId: string): Promise<DealEntity[]> {
+    const data = await this.repo.find({
+      where: { clientId, sellerId } as FindOptionsWhere<DealTypeormEntity>,
+      order: { createdAt: 'ASC' },
+    });
+    return data.map((e) => this.toDomain(e));
+  }
+
+  async findByOpportunity(clientId: string, sellerId: string, opportunityName: string): Promise<DealEntity | null> {
+    const entity = await this.repo.findOne({
+      where: { clientId, sellerId, opportunityName } as FindOptionsWhere<DealTypeormEntity>,
+    });
+    return entity ? this.toDomain(entity) : null;
+  }
+
   async findDetailedBySellerId(sellerId: string): Promise<{
     deal: DealEntity;
     clientName: string;
@@ -258,6 +273,7 @@ export class DealRepositoryImpl implements IDealsRepository {
     return Object.assign(new DealEntity(), {
       ...entity,
       amount: Number(entity.amount),
+      opportunityName: entity.opportunityName ?? null,
     });
   }
 }

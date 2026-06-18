@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { ActivityEntity } from '../../domain/entities/activity.entity';
+import { ActivityEntity, ActivityHistoryEntry } from '../../domain/entities/activity.entity';
 import { IActivityRepository } from '../../domain/repositories/activity.repository.interface';
 import { ActivityTypeormEntity } from '../entities/activity.typeorm.entity';
 import { FindAllOptions } from '../../../../core/domain/repository.interface';
@@ -108,6 +108,23 @@ export class ActivityRepositoryImpl implements IActivityRepository {
       where: { sellerId } as FindOptionsWhere<ActivityTypeormEntity>,
       order: { executedAt: 'DESC' },
       take: limit,
+    });
+    return data.map((e) => this.toDomain(e));
+  }
+
+  async updateStatus(id: string, status: string, historyEntry: ActivityHistoryEntry): Promise<ActivityEntity> {
+    const existing = await this.repo.findOne({ where: { id } });
+    if (!existing) throw new Error('Activity not found');
+    existing.status = status;
+    existing.activityHistory = [...(existing.activityHistory ?? []), historyEntry];
+    const saved = await this.repo.save(existing);
+    return this.toDomain(saved);
+  }
+
+  async findByClientId(clientId: string): Promise<ActivityEntity[]> {
+    const data = await this.repo.find({
+      where: { clientId } as FindOptionsWhere<ActivityTypeormEntity>,
+      order: { executedAt: 'DESC' },
     });
     return data.map((e) => this.toDomain(e));
   }

@@ -8,6 +8,8 @@ export interface IDealsRepository extends IRepository<DealEntity> {
   findBySellerId(sellerId: string): Promise<DealEntity[]>;
   findByStage(stage: PipelineStage): Promise<DealEntity[]>;
   findByClientIdAndSellerId(clientId: string, sellerId: string): Promise<DealEntity | null>;
+  findAllByClientAndSeller(clientId: string, sellerId: string): Promise<DealEntity[]>;
+  findByOpportunity(clientId: string, sellerId: string, opportunityName: string): Promise<DealEntity | null>;
   findDetailedBySellerId(sellerId: string): Promise<{
     deal: DealEntity;
     clientName: string;

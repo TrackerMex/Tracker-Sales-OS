@@ -38,4 +38,5 @@ export class DealEntity extends BaseEntity {
   amount: number;
   probability: number;
   stageHistory: StageHistoryEntry[];
+  opportunityName: string | null;
 }

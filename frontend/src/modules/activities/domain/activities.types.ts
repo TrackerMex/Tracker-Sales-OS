@@ -1,6 +1,16 @@
 import type { ID } from "@/core/domain/types/common.types"
 import type { ActivityType, PipelineStage } from "@/shared/lib/constants"
 
+export type ActivityStatus = 'Pendiente' | 'En curso' | 'Completada' | 'Cancelada'
+
+export interface ActivityHistoryEntry {
+  changedAt: string
+  oldStatus: string
+  newStatus: string
+  changedBy: string
+  comment?: string
+}
+
 export type ActivityResult =
   | "Interesado"
   | "No contestó"
@@ -29,6 +39,8 @@ export interface Activity {
   quality: number
   stage?: string | null
   taskId?: string | null
+  status?: ActivityStatus
+  activityHistory?: ActivityHistoryEntry[]
   executedAt: string
   capturedAt: string
   delayMinutes: number
@@ -56,4 +68,5 @@ export interface CreateActivityInput {
   executedAt: string
   programmedAt?: string
   stage?: PipelineStage
+  opportunityName?: string
 }

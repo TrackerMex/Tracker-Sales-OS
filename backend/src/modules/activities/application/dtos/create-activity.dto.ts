@@ -23,4 +23,5 @@ export class CreateActivityDto {
   @ApiPropertyOptional() @IsOptional() @IsDateString() programmedAt?: string;
   @ApiPropertyOptional({ enum: PipelineStage }) @IsOptional() @IsEnum(PipelineStage) stage?: PipelineStage;
   @ApiPropertyOptional() @IsOptional() @IsUUID() taskId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() opportunityName?: string;
 }

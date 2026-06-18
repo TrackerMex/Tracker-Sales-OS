@@ -11,6 +11,7 @@ import { useApiFormErrors } from '@/shared/lib/api-errors'
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
 import { useTodayTasks } from "@/modules/tasks/application/hooks/useTodayTasks"
+import { useClientDeals } from "@/modules/pipeline/application/hooks/useClientDeals"
 
 const ACTIVITY_RESULTS: ActivityResult[] = [
   "Interesado",
@@ -78,10 +79,15 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
   const [executedAt, setExecutedAt] = useState(localNow)
   const [programmedAt, setProgrammedAt] = useState(localNow)
   const [internalTaskId, setInternalTaskId] = useState(taskId ?? "")
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState("")
+  const [newOpportunityName, setNewOpportunityName] = useState("")
 
   const { data: pipelineGrouped } = usePipeline(sellerId || null)
   const { data: todayTasks } = useTodayTasks()
   const pendingTasks = (todayTasks ?? []).filter((t) => t.status === 'Pendiente')
+  const { data: clientDeals } = useClientDeals(clientId || null, sellerId || null)
+  const isNewOpportunity = selectedOpportunityId === "__new__"
+  const selectedDeal = clientDeals?.find((d) => d.id === selectedOpportunityId) ?? null
 
   const currentDeal = pipelineGrouped && clientId
     ? Object.values(pipelineGrouped).flat().find((d) => d.clientId === clientId) ?? null
@@ -148,6 +154,8 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
     if (stage) input.stage = stage as PipelineStage
     if (internalTaskId) input.taskId = internalTaskId
     if (programmedAt) input.programmedAt = new Date(programmedAt).toISOString()
+    const resolvedOpportunity = isNewOpportunity ? newOpportunityName.trim() : selectedDeal?.opportunityName ?? undefined
+    if (resolvedOpportunity) input.opportunityName = resolvedOpportunity
     onSubmit(input)
   }
 
@@ -222,7 +230,13 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
           <select
             className={fieldErrors.clientId ? "input input-error" : "input"}
             value={clientId}
-            onChange={(e) => { setClientId(e.target.value); setContactId(""); clearField("clientId") }}
+            onChange={(e) => {
+              setClientId(e.target.value)
+              setContactId("")
+              setSelectedOpportunityId("")
+              setNewOpportunityName("")
+              clearField("clientId")
+            }}
             required={!isNonCommercial}
             {...fieldErrorProps("clientId", fieldErrors.clientId)}
           >
@@ -233,6 +247,40 @@ export function ActivityForm({ onSubmit, isLoading, programmedTask, submitError,
           </select>
           <FieldError name="clientId" message={fieldErrors.clientId} />
         </div>
+
+        {/* Opportunity selector */}
+        {clientId && !isNonCommercial && (
+          <div className="sm:col-span-2">
+            <label className="slabel">Oportunidad / Proyecto</label>
+            <select
+              className="input"
+              value={selectedOpportunityId}
+              onChange={(e) => {
+                setSelectedOpportunityId(e.target.value)
+                const deal = clientDeals?.find((d) => d.id === e.target.value)
+                if (deal && !stage) setStage(deal.stage)
+              }}
+            >
+              <option value="">Sin oportunidad vinculada (deal principal)</option>
+              {(clientDeals ?? []).map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.opportunityName ?? "Oportunidad principal"} — {d.stage}
+                </option>
+              ))}
+              <option value="__new__">+ Nueva oportunidad...</option>
+            </select>
+            {isNewOpportunity && (
+              <input
+                type="text"
+                className="input mt-2"
+                placeholder="Nombre de la nueva oportunidad (ej. Flotilla GPS, Proyecto Cámaras)"
+                value={newOpportunityName}
+                onChange={(e) => setNewOpportunityName(e.target.value)}
+                maxLength={200}
+              />
+            )}
+          </div>
+        )}
 
         {/* Contact dropdown */}
         <div>
