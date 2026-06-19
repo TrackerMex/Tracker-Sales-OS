@@ -33,6 +33,7 @@ import { ImportExportModule } from './modules/import-export/import-export.module
         password: config.get<string>('POSTGRES_PASSWORD'),
         database: config.get<string>('POSTGRES_DB', 'tracker_sales_os'),
         autoLoadEntities: true,
+        migrationsRun: true,
         synchronize:
           config.get<string>('TYPEORM_SYNCHRONIZE', 'false') === 'true',
         logging: config.get<string>('TYPEORM_LOGGING', 'false') === 'true',
