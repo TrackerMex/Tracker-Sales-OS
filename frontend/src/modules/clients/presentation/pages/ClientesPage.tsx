@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import type { FormEvent } from "react"
 import { toast } from "sonner"
 import { useQuery } from "@tanstack/react-query"
@@ -112,6 +112,10 @@ export function ClientesPage() {
   const [form, setForm] = useState<CreateClientInput>(() => emptyClientForm(currentUser?.sellerId))
 
   const [deleteTarget, setDeleteTarget] = useState<Client | null>(null)
+
+  useEffect(() => {
+    setView({ mode: "list" })
+  }, [currentUser?.id])
 
   const filters = useMemo(
     () => ({ q, limit: 50, cold: cold || undefined, incomplete: incomplete || undefined }),
