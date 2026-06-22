@@ -85,7 +85,7 @@ export class ClientRepositoryImpl implements IClientRepository {
       query
         .andWhere('client.createdAt < :coldBefore', { coldBefore: filters.coldBefore })
         .andWhere(
-          'NOT EXISTS (SELECT 1 FROM activities act WHERE act.client_id = client.id::text AND act.deleted_at IS NULL AND act.executed_at >= :coldBefore)',
+          'NOT EXISTS (SELECT 1 FROM activities act WHERE act.client_id = client.id AND act.deleted_at IS NULL AND act.executed_at >= :coldBefore)',
         );
     }
 
