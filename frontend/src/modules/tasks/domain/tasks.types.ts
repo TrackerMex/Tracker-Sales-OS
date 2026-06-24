@@ -14,6 +14,7 @@ export interface Task {
   isOverdue: boolean
   createdAt: string
   updatedAt: string
+  sellerName?: string
 }
 
 export interface CreateTaskInput {

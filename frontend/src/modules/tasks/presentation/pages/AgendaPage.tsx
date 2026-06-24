@@ -4,10 +4,14 @@ import { toast } from "sonner"
 import { useClients } from "@/modules/clients/application/hooks/useClients"
 import { useTodayTasks } from "../../application/hooks/useTodayTasks"
 import { useMonthTasks } from "../../application/hooks/useMonthTasks"
+import { useTeamMonthTasks } from "../../application/hooks/useTeamMonthTasks"
 import { useCreateTask } from "../../application/hooks/useCreateTask"
 import { useCompleteTask } from "../../application/hooks/useCompleteTask"
 import { useUpdateTask } from "../../application/hooks/useUpdateTask"
 import { useReactivateTask } from "../../application/hooks/useReactivateTask"
+import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
+import { useAppStore } from "@/shared/store/app.store"
+import { UserRole } from "@/core/domain/types/common.types"
 import { TaskCard } from "../components/TaskCard"
 import { CalendarView } from "../components/CalendarView"
 import { CreateTaskForm } from "../components/CreateTaskForm"
@@ -52,6 +56,16 @@ export function AgendaPage() {
 
   const [prefilledDate, setPrefilledDate] = useState<Date | undefined>()
 
+  const currentUser = useAppStore((s) => s.currentUser)
+  const isAdminOrDirector =
+    currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Director
+
+  const [selectedSeller, setSelectedSeller] = useState<string>(() => {
+    return localStorage.getItem('tasks_team_seller_filter') ?? 'all'
+  })
+
+  const { data: sellers = [] } = useSellers()
+
   const { data: tasks = [], isLoading } = useTodayTasks()
   const {
     mutate: createTask,
@@ -70,7 +84,24 @@ export function AgendaPage() {
   const { data: clientsData } = useClients({ limit: 200 })
   const clients = clientsData?.data ?? []
   const navigate = useNavigate()
-  const { data: monthTasks = [] } = useMonthTasks(calYear, calMonth)
+
+  const isTeamMode = isAdminOrDirector && selectedSeller === 'all'
+
+  const { data: monthTasksRaw = [] } = useMonthTasks(calYear, calMonth)
+  const { data: teamMonthTasksRaw = [] } = useTeamMonthTasks(
+    calYear,
+    calMonth,
+    isAdminOrDirector,
+  )
+
+  const sellerMap = Object.fromEntries(sellers.map((s) => [s.id, s.name]))
+
+  const enrichedTeamTasks = teamMonthTasksRaw.map((t) => ({
+    ...t,
+    sellerName: sellerMap[t.sellerId] ?? undefined,
+  }))
+
+  const monthTasks = isTeamMode ? enrichedTeamTasks : monthTasksRaw
 
   function handleToggleView(mode: "list" | "calendar") {
     setViewMode(mode)
@@ -176,6 +207,29 @@ export function AgendaPage() {
           Compromisos comerciales
         </h1>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {viewMode === "calendar" && isAdminOrDirector && (
+            <select
+              value={selectedSeller}
+              onChange={(e) => {
+                setSelectedSeller(e.target.value)
+                localStorage.setItem('tasks_team_seller_filter', e.target.value)
+              }}
+              style={{
+                fontSize: 13,
+                padding: '4px 8px',
+                border: '1px solid #E2E8F0',
+                borderRadius: 6,
+                backgroundColor: '#fff',
+                color: '#0F172A',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="all">Todos los vendedores</option>
+              {sellers.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          )}
           <div
             style={{
               display: "flex",

@@ -169,6 +169,7 @@ function TaskChip({ task, client, isDragging, onEdit }: TaskChipProps) {
     formatTime(task.scheduledAt),
     task.type ?? null,
     client?.name ?? null,
+    task.sellerName ?? null,
   ]
     .filter(Boolean)
     .join(" · ")
@@ -226,6 +227,11 @@ function TaskChip({ task, client, isDragging, onEdit }: TaskChipProps) {
             {task.type && (
               <span className={`tag ${tagClass}`} style={{ fontSize: 11 }}>
                 {task.type}
+              </span>
+            )}
+            {task.sellerName && (
+              <span className="tag tag-navy" style={{ fontSize: 11 }}>
+                {task.sellerName}
               </span>
             )}
             <span

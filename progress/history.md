@@ -1,5 +1,17 @@
 # History — Tracker Sales OS
 
+## 2026-06-24 — Feature 39: Calendario equipo para Admin/Director
+
+**Status**: done — tsc backend+frontend exit 0
+
+**Qué**: Admin y Director pueden ver la agenda de todo el equipo en vista Calendario. Dropdown "Todos los vendedores" aparece solo en vista Calendario para roles Admin/Director. Cada chip muestra nombre del vendedor. Seller solo ve el suyo.
+
+- Backend: `findMonthAllSellers` en repo (sin filtro sellerId), `GetTeamTasksUseCase`, `GET /api/tasks/team` (Admin/Director only) antes de `seller/:id/today` para evitar conflicto de rutas.
+- Frontend: `Task.sellerName?` opcional, `useTeamMonthTasks(year,month,enabled)`, enriquecimiento en AgendaPage con `sellerMap`, chipLabel incluye sellerName, HoverCard muestra badge vendedor.
+- Sin tablas nuevas, sin migraciones.
+
+---
+
 ## 2026-06-17 — Feature 38: Ciclo de vida por actividad + historial individual
 
 **Status**: done — Review 19/19 PASS (progress/review_38-activity-lifecycle.md)

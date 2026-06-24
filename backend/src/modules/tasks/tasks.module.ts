@@ -5,6 +5,7 @@ import { TaskRepositoryImpl } from './infrastructure/repositories/task.repositor
 import { TASK_REPOSITORY } from './domain/repositories/task.repository.interface';
 import { CreateTaskUseCase } from './application/use-cases/create-task.use-case';
 import { GetTodayTasksUseCase } from './application/use-cases/get-today-tasks.use-case';
+import { GetTeamTasksUseCase } from './application/use-cases/get-team-tasks.use-case';
 import { CompleteTaskUseCase } from './application/use-cases/complete-task.use-case';
 import { UpdateTaskUseCase } from './application/use-cases/update-task.use-case';
 import { ReactivateTaskUseCase } from './application/use-cases/reactivate-task.use-case';
@@ -18,6 +19,7 @@ import { AuthModule } from '../auth/auth.module';
     { provide: TASK_REPOSITORY, useClass: TaskRepositoryImpl },
     CreateTaskUseCase,
     GetTodayTasksUseCase,
+    GetTeamTasksUseCase,
     CompleteTaskUseCase,
     UpdateTaskUseCase,
     ReactivateTaskUseCase,

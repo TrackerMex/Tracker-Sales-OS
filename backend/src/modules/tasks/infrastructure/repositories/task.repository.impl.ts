@@ -70,6 +70,20 @@ export class TaskRepositoryImpl implements ITaskRepository {
     return data.map((e) => this.toDomain(e));
   }
 
+  async findMonthAllSellers(dateFrom: Date): Promise<TaskEntity[]> {
+    const startOfDay = new Date(dateFrom);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const data = await this.repo
+      .createQueryBuilder('task')
+      .where('task.scheduledAt >= :start', { start: startOfDay })
+      .andWhere('task.deletedAt IS NULL')
+      .orderBy('task.scheduledAt', 'ASC')
+      .getMany();
+
+    return data.map((e) => this.toDomain(e));
+  }
+
   async findOverdueBySeller(sellerId: string): Promise<TaskEntity[]> {
     const now = new Date();
 

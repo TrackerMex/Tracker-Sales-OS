@@ -11,6 +11,9 @@ export const tasksApi = {
   getMonthTasks: (sellerId: string, monthStart: string): Promise<Task[]> =>
     api.get<Task[]>(`/tasks/seller/${sellerId}/today`, { params: { date: monthStart } }).then((r) => r.data),
 
+  getMonthTeamTasks: (monthStart: string): Promise<Task[]> =>
+    api.get<Task[]>('/tasks/team', { params: { date: monthStart } }).then((r) => r.data),
+
   completeTask: (taskId: string, sellerId: string): Promise<Task> =>
     api.patch<Task>(`/tasks/${taskId}/complete`, { sellerId }).then((r) => r.data),
 

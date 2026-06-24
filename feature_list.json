@@ -411,5 +411,15 @@
     "backend_modules": ["activities"],
     "frontend_modules": ["activities"],
     "notes": "Completada 2026-06-17. Review 19/19 PASS (progress/review_38-activity-lifecycle.md). DB: status (varchar, default Pendiente) + activity_history (JSONB, default []) — sin tablas nuevas. Transiciones: Pendiente→{En curso, Cancelada}, En curso→{Completada, Cancelada}. Terminales bloqueados en use-case y UI. changedBy del JWT (anti-spoofing). PATCH /api/activities/:id/status + GET /api/activities/:id + GET /api/activities/client/:clientId. Frontend: status badge en lista + ActivityHistoryModal por actividad individual. tsc backend+frontend exit 0."
+  },
+  {
+    "id": "39-team-calendar",
+    "name": "Calendario equipo para Admin/Director",
+    "description": "Admin y Director pueden ver la agenda de todo su equipo en la vista Calendario. Selector 'Todos / Vendedor X' en AgendaPage. Cada chip del calendario muestra badge del vendedor. Seller sigue viendo solo el suyo.",
+    "status": "done",
+    "priority": 39,
+    "backend_modules": ["tasks"],
+    "frontend_modules": ["tasks"],
+    "notes": "Completada 2026-06-24. GET /api/tasks/team (Admin/Director only, ?date=YYYY-MM-01). ITaskRepository.findMonthAllSellers sin filtro sellerId. GetTeamTasksUseCase. Frontend: useTeamMonthTasks(year,month,enabled), sellerName? en Task type, enriquecimiento en AgendaPage con sellerMap, dropdown 'Todos los vendedores' solo en vista calendario para Admin/Director, chipLabel+HoverCard muestran sellerName. tsc backend+frontend exit 0."
   }
 ]

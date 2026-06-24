@@ -17,6 +17,7 @@ import { Roles } from '../../auth/presentation/decorators/roles.decorator';
 import { UserRole } from '../../auth/domain/entities/user.entity';
 import { CreateTaskUseCase } from '../application/use-cases/create-task.use-case';
 import { GetTodayTasksUseCase } from '../application/use-cases/get-today-tasks.use-case';
+import { GetTeamTasksUseCase } from '../application/use-cases/get-team-tasks.use-case';
 import { CompleteTaskUseCase } from '../application/use-cases/complete-task.use-case';
 import { UpdateTaskUseCase } from '../application/use-cases/update-task.use-case';
 import { ReactivateTaskUseCase } from '../application/use-cases/reactivate-task.use-case';
@@ -31,6 +32,7 @@ export class TasksController {
   constructor(
     private readonly createTask: CreateTaskUseCase,
     private readonly getTodayTasks: GetTodayTasksUseCase,
+    private readonly getTeamTasks: GetTeamTasksUseCase,
     private readonly completeTask: CompleteTaskUseCase,
     private readonly updateTask: UpdateTaskUseCase,
     private readonly reactivateTask: ReactivateTaskUseCase,
@@ -41,6 +43,13 @@ export class TasksController {
   @ApiOperation({ summary: 'Create a new task' })
   create(@Body() dto: CreateTaskDto) {
     return this.createTask.execute(dto);
+  }
+
+  @Get('team')
+  @Roles(UserRole.Admin, UserRole.Director)
+  @ApiOperation({ summary: 'Get all team tasks (Admin/Director only)' })
+  getTeam(@Query('date') date: string | undefined) {
+    return this.getTeamTasks.execute({ date });
   }
 
   @Get('seller/:id/today')
