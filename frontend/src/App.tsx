@@ -2,6 +2,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { rootRoute } from './routes/__root';
 import { indexRoute } from './routes/index';
 import { loginRoute } from './routes/login';
+import { laminaRoute } from './routes/lamina';
 import { appLayoutRoute } from './routes/_app';
 import { dashboardRoute } from './routes/_app/dashboard';
 import { miDiaRoute } from './routes/_app/mi-dia';
@@ -19,6 +20,7 @@ import { importExportRoute } from './routes/_app/import-export';
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
+  laminaRoute,
   appLayoutRoute.addChildren([
     dashboardRoute,
     miDiaRoute,

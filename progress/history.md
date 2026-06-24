@@ -1,5 +1,30 @@
 # History — Tracker Sales OS
 
+## 2026-06-24 — Feature 40 (revisión): Lámina standalone + fix auth sessionStorage
+
+**Status**: done — tsc frontend exit 0
+
+**Qué**: shareLink() ahora genera `/lamina?month=...` — ruta root-level sin sidebar que muestra solo el ExecutiveSlide. Fix completo de sessionStorage→localStorage en 5 archivos (axios.ts, index.tsx, dashboard.tsx, app.store.ts, _app.tsx).
+
+- `ExecutiveSlide.tsx` — componente extraído con helpers (buildAnalysis, money, Bar, AnalysisList, healthColor, LABEL_STYLE, LOSS_REASON_LABELS).
+- `LaminaPage.tsx` — página full-screen, no AppLayout, lee params de URL, renderiza ExecutiveSlide.
+- `routes/lamina.tsx` — ruta `/lamina` con beforeLoad propio (localStorage auth check) + validateSearch numérico.
+- `App.tsx` — laminaRoute registrado al root junto a loginRoute.
+- Login preserva URL original: `beforeLoad` guarda `?redirect=`, `useLogin` usa `router.history.push(redirect)`.
+
+---
+
+## 2026-06-24 — Feature 40: Reportes — compartir como hipervínculo
+
+**Status**: done — tsc frontend exit 0
+
+**Qué**: Botón "Compartir" en Reportes copia al clipboard la URL con filtros activos como query params. Al abrir el link, la página restaura automáticamente mes y metas.
+
+- `reportes.tsx`: `validateSearch` para `month`, `goalAmount`, `goalUnits`, `goalPerSeller` (parsea string→number desde URL).
+- `ReportsPage.tsx`: `useSearch({ strict: false })` leído una vez al mount; 4 `useState` priorizan search params → localStorage → defaults hardcoded. `shareLink()` con `URLSearchParams`, feedback idle/ok/fail. Sin cambios backend ni BD.
+
+---
+
 ## 2026-06-24 — Feature 39: Calendario equipo para Admin/Director
 
 **Status**: done — tsc backend+frontend exit 0

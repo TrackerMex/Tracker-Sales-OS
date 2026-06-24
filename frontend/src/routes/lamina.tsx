@@ -1,10 +1,10 @@
-import { createRoute } from '@tanstack/react-router';
-import { appLayoutRoute } from '../_app';
-import { ReportsPage } from '@/modules/reports/presentation/pages/ReportsPage';
+import { createRoute, redirect } from '@tanstack/react-router';
+import { rootRoute } from './__root';
+import { LaminaPage } from '../modules/reports/presentation/pages/LaminaPage';
 
-export const reportesRoute = createRoute({
-  getParentRoute: () => appLayoutRoute,
-  path: '/reportes',
+export const laminaRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/lamina',
   validateSearch: (search: Record<string, unknown>): {
     month?: string;
     goalAmount?: number;
@@ -22,5 +22,15 @@ export const reportesRoute = createRoute({
       : typeof search.goalPerSeller === 'string' && !isNaN(Number(search.goalPerSeller)) ? Number(search.goalPerSeller)
       : undefined,
   }),
-  component: ReportsPage,
+  beforeLoad: ({ location }) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      const redirectTo = location.pathname + location.search;
+      throw redirect({
+        to: '/login',
+        search: { redirect: redirectTo },
+      });
+    }
+  },
+  component: LaminaPage,
 });

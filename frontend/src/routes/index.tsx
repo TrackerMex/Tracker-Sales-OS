@@ -5,7 +5,7 @@ export const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   beforeLoad: () => {
-    const token = sessionStorage.getItem('accessToken');
+    const token = localStorage.getItem('accessToken');
     if (!token) throw redirect({ to: '/login' });
     throw redirect({ to: '/dashboard' });
   },

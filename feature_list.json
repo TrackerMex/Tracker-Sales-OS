@@ -421,5 +421,15 @@
     "backend_modules": ["tasks"],
     "frontend_modules": ["tasks"],
     "notes": "Completada 2026-06-24. GET /api/tasks/team (Admin/Director only, ?date=YYYY-MM-01). ITaskRepository.findMonthAllSellers sin filtro sellerId. GetTeamTasksUseCase. Frontend: useTeamMonthTasks(year,month,enabled), sellerName? en Task type, enriquecimiento en AgendaPage con sellerMap, dropdown 'Todos los vendedores' solo en vista calendario para Admin/Director, chipLabel+HoverCard muestran sellerName. tsc backend+frontend exit 0."
+  },
+  {
+    "id": "40-reports-share-link",
+    "name": "Reportes: compartir como hipervínculo",
+    "description": "Botón 'Compartir' en la página de Reportes que copia al clipboard la URL actual con los filtros activos (mes, metas) como query params. Al abrir el link, los filtros se restauran automáticamente.",
+    "status": "done",
+    "priority": 40,
+    "backend_modules": [],
+    "frontend_modules": ["reports"],
+    "notes": "Completada 2026-06-24. ExecutiveSlide extraído a componente shared. Ruta /lamina (root-level, fuera de _app) con auth propio + validateSearch. LaminaPage standalone sin sidebar/nav. shareLink() genera /lamina?month=...&goalAmount=...&goalUnits=...&goalPerSeller=... App.tsx registra laminaRoute al root. tsc frontend exit 0. Fix paralelo: migración sessionStorage→localStorage completa (axios.ts, index.tsx, dashboard.tsx, app.store.ts, _app.tsx). Login preserva URL original via ?redirect= + router.history.push."
   }
 ]
