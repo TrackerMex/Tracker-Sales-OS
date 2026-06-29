@@ -39,6 +39,9 @@ export interface Activity {
   quality: number
   stage?: string | null
   taskId?: string | null
+  clientName?: string | null
+  contactName?: string | null
+  taskTitle?: string | null
   status?: ActivityStatus
   activityHistory?: ActivityHistoryEntry[]
   executedAt: string

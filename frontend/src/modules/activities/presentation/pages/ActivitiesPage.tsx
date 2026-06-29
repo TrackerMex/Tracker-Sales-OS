@@ -1,6 +1,8 @@
 import { useState } from "react"
 import { useSearch } from "@tanstack/react-router"
 import { toast } from "sonner"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { OfficeIcon, User02Icon, CheckListIcon } from "@hugeicons/core-free-icons"
 import { useDailyActivities } from "../../application/hooks/useDailyActivities"
 import { useCreateActivity } from "../../application/hooks/useCreateActivity"
 import { ActivityForm } from "../components/ActivityForm"
@@ -97,6 +99,31 @@ export function ActivitiesPage() {
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#82bc00' }}>+{activity.points} pts</span>
               </div>
               <div className="flex-1 min-w-0">
+                {(activity.clientName || activity.contactName || activity.taskTitle) && (
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1.5">
+                    {activity.clientName && (
+                      <span className="inline-flex items-center gap-1" style={{ fontSize: 11, fontWeight: 600, color: '#002B49' }}>
+                        <HugeiconsIcon icon={OfficeIcon} size={12} color="#002B49" strokeWidth={1.8} />
+                        {activity.clientName}
+                      </span>
+                    )}
+                    {activity.contactName && (
+                      <span className="inline-flex items-center gap-1" style={{ fontSize: 11, color: '#475569' }}>
+                        <HugeiconsIcon icon={User02Icon} size={12} color="#64748B" strokeWidth={1.8} />
+                        {activity.contactName}
+                      </span>
+                    )}
+                    {activity.taskTitle && (
+                      <span
+                        className="inline-flex items-center gap-1 rounded px-1.5 py-0.5"
+                        style={{ fontSize: 10, background: '#EEF2FF', color: '#3730A3' }}
+                      >
+                        <HugeiconsIcon icon={CheckListIcon} size={11} color="#4338CA" strokeWidth={1.8} />
+                        {activity.taskTitle.length > 40 ? activity.taskTitle.slice(0, 40) + '…' : activity.taskTitle}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <p style={{ fontSize: 13, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {activity.summary.length > 80 ? activity.summary.slice(0, 80) + "..." : activity.summary}
                 </p>
