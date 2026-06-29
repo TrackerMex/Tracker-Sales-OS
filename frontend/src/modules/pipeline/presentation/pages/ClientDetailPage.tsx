@@ -34,6 +34,15 @@ export function ClientDetailPage({ deal, onBack }: Props) {
   const username = currentUser?.username ?? ""
   const changeStage = useChangeStage()
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+
+  function toggleExpand(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   const { data: client } = useQuery({
     queryKey: ["clients", deal.clientId],
@@ -226,9 +235,22 @@ export function ClientDetailPage({ deal, onBack }: Props) {
                       </span>
                     </div>
                     {activity.summary && (
-                      <p style={{ fontSize: 12, color: '#334155', marginBottom: 4, lineHeight: 1.4 }}>
-                        {activity.summary.length > 100 ? activity.summary.slice(0, 100) + '...' : activity.summary}
-                      </p>
+                      <div style={{ marginBottom: 4 }}>
+                        <p style={{ fontSize: 12, color: '#334155', lineHeight: 1.4 }}>
+                          {activity.summary.length > 120 && !expandedIds.has(activity.id)
+                            ? activity.summary.slice(0, 120) + '...'
+                            : activity.summary}
+                        </p>
+                        {activity.summary.length > 120 && (
+                          <button
+                            className="btn-ghost"
+                            style={{ fontSize: 10, padding: '1px 0', color: '#64748B' }}
+                            onClick={() => toggleExpand(activity.id)}
+                          >
+                            {expandedIds.has(activity.id) ? 'Ver menos' : 'Ver más'}
+                          </button>
+                        )}
+                      </div>
                     )}
                     {activity.nextStep && (
                       <p style={{ fontSize: 11, color: '#82bc00', fontWeight: 600 }}>
