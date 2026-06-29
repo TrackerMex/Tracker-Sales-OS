@@ -1,12 +1,30 @@
 # Tracker Sales OS — Status
 
-**Última actualización**: 2026-06-24
-**Features completadas**: 40/40
+**Última actualización**: 2026-06-28
+**Features completadas**: 40/40 + feature 41 (actividades enriquecidas)
 **En producción**: sí
 
 ---
 
 ## Features recientes (esta sesión)
+
+### Feature 41 — Lista de actividades: cliente, contacto y tarea vinculada
+
+**Backend:**
+- `ActivityEntity` — campos opcionales: `clientName`, `contactName`, `taskTitle`
+- `ActivityRepositoryImpl.findDailyBySeller` — QueryBuilder con LEFT JOIN a `clients`, `contacts`, `tasks` via `getRawAndEntities()`
+- `ActivityDto` — expone `clientName`, `contactName`, `taskTitle`
+
+**Frontend:**
+- `Activity` type — 3 campos opcionales añadidos
+- `ActivitiesPage` — cada card muestra:
+  - `[OfficeIcon] Nombre empresa` (navy #002B49, bold)
+  - `[User02Icon] Nombre contacto` (slate #475569)
+  - `[CheckListIcon] Título tarea` (pill índigo #EEF2FF/#3730A3)
+
+---
+
+## Features anteriores
 
 ### Feature 39 — Calendario equipo (Admin/Director)
 - `GET /api/tasks/team` (Admin/Director only)
