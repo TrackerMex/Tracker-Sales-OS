@@ -20,6 +20,9 @@ export class ActivityDto {
   status: string;
   activityHistory: ActivityHistoryEntry[];
   taskId: string | null;
+  clientName: string | null;
+  contactName: string | null;
+  taskTitle: string | null;
   executedAt: Date;
   programmedAt: Date | null;
   capturedAt: Date;
@@ -48,6 +51,9 @@ export class ActivityDto {
     dto.status = entity.status ?? 'Pendiente';
     dto.activityHistory = entity.activityHistory ?? [];
     dto.taskId = entity.taskId;
+    dto.clientName = entity.clientName ?? null;
+    dto.contactName = entity.contactName ?? null;
+    dto.taskTitle = entity.taskTitle ?? null;
     dto.executedAt = entity.executedAt;
     dto.programmedAt = entity.programmedAt;
     dto.capturedAt = entity.capturedAt;

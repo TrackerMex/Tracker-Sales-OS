@@ -55,14 +55,26 @@ export class ActivityRepositoryImpl implements IActivityRepository {
     const end = new Date(date);
     end.setUTCHours(23, 59, 59, 999);
 
-    const data = await this.repo
+    const { entities, raw } = await this.repo
       .createQueryBuilder('activity')
-      .where('activity.sellerId = :sellerId', { sellerId })
-      .andWhere('activity.executedAt >= :start AND activity.executedAt <= :end', { start, end })
-      .orderBy('activity.executedAt', 'DESC')
-      .getMany();
+      .addSelect('c.name', 'clientName')
+      .addSelect('ct.name', 'contactName')
+      .addSelect('t.title', 'taskTitle')
+      .leftJoin('clients', 'c', 'c.id = activity.client_id AND c.deleted_at IS NULL')
+      .leftJoin('contacts', 'ct', 'ct.id::text = activity.contact_id AND ct.deleted_at IS NULL')
+      .leftJoin('tasks', 't', 't.id::text = activity.task_id AND t.deleted_at IS NULL')
+      .where('activity.seller_id = :sellerId', { sellerId })
+      .andWhere('activity.executed_at >= :start AND activity.executed_at <= :end', { start, end })
+      .orderBy('activity.executed_at', 'DESC')
+      .getRawAndEntities();
 
-    return data.map((e) => this.toDomain(e));
+    return entities.map((entity, i) =>
+      Object.assign(this.toDomain(entity), {
+        clientName: (raw[i].clientName as string | null) ?? null,
+        contactName: (raw[i].contactName as string | null) ?? null,
+        taskTitle: (raw[i].taskTitle as string | null) ?? null,
+      }),
+    );
   }
 
   async sumDailyPoints(sellerId: string, date: Date): Promise<number> {
