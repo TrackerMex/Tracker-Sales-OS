@@ -1,5 +1,48 @@
 # History — Tracker Sales OS
 
+## 2026-07-01 — Feature 44: Eliminar tarea (Agenda)
+
+**Status**: done — Review Líder 12/12 PASS — tsc backend+frontend exit 0
+
+**Qué**: Agenda solo tenía Editar y Completar/Reactivar en `TaskCard`. Se agrega acción "Eliminar" con confirmación (`AlertDialog`, acción irreversible), soft-delete real en backend.
+
+- Backend: `DeleteTaskUseCase` (mismo ownership check que `update`/`complete`/`reactivate`: `task.sellerId !== input.sellerId` → `ForbiddenException`), `DELETE /api/tasks/:id` (roles Admin/Director/Seller, `sellerId` en body), registrado en `tasks.module.ts`. `softDelete` reutilizado tal cual de `TaskRepositoryImpl` (ya existía vía `IRepository`), sin tocar ese archivo. Sin tablas/columnas nuevas.
+- Frontend: `tasksApi.deleteTask` (axios `delete` con `{data:{sellerId}}`), `useDeleteTask` (calco de `useReactivateTask`), botón "Eliminar" + `AlertDialog` en `TaskCard.tsx` (visible en Pendiente y Completada, fuera del condicional de status, sin romper Editar/Completar/Reactivar), `AgendaPage.handleDelete` con toast + invalidate.
+- `mi-dia/**` no tocado (`MiDiaPage.tsx` solo importa la constante `TYPE_TAG`, no el componente).
+- `progress/impl_44-task-delete.md`.
+
+**Iteración (mismo día, via `/impeccable`)**: íconos HugeIcons agregados a `TaskCard.tsx` — `OfficeIcon` (cliente), `User02Icon` (contacto), `CheckListIcon` (badge de tipo), `PencilEdit02Icon`/`CheckmarkCircle02Icon`/`ArrowReloadHorizontalIcon`/`Delete02Icon` en los 4 botones de acción (Editar/Completar/Reactivar/Eliminar), reemplazando el SVG inline de Editar. Mismo patrón ya establecido en `MiDiaPage.tsx`/`ActivitiesPage.tsx` (feature 42). Sin cambios de comportamiento ni layout. `progress/impl_44-task-delete-icons.md`. tsc frontend exit 0.
+
+---
+
+## 2026-07-01 — Feature 43: Mi Día — confirmación y feedback al completar tarea
+
+**Status**: done — Review Líder 6/6 PASS — tsc frontend exit 0
+
+**Qué**: El botón "Completar" en Mi Día ejecutaba la mutación directo al click, sin confirmación ni feedback ni navegación posterior. Ahora iguala el comportamiento de Agenda: `AlertDialog` de confirmación (mismo texto que `TaskCard.tsx`), `toast.success`/`toast.error`, y navega a `/actividades/nueva` con `clientId`/`taskTitle`/`taskId` tras completar (mismo patrón que `AgendaPage.handleComplete`).
+
+- `MiDiaPage.tsx`: nueva función `handleCompleteTask(task)`; botón envuelto en `AlertDialog` con `AlertDialogTrigger asChild` conservando `disabled`/`aria-busy`/`aria-label`.
+- Sin cambios backend — `CompleteTaskUseCase` ya validaba `ForbiddenException` por sellerId (feature 06).
+- Decisión de alcance tomada vía `AskUserQuestion` (usuario eligió "Confirmación + feedback" sobre las opciones parciales).
+- `progress/impl_43-mi-dia-task-completion-validation.md`.
+
+---
+
+## 2026-07-01 — Feature 42: Mi Día — cliente, contacto y tipo de actividad en el listado de tareas
+
+**Status**: done — Review Líder 6/6 PASS — tsc frontend exit 0
+
+**Qué**: En "Agenda de hoy y pendientes" (MiDiaPage), cada tarea ahora muestra nombre de cliente, nombre de contacto y badge del tipo de actividad (task.type), reusando el mismo color-mapping que ya tenía TaskCard en Agenda.
+
+- `TaskCard.tsx`: `TYPE_TAG` (mapa tipo→clase de tag) pasó de privado a exportado.
+- `MiDiaPage.tsx`: `useClients({limit:200})` + resolución de client/contact por id dentro del `task-item` (mismo patrón que `AgendaPage.tsx`); bloque nuevo condicional (no imprime null/undefined si faltan datos).
+- Sin cambios backend. No se agregaron botones de Editar/Reactivar — solo texto/badges informativos; botón "Completar" intacto.
+- `progress/impl_42-mi-dia-task-enrichment.md`.
+
+**Iteración (mismo día)**: agregados íconos hugeicons a los 3 elementos — `OfficeIcon` (cliente), `User02Icon` (contacto), `CheckListIcon` en el badge de tipo (`color="currentColor"`, hereda color de la variante `.tag-*`). Mismo patrón visual que `ActivitiesPage.tsx` (feature 41). tsc frontend exit 0.
+
+---
+
 ## 2026-06-24 — Feature 40 (revisión): Lámina standalone + fix auth sessionStorage
 
 **Status**: done — tsc frontend exit 0

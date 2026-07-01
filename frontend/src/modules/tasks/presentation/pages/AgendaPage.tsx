@@ -9,6 +9,7 @@ import { useCreateTask } from "../../application/hooks/useCreateTask"
 import { useCompleteTask } from "../../application/hooks/useCompleteTask"
 import { useUpdateTask } from "../../application/hooks/useUpdateTask"
 import { useReactivateTask } from "../../application/hooks/useReactivateTask"
+import { useDeleteTask } from "../../application/hooks/useDeleteTask"
 import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
 import { useAppStore } from "@/shared/store/app.store"
 import { UserRole } from "@/core/domain/types/common.types"
@@ -81,6 +82,7 @@ export function AgendaPage() {
     reset: resetUpdateTask,
   } = useUpdateTask()
   const { mutate: reactivateTask } = useReactivateTask()
+  const { mutate: deleteTask } = useDeleteTask()
   const { data: clientsData } = useClients({ limit: 200 })
   const clients = clientsData?.data ?? []
   const navigate = useNavigate()
@@ -197,6 +199,13 @@ export function AgendaPage() {
     reactivateTask(taskId, {
       onSuccess: () => toast.success("Tarea reactivada"),
       onError: () => toast.error("No se pudo reactivar la tarea"),
+    })
+  }
+
+  function handleDelete(taskId: string) {
+    deleteTask(taskId, {
+      onSuccess: () => toast.success("Tarea eliminada"),
+      onError: () => toast.error("No se pudo eliminar la tarea"),
     })
   }
 
@@ -339,6 +348,7 @@ export function AgendaPage() {
                     setEditingTask(t)
                   }}
                   onReactivate={handleReactivate}
+                  onDelete={handleDelete}
                 />
               )
             })}

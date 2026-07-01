@@ -9,6 +9,7 @@ import { GetTeamTasksUseCase } from './application/use-cases/get-team-tasks.use-
 import { CompleteTaskUseCase } from './application/use-cases/complete-task.use-case';
 import { UpdateTaskUseCase } from './application/use-cases/update-task.use-case';
 import { ReactivateTaskUseCase } from './application/use-cases/reactivate-task.use-case';
+import { DeleteTaskUseCase } from './application/use-cases/delete-task.use-case';
 import { TasksController } from './presentation/tasks.controller';
 import { AuthModule } from '../auth/auth.module';
 
@@ -23,6 +24,7 @@ import { AuthModule } from '../auth/auth.module';
     CompleteTaskUseCase,
     UpdateTaskUseCase,
     ReactivateTaskUseCase,
+    DeleteTaskUseCase,
   ],
   exports: [TASK_REPOSITORY],
 })

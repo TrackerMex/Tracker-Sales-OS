@@ -431,5 +431,35 @@
     "backend_modules": [],
     "frontend_modules": ["reports"],
     "notes": "Completada 2026-06-24. ExecutiveSlide extraído a componente shared. Ruta /lamina (root-level, fuera de _app) con auth propio + validateSearch. LaminaPage standalone sin sidebar/nav. shareLink() genera /lamina?month=...&goalAmount=...&goalUnits=...&goalPerSeller=... App.tsx registra laminaRoute al root. tsc frontend exit 0. Fix paralelo: migración sessionStorage→localStorage completa (axios.ts, index.tsx, dashboard.tsx, app.store.ts, _app.tsx). Login preserva URL original via ?redirect= + router.history.push."
+  },
+  {
+    "id": "42-mi-dia-task-enrichment",
+    "name": "Mi Día: cliente, contacto y tipo de actividad en el listado de tareas",
+    "description": "En la sección 'Agenda de hoy y pendientes' de Mi Día, cada tarea debe mostrar el nombre del cliente, el contacto y el tipo de actividad (el mismo 'type' que se elige en el select del formulario de tarea), igual que ya lo muestra TaskCard en Agenda.",
+    "status": "done",
+    "priority": 42,
+    "backend_modules": [],
+    "frontend_modules": ["mi-dia"],
+    "notes": "Completada 2026-07-01. Review Líder 6/6 PASS (progress/impl_42-mi-dia-task-enrichment.md). Solo frontend, sin backend. TaskCard.tsx exporta TYPE_TAG (antes privado). MiDiaPage.tsx: useClients({limit:200}) + resolución client/contact por id (mismo patrón que AgendaPage.tsx) dentro del bloque task-item existente; bloque nuevo gateado por (client||contact||typeTagClass), cada sub-elemento con su propio guard — no se imprime null/undefined. Sin botones de Editar/Reactivar agregados; botón 'Completar' intacto. tsc frontend exit 0. Iteración 2026-07-01: íconos hugeicons agregados (OfficeIcon cliente, User02Icon contacto, CheckListIcon badge tipo con currentColor), mismo patrón que ActivitiesPage.tsx (feature 41). tsc frontend exit 0."
+  },
+  {
+    "id": "43-mi-dia-complete-task-validation",
+    "name": "Mi Día: confirmación y feedback al completar tarea",
+    "description": "El botón 'Completar' en la lista de tareas de Mi Día ejecuta la mutación directo al click, sin diálogo de confirmación ni feedback de éxito/error, y sin navegar a registrar la actividad derivada. Agregar el mismo comportamiento que ya existe en Agenda (TaskCard.tsx + AgendaPage.handleComplete): diálogo de confirmación (acción irreversible), toast de éxito/error, y navegación a /actividades/nueva con clientId/taskTitle/taskId tras completar.",
+    "status": "done",
+    "priority": 43,
+    "backend_modules": [],
+    "frontend_modules": ["mi-dia"],
+    "notes": "Completada 2026-07-01. Review Líder 6/6 PASS (progress/impl_43-mi-dia-task-completion-validation.md). Origen: pedido usuario, decisión vía AskUserQuestion (opción 'Confirmación + feedback', igualar AgendaPage). Solo frontend. MiDiaPage.tsx: botón Completar envuelto en AlertDialog (mismo texto que TaskCard.tsx), handleCompleteTask con toast.success/error + navigate a /actividades/nueva con clientId/taskTitle/taskId (mismo patrón que AgendaPage.handleComplete). disabled/aria-busy conservados, condición de visibilidad del botón sin cambios. Sin backend, sin tests. tsc frontend exit 0."
+  },
+  {
+    "id": "44-task-delete",
+    "name": "Eliminar tarea",
+    "description": "Agregar acción de eliminar tarea en Agenda (TaskCard), junto a Editar y Reactivar/Completar. Soft-delete backend (deletedAt ya existe en IRepository/BaseEntity, mismo patrón que delete-client.use-case.ts). Confirmación con AlertDialog (acción irreversible) + toast de éxito/error, igual que el resto de acciones de TaskCard.",
+    "status": "done",
+    "priority": 44,
+    "backend_modules": ["tasks"],
+    "frontend_modules": ["tasks"],
+    "notes": "Completada 2026-07-01. Review Líder 12/12 PASS (progress/impl_44-task-delete.md). Backend: DeleteTaskUseCase (mismo check de ownership que reactivate/update/complete: task.sellerId !== input.sellerId -> Forbidden), DELETE /api/tasks/:id (body sellerId, igual convención que PATCH), softDelete reutilizado sin tocar TaskRepositoryImpl. Frontend: tasksApi.deleteTask (axios delete con {data:{sellerId}}), useDeleteTask hook (calco de useReactivateTask), botón 'Eliminar' + AlertDialog en TaskCard.tsx (visible en Pendiente y Completada, fuera del condicional de status), wiring en AgendaPage.handleDelete (toast + invalidate). mi-dia/** no tocado (solo importa TYPE_TAG, no el componente). tsc backend+frontend exit 0. Iteración 2026-07-01 (via /impeccable): íconos HugeIcons agregados a TaskCard.tsx (OfficeIcon cliente, User02Icon contacto, CheckListIcon badge tipo, PencilEdit02Icon/CheckmarkCircle02Icon/ArrowReloadHorizontalIcon/Delete02Icon en botones Editar/Completar/Reactivar/Eliminar), mismo patrón que MiDiaPage.tsx/ActivitiesPage.tsx (feature 42). progress/impl_44-task-delete-icons.md. tsc frontend exit 0."
   }
 ]

@@ -22,4 +22,7 @@ export const tasksApi = {
 
   reactivateTask: (taskId: string, sellerId: string): Promise<Task> =>
     api.patch<Task>(`/tasks/${taskId}/reactivate`, { sellerId }).then((r) => r.data),
+
+  deleteTask: (taskId: string, sellerId: string): Promise<void> =>
+    api.delete(`/tasks/${taskId}`, { data: { sellerId } }).then(() => undefined),
 }

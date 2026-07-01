@@ -335,3 +335,45 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [ ] El mensaje de error incluye la información del conflicto (fecha, hora, título de la tarea existente)
 - [ ] La UI permite al usuario corregir el horario y reintentar sin recargar la página
 - [ ] `tsc --noEmit` sin errores en frontend
+
+---
+
+## 42-mi-dia-task-enrichment
+
+- [x] Cada tarea en "Agenda de hoy y pendientes" (MiDiaPage) muestra el nombre del cliente (`task.clientId` resuelto vía `useClients`) cuando existe
+- [x] Cada tarea muestra el nombre del contacto (`task.contactId` resuelto dentro de `client.contacts`) cuando existe
+- [x] Cada tarea muestra el tipo de actividad (`task.type`) como badge, con el mismo color-mapping que `TaskCard.tsx` (TYPE_TAG)
+- [x] Tareas sin cliente/contacto/type asignado no rompen el render (campos opcionales, sin mostrar "undefined"/"null")
+- [x] No se agregan botones de Editar/Reactivar en Mi Día (fuera de alcance) — solo se añade texto/badges informativos, se conserva el botón "Completar" existente
+- [x] `tsc --noEmit` sin errores en frontend
+
+---
+
+## 43-mi-dia-complete-task-validation
+
+- [x] El botón "Completar" en MiDiaPage abre un `AlertDialog` de confirmación ("¿Completar esta tarea?", acción irreversible) antes de ejecutar la mutación, igual que `TaskCard.tsx`
+- [x] Al confirmar y tener éxito: `toast.success` + navega a `/actividades/nueva` con `clientId` (si `completedTask.clientId` existe), `taskTitle` (si `task.title` existe) y `taskId`, igual que `AgendaPage.handleComplete`
+- [x] Al fallar la mutación: `toast.error` con mensaje amigable, sin romper la pantalla ni perder el estado de la lista
+- [x] El estado `disabled`/`aria-busy` durante la mutación (`isThisTaskPending`) se conserva
+- [x] No se modifica el backend (`CompleteTaskUseCase` ya valida `ForbiddenException` si `sellerId` no coincide — sin cambios ahí)
+- [x] `tsc --noEmit` sin errores en frontend
+
+---
+
+## 44-task-delete
+
+**Backend — tasks (eliminar tarea):**
+- [x] `DeleteTaskUseCase` valida que la tarea existe (`NotFoundException` si no) y que `task.sellerId === input.sellerId` (`ForbiddenException` si no, mismo criterio que `update`/`complete`/`reactivate`)
+- [x] `DeleteTaskUseCase` llama `taskRepo.softDelete(taskId)` (ya implementado genéricamente en `TaskRepositoryImpl`, sin cambios ahí)
+- [x] `DELETE /api/tasks/:id` (roles Admin/Director/Seller, mismo patrón que los demás endpoints) recibe `sellerId` en el body y delega al use-case
+- [x] `tasks.module.ts` registra `DeleteTaskUseCase` como provider
+- [x] Sin tablas/columnas nuevas
+- [x] `tsc --noEmit` sin errores en backend
+
+**Frontend — tasks (botón Eliminar en TaskCard):**
+- [x] `tasksApi.deleteTask(taskId, sellerId)` en `tasks.api.ts` (DELETE con body `{sellerId}`, mismo estilo que `reactivateTask`)
+- [x] `useDeleteTask` hook (mismo patrón que `useReactivateTask`: invalida `['tasks']` en `onSuccess`)
+- [x] `TaskCard.tsx` agrega botón "Eliminar" junto a Editar/Completar/Reactivar, con `AlertDialog` de confirmación (acción irreversible) — no usa `confirm()`/`alert()` del browser
+- [x] `AgendaPage.handleDelete` llama la mutación con `toast.success`/`toast.error`
+- [x] No rompe las acciones existentes (Editar, Completar, Reactivar) ni el layout de `TaskCard`
+- [x] `tsc --noEmit` sin errores en frontend

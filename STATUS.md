@@ -1,12 +1,24 @@
 # Tracker Sales OS — Status
 
-**Última actualización**: 2026-06-28
-**Features completadas**: 40/40 + feature 41 (actividades enriquecidas)
+**Última actualización**: 2026-07-01
+**Features completadas**: 40/40 + feature 41 (actividades enriquecidas) + feature 42 (Mi Día enriquecido) + feature 43 (Mi Día: confirmar completar)
 **En producción**: sí
 
 ---
 
 ## Features recientes (esta sesión)
+
+### Feature 43 — Mi Día: confirmación y feedback al completar tarea
+
+- Botón "Completar" ahora pide confirmación (`AlertDialog`, mismo texto que Agenda) antes de ejecutar
+- `toast.success`/`toast.error` + navega a `/actividades/nueva` con clientId/taskTitle/taskId tras completar
+- Solo frontend, sin cambios backend
+
+### Feature 42 — Mi Día: cliente, contacto y tipo de actividad en el listado de tareas
+
+- `TaskCard.tsx`: `TYPE_TAG` exportado (antes privado)
+- `MiDiaPage.tsx`: cada tarea de "Agenda de hoy y pendientes" muestra nombre de cliente, contacto y badge de tipo (mismo patrón de resolución que `AgendaPage.tsx` vía `useClients`)
+- Solo frontend, sin cambios backend. Sin botones nuevos (Editar/Reactivar) — botón "Completar" intacto
 
 ### Feature 41 — Lista de actividades: cliente, contacto y tarea vinculada
 

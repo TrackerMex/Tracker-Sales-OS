@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Patch,
+  Delete,
   Param,
   Query,
   UseGuards,
@@ -21,6 +22,7 @@ import { GetTeamTasksUseCase } from '../application/use-cases/get-team-tasks.use
 import { CompleteTaskUseCase } from '../application/use-cases/complete-task.use-case';
 import { UpdateTaskUseCase } from '../application/use-cases/update-task.use-case';
 import { ReactivateTaskUseCase } from '../application/use-cases/reactivate-task.use-case';
+import { DeleteTaskUseCase } from '../application/use-cases/delete-task.use-case';
 import { CreateTaskDto } from '../application/dtos/create-task.dto';
 import { UpdateTaskDto } from '../application/dtos/update-task.dto';
 
@@ -36,6 +38,7 @@ export class TasksController {
     private readonly completeTask: CompleteTaskUseCase,
     private readonly updateTask: UpdateTaskUseCase,
     private readonly reactivateTask: ReactivateTaskUseCase,
+    private readonly deleteTask: DeleteTaskUseCase,
   ) {}
 
   @Post()
@@ -89,5 +92,12 @@ export class TasksController {
   @ApiOperation({ summary: 'Reactivate a completed task' })
   reactivate(@Param('id') taskId: string, @Body('sellerId') sellerId: string) {
     return this.reactivateTask.execute({ taskId, sellerId });
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
+  @ApiOperation({ summary: 'Delete a task' })
+  delete(@Param('id') taskId: string, @Body('sellerId') sellerId: string) {
+    return this.deleteTask.execute({ taskId, sellerId });
   }
 }

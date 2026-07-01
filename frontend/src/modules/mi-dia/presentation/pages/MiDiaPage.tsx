@@ -1,11 +1,28 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
 import { useAppStore } from '@/shared/store/app.store';
 import { UserRole } from '@/core/domain/types/common.types';
 import { useSellers } from '@/modules/equipo/application/hooks/useSellers';
+import { useClients } from '@/modules/clients/application/hooks/useClients';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useMiDia } from '../../application/hooks/useMiDia';
 import { useTodayTasks } from '../../../tasks/application/hooks/useTodayTasks';
 import { useCompleteTask } from '../../../tasks/application/hooks/useCompleteTask';
+import { TYPE_TAG } from '../../../tasks/presentation/components/TaskCard';
+import type { Task } from '../../../tasks/domain/tasks.types';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { OfficeIcon, User02Icon, CheckListIcon } from '@hugeicons/core-free-icons';
 
 type Semaphore = 'verde' | 'ambar' | 'rojo' | 'morado';
 type AlertVariant = 'danger' | 'warning' | 'purple' | 'success';
@@ -198,6 +215,8 @@ export function MiDiaPage() {
   const { data, isLoading, isError, refetch } = useMiDia(activeSellerId);
   const { data: tasks, isError: tasksError } = useTodayTasks(activeSellerId);
   const { mutate: completeTask, isPending: isCompleting, variables: completingTaskId } = useCompleteTask();
+  const { data: clientsData } = useClients({ limit: 200 });
+  const clients = clientsData?.data ?? [];
 
   if (isAdminOrDirector && !selectedSeller) {
     return <SellerPicker onSelect={(id, name) => setSelectedSeller({ id, name })} />;
@@ -230,6 +249,23 @@ export function MiDiaPage() {
         </div>
       </div>
     );
+  }
+
+  function handleCompleteTask(task: Task) {
+    completeTask(task.id, {
+      onSuccess: (completedTask) => {
+        toast.success('Tarea completada');
+        void navigate({
+          to: '/actividades/nueva',
+          search: {
+            ...(completedTask.clientId ? { clientId: completedTask.clientId } : {}),
+            ...(task.title ? { taskTitle: task.title } : {}),
+            taskId: task.id,
+          },
+        });
+      },
+      onError: () => toast.error('No se pudo completar la tarea'),
+    });
   }
 
   const taskList = tasks ?? [];
@@ -412,6 +448,9 @@ export function MiDiaPage() {
                   ]
                     .filter(Boolean)
                     .join(' ');
+                  const client = clients.find((c) => c.id === task.clientId);
+                  const contact = client?.contacts.find((c) => c.id === task.contactId);
+                  const typeTagClass = task.type ? (TYPE_TAG[task.type] ?? 'tag-gray') : null;
                   return (
                     <div key={task.id} className={cls}>
                       <div className="flex-1 min-w-0">
@@ -419,20 +458,59 @@ export function MiDiaPage() {
                           <p className="ti-title">{task.title}</p>
                           {isOverdue && <span className="tag tag-red">Vencida</span>}
                         </div>
+                        {(client || contact || typeTagClass) && (
+                          <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                            {client && (
+                              <span className="inline-flex items-center gap-1 text-[12px] font-semibold" style={{ color: '#334155' }}>
+                                <HugeiconsIcon icon={OfficeIcon} size={12} color="#334155" strokeWidth={1.8} />
+                                {client.name}
+                              </span>
+                            )}
+                            {contact && (
+                              <span className="inline-flex items-center gap-1 text-[11px]" style={{ color: 'var(--tracker-text-secondary)' }}>
+                                <HugeiconsIcon icon={User02Icon} size={11} color="#64748B" strokeWidth={1.8} />
+                                {contact.name}
+                              </span>
+                            )}
+                            {typeTagClass && (
+                              <span className={`tag ${typeTagClass} inline-flex items-center gap-1`}>
+                                <HugeiconsIcon icon={CheckListIcon} size={11} color="currentColor" strokeWidth={1.8} />
+                                {task.type}
+                              </span>
+                            )}
+                          </div>
+                        )}
                         {task.scheduledAt && (
                           <p className="ti-time">{formatTime(task.scheduledAt)}</p>
                         )}
                       </div>
                       {task.status === 'Pendiente' && !isAdminOrDirector && (
-                        <button
-                          className="btn-green btn-sm"
-                          onClick={() => completeTask(task.id)}
-                          disabled={isThisTaskPending}
-                          aria-label={`Completar: ${task.title}`}
-                          aria-busy={isThisTaskPending}
-                        >
-                          {isThisTaskPending ? '...' : 'Completar'}
-                        </button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              className="btn-green btn-sm"
+                              disabled={isThisTaskPending}
+                              aria-label={`Completar: ${task.title}`}
+                              aria-busy={isThisTaskPending}
+                            >
+                              {isThisTaskPending ? '...' : 'Completar'}
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Completar esta tarea?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Se marcará como completada y se abrirá el registro de actividad. Esta acción no se puede deshacer.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleCompleteTask(task)}>
+                                Sí, completar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       )}
                     </div>
                   );
