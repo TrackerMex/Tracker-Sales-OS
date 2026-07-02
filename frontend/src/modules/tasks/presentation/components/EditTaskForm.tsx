@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react'
-import { useClients } from '../../../clients/application/hooks/useClients'
+import { useState } from 'react'
 import type { Task, UpdateTaskInput } from '../../domain/tasks.types'
+import type { Client } from '../../../clients/domain/clients.types'
 import { useApiFormErrors } from '@/shared/lib/api-errors'
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
+import { ClientCombobox } from '@/shared/components/forms/ClientCombobox'
 
 const TASK_TYPES = [
   'Chat',
@@ -43,11 +44,10 @@ interface EditTaskFormProps {
 }
 
 export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error }: EditTaskFormProps) {
-  const { data: clientsData } = useClients({ limit: 200 })
-  const clients = clientsData?.data ?? []
   const { summary: errorSummary, fieldErrors, clearField, formRef } = useApiFormErrors(error)
 
   const [clientId, setClientId] = useState(task.clientId ?? '')
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [type, setType] = useState(task.type ?? 'Llamada')
   const [contactId, setContactId] = useState(task.contactId ?? '')
   const [objective, setObjective] = useState(task.title)
@@ -55,7 +55,6 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
   const [time, setTime] = useState(toTimeInput(task.scheduledAt))
   const [description, setDescription] = useState(task.description ?? '')
 
-  const selectedClient = useMemo(() => clients.find((c) => c.id === clientId), [clients, clientId])
   const contacts = selectedClient?.contacts ?? []
   const showOutlookReminder = OUTLOOK_TYPES.has(type)
 
@@ -94,17 +93,20 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
           <FormErrorSummary error={errorSummary} />
 
           <div>
-            <select
+            <ClientCombobox
               value={clientId}
-              onChange={(e) => { setClientId(e.target.value); setContactId(''); clearField('clientId') }}
-              className={fieldErrors.clientId ? 'input input-error' : 'input'}
-              {...fieldErrorProps('clientId', fieldErrors.clientId)}
-            >
-              <option value="">Sin cliente / prospecto nuevo</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              onSelect={(client) => {
+                const changed = (client?.id ?? '') !== clientId
+                setClientId(client?.id ?? '')
+                setSelectedClient(client)
+                if (changed) setContactId('')
+                clearField('clientId')
+              }}
+              onResolve={(client) => setSelectedClient(client)}
+              initialLabel={task.clientName}
+              placeholder="Sin cliente / prospecto nuevo"
+              error={!!fieldErrors.clientId}
+            />
             <FieldError name="clientId" message={fieldErrors.clientId} />
           </div>
 

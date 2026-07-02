@@ -256,6 +256,7 @@ export function MiDiaPage() {
           to: '/actividades/nueva',
           search: {
             ...(completedTask.clientId ? { clientId: completedTask.clientId } : {}),
+            ...(completedTask.clientName ? { clientName: completedTask.clientName } : {}),
             ...(task.title ? { taskTitle: task.title } : {}),
             taskId: task.id,
           },

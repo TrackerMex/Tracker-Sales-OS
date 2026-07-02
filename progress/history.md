@@ -1,5 +1,21 @@
 # History — Tracker Sales OS
 
+## 2026-07-02 — Feature 48: Combobox buscable de clientes (paginado/server-side)
+
+**Status**: done — Review 1 FAILED (regresión real) → fix-pass → Review 2 PASSED — tsc frontend exit 0
+
+**Qué**: Los 4 formularios que seleccionan cliente (`CreateTaskForm`, `EditTaskForm`, `ActivityForm`, `SalesPage`) usaban `useClients({limit:100-200})` + `<select>` nativo — el cliente deseado desaparecía silenciosamente del selector si el catálogo superaba ese límite. Reemplazado por `ClientCombobox` (Popover+Command/cmdk) con debounce 300ms sobre `GET /api/clients?q=...` (backend ya soportaba `q`/`page`/`limit`, sin cambios backend).
+
+- Setup: `cmdk` agregado a dependencies (autorizado previamente). `frontend/src/components/ui/popover.tsx` y `command.tsx` nuevos (patrón shadcn del repo, import unificado `radix-ui`, `Search01Icon` de hugeicons).
+- `frontend/src/shared/components/forms/ClientCombobox.tsx`: componente reutilizable `{value, onSelect, initialLabel?, onResolve?, placeholder?, disabled?, error?, id?}`.
+- 4 call sites migrados, cada uno reemplaza su `useClients({limit:N})`+`<select>` por el combobox, preservando validación/campos derivados (contactos, nombre, tipo de cliente).
+- **Review 1 (FAILED)**: `selectedClient` arrancaba en `null` en `EditTaskForm`/`ActivityForm`, dejando el selector de Contacto deshabilitado/vacío al montar con cliente ya asignado (mismo hueco que antes existía si el cliente no estaba en los primeros 100-200, pero ahora siempre presente al inicio).
+- **Fix post-review**: nuevo prop `onResolve` en `ClientCombobox` — query puntual `useClients({q: initialLabel, limit:5}, {enabled})` que resuelve el `Client` completo por nombre una sola vez (useRef) y lo entrega sin disparar `onSelect`. Threading de `clientName` (ya existente en `Task`/`Deal` desde features 47/19) desde `AgendaPage`/`MiDiaPage`/`ClientDetailPage` → route search `actividades.nueva.tsx` → `ActivitiesPage` → `ActivityForm` (`initialClientLabel`). Guard agregado: reseleccionar el mismo cliente ya no resetea `contactId`.
+- Caveat restante (aceptado): si el nombre conocido no matchea ningún resultado de búsqueda (cliente renombrado/borrado), el selector de Contacto queda deshabilitado hasta que el usuario reabra el combobox y reelija — sin backend `GET /clients/:id` no es resoluble 100% desde frontend.
+- `progress/impl_48-client-picker-combobox.md`.
+
+---
+
 ## 2026-07-01 — Feature 44: Eliminar tarea (Agenda)
 
 **Status**: done — Review Líder 12/12 PASS — tsc backend+frontend exit 0

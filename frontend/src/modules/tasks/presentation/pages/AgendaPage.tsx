@@ -159,6 +159,7 @@ export function AgendaPage() {
             ...(completedTask.clientId
               ? { clientId: completedTask.clientId }
               : {}),
+            ...(completedTask.clientName ? { clientName: completedTask.clientName } : {}),
             ...(task?.title ? { taskTitle: task.title } : {}),
             taskId: taskId,
           },

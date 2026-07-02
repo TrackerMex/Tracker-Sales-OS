@@ -458,19 +458,21 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 ## 48-client-picker-combobox
 
 **Setup (una sola vez, consultar con el usuario antes de instalar dependencia):**
-- [ ] `cmdk` agregado como dependencia npm en `frontend/package.json` (requiere aprobacion explicita antes de instalar — regla AGENTS.md)
-- [ ] `frontend/src/components/ui/command.tsx` y `frontend/src/components/ui/popover.tsx` (shadcn) generados/agregados
+- [x] `cmdk` agregado como dependencia npm en `frontend/package.json` (requiere aprobacion explicita antes de instalar — regla AGENTS.md)
+- [x] `frontend/src/components/ui/command.tsx` y `frontend/src/components/ui/popover.tsx` (shadcn) generados/agregados
 
 **Componente reutilizable:**
-- [ ] Combobox buscable (Popover + Command) que recibe `value`/`onChange` de un `clientId` y hace debounce (~300ms) sobre el input de busqueda antes de consultar `GET /api/clients?q=...`
-- [ ] Usa `useClients({ q, limit: <chico, ej 20> })` (el hook y el backend ya soportan `q`/`page`/`limit` via `ClientFilters`/`GetClientsQueryDto` — sin cambios backend)
-- [ ] Muestra loading state mientras busca, empty state si no hay resultados, y el cliente ya seleccionado visible aunque no este en los resultados de la busqueda actual (fetch individual por id si hace falta, o mantener el nombre ya conocido en estado local)
-- [ ] Accesible por teclado (navegacion con flechas + enter, propio de shadcn Command)
+- [x] Combobox buscable (Popover + Command) que recibe `value`/`onChange` de un `clientId` y hace debounce (~300ms) sobre el input de busqueda antes de consultar `GET /api/clients?q=...`
+- [x] Usa `useClients({ q, limit: <chico, ej 20> })` (el hook y el backend ya soportan `q`/`page`/`limit` via `ClientFilters`/`GetClientsQueryDto` — sin cambios backend)
+- [x] Muestra loading state mientras busca, empty state si no hay resultados, y el cliente ya seleccionado visible aunque no este en los resultados de la busqueda actual (fetch individual por id si hace falta, o mantener el nombre ya conocido en estado local)
+- [x] Accesible por teclado (navegacion con flechas + enter, propio de shadcn Command)
 
 **Migracion de los 4 call sites (cada uno reemplaza `useClients({limit:N})` + su `.map()`/`<select>` o lista local por el combobox):**
-- [ ] `frontend/src/modules/tasks/presentation/components/CreateTaskForm.tsx`
-- [ ] `frontend/src/modules/tasks/presentation/components/EditTaskForm.tsx`
-- [ ] `frontend/src/modules/activities/presentation/components/ActivityForm.tsx`
-- [ ] `frontend/src/modules/sales/presentation/pages/SalesPage.tsx`
-- [ ] Ningun formulario pierde funcionalidad existente (validacion, valor inicial al editar, limpiar seleccion si aplica)
-- [ ] `tsc --noEmit` sin errores en frontend
+- [x] `frontend/src/modules/tasks/presentation/components/CreateTaskForm.tsx`
+- [x] `frontend/src/modules/tasks/presentation/components/EditTaskForm.tsx`
+- [x] `frontend/src/modules/activities/presentation/components/ActivityForm.tsx`
+- [x] `frontend/src/modules/sales/presentation/pages/SalesPage.tsx`
+- [x] Ningun formulario pierde funcionalidad existente (validacion, valor inicial al editar, limpiar seleccion si aplica)
+- [x] `tsc --noEmit` sin errores en frontend
+
+**Reviewer**: Review 1 FAILED — `selectedClient` arrancaba en `null` en `EditTaskForm`/`ActivityForm`, selector de Contacto deshabilitado/vacio al montar con cliente ya asignado. Fix-pass agrego prop `onResolve` a `ClientCombobox` (resuelve el `Client` completo por nombre via query puntual, una sola vez) + threading de `clientName` desde `AgendaPage`/`MiDiaPage`/`ClientDetailPage` hasta `ActivityForm`. Review 2 PASSED — 16/16 hallazgos verificados linea por linea, `tsc`/`eslint` limpios, sin cambios en backend/tests. Caveat aceptado: si el nombre conocido no matchea ningun resultado de busqueda (cliente renombrado/borrado), el selector de Contacto queda deshabilitado hasta reseleccion manual — no resoluble 100% sin `GET /clients/:id` en backend (fuera de alcance).

@@ -4,12 +4,12 @@ import { useAppStore } from '@/shared/store/app.store';
 import { useCreateSale } from '../../application/hooks/useCreateSale';
 import { useSales } from '../../application/hooks/useSales';
 import { useDeleteSale } from '../../application/hooks/useDeleteSale';
-import { useClients } from '../../../clients/application/hooks/useClients';
 import type { CreateSaleInput, PaymentMethod, SaleSource, Sale } from '../../domain/sales.types';
 import { UserRole } from '@/core/domain/types/common.types';
 import { useApiFormErrors } from '@/shared/lib/api-errors';
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary';
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError';
+import { ClientCombobox } from '@/shared/components/forms/ClientCombobox';
 import { EditSaleModal } from '../components/EditSaleModal';
 import {
   Dialog,
@@ -82,7 +82,6 @@ export function SalesPage() {
   const dirErrors = useApiFormErrors(createDirSale.error);
   const atcErrors = useApiFormErrors(createAtcSale.error);
 
-  const { data: clientsData } = useClients({ limit: 200 });
   const { data, isLoading: loadingList, isError } = useSales(
     !isAdminOrDirector ? { sellerId } : {},
   );
@@ -196,28 +195,17 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1">Cliente</label>
-              <select
-                className={sellerErrors.fieldErrors.clientId ? 'input input-error' : 'input'}
+              <ClientCombobox
                 value={sellerClientId}
-                onChange={(e) => {
-                  const client = clientsData?.data.find((c) => c.id === e.target.value);
-                  setSellerClientId(e.target.value);
+                onSelect={(client) => {
+                  setSellerClientId(client?.id ?? '');
                   setSellerClientName(client?.name ?? '');
-                  setSellerClientType(
-                    client?.type === 'Nuevo' ? 'Nuevo' : 'Existente',
-                  );
+                  setSellerClientType(client?.type === 'Nuevo' ? 'Nuevo' : 'Existente');
                   sellerErrors.clearField('clientId');
                 }}
-                required
-                {...fieldErrorProps('clientId', sellerErrors.fieldErrors.clientId)}
-              >
-                <option value="">Seleccionar cliente</option>
-                {clientsData?.data.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Seleccionar cliente"
+                error={!!sellerErrors.fieldErrors.clientId}
+              />
               <FieldError name="clientId" message={sellerErrors.fieldErrors.clientId} />
             </div>
 
