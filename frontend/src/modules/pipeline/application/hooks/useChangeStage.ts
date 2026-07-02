@@ -15,6 +15,8 @@ export const useChangeStage = () => {
       pipelineApi.changeStage(dealId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['client-deals'] });
     },
   });
 };

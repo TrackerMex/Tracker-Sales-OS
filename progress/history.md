@@ -727,3 +727,13 @@ Batch 2:
 - Reviewer independiente: 16/16 PASS, sin regresiones, sin N+1, cast de tipos verificado contra schema real.
 - Incidente de proceso (detectado por el Reviewer, corregido por el Lider): el Implementer genero un backend/CHECKPOINTS.md suelto por cwd incorrecto. Al corregirlo, un primer intento con awk/gsub corrompio marcas [x] en secciones historicas no relacionadas (features 05-27) por scoping erroneo — detectado antes de guardar via git diff, revertido con git checkout HEAD (el usuario ya habia commiteado feature 46 como c0586d7, HEAD limpio) y reaplicado solo el bloque de la seccion 47.
 - Con esto se cierran los 3 fixes del plan de auditoria de bugs 2026-07-01 (features 45, 46, 47).
+
+## 2026-07-02 — Fix: sync client.stage <-> deal.stage (tab Clientes vs Pipeline)
+
+- Bug reportado por el usuario: en detalle de cliente (tab Clientes), el card "Actualizar stage" solo escribia clients.stage; el Kanban del pipeline lee deals.stage (entidad separada) y nunca reflejaba el cambio. Tampoco existia sync inverso (drag en Kanban no actualizaba clients.stage).
+- Diseño: deals.stage = fuente de verdad del pipeline; clients.stage = copia denormalizada sincronizada.
+- Backend: ChangeDealStageUseCase inyecta CLIENT_REPOSITORY y tras mover el deal sincroniza clients.stage (guard clientId). Sin cambios de module (PipelineModule ya importa ClientsModule).
+- Frontend: pipeline.types.ts exporta ALLOWED_TRANSITIONS (espejo del backend). ClientesPage detalle: con deal, los botones mueven el deal via changeStage (historial + reglas de transicion, botones no permitidos deshabilitados); sin deal, comportamiento previo (updateClient). useChangeStage invalida clients/client-deals; useUpdateClient invalida pipeline.
+- Verificacion: tsc --noEmit limpio en backend y frontend. Sin specs afectados (no existe spec de ChangeDealStageUseCase).
+- Riesgos documentados: cliente con multiples deals solo mueve el mas reciente; escritura deal+client no transaccional.
+- Detalle: progress/impl_fix_client_stage_sync.md. Implementado por subagente Implementer, diff verificado por el Lider.
