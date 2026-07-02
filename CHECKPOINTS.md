@@ -422,3 +422,32 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 **Fuera de alcance / limitaciones conocidas**:
 - Sin acceso directo a la DB de prod real — no se pudo verificar su estado de antemano. Mitigado con idempotencia total; recomendado hacer backup de prod antes del primer deploy con `TYPEORM_MIGRATIONS_RUN=true`.
 - `progress/seed_test_users.sql` quedo en evidencia como desactualizado (usa columna `password` en vez de `password_hash` — la mayoria de sus INSERTs fallan silenciosamente). No es parte de esta feature, pendiente de fix aparte si se sigue usando para QA manual.
+
+
+---
+
+## 47-hardening-menor
+
+**Backend — B6 (defensivo, update() sin 500 en id inexistente):**
+- [x] `TaskRepositoryImpl.update()` lanza `NotFoundException` si `findOne` no encuentra el id, en vez de `Object.assign(existing!, ...)`
+- [x] `ActivityRepositoryImpl.update()` mismo fix
+- [x] Ningun use-case actual cambia de comportamiento (los 3 callers de `taskRepo.update()` ya validan con `findById` antes) — confirmado con `git diff` vacio en complete-task/update-task/reactivate-task use-cases
+- [x] `tsc --noEmit` sin errores en backend
+
+**Backend — B7 (TaskDto enriquecido con clientName/contactName):**
+- [x] `TaskEntity` (domain) gana `clientName?: string | null` y `contactName?: string | null` (mismo patron que `ActivityEntity`)
+- [x] `TaskDto` gana `clientName: string | null` y `contactName: string | null`, poblados en `fromEntity`
+- [x] `TaskRepositoryImpl.findTodayBySeller` y `findMonthAllSellers` usan `leftJoin` a `clients`/`contacts` + `getRawAndEntities` para traer `clientName`/`contactName` en la misma query (mismo patron que `ActivityRepositoryImpl.findDailyBySeller`), sin N+1. Cast `::text` necesario porque `tasks.client_id`/`contact_id` son `varchar` (no `uuid` como en activities) — verificado contra `task.typeorm.entity.ts`
+- [x] `tsc --noEmit` sin errores en backend
+
+**Frontend — B7 (dejar de resolver client-side con lista de 200):**
+- [x] `Task` (tasks.types.ts) gana `clientName?: string | null` y `contactName?: string | null`
+- [x] `AgendaPage.tsx` vista lista: `TaskCard` recibe `clientName={task.clientName}` / `contactName={task.contactName}` directo del task, sin `clients.find(...)`
+- [x] `AgendaPage.tsx` ya no llama `useClients({ limit: 200 })` — sin otro consumidor de esa lista en el archivo
+- [x] `CalendarView.tsx`: los 3 bloques que hacian `clients.find(...)` usan `task.clientName` directo; prop `clients: Client[]` retirado de las 8 interfaces anidadas (MonthView, MonthDayCell, WeekView, WeekDayColumn, DayView, DayHourRow, TaskChip)
+- [x] `MiDiaPage.tsx`: usa `task.clientName`/`task.contactName` directo, ya no hace `clients.find(...)` ni llama `useClients({ limit: 200 })`
+- [x] `CreateTaskForm.tsx` NO se toco — confirmado `git diff` vacio, sigue con su propio `useClients({ limit: 200 })` para el dropdown
+- [x] `TaskCard.tsx` sin cambios de firma — confirmado `git diff` vacio
+- [x] `tsc --noEmit` sin errores en frontend
+
+**Reviewer**: 16/16 criterios PASSED (progress/impl_47-hardening-menor.md). Verifico cast `::text`, ausencia de N+1, cadena completa de props retirados en CalendarView, y que MiDiaPage no perdio ningun campo del objeto Client/Contact mas alla del nombre. Hallazgo de proceso (no de codigo): el Implementer genero un `backend/CHECKPOINTS.md` suelto por error de cwd — eliminado, contenido consolidado aqui.

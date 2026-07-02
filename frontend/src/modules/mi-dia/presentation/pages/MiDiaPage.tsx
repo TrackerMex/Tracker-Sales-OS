@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { useAppStore } from '@/shared/store/app.store';
 import { UserRole } from '@/core/domain/types/common.types';
 import { useSellers } from '@/modules/equipo/application/hooks/useSellers';
-import { useClients } from '@/modules/clients/application/hooks/useClients';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -215,8 +214,6 @@ export function MiDiaPage() {
   const { data, isLoading, isError, refetch } = useMiDia(activeSellerId);
   const { data: tasks, isError: tasksError } = useTodayTasks(activeSellerId);
   const { mutate: completeTask, isPending: isCompleting, variables: completingTaskId } = useCompleteTask();
-  const { data: clientsData } = useClients({ limit: 200 });
-  const clients = clientsData?.data ?? [];
 
   if (isAdminOrDirector && !selectedSeller) {
     return <SellerPicker onSelect={(id, name) => setSelectedSeller({ id, name })} />;
@@ -448,8 +445,8 @@ export function MiDiaPage() {
                   ]
                     .filter(Boolean)
                     .join(' ');
-                  const client = clients.find((c) => c.id === task.clientId);
-                  const contact = client?.contacts.find((c) => c.id === task.contactId);
+                  const clientName = task.clientName ?? null;
+                  const contactName = task.contactName ?? null;
                   const typeTagClass = task.type ? (TYPE_TAG[task.type] ?? 'tag-gray') : null;
                   return (
                     <div key={task.id} className={cls}>
@@ -458,18 +455,18 @@ export function MiDiaPage() {
                           <p className="ti-title">{task.title}</p>
                           {isOverdue && <span className="tag tag-red">Vencida</span>}
                         </div>
-                        {(client || contact || typeTagClass) && (
+                        {(clientName || contactName || typeTagClass) && (
                           <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                            {client && (
+                            {clientName && (
                               <span className="inline-flex items-center gap-1 text-[12px] font-semibold" style={{ color: '#334155' }}>
                                 <HugeiconsIcon icon={OfficeIcon} size={12} color="#334155" strokeWidth={1.8} />
-                                {client.name}
+                                {clientName}
                               </span>
                             )}
-                            {contact && (
+                            {contactName && (
                               <span className="inline-flex items-center gap-1 text-[11px]" style={{ color: 'var(--tracker-text-secondary)' }}>
                                 <HugeiconsIcon icon={User02Icon} size={11} color="#64748B" strokeWidth={1.8} />
-                                {contact.name}
+                                {contactName}
                               </span>
                             )}
                             {typeTagClass && (

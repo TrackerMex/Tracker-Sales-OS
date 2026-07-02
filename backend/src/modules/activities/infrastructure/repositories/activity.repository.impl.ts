@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import {
@@ -50,8 +50,9 @@ export class ActivityRepositoryImpl implements IActivityRepository {
     entity: Partial<ActivityEntity>,
   ): Promise<ActivityEntity> {
     const existing = await this.repo.findOne({ where: { id } });
-    Object.assign(existing!, entity);
-    const saved = await this.repo.save(existing!);
+    if (!existing) throw new NotFoundException(`Activity ${id} not found`);
+    Object.assign(existing, entity);
+    const saved = await this.repo.save(existing);
     return this.toDomain(saved);
   }
 

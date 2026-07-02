@@ -702,3 +702,12 @@ Batch 2:
 - Docs actualizados: docs/verification.md (flujo de migraciones + regla de migracion obligatoria por entidad nueva + gotcha de restart), docs/conventions.md (path real de migraciones).
 - Detalle: progress/impl_46-schema-migrations-reconcile.md.
 - Pendiente del plan de bugs: Fix 3 (47-hardening-menor, B6+B7).
+
+## 2026-07-02 — Feature 47: FIX hardening menor (B6+B7)
+
+- Origen: auditoria de bugs del Lider, aprobada por el usuario como "Fix 3" (ultimo del plan). Delegado a Implementer + Reviewer independiente (flujo normal, ambos tocan modules/).
+- B6 defensivo: TaskRepositoryImpl.update() y ActivityRepositoryImpl.update() lanzan NotFoundException en vez de Object.assign(existing!, ...). Los 3 use-cases que llaman taskRepo.update() (complete/update/reactivate) ya validaban findById antes, asi que no hay cambio de comportamiento para callers actuales — solo cierra ventana TOCTOU y protege callers futuros.
+- B7: backend enriquece TaskEntity/TaskDto con clientName/contactName via leftJoin en findTodayBySeller/findMonthAllSellers (mismo patron que ActivityRepositoryImpl.findDailyBySeller, sin N+1; cast ::text porque tasks.client_id/contact_id son varchar). Frontend: AgendaPage, CalendarView (cascada de 8 interfaces) y MiDiaPage dejan de hacer clients.find() sobre useClients({limit:200}) para mostrar nombres, usan datos ya enriquecidos del backend. CreateTaskForm.tsx fuera de alcance (su useClients es para el dropdown de seleccion, problema distinto).
+- Reviewer independiente: 16/16 PASS, sin regresiones, sin N+1, cast de tipos verificado contra schema real.
+- Incidente de proceso (detectado por el Reviewer, corregido por el Lider): el Implementer genero un backend/CHECKPOINTS.md suelto por cwd incorrecto. Al corregirlo, un primer intento con awk/gsub corrompio marcas [x] en secciones historicas no relacionadas (features 05-27) por scoping erroneo — detectado antes de guardar via git diff, revertido con git checkout HEAD (el usuario ya habia commiteado feature 46 como c0586d7, HEAD limpio) y reaplicado solo el bloque de la seccion 47.
+- Con esto se cierran los 3 fixes del plan de auditoria de bugs 2026-07-01 (features 45, 46, 47).

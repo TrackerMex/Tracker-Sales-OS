@@ -6,15 +6,14 @@
 
 ## Plan de la sesion
 
-Feature `46-schema-migrations-reconcile` completada (Fix 2 de la auditoría de bugs 2026-07-01).
+Feature `47-hardening-menor` completada — cierra el plan de 3 fixes de la auditoría de bugs 2026-07-01 (45, 46, 47 todas `done`).
 
 ## Decisiones tomadas
 
-- Ejecutado directamente por el Líder (fuera de modules/, requería iteración estrecha con Docker/DB) — no delegado a Implementer, pero sí a un Reviewer independiente
-- Todas las migraciones nuevas/retrofitteadas son idempotentes (IF NOT EXISTS / DO-block duplicate_object) porque no hay acceso a la DB de prod real para conocer su estado
-- Migración baseline generada con `migration:generate` contra DB vacía real (no escrita a mano) — timestamp deliberadamente el más antiguo para correr primero
-- Volumen docker dev recreado (autorizado por el usuario, datos de prueba desechables) para poder verificar desde cero
-- `.env` raíz: `TYPEORM_MIGRATIONS_RUN` cambiado a `true` para que dev ejercite el mismo camino que prod
+- B6 es defensivo puro: sin cambio de comportamiento para los use-cases actuales, cierra ventana TOCTOU
+- B7 replica el patrón ya existente de ActivityRepositoryImpl.findDailyBySeller (leftJoin + getRawAndEntities, sin N+1)
+- CreateTaskForm.tsx quedó fuera de alcance deliberadamente (su useClients es para el dropdown, problema de escala distinto y no reportado como bug)
+- Incidente de proceso: archivo CHECKPOINTS.md suelto del Implementer + mi propio error de scoping al corregirlo con awk — resuelto revirtiendo a HEAD (limpio, ya con feature 46 commiteada) y reaplicando solo lo necesario
 
 ## Bloqueantes
 
@@ -22,7 +21,7 @@ _(ninguno)_
 
 ## Proximos pasos
 
-- Commit de feature 46 (lo hace el usuario, mensaje preparado por el Líder)
-- Fix 3 pendiente: `47-hardening-menor` (B6 update() con NotFoundException, B7 enriquecer clientName/contactName en tasks DTO en vez de useClients({limit:200}))
-- Nota operativa para el usuario: antes de desplegar este fix a prod, hacer backup de la DB real primero (sin acceso para verificar su estado de antemano, aunque las migraciones son idempotentes)
-- Nota menor sin resolver: `progress/seed_test_users.sql` desactualizado (columna `password` vs `password_hash` real) — no se tocó, fuera de alcance de esta feature
+- Commit de feature 47 (lo hace el usuario, mensaje preparado por el Líder)
+- Sin más items pendientes del plan de auditoría de bugs — feature_list.json sin features en estado pending/in_progress
+- Nota menor sin resolver (fuera de cualquier feature): `progress/seed_test_users.sql` desactualizado (columna `password` vs `password_hash` real)
+- Nota menor sin resolver: dropdown de selección de cliente en CreateTaskForm.tsx usa `useClients({limit:200})` sin paginación/búsqueda — mismo problema de escala que B7 pero para un caso de uso distinto (selección, no display), no reportado como bug, candidato a feature futura si el catálogo de clientes crece

@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
-import { useClients } from "@/modules/clients/application/hooks/useClients"
 import { useTodayTasks } from "../../application/hooks/useTodayTasks"
 import { useMonthTasks } from "../../application/hooks/useMonthTasks"
 import { useTeamMonthTasks } from "../../application/hooks/useTeamMonthTasks"
@@ -83,8 +82,6 @@ export function AgendaPage() {
   } = useUpdateTask()
   const { mutate: reactivateTask } = useReactivateTask()
   const { mutate: deleteTask } = useDeleteTask()
-  const { data: clientsData } = useClients({ limit: 200 })
-  const clients = clientsData?.data ?? []
   const navigate = useNavigate()
 
   const isTeamMode = isAdminOrDirector && selectedSeller === 'all'
@@ -331,27 +328,21 @@ export function AgendaPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {tasks.map((task) => {
-              const client = clients.find((c) => c.id === task.clientId)
-              const contact = client?.contacts.find(
-                (c) => c.id === task.contactId
-              )
-              return (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  clientName={client?.name ?? null}
-                  contactName={contact?.name ?? null}
-                  onComplete={handleComplete}
-                  onEdit={(t) => {
-                    resetUpdateTask()
-                    setEditingTask(t)
-                  }}
-                  onReactivate={handleReactivate}
-                  onDelete={handleDelete}
-                />
-              )
-            })}
+            {tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                clientName={task.clientName ?? null}
+                contactName={task.contactName ?? null}
+                onComplete={handleComplete}
+                onEdit={(t) => {
+                  resetUpdateTask()
+                  setEditingTask(t)
+                }}
+                onReactivate={handleReactivate}
+                onDelete={handleDelete}
+              />
+            ))}
           </div>
         )
       ) : (
@@ -359,7 +350,6 @@ export function AgendaPage() {
           year={calYear}
           month={calMonth}
           tasks={monthTasks}
-          clients={clients}
           onEdit={(t) => {
             resetUpdateTask()
             setEditingTask(t)
