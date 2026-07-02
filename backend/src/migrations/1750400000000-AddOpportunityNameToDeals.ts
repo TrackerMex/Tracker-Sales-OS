@@ -1,20 +1,15 @@
-import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddOpportunityNameToDeals1750400000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.addColumn(
-      'deals',
-      new TableColumn({
-        name: 'opportunity_name',
-        type: 'varchar',
-        length: '200',
-        isNullable: true,
-        default: null,
-      }),
+    await queryRunner.query(
+      `ALTER TABLE "deals" ADD COLUMN IF NOT EXISTS "opportunity_name" character varying(200)`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropColumn('deals', 'opportunity_name');
+    await queryRunner.query(
+      `ALTER TABLE "deals" DROP COLUMN IF EXISTS "opportunity_name"`,
+    );
   }
 }

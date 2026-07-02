@@ -690,3 +690,15 @@ Batch 2:
 - Frontend tasks: tasks.api.ts y hooks useCompleteTask/useUpdateTask/useReactivateTask/useDeleteTask sin sellerId; firmas externas intactas, cero cambios en paginas.
 - Reviewer: 13/13 PASS. tsc backend+frontend exit 0. Detalle: progress/impl_45-authz-tasks-activities.md.
 - Pendientes del plan de bugs: Fix 2 (46-schema-migrations-reconcile, B2) y Fix 3 (47-hardening-menor, B6+B7).
+
+## 2026-07-01 — Feature 46: FIX reconciliacion de schema y migraciones (B2)
+
+- Origen: auditoria de bugs del Lider, aprobada por el usuario como "Fix 2". Ejecutado directamente por el Lider (fuera de modules/, requeria iteracion estrecha con Docker/DB).
+- Hallazgo: tabla migrations en dev vacia — las 4 migraciones previas nunca corrieron, todo el schema (incluyendo activities.task_id/contact_id, tasks.type/contact_id) se creo via TYPEORM_SYNCHRONIZE=true. app.module.ts ignoraba TYPEORM_MIGRATIONS_RUN (hardcoded false).
+- Usuario confirmo: existe prod real con datos, sin acceso directo para introspectarla. Decision: todas las migraciones nuevas son idempotentes (IF NOT EXISTS / DO-block duplicate_object) para no asumir el estado de ningun entorno.
+- data-source.ts (ya existia) cableado con scripts npm migration:generate/run/revert. Migracion baseline generada con migration:generate contra DB vacia real (docker volume recreado, autorizado por el usuario, datos de prueba) — no escrita a mano. 4 migraciones legacy retrofitteadas a idempotentes.
+- Verificado E2E: schema resultante identico al original (11 tablas) + fix colateral de timestamptz drift en created_at/updated_at/deleted_at. migrationsRun=true probado con boot limpio + login JWT funcional.
+- Reviewer independiente: 11/11 PASS. Unico hallazgo: docker compose restart no relee env_file — corregido con --force-recreate y documentado en docs/verification.md como gotcha.
+- Docs actualizados: docs/verification.md (flujo de migraciones + regla de migracion obligatoria por entidad nueva + gotcha de restart), docs/conventions.md (path real de migraciones).
+- Detalle: progress/impl_46-schema-migrations-reconcile.md.
+- Pendiente del plan de bugs: Fix 3 (47-hardening-menor, B6+B7).

@@ -5,11 +5,11 @@ export class AddStageToActivities1749528600000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "activities" ADD COLUMN "stage" varchar NULL`,
+      `ALTER TABLE "activities" ADD COLUMN IF NOT EXISTS "stage" varchar NULL`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "activities" DROP COLUMN "stage"`);
+    await queryRunner.query(`ALTER TABLE "activities" DROP COLUMN IF EXISTS "stage"`);
   }
 }

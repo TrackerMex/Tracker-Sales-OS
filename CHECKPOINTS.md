@@ -401,3 +401,24 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] Hooks `useCompleteTask`, `useUpdateTask`, `useReactivateTask`, `useDeleteTask` dejan de resolver `currentUser?.sellerId ?? currentUser?.id`; su firma externa hacia las páginas no cambia
 - [x] Admin/Director pueden completar/editar/reactivar/eliminar tareas de cualquier vendedor sin recibir 403
 - [x] `tsc --noEmit` sin errores en frontend
+
+
+---
+
+## 46-schema-migrations-reconcile
+
+- [x] `backend/src/data-source.ts` (ya existia, sin scripts) queda cableado con `backend/package.json`: `typeorm`, `migration:generate`, `migration:run`, `migration:revert`
+- [x] `app.module.ts` lee `TYPEORM_MIGRATIONS_RUN` del env en vez de hardcodear `migrationsRun: false`
+- [x] Migracion baseline `1749000000000-BaselineSchemaReconcile.ts` (timestamp mas antiguo, corre primero) generada con `migration:generate` contra una DB vacia real — captura el schema completo de las 10 entidades + audit_logs (11 tablas), incluyendo columnas que solo existian via `TYPEORM_SYNCHRONIZE=true` sin migracion propia (`activities.task_id`, `activities.contact_id`, `tasks.type`, `tasks.contact_id`)
+- [x] Todos los statements de la baseline son idempotentes: `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `DO $$ ... EXCEPTION WHEN duplicate_object THEN null; END $$;` para `CREATE TYPE` y `ADD CONSTRAINT` (FKs) — segura de correr sin importar el estado real de prod (sin acceso para verificarlo)
+- [x] Las 4 migraciones legacy (`AddStageToActivities`, `AddStatusAndActivityHistoryToActivities`, `AddOpportunityNameToDeals`, `AlterTaskTitleToText`) retrofitteadas a idempotentes (`IF NOT EXISTS` / `IF EXISTS`) para no fallar corriendo despues de la baseline
+- [x] Verificado end-to-end: volumen docker postgres recreado vacio (autorizado por el usuario, datos de prueba) → `migration:run` aplica las 5 migraciones sin error → segundo `migration:run` reporta "No migrations are pending" (idempotencia confirmada) → schema resultante (`\dt`, `\d activities`, `\d tasks`, `\d deals`) identico al original pre-recreate (11 tablas, mismas columnas/indexes/FKs; bonus: `created_at`/`updated_at`/`deleted_at` ahora `timestamptz` correctamente, corrige drift previo de `timestamp without time zone`)
+- [x] Backend arranca limpio con `TYPEORM_MIGRATIONS_RUN=true` + `TYPEORM_SYNCHRONIZE=false` (modo prod-like) contra la DB migrada — `docker logs` sin errores, `Nest application successfully started`. Reviewer detectó que `docker compose restart` no relee `env_file:` (contenedor seguía con el valor viejo horneado); corregido con `up -d --force-recreate backend` y documentado el gotcha en `docs/verification.md`
+- [x] Smoke E2E: login `POST /api/auth/login` con admin auto-seedeado devuelve JWT valido
+- [x] `docs/verification.md` documenta el flujo de migraciones y la regla de "toda entidad nueva requiere su migracion idempotente"
+- [x] `docs/conventions.md` corrige el path real de migraciones (`backend/src/migrations/`, no `backend/src/database/migrations/`)
+- [x] `tsc --noEmit` sin errores en backend
+
+**Fuera de alcance / limitaciones conocidas**:
+- Sin acceso directo a la DB de prod real — no se pudo verificar su estado de antemano. Mitigado con idempotencia total; recomendado hacer backup de prod antes del primer deploy con `TYPEORM_MIGRATIONS_RUN=true`.
+- `progress/seed_test_users.sql` quedo en evidencia como desactualizado (usa columna `password` en vez de `password_hash` — la mayoria de sus INSERTs fallan silenciosamente). No es parte de esta feature, pendiente de fix aparte si se sigue usando para QA manual.

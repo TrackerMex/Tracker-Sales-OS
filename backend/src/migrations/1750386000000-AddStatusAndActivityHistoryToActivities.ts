@@ -5,15 +5,15 @@ export class AddStatusAndActivityHistoryToActivities1750386000000 implements Mig
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "activities" ADD COLUMN "status" varchar NOT NULL DEFAULT 'Pendiente'`,
+      `ALTER TABLE "activities" ADD COLUMN IF NOT EXISTS "status" varchar NOT NULL DEFAULT 'Pendiente'`,
     );
     await queryRunner.query(
-      `ALTER TABLE "activities" ADD COLUMN "activity_history" jsonb NOT NULL DEFAULT '[]'`,
+      `ALTER TABLE "activities" ADD COLUMN IF NOT EXISTS "activity_history" jsonb NOT NULL DEFAULT '[]'`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "activities" DROP COLUMN "activity_history"`);
-    await queryRunner.query(`ALTER TABLE "activities" DROP COLUMN "status"`);
+    await queryRunner.query(`ALTER TABLE "activities" DROP COLUMN IF EXISTS "activity_history"`);
+    await queryRunner.query(`ALTER TABLE "activities" DROP COLUMN IF EXISTS "status"`);
   }
 }
