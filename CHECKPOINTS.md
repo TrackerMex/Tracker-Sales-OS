@@ -451,3 +451,26 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] `tsc --noEmit` sin errores en frontend
 
 **Reviewer**: 16/16 criterios PASSED (progress/impl_47-hardening-menor.md). Verifico cast `::text`, ausencia de N+1, cadena completa de props retirados en CalendarView, y que MiDiaPage no perdio ningun campo del objeto Client/Contact mas alla del nombre. Hallazgo de proceso (no de codigo): el Implementer genero un `backend/CHECKPOINTS.md` suelto por error de cwd — eliminado, contenido consolidado aqui.
+
+
+---
+
+## 48-client-picker-combobox
+
+**Setup (una sola vez, consultar con el usuario antes de instalar dependencia):**
+- [ ] `cmdk` agregado como dependencia npm en `frontend/package.json` (requiere aprobacion explicita antes de instalar — regla AGENTS.md)
+- [ ] `frontend/src/components/ui/command.tsx` y `frontend/src/components/ui/popover.tsx` (shadcn) generados/agregados
+
+**Componente reutilizable:**
+- [ ] Combobox buscable (Popover + Command) que recibe `value`/`onChange` de un `clientId` y hace debounce (~300ms) sobre el input de busqueda antes de consultar `GET /api/clients?q=...`
+- [ ] Usa `useClients({ q, limit: <chico, ej 20> })` (el hook y el backend ya soportan `q`/`page`/`limit` via `ClientFilters`/`GetClientsQueryDto` — sin cambios backend)
+- [ ] Muestra loading state mientras busca, empty state si no hay resultados, y el cliente ya seleccionado visible aunque no este en los resultados de la busqueda actual (fetch individual por id si hace falta, o mantener el nombre ya conocido en estado local)
+- [ ] Accesible por teclado (navegacion con flechas + enter, propio de shadcn Command)
+
+**Migracion de los 4 call sites (cada uno reemplaza `useClients({limit:N})` + su `.map()`/`<select>` o lista local por el combobox):**
+- [ ] `frontend/src/modules/tasks/presentation/components/CreateTaskForm.tsx`
+- [ ] `frontend/src/modules/tasks/presentation/components/EditTaskForm.tsx`
+- [ ] `frontend/src/modules/activities/presentation/components/ActivityForm.tsx`
+- [ ] `frontend/src/modules/sales/presentation/pages/SalesPage.tsx`
+- [ ] Ningun formulario pierde funcionalidad existente (validacion, valor inicial al editar, limpiar seleccion si aplica)
+- [ ] `tsc --noEmit` sin errores en frontend

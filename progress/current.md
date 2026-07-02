@@ -22,6 +22,5 @@ _(ninguno)_
 ## Proximos pasos
 
 - Commit de feature 47 (lo hace el usuario, mensaje preparado por el Líder)
-- Sin más items pendientes del plan de auditoría de bugs — feature_list.json sin features en estado pending/in_progress
+- Feature `48-client-picker-combobox` registrada como `pending` (2026-07-02) — combobox buscable server-side para reemplazar useClients({limit:100-200}) en CreateTaskForm/EditTaskForm/ActivityForm/SalesPage. Decisión con el usuario: solo registrar por ahora, no implementar; enfoque shadcn Command+Popover (requiere dependencia npm `cmdk`, pedir aprobación antes de instalar)
 - Nota menor sin resolver (fuera de cualquier feature): `progress/seed_test_users.sql` desactualizado (columna `password` vs `password_hash` real)
-- Nota menor sin resolver: dropdown de selección de cliente en CreateTaskForm.tsx usa `useClients({limit:200})` sin paginación/búsqueda — mismo problema de escala que B7 pero para un caso de uso distinto (selección, no display), no reportado como bug, candidato a feature futura si el catálogo de clientes crece
