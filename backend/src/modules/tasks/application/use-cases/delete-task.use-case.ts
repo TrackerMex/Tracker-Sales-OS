@@ -9,10 +9,12 @@ import {
   TASK_REPOSITORY,
   ITaskRepository,
 } from '../../domain/repositories/task.repository.interface';
+import { UserRole } from '../../../auth/domain/entities/user.entity';
 
 export interface DeleteTaskInput {
   taskId: string;
-  sellerId: string;
+  callerRole: string;
+  callerSellerId: string | null;
 }
 
 @Injectable()
@@ -29,7 +31,10 @@ export class DeleteTaskUseCase implements IUseCase<DeleteTaskInput, void> {
       throw new NotFoundException(`Task ${input.taskId} not found`);
     }
 
-    if (task.sellerId !== input.sellerId) {
+    if (
+      input.callerRole === UserRole.Seller &&
+      task.sellerId !== input.callerSellerId
+    ) {
       throw new ForbiddenException('You can only delete your own tasks');
     }
 

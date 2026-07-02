@@ -461,5 +461,15 @@
     "backend_modules": ["tasks"],
     "frontend_modules": ["tasks"],
     "notes": "Completada 2026-07-01. Review Líder 12/12 PASS (progress/impl_44-task-delete.md). Backend: DeleteTaskUseCase (mismo check de ownership que reactivate/update/complete: task.sellerId !== input.sellerId -> Forbidden), DELETE /api/tasks/:id (body sellerId, igual convención que PATCH), softDelete reutilizado sin tocar TaskRepositoryImpl. Frontend: tasksApi.deleteTask (axios delete con {data:{sellerId}}), useDeleteTask hook (calco de useReactivateTask), botón 'Eliminar' + AlertDialog en TaskCard.tsx (visible en Pendiente y Completada, fuera del condicional de status), wiring en AgendaPage.handleDelete (toast + invalidate). mi-dia/** no tocado (solo importa TYPE_TAG, no el componente). tsc backend+frontend exit 0. Iteración 2026-07-01 (via /impeccable): íconos HugeIcons agregados a TaskCard.tsx (OfficeIcon cliente, User02Icon contacto, CheckListIcon badge tipo, PencilEdit02Icon/CheckmarkCircle02Icon/ArrowReloadHorizontalIcon/Delete02Icon en botones Editar/Completar/Reactivar/Eliminar), mismo patrón que MiDiaPage.tsx/ActivitiesPage.tsx (feature 42). progress/impl_44-task-delete-icons.md. tsc frontend exit 0."
+  },
+  {
+    "id": "45-authz-tasks-activities",
+    "name": "FIX: Autorización por JWT en tasks y activities (B1+B3+B4)",
+    "description": "Ownership de tareas derivado del JWT en vez del body (complete/update/reactivate/delete), bypass para Admin/Director, sellerId forzado del JWT al crear tareas/actividades como Seller, check de ownership en PATCH /activities/:id/status. Frontend deja de enviar sellerId en los bodies de mutación de tasks.",
+    "status": "done",
+    "priority": 45,
+    "backend_modules": ["tasks", "activities"],
+    "frontend_modules": ["tasks"],
+    "notes": "Origen: progress/explore_bugs_2026-07-01.md (B1 ALTA, B3 MEDIA, B4 MEDIA). Completada 2026-07-01. Review 13/13 PASS. Backend tasks: 4 mutaciones derivan callerRole/callerSellerId de req.user, ownership solo aplica a Seller (Admin/Director bypass), UpdateTaskDto sin sellerId, conflicto de horario contra task.sellerId (dueño). POST /tasks y POST /activities fuerzan dto.sellerId del JWT para Seller (403 si JWT sin sellerId). PATCH /activities/:id/status: NotFound si no existe + Forbidden si Seller ajeno; changedBy del JWT intacto. Decisión B3: GETs de lectura de activities quedan abiertos (historial de cliente compartido, feature 38). Frontend: tasks.api.ts y hooks useCompleteTask/useUpdateTask/useReactivateTask/useDeleteTask sin sellerId (firmas externas intactas, ninguna página tocada). tsc backend+frontend exit 0. progress/impl_45-authz-tasks-activities.md."
   }
 ]

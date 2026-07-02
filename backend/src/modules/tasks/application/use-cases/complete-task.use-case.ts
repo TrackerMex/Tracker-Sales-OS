@@ -11,10 +11,12 @@ import {
   ITaskRepository,
 } from '../../domain/repositories/task.repository.interface';
 import { TaskStatus } from '../../domain/entities/task.entity';
+import { UserRole } from '../../../auth/domain/entities/user.entity';
 
 export interface CompleteTaskInput {
   taskId: string;
-  sellerId: string;
+  callerRole: string;
+  callerSellerId: string | null;
 }
 
 @Injectable()
@@ -34,7 +36,10 @@ export class CompleteTaskUseCase implements IUseCase<
       throw new NotFoundException(`Task ${input.taskId} not found`);
     }
 
-    if (task.sellerId !== input.sellerId) {
+    if (
+      input.callerRole === UserRole.Seller &&
+      task.sellerId !== input.callerSellerId
+    ) {
       throw new ForbiddenException('You can only complete your own tasks');
     }
 

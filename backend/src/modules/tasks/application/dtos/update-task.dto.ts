@@ -8,7 +8,6 @@ import {
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateTaskDto {
-  @ApiPropertyOptional() @IsOptional() @IsUUID() sellerId?: string;
   @ApiPropertyOptional() @IsOptional() @IsUUID() clientId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(50) type?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() contactId?: string;

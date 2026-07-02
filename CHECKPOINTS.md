@@ -377,3 +377,27 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] `AgendaPage.handleDelete` llama la mutación con `toast.success`/`toast.error`
 - [x] No rompe las acciones existentes (Editar, Completar, Reactivar) ni el layout de `TaskCard`
 - [x] `tsc --noEmit` sin errores en frontend
+
+
+---
+
+## 45-authz-tasks-activities
+
+**Backend — tasks (ownership por JWT):**
+- [x] `PATCH /api/tasks/:id/complete`, `PATCH /api/tasks/:id`, `PATCH /api/tasks/:id/reactivate` y `DELETE /api/tasks/:id` derivan la identidad del caller de `req.user` (JWT) — el `sellerId` del body se ignora/elimina
+- [x] Use-cases (complete/update/reactivate/delete) reciben `callerRole` + `callerSellerId`: si `callerRole === Seller` y `task.sellerId !== callerSellerId` lanzan `ForbiddenException`; Admin/Director operan cualquier tarea
+- [x] `POST /api/tasks`: si `req.user.role === Seller`, el controller fuerza `dto.sellerId = req.user.sellerId` (403 si el JWT no trae sellerId); Admin/Director pueden especificar sellerId
+- [x] En `UpdateTaskUseCase` el conflicto de horario se valida contra `task.sellerId` (dueño de la tarea), no contra el caller
+- [x] `tsc --noEmit` sin errores en backend
+
+**Backend — activities:**
+- [x] `POST /api/activities`: si `req.user.role === Seller`, el controller fuerza `dto.sellerId = req.user.sellerId` (403 si el JWT no trae sellerId)
+- [x] `PATCH /api/activities/:id/status`: si `req.user.role === Seller` y la actividad no le pertenece, responde 403 (mismo patrón inline que `getDailyPoints`)
+- [x] Los GET de lectura (`/activities/:id`, `/activities/client/:clientId`) NO cambian (historial de cliente compartido, decisión documentada)
+- [x] `tsc --noEmit` sin errores en backend
+
+**Frontend — tasks:**
+- [x] `tasks.api.ts`: `completeTask`, `updateTask`, `reactivateTask`, `deleteTask` ya no envían `sellerId` (firmas sin ese parámetro); `createTask` lo conserva
+- [x] Hooks `useCompleteTask`, `useUpdateTask`, `useReactivateTask`, `useDeleteTask` dejan de resolver `currentUser?.sellerId ?? currentUser?.id`; su firma externa hacia las páginas no cambia
+- [x] Admin/Director pueden completar/editar/reactivar/eliminar tareas de cualquier vendedor sin recibir 403
+- [x] `tsc --noEmit` sin errores en frontend

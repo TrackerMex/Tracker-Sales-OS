@@ -680,3 +680,13 @@ Batch 2:
 **Verificacion**: Review Líder PASS. tsc backend+frontend exit 0. progress/impl_25-winloss-analysis.md. Stub findAllForAnalysis: jest.fn() en create-activity.use-case.spec.ts (mock, patron features 20/21).
 
 **Caveat no bloqueante**: avgDaysInStage omite dwell del stage inicial (no hay entry de creación en stageHistory) y del stage actual en curso; solo intervalos cerrados entre transiciones. origin de Perdido por defecto Prospecto si stageHistory insuficiente. Mismo limite conocido de feature 18 (stage inicial no registrado).
+
+## 2026-07-01 — Feature 45: FIX autorizacion JWT en tasks/activities (B1+B3+B4)
+
+- Origen: auditoria de bugs del Lider (progress/explore_bugs_2026-07-01.md), aprobada por el usuario como "Fix 1".
+- Backend tasks: complete/update/reactivate/delete derivan callerRole/callerSellerId del JWT (antes @Body('sellerId') spoofable); ownership solo para Seller, Admin/Director bypass; UpdateTaskDto sin sellerId; conflicto de horario en update contra task.sellerId (dueno).
+- Backend: POST de tasks y POST de activities fuerzan dto.sellerId del JWT para role Seller (403 si JWT sin sellerId); Admin/Director conservan el del body.
+- Backend activities: PATCH :id/status carga la actividad (404 si no existe) y bloquea Seller sobre actividad ajena (403); changedBy sigue del JWT. GETs de lectura sin cambios (decision: historial de cliente compartido).
+- Frontend tasks: tasks.api.ts y hooks useCompleteTask/useUpdateTask/useReactivateTask/useDeleteTask sin sellerId; firmas externas intactas, cero cambios en paginas.
+- Reviewer: 13/13 PASS. tsc backend+frontend exit 0. Detalle: progress/impl_45-authz-tasks-activities.md.
+- Pendientes del plan de bugs: Fix 2 (46-schema-migrations-reconcile, B2) y Fix 3 (47-hardening-menor, B6+B7).

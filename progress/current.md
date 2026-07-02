@@ -6,14 +6,14 @@
 
 ## Plan de la sesion
 
-Feature `44-task-delete` completada.
+Feature `45-authz-tasks-activities` completada (Fix 1 de la auditoría de bugs 2026-07-01).
 
 ## Decisiones tomadas
 
-- Ownership check calcado de reactivate/update/complete (task.sellerId !== sellerId -> Forbidden), sin diferenciar por rol
-- softDelete reutilizado tal cual (ya existia generico en TaskRepositoryImpl via IRepository), sin tocar ese archivo
-- Boton Eliminar visible siempre (Pendiente y Completada), fuera del condicional de status en TaskCard.tsx
-- mi-dia/** fuera de alcance (solo importa TYPE_TAG, no el componente TaskCard)
+- Ownership derivado del JWT (callerRole/callerSellerId) en las 4 mutaciones de tasks; Admin/Director bypass
+- B3 acotado: solo PATCH /activities/:id/status valida ownership; GETs de lectura abiertos (historial de cliente compartido, feature 38)
+- Conflicto de horario en update-task contra task.sellerId (dueño), no contra el caller
+- Firmas externas de hooks frontend sin cambio — cero ediciones en páginas
 
 ## Bloqueantes
 
@@ -21,4 +21,6 @@ _(ninguno)_
 
 ## Proximos pasos
 
-Commit de la feature (pendiente, lo hace el usuario). Sin siguiente item de backlog definido — feature_list.json sin pendientes.
+- Commit de feature 45 (lo hace el usuario, mensaje preparado por el Líder)
+- Fix 2 pendiente: `46-schema-migrations-reconcile` (B2 — migraciones faltantes task_id/contact_id + migrationsRun)
+- Fix 3 pendiente: `47-hardening-menor` (B6 update() 404, B7 enriquecer clientName/contactName en tasks DTO)

@@ -35,7 +35,14 @@ export class ActivitiesController {
   @Post()
   @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
   @ApiOperation({ summary: 'Register a new activity' })
-  create(@Body() dto: CreateActivityDto) {
+  create(
+    @Body() dto: CreateActivityDto,
+    @Request() req: { user: { role: string; sellerId: string | null } },
+  ) {
+    if (req.user.role === UserRole.Seller) {
+      if (!req.user.sellerId) throw new ForbiddenException();
+      dto.sellerId = req.user.sellerId;
+    }
     return this.createActivity.execute(dto);
   }
 
@@ -88,11 +95,27 @@ export class ActivitiesController {
   @Patch(':id/status')
   @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
   @ApiOperation({ summary: 'Update activity status' })
-  updateStatus(
+  async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateActivityStatusDto,
-    @Request() req: { user: { id: string; username: string } },
+    @Request()
+    req: {
+      user: {
+        id: string;
+        username: string;
+        role: string;
+        sellerId: string | null;
+      };
+    },
   ) {
+    const activity = await this.activityRepo.findById(id);
+    if (!activity) throw new NotFoundException('Activity not found');
+    if (
+      req.user.role === UserRole.Seller &&
+      activity.sellerId !== req.user.sellerId
+    ) {
+      throw new ForbiddenException();
+    }
     return this.updateActivityStatus.execute({
       id,
       newStatus: dto.newStatus,
