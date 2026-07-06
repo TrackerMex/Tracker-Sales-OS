@@ -283,7 +283,7 @@ export function ClientDetailPage({ deal, onBack }: Props) {
         position: 'sticky', bottom: 0, background: '#fff',
       }}>
         <button
-          onClick={() => navigate({ to: "/actividades/nueva", search: { clientId: deal.clientId } })}
+          onClick={() => navigate({ to: "/actividades/nueva", search: { clientId: deal.clientId, clientName: deal.clientName } })}
           style={{
             width: '100%', padding: '10px 0', background: '#82bc00', color: '#fff',
             border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',

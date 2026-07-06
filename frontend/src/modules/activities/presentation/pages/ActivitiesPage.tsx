@@ -18,6 +18,7 @@ function getPointsBarColor(pct: number): string {
 export function ActivitiesPage() {
   const search = useSearch({ strict: false })
   const clientId = (search as { clientId?: string }).clientId
+  const clientName = (search as { clientName?: string }).clientName
   const taskTitle = (search as { taskTitle?: string }).taskTitle
   const taskId = (search as { taskId?: string }).taskId
   const [showForm, setShowForm] = useState(() => !!(clientId || taskId))
@@ -81,6 +82,7 @@ export function ActivitiesPage() {
             programmedTask={taskTitle}
             submitError={createError}
             initialClientId={clientId}
+            initialClientLabel={clientName}
             taskId={taskId}
           />
         </div>

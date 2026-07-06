@@ -377,3 +377,102 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] `AgendaPage.handleDelete` llama la mutación con `toast.success`/`toast.error`
 - [x] No rompe las acciones existentes (Editar, Completar, Reactivar) ni el layout de `TaskCard`
 - [x] `tsc --noEmit` sin errores en frontend
+
+
+---
+
+## 45-authz-tasks-activities
+
+**Backend — tasks (ownership por JWT):**
+- [x] `PATCH /api/tasks/:id/complete`, `PATCH /api/tasks/:id`, `PATCH /api/tasks/:id/reactivate` y `DELETE /api/tasks/:id` derivan la identidad del caller de `req.user` (JWT) — el `sellerId` del body se ignora/elimina
+- [x] Use-cases (complete/update/reactivate/delete) reciben `callerRole` + `callerSellerId`: si `callerRole === Seller` y `task.sellerId !== callerSellerId` lanzan `ForbiddenException`; Admin/Director operan cualquier tarea
+- [x] `POST /api/tasks`: si `req.user.role === Seller`, el controller fuerza `dto.sellerId = req.user.sellerId` (403 si el JWT no trae sellerId); Admin/Director pueden especificar sellerId
+- [x] En `UpdateTaskUseCase` el conflicto de horario se valida contra `task.sellerId` (dueño de la tarea), no contra el caller
+- [x] `tsc --noEmit` sin errores en backend
+
+**Backend — activities:**
+- [x] `POST /api/activities`: si `req.user.role === Seller`, el controller fuerza `dto.sellerId = req.user.sellerId` (403 si el JWT no trae sellerId)
+- [x] `PATCH /api/activities/:id/status`: si `req.user.role === Seller` y la actividad no le pertenece, responde 403 (mismo patrón inline que `getDailyPoints`)
+- [x] Los GET de lectura (`/activities/:id`, `/activities/client/:clientId`) NO cambian (historial de cliente compartido, decisión documentada)
+- [x] `tsc --noEmit` sin errores en backend
+
+**Frontend — tasks:**
+- [x] `tasks.api.ts`: `completeTask`, `updateTask`, `reactivateTask`, `deleteTask` ya no envían `sellerId` (firmas sin ese parámetro); `createTask` lo conserva
+- [x] Hooks `useCompleteTask`, `useUpdateTask`, `useReactivateTask`, `useDeleteTask` dejan de resolver `currentUser?.sellerId ?? currentUser?.id`; su firma externa hacia las páginas no cambia
+- [x] Admin/Director pueden completar/editar/reactivar/eliminar tareas de cualquier vendedor sin recibir 403
+- [x] `tsc --noEmit` sin errores en frontend
+
+
+---
+
+## 46-schema-migrations-reconcile
+
+- [x] `backend/src/data-source.ts` (ya existia, sin scripts) queda cableado con `backend/package.json`: `typeorm`, `migration:generate`, `migration:run`, `migration:revert`
+- [x] `app.module.ts` lee `TYPEORM_MIGRATIONS_RUN` del env en vez de hardcodear `migrationsRun: false`
+- [x] Migracion baseline `1749000000000-BaselineSchemaReconcile.ts` (timestamp mas antiguo, corre primero) generada con `migration:generate` contra una DB vacia real — captura el schema completo de las 10 entidades + audit_logs (11 tablas), incluyendo columnas que solo existian via `TYPEORM_SYNCHRONIZE=true` sin migracion propia (`activities.task_id`, `activities.contact_id`, `tasks.type`, `tasks.contact_id`)
+- [x] Todos los statements de la baseline son idempotentes: `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `DO $$ ... EXCEPTION WHEN duplicate_object THEN null; END $$;` para `CREATE TYPE` y `ADD CONSTRAINT` (FKs) — segura de correr sin importar el estado real de prod (sin acceso para verificarlo)
+- [x] Las 4 migraciones legacy (`AddStageToActivities`, `AddStatusAndActivityHistoryToActivities`, `AddOpportunityNameToDeals`, `AlterTaskTitleToText`) retrofitteadas a idempotentes (`IF NOT EXISTS` / `IF EXISTS`) para no fallar corriendo despues de la baseline
+- [x] Verificado end-to-end: volumen docker postgres recreado vacio (autorizado por el usuario, datos de prueba) → `migration:run` aplica las 5 migraciones sin error → segundo `migration:run` reporta "No migrations are pending" (idempotencia confirmada) → schema resultante (`\dt`, `\d activities`, `\d tasks`, `\d deals`) identico al original pre-recreate (11 tablas, mismas columnas/indexes/FKs; bonus: `created_at`/`updated_at`/`deleted_at` ahora `timestamptz` correctamente, corrige drift previo de `timestamp without time zone`)
+- [x] Backend arranca limpio con `TYPEORM_MIGRATIONS_RUN=true` + `TYPEORM_SYNCHRONIZE=false` (modo prod-like) contra la DB migrada — `docker logs` sin errores, `Nest application successfully started`. Reviewer detectó que `docker compose restart` no relee `env_file:` (contenedor seguía con el valor viejo horneado); corregido con `up -d --force-recreate backend` y documentado el gotcha en `docs/verification.md`
+- [x] Smoke E2E: login `POST /api/auth/login` con admin auto-seedeado devuelve JWT valido
+- [x] `docs/verification.md` documenta el flujo de migraciones y la regla de "toda entidad nueva requiere su migracion idempotente"
+- [x] `docs/conventions.md` corrige el path real de migraciones (`backend/src/migrations/`, no `backend/src/database/migrations/`)
+- [x] `tsc --noEmit` sin errores en backend
+
+**Fuera de alcance / limitaciones conocidas**:
+- Sin acceso directo a la DB de prod real — no se pudo verificar su estado de antemano. Mitigado con idempotencia total; recomendado hacer backup de prod antes del primer deploy con `TYPEORM_MIGRATIONS_RUN=true`.
+- `progress/seed_test_users.sql` quedo en evidencia como desactualizado (usa columna `password` en vez de `password_hash` — la mayoria de sus INSERTs fallan silenciosamente). No es parte de esta feature, pendiente de fix aparte si se sigue usando para QA manual.
+
+
+---
+
+## 47-hardening-menor
+
+**Backend — B6 (defensivo, update() sin 500 en id inexistente):**
+- [x] `TaskRepositoryImpl.update()` lanza `NotFoundException` si `findOne` no encuentra el id, en vez de `Object.assign(existing!, ...)`
+- [x] `ActivityRepositoryImpl.update()` mismo fix
+- [x] Ningun use-case actual cambia de comportamiento (los 3 callers de `taskRepo.update()` ya validan con `findById` antes) — confirmado con `git diff` vacio en complete-task/update-task/reactivate-task use-cases
+- [x] `tsc --noEmit` sin errores en backend
+
+**Backend — B7 (TaskDto enriquecido con clientName/contactName):**
+- [x] `TaskEntity` (domain) gana `clientName?: string | null` y `contactName?: string | null` (mismo patron que `ActivityEntity`)
+- [x] `TaskDto` gana `clientName: string | null` y `contactName: string | null`, poblados en `fromEntity`
+- [x] `TaskRepositoryImpl.findTodayBySeller` y `findMonthAllSellers` usan `leftJoin` a `clients`/`contacts` + `getRawAndEntities` para traer `clientName`/`contactName` en la misma query (mismo patron que `ActivityRepositoryImpl.findDailyBySeller`), sin N+1. Cast `::text` necesario porque `tasks.client_id`/`contact_id` son `varchar` (no `uuid` como en activities) — verificado contra `task.typeorm.entity.ts`
+- [x] `tsc --noEmit` sin errores en backend
+
+**Frontend — B7 (dejar de resolver client-side con lista de 200):**
+- [x] `Task` (tasks.types.ts) gana `clientName?: string | null` y `contactName?: string | null`
+- [x] `AgendaPage.tsx` vista lista: `TaskCard` recibe `clientName={task.clientName}` / `contactName={task.contactName}` directo del task, sin `clients.find(...)`
+- [x] `AgendaPage.tsx` ya no llama `useClients({ limit: 200 })` — sin otro consumidor de esa lista en el archivo
+- [x] `CalendarView.tsx`: los 3 bloques que hacian `clients.find(...)` usan `task.clientName` directo; prop `clients: Client[]` retirado de las 8 interfaces anidadas (MonthView, MonthDayCell, WeekView, WeekDayColumn, DayView, DayHourRow, TaskChip)
+- [x] `MiDiaPage.tsx`: usa `task.clientName`/`task.contactName` directo, ya no hace `clients.find(...)` ni llama `useClients({ limit: 200 })`
+- [x] `CreateTaskForm.tsx` NO se toco — confirmado `git diff` vacio, sigue con su propio `useClients({ limit: 200 })` para el dropdown
+- [x] `TaskCard.tsx` sin cambios de firma — confirmado `git diff` vacio
+- [x] `tsc --noEmit` sin errores en frontend
+
+**Reviewer**: 16/16 criterios PASSED (progress/impl_47-hardening-menor.md). Verifico cast `::text`, ausencia de N+1, cadena completa de props retirados en CalendarView, y que MiDiaPage no perdio ningun campo del objeto Client/Contact mas alla del nombre. Hallazgo de proceso (no de codigo): el Implementer genero un `backend/CHECKPOINTS.md` suelto por error de cwd — eliminado, contenido consolidado aqui.
+
+
+---
+
+## 48-client-picker-combobox
+
+**Setup (una sola vez, consultar con el usuario antes de instalar dependencia):**
+- [x] `cmdk` agregado como dependencia npm en `frontend/package.json` (requiere aprobacion explicita antes de instalar — regla AGENTS.md)
+- [x] `frontend/src/components/ui/command.tsx` y `frontend/src/components/ui/popover.tsx` (shadcn) generados/agregados
+
+**Componente reutilizable:**
+- [x] Combobox buscable (Popover + Command) que recibe `value`/`onChange` de un `clientId` y hace debounce (~300ms) sobre el input de busqueda antes de consultar `GET /api/clients?q=...`
+- [x] Usa `useClients({ q, limit: <chico, ej 20> })` (el hook y el backend ya soportan `q`/`page`/`limit` via `ClientFilters`/`GetClientsQueryDto` — sin cambios backend)
+- [x] Muestra loading state mientras busca, empty state si no hay resultados, y el cliente ya seleccionado visible aunque no este en los resultados de la busqueda actual (fetch individual por id si hace falta, o mantener el nombre ya conocido en estado local)
+- [x] Accesible por teclado (navegacion con flechas + enter, propio de shadcn Command)
+
+**Migracion de los 4 call sites (cada uno reemplaza `useClients({limit:N})` + su `.map()`/`<select>` o lista local por el combobox):**
+- [x] `frontend/src/modules/tasks/presentation/components/CreateTaskForm.tsx`
+- [x] `frontend/src/modules/tasks/presentation/components/EditTaskForm.tsx`
+- [x] `frontend/src/modules/activities/presentation/components/ActivityForm.tsx`
+- [x] `frontend/src/modules/sales/presentation/pages/SalesPage.tsx`
+- [x] Ningun formulario pierde funcionalidad existente (validacion, valor inicial al editar, limpiar seleccion si aplica)
+- [x] `tsc --noEmit` sin errores en frontend
+
+**Reviewer**: Review 1 FAILED — `selectedClient` arrancaba en `null` en `EditTaskForm`/`ActivityForm`, selector de Contacto deshabilitado/vacio al montar con cliente ya asignado. Fix-pass agrego prop `onResolve` a `ClientCombobox` (resuelve el `Client` completo por nombre via query puntual, una sola vez) + threading de `clientName` desde `AgendaPage`/`MiDiaPage`/`ClientDetailPage` hasta `ActivityForm`. Review 2 PASSED — 16/16 hallazgos verificados linea por linea, `tsc`/`eslint` limpios, sin cambios en backend/tests. Caveat aceptado: si el nombre conocido no matchea ningun resultado de busqueda (cliente renombrado/borrado), el selector de Contacto queda deshabilitado hasta reseleccion manual — no resoluble 100% sin `GET /clients/:id` en backend (fuera de alcance).

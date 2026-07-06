@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { TaskEntity, TaskStatus } from '../../domain/entities/task.entity';
@@ -44,8 +44,9 @@ export class TaskRepositoryImpl implements ITaskRepository {
 
   async update(id: string, entity: Partial<TaskEntity>): Promise<TaskEntity> {
     const existing = await this.repo.findOne({ where: { id } });
-    Object.assign(existing!, entity);
-    const saved = await this.repo.save(existing!);
+    if (!existing) throw new NotFoundException(`Task ${id} not found`);
+    Object.assign(existing, entity);
+    const saved = await this.repo.save(existing);
     return this.toDomain(saved);
   }
 
@@ -57,31 +58,49 @@ export class TaskRepositoryImpl implements ITaskRepository {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
 
-    const data = await this.repo
+    const { entities, raw } = await this.repo
       .createQueryBuilder('task')
+      .addSelect('c.name', 'clientName')
+      .addSelect('ct.name', 'contactName')
+      .leftJoin('clients', 'c', 'c.id::text = task.client_id::text AND c.deleted_at IS NULL')
+      .leftJoin('contacts', 'ct', 'ct.id::text = task.contact_id::text AND ct.deleted_at IS NULL')
       .where('task.sellerId = :sellerId', { sellerId })
       .andWhere('task.scheduledAt >= :start', {
         start: startOfDay,
       })
       .andWhere('task.deletedAt IS NULL')
       .orderBy('task.scheduledAt', 'ASC')
-      .getMany();
+      .getRawAndEntities();
 
-    return data.map((e) => this.toDomain(e));
+    return entities.map((entity, i) =>
+      Object.assign(this.toDomain(entity), {
+        clientName: (raw[i].clientName as string | null) ?? null,
+        contactName: (raw[i].contactName as string | null) ?? null,
+      }),
+    );
   }
 
   async findMonthAllSellers(dateFrom: Date): Promise<TaskEntity[]> {
     const startOfDay = new Date(dateFrom);
     startOfDay.setHours(0, 0, 0, 0);
 
-    const data = await this.repo
+    const { entities, raw } = await this.repo
       .createQueryBuilder('task')
+      .addSelect('c.name', 'clientName')
+      .addSelect('ct.name', 'contactName')
+      .leftJoin('clients', 'c', 'c.id::text = task.client_id::text AND c.deleted_at IS NULL')
+      .leftJoin('contacts', 'ct', 'ct.id::text = task.contact_id::text AND ct.deleted_at IS NULL')
       .where('task.scheduledAt >= :start', { start: startOfDay })
       .andWhere('task.deletedAt IS NULL')
       .orderBy('task.scheduledAt', 'ASC')
-      .getMany();
+      .getRawAndEntities();
 
-    return data.map((e) => this.toDomain(e));
+    return entities.map((entity, i) =>
+      Object.assign(this.toDomain(entity), {
+        clientName: (raw[i].clientName as string | null) ?? null,
+        contactName: (raw[i].contactName as string | null) ?? null,
+      }),
+    );
   }
 
   async findOverdueBySeller(sellerId: string): Promise<TaskEntity[]> {

@@ -1,5 +1,21 @@
 # History — Tracker Sales OS
 
+## 2026-07-02 — Feature 48: Combobox buscable de clientes (paginado/server-side)
+
+**Status**: done — Review 1 FAILED (regresión real) → fix-pass → Review 2 PASSED — tsc frontend exit 0
+
+**Qué**: Los 4 formularios que seleccionan cliente (`CreateTaskForm`, `EditTaskForm`, `ActivityForm`, `SalesPage`) usaban `useClients({limit:100-200})` + `<select>` nativo — el cliente deseado desaparecía silenciosamente del selector si el catálogo superaba ese límite. Reemplazado por `ClientCombobox` (Popover+Command/cmdk) con debounce 300ms sobre `GET /api/clients?q=...` (backend ya soportaba `q`/`page`/`limit`, sin cambios backend).
+
+- Setup: `cmdk` agregado a dependencies (autorizado previamente). `frontend/src/components/ui/popover.tsx` y `command.tsx` nuevos (patrón shadcn del repo, import unificado `radix-ui`, `Search01Icon` de hugeicons).
+- `frontend/src/shared/components/forms/ClientCombobox.tsx`: componente reutilizable `{value, onSelect, initialLabel?, onResolve?, placeholder?, disabled?, error?, id?}`.
+- 4 call sites migrados, cada uno reemplaza su `useClients({limit:N})`+`<select>` por el combobox, preservando validación/campos derivados (contactos, nombre, tipo de cliente).
+- **Review 1 (FAILED)**: `selectedClient` arrancaba en `null` en `EditTaskForm`/`ActivityForm`, dejando el selector de Contacto deshabilitado/vacío al montar con cliente ya asignado (mismo hueco que antes existía si el cliente no estaba en los primeros 100-200, pero ahora siempre presente al inicio).
+- **Fix post-review**: nuevo prop `onResolve` en `ClientCombobox` — query puntual `useClients({q: initialLabel, limit:5}, {enabled})` que resuelve el `Client` completo por nombre una sola vez (useRef) y lo entrega sin disparar `onSelect`. Threading de `clientName` (ya existente en `Task`/`Deal` desde features 47/19) desde `AgendaPage`/`MiDiaPage`/`ClientDetailPage` → route search `actividades.nueva.tsx` → `ActivitiesPage` → `ActivityForm` (`initialClientLabel`). Guard agregado: reseleccionar el mismo cliente ya no resetea `contactId`.
+- Caveat restante (aceptado): si el nombre conocido no matchea ningún resultado de búsqueda (cliente renombrado/borrado), el selector de Contacto queda deshabilitado hasta que el usuario reabra el combobox y reelija — sin backend `GET /clients/:id` no es resoluble 100% desde frontend.
+- `progress/impl_48-client-picker-combobox.md`.
+
+---
+
 ## 2026-07-01 — Feature 44: Eliminar tarea (Agenda)
 
 **Status**: done — Review Líder 12/12 PASS — tsc backend+frontend exit 0
@@ -680,3 +696,56 @@ Batch 2:
 **Verificacion**: Review Líder PASS. tsc backend+frontend exit 0. progress/impl_25-winloss-analysis.md. Stub findAllForAnalysis: jest.fn() en create-activity.use-case.spec.ts (mock, patron features 20/21).
 
 **Caveat no bloqueante**: avgDaysInStage omite dwell del stage inicial (no hay entry de creación en stageHistory) y del stage actual en curso; solo intervalos cerrados entre transiciones. origin de Perdido por defecto Prospecto si stageHistory insuficiente. Mismo limite conocido de feature 18 (stage inicial no registrado).
+
+## 2026-07-01 — Feature 45: FIX autorizacion JWT en tasks/activities (B1+B3+B4)
+
+- Origen: auditoria de bugs del Lider (progress/explore_bugs_2026-07-01.md), aprobada por el usuario como "Fix 1".
+- Backend tasks: complete/update/reactivate/delete derivan callerRole/callerSellerId del JWT (antes @Body('sellerId') spoofable); ownership solo para Seller, Admin/Director bypass; UpdateTaskDto sin sellerId; conflicto de horario en update contra task.sellerId (dueno).
+- Backend: POST de tasks y POST de activities fuerzan dto.sellerId del JWT para role Seller (403 si JWT sin sellerId); Admin/Director conservan el del body.
+- Backend activities: PATCH :id/status carga la actividad (404 si no existe) y bloquea Seller sobre actividad ajena (403); changedBy sigue del JWT. GETs de lectura sin cambios (decision: historial de cliente compartido).
+- Frontend tasks: tasks.api.ts y hooks useCompleteTask/useUpdateTask/useReactivateTask/useDeleteTask sin sellerId; firmas externas intactas, cero cambios en paginas.
+- Reviewer: 13/13 PASS. tsc backend+frontend exit 0. Detalle: progress/impl_45-authz-tasks-activities.md.
+- Pendientes del plan de bugs: Fix 2 (46-schema-migrations-reconcile, B2) y Fix 3 (47-hardening-menor, B6+B7).
+
+## 2026-07-01 — Feature 46: FIX reconciliacion de schema y migraciones (B2)
+
+- Origen: auditoria de bugs del Lider, aprobada por el usuario como "Fix 2". Ejecutado directamente por el Lider (fuera de modules/, requeria iteracion estrecha con Docker/DB).
+- Hallazgo: tabla migrations en dev vacia — las 4 migraciones previas nunca corrieron, todo el schema (incluyendo activities.task_id/contact_id, tasks.type/contact_id) se creo via TYPEORM_SYNCHRONIZE=true. app.module.ts ignoraba TYPEORM_MIGRATIONS_RUN (hardcoded false).
+- Usuario confirmo: existe prod real con datos, sin acceso directo para introspectarla. Decision: todas las migraciones nuevas son idempotentes (IF NOT EXISTS / DO-block duplicate_object) para no asumir el estado de ningun entorno.
+- data-source.ts (ya existia) cableado con scripts npm migration:generate/run/revert. Migracion baseline generada con migration:generate contra DB vacia real (docker volume recreado, autorizado por el usuario, datos de prueba) — no escrita a mano. 4 migraciones legacy retrofitteadas a idempotentes.
+- Verificado E2E: schema resultante identico al original (11 tablas) + fix colateral de timestamptz drift en created_at/updated_at/deleted_at. migrationsRun=true probado con boot limpio + login JWT funcional.
+- Reviewer independiente: 11/11 PASS. Unico hallazgo: docker compose restart no relee env_file — corregido con --force-recreate y documentado en docs/verification.md como gotcha.
+- Docs actualizados: docs/verification.md (flujo de migraciones + regla de migracion obligatoria por entidad nueva + gotcha de restart), docs/conventions.md (path real de migraciones).
+- Detalle: progress/impl_46-schema-migrations-reconcile.md.
+- Pendiente del plan de bugs: Fix 3 (47-hardening-menor, B6+B7).
+
+## 2026-07-02 — Feature 47: FIX hardening menor (B6+B7)
+
+- Origen: auditoria de bugs del Lider, aprobada por el usuario como "Fix 3" (ultimo del plan). Delegado a Implementer + Reviewer independiente (flujo normal, ambos tocan modules/).
+- B6 defensivo: TaskRepositoryImpl.update() y ActivityRepositoryImpl.update() lanzan NotFoundException en vez de Object.assign(existing!, ...). Los 3 use-cases que llaman taskRepo.update() (complete/update/reactivate) ya validaban findById antes, asi que no hay cambio de comportamiento para callers actuales — solo cierra ventana TOCTOU y protege callers futuros.
+- B7: backend enriquece TaskEntity/TaskDto con clientName/contactName via leftJoin en findTodayBySeller/findMonthAllSellers (mismo patron que ActivityRepositoryImpl.findDailyBySeller, sin N+1; cast ::text porque tasks.client_id/contact_id son varchar). Frontend: AgendaPage, CalendarView (cascada de 8 interfaces) y MiDiaPage dejan de hacer clients.find() sobre useClients({limit:200}) para mostrar nombres, usan datos ya enriquecidos del backend. CreateTaskForm.tsx fuera de alcance (su useClients es para el dropdown de seleccion, problema distinto).
+- Reviewer independiente: 16/16 PASS, sin regresiones, sin N+1, cast de tipos verificado contra schema real.
+- Incidente de proceso (detectado por el Reviewer, corregido por el Lider): el Implementer genero un backend/CHECKPOINTS.md suelto por cwd incorrecto. Al corregirlo, un primer intento con awk/gsub corrompio marcas [x] en secciones historicas no relacionadas (features 05-27) por scoping erroneo — detectado antes de guardar via git diff, revertido con git checkout HEAD (el usuario ya habia commiteado feature 46 como c0586d7, HEAD limpio) y reaplicado solo el bloque de la seccion 47.
+- Con esto se cierran los 3 fixes del plan de auditoria de bugs 2026-07-01 (features 45, 46, 47).
+
+## 2026-07-02 — Fix: sync client.stage <-> deal.stage (tab Clientes vs Pipeline)
+
+- Bug reportado por el usuario: en detalle de cliente (tab Clientes), el card "Actualizar stage" solo escribia clients.stage; el Kanban del pipeline lee deals.stage (entidad separada) y nunca reflejaba el cambio. Tampoco existia sync inverso (drag en Kanban no actualizaba clients.stage).
+- Diseño: deals.stage = fuente de verdad del pipeline; clients.stage = copia denormalizada sincronizada.
+- Backend: ChangeDealStageUseCase inyecta CLIENT_REPOSITORY y tras mover el deal sincroniza clients.stage (guard clientId). Sin cambios de module (PipelineModule ya importa ClientsModule).
+- Frontend: pipeline.types.ts exporta ALLOWED_TRANSITIONS (espejo del backend). ClientesPage detalle: con deal, los botones mueven el deal via changeStage (historial + reglas de transicion, botones no permitidos deshabilitados); sin deal, comportamiento previo (updateClient). useChangeStage invalida clients/client-deals; useUpdateClient invalida pipeline.
+- Verificacion: tsc --noEmit limpio en backend y frontend. Sin specs afectados (no existe spec de ChangeDealStageUseCase).
+- Riesgos documentados: cliente con multiples deals solo mueve el mas reciente; escritura deal+client no transaccional.
+- Detalle: progress/impl_fix_client_stage_sync.md. Implementado por subagente Implementer, diff verificado por el Lider.
+
+## 2026-07-06 — Pre-merge a main: verificación contra prod + Feature 49
+
+- Objetivo: validar impacto en DB de prod (VPS Hostinger srv1178023, Dokploy, DB postgres:18 servicio "tracker-sales-os-trackersales-hibdzn", db sales-os) antes del merge de fix/auth-tasks-activities.
+- Acceso: llave SSH instalada en el VPS (fix: authorized_keys tenia llave previa sin newline final, la nuestra quedo concatenada en la misma linea; sed la separo).
+- Hallazgo critico: .env de prod ya tiene TYPEORM_MIGRATIONS_RUN=true (hoy ignorado, main hardcodea false). Al mergear, la baseline correra sola en el arranque.
+- Backup: /root/backups/salesos_pre_merge_20260706.dump (251K, pg_dump -F c).
+- Check de huerfanos (10 FKs de la baseline): 9 limpios, 1 blocker — 7 ventas (6 ATC + 1 Direccion, ~$1.02M) con seller_id = USER id de la cuenta admin (652194b4). Causa: SalesPage.tsx fallback `currentUser?.sellerId ?? currentUser?.id`. No era un seller borrado.
+- Fix datos (prod, transaccional): seller 'Direccion Comercial' creado (bd4b30ca-7d63-4bf7-9f56-0b4c6dcd4a3c) + UPDATE de las 7 ventas. Re-check: 0 huerfanos.
+- Tabla migrations de prod: 5 registros; incluye AlterActivitiesClientIdNullable1782345600000 cuyo archivo no existe en ningun branch (corrida manual, inofensiva — TypeORM la ignora). Tras merge solo queda pendiente la baseline.
+- Feature 49 (fix codigo): dropdown Vendedor en forms Direccion/ATC de SalesPage.tsx, default 'Direccion Comercial', fallback a user.id eliminado. Implementer + Reviewer independiente: 10/10 PASS. tsc frontend exit 0.
+- Pendiente no bloqueante: rotar JWT_SECRET de prod (usa el secret de dev, publico en el repo) y considerar rotar ANTHROPIC_API_KEY.

@@ -14,6 +14,8 @@ export class TaskDto {
   isOverdue: boolean;
   createdAt: string;
   updatedAt: string;
+  clientName: string | null;
+  contactName: string | null;
 
   static fromEntity(entity: TaskEntity): TaskDto {
     const now = new Date();
@@ -32,6 +34,8 @@ export class TaskDto {
       entity.status === TaskStatus.Pending && entity.scheduledAt < now;
     dto.createdAt = entity.createdAt.toISOString();
     dto.updatedAt = entity.updatedAt.toISOString();
+    dto.clientName = entity.clientName ?? null;
+    dto.contactName = entity.contactName ?? null;
     return dto;
   }
 }

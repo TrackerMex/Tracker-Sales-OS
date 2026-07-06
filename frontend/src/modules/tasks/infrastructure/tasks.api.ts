@@ -14,15 +14,15 @@ export const tasksApi = {
   getMonthTeamTasks: (monthStart: string): Promise<Task[]> =>
     api.get<Task[]>('/tasks/team', { params: { date: monthStart } }).then((r) => r.data),
 
-  completeTask: (taskId: string, sellerId: string): Promise<Task> =>
-    api.patch<Task>(`/tasks/${taskId}/complete`, { sellerId }).then((r) => r.data),
+  completeTask: (taskId: string): Promise<Task> =>
+    api.patch<Task>(`/tasks/${taskId}/complete`, {}).then((r) => r.data),
 
-  updateTask: (taskId: string, sellerId: string, input: UpdateTaskInput): Promise<Task> =>
-    api.patch<Task>(`/tasks/${taskId}`, { ...input, sellerId }).then((r) => r.data),
+  updateTask: (taskId: string, input: UpdateTaskInput): Promise<Task> =>
+    api.patch<Task>(`/tasks/${taskId}`, input).then((r) => r.data),
 
-  reactivateTask: (taskId: string, sellerId: string): Promise<Task> =>
-    api.patch<Task>(`/tasks/${taskId}/reactivate`, { sellerId }).then((r) => r.data),
+  reactivateTask: (taskId: string): Promise<Task> =>
+    api.patch<Task>(`/tasks/${taskId}/reactivate`, {}).then((r) => r.data),
 
-  deleteTask: (taskId: string, sellerId: string): Promise<void> =>
-    api.delete(`/tasks/${taskId}`, { data: { sellerId } }).then(() => undefined),
+  deleteTask: (taskId: string): Promise<void> =>
+    api.delete(`/tasks/${taskId}`).then(() => undefined),
 }

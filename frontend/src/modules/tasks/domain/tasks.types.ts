@@ -15,6 +15,8 @@ export interface Task {
   createdAt: string
   updatedAt: string
   sellerName?: string
+  clientName?: string | null
+  contactName?: string | null
 }
 
 export interface CreateTaskInput {

@@ -2,10 +2,12 @@ import { Injectable, Inject, NotFoundException, ForbiddenException, ConflictExce
 import { IUseCase } from '../../../../core/domain/use-case.interface';
 import { TaskDto } from '../dtos/task.dto';
 import { TASK_REPOSITORY, ITaskRepository } from '../../domain/repositories/task.repository.interface';
+import { UserRole } from '../../../auth/domain/entities/user.entity';
 
 export interface UpdateTaskInput {
   taskId: string;
-  sellerId: string;
+  callerRole: string;
+  callerSellerId: string | null;
   clientId?: string;
   type?: string;
   contactId?: string;
@@ -25,11 +27,13 @@ export class UpdateTaskUseCase implements IUseCase<UpdateTaskInput, TaskDto> {
     const task = await this.taskRepo.findById(input.taskId);
 
     if (!task) throw new NotFoundException(`Task ${input.taskId} not found`);
-    if (task.sellerId !== input.sellerId) throw new ForbiddenException('You can only edit your own tasks');
+    if (input.callerRole === UserRole.Seller && task.sellerId !== input.callerSellerId) {
+      throw new ForbiddenException('You can only edit your own tasks');
+    }
 
     if (input.scheduledAt) {
       const newScheduledAt = new Date(input.scheduledAt);
-      const conflict = await this.taskRepo.findConflictingTask(input.sellerId, newScheduledAt, input.taskId);
+      const conflict = await this.taskRepo.findConflictingTask(task.sellerId, newScheduledAt, input.taskId);
       if (conflict) {
         const fecha = newScheduledAt.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
         const hora = newScheduledAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -39,7 +43,7 @@ export class UpdateTaskUseCase implements IUseCase<UpdateTaskInput, TaskDto> {
       }
     }
 
-    const { taskId, sellerId, ...fields } = input;
+    const { taskId, callerRole, callerSellerId, ...fields } = input;
 
     const updated = await this.taskRepo.update(taskId, {
       ...fields,

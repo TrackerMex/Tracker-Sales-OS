@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useClients } from '../../../clients/application/hooks/useClients'
 import type { CreateTaskInput } from '../../domain/tasks.types'
+import type { Client } from '../../../clients/domain/clients.types'
 import { coachingApi } from '../../../coaching/infrastructure/coaching.api'
 import { tasksApi } from '../../infrastructure/tasks.api'
 import { useApiFormErrors } from '@/shared/lib/api-errors'
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
+import { ClientCombobox } from '@/shared/components/forms/ClientCombobox'
 import { useAppStore } from '@/shared/store/app.store'
 
 const TASK_TYPES = [
@@ -57,13 +58,12 @@ interface CreateTaskFormProps {
 }
 
 export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, initialDate }: CreateTaskFormProps) {
-  const { data: clientsData } = useClients({ limit: 200 })
-  const clients = clientsData?.data ?? []
   const { summary: errorSummary, fieldErrors, clearField, formRef } = useApiFormErrors(error)
 
   const [aiTips, setAiTips] = useState<string[]>([])
   const [aiLoading, setAiLoading] = useState(false)
   const [clientId, setClientId] = useState('')
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [type, setType] = useState('Llamada')
   const [contactId, setContactId] = useState('')
   const [objective, setObjective] = useState('')
@@ -90,7 +90,6 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, in
     .filter((t) => t.status !== 'Completado')
     .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))
 
-  const selectedClient = useMemo(() => clients.find((c) => c.id === clientId), [clients, clientId])
   const contacts = selectedClient?.contacts ?? []
   const selectedContact = useMemo(() => contacts.find((c) => c.id === contactId), [contacts, contactId])
 
@@ -159,17 +158,18 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, in
 
           {/* cliente */}
           <div>
-            <select
+            <ClientCombobox
               value={clientId}
-              onChange={(e) => { setClientId(e.target.value); setContactId(''); clearField('clientId') }}
-              className={fieldErrors.clientId ? 'input input-error' : 'input'}
-              {...fieldErrorProps('clientId', fieldErrors.clientId)}
-            >
-              <option value="">Sin cliente / prospecto nuevo</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              onSelect={(client) => {
+                const changed = (client?.id ?? '') !== clientId
+                setClientId(client?.id ?? '')
+                setSelectedClient(client)
+                if (changed) setContactId('')
+                clearField('clientId')
+              }}
+              placeholder="Sin cliente / prospecto nuevo"
+              error={!!fieldErrors.clientId}
+            />
             <FieldError name="clientId" message={fieldErrors.clientId} />
           </div>
 
@@ -249,7 +249,7 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, in
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {scheduledToday.map((t) => {
-                  const clientName = t.clientId ? (clients.find((c) => c.id === t.clientId)?.name ?? null) : null
+                  const clientName = t.clientName ?? null
                   return (
                     <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
                       <span style={{ fontWeight: 700, color: '#0F172A', minWidth: 42 }}>{formatScheduleTime(t.scheduledAt)}</span>

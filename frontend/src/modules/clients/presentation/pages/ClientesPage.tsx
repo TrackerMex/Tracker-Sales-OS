@@ -11,6 +11,9 @@ import { useCreateClient } from "../../application/hooks/useCreateClient"
 import { useDeleteClient } from "../../application/hooks/useDeleteClient"
 import { useUpdateClient } from "../../application/hooks/useUpdateClient"
 import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
+import { useClientDeals } from "@/modules/pipeline/application/hooks/useClientDeals"
+import { useChangeStage } from "@/modules/pipeline/application/hooks/useChangeStage"
+import { ALLOWED_TRANSITIONS } from "@/modules/pipeline/domain/pipeline.types"
 import { useApiFormErrors } from "@/shared/lib/api-errors"
 import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
 import { FieldError, fieldErrorProps } from "@/shared/components/forms/FieldError"
@@ -136,6 +139,11 @@ export function ClientesPage() {
   const clientList = data?.data ?? []
   const selectedClient = view.mode === "detail" ? clientList.find((c) => c.id === view.clientId) ?? null : null
 
+  const { data: clientDeals } = useClientDeals(selectedClient?.id ?? null, selectedClient?.sellerId ?? null)
+  // Deals come ordered by createdAt ASC, so the last one is the most recent
+  const activeDeal = clientDeals && clientDeals.length > 0 ? clientDeals[clientDeals.length - 1] : null
+  const changeStage = useChangeStage()
+
   const sellerId = currentUser?.sellerId ?? currentUser?.id ?? ""
   const { data: sellerActivities } = useQuery({
     queryKey: ["activities", "seller", sellerId],
@@ -239,6 +247,27 @@ export function ClientesPage() {
     })
   }
 
+  function handleStageChange(stage: PipelineStage) {
+    if (!selectedClient) return
+    if (activeDeal) {
+      changeStage.mutate(
+        { dealId: activeDeal.id, input: { newStage: stage, changedBy: currentUser?.username ?? "" } },
+        {
+          onSuccess: () => toast.success("Stage actualizado"),
+          onError: () => toast.error("No se pudo actualizar el stage"),
+        }
+      )
+    } else {
+      updateClient.mutate(
+        { id: selectedClient.id, payload: { stage } },
+        {
+          onSuccess: () => toast.success("Stage actualizado"),
+          onError: () => toast.error("No se pudo actualizar el stage"),
+        }
+      )
+    }
+  }
+
   function goToDetail(clientId: string) {
     setView({ mode: "detail", clientId })
   }
@@ -320,24 +349,27 @@ export function ClientesPage() {
             <div className="card p-5">
               <p className="slabel mb-3">Actualizar stage</p>
               <div className="flex flex-wrap gap-2">
-                {pipelineStages.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() =>
-                      updateClient.mutate({
-                        id: selectedClient.id,
-                        payload: { stage: s },
-                      })
-                    }
-                    className={`rounded-lg px-3.5 py-2 text-xs font-semibold transition-all ${
-                      selectedClient.stage === s
-                        ? "bg-[#002B49] text-white shadow-sm"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
+                {pipelineStages.map((s) => {
+                  // With a deal, the deal stage is the pipeline source of truth
+                  const isActive = activeDeal ? activeDeal.stage === s : selectedClient.stage === s
+                  const disabled = activeDeal
+                    ? isActive || !ALLOWED_TRANSITIONS[activeDeal.stage].includes(s)
+                    : false
+                  return (
+                    <button
+                      key={s}
+                      disabled={disabled}
+                      onClick={() => handleStageChange(s)}
+                      className={`rounded-lg px-3.5 py-2 text-xs font-semibold transition-all ${
+                        isActive
+                          ? "bg-[#002B49] text-white shadow-sm"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      } ${disabled && !isActive ? "opacity-40 cursor-not-allowed" : ""}`}
+                    >
+                      {s}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 

@@ -7,6 +7,9 @@ export function useUpdateClient() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateClientInput }) =>
       clientsApi.updateClient(id, payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] })
+      queryClient.invalidateQueries({ queryKey: ["pipeline"] })
+    },
   })
 }

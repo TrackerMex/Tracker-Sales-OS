@@ -5,6 +5,17 @@ export type { PipelineStage }
 
 export type LossReason = 'precio' | 'competencia' | 'sin_respuesta' | 'timing' | 'otro'
 
+// Mirrors ALLOWED_TRANSITIONS in backend deal.entity.ts
+export const ALLOWED_TRANSITIONS: Record<PipelineStage, PipelineStage[]> = {
+  Prospecto: ['Contactado', 'Perdido'],
+  Contactado: ['Interesado', 'Perdido'],
+  Interesado: ['Propuesta', 'Perdido'],
+  Propuesta: ['Negociación', 'Perdido'],
+  Negociación: ['Cierre', 'Perdido'],
+  Cierre: [],
+  Perdido: [],
+}
+
 export interface StageHistoryEntry {
   stage: PipelineStage
   changedAt: string

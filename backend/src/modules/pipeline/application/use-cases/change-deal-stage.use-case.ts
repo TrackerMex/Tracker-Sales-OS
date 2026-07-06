@@ -10,6 +10,10 @@ import {
   IDealsRepository,
 } from '../../domain/repositories/deal.repository.interface';
 import {
+  CLIENT_REPOSITORY,
+  IClientRepository,
+} from '../../../clients/domain/repositories/client.repository.interface';
+import {
   ALLOWED_TRANSITIONS,
   STAGE_PROBABILITY,
   StageHistoryEntry,
@@ -33,6 +37,8 @@ export class ChangeDealStageUseCase implements IUseCase<
   constructor(
     @Inject(DEAL_REPOSITORY)
     private readonly dealRepo: IDealsRepository,
+    @Inject(CLIENT_REPOSITORY)
+    private readonly clientRepo: IClientRepository,
   ) {}
 
   async execute(input: ChangeDealStageInput): Promise<DealDto> {
@@ -62,6 +68,11 @@ export class ChangeDealStageUseCase implements IUseCase<
       probability: STAGE_PROBABILITY[input.newStage],
       stageHistory: [...deal.stageHistory, historyEntry],
     });
+
+    // Keep clients.stage in sync with the deal stage
+    if (deal.clientId) {
+      await this.clientRepo.update(deal.clientId, { stage: input.newStage });
+    }
 
     return DealDto.fromEntity(updated);
   }

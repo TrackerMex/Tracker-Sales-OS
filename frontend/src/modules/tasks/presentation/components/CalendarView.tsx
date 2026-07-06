@@ -5,13 +5,11 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
 import type { Task } from "../../domain/tasks.types"
-import type { Client } from "@/modules/clients/domain/clients.types"
 
 interface CalendarViewProps {
   year: number
   month: number
   tasks: Task[]
-  clients: Client[]
   onEdit: (task: Task) => void
   onPrevMonth: () => void
   onNextMonth: () => void
@@ -130,12 +128,11 @@ function CalendarViewToggle({
 
 interface TaskChipProps {
   task: Task
-  client: Client | undefined
   isDragging?: boolean
   onEdit?: (task: Task) => void
 }
 
-function TaskChip({ task, client, isDragging, onEdit }: TaskChipProps) {
+function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
   const taskRef = useRef<HTMLButtonElement>(null)
   const [internalDragging, setInternalDragging] = useState(false)
 
@@ -168,7 +165,7 @@ function TaskChip({ task, client, isDragging, onEdit }: TaskChipProps) {
   const chipLabel = [
     formatTime(task.scheduledAt),
     task.type ?? null,
-    client?.name ?? null,
+    task.clientName ?? null,
     task.sellerName ?? null,
   ]
     .filter(Boolean)
@@ -256,9 +253,9 @@ function TaskChip({ task, client, isDragging, onEdit }: TaskChipProps) {
           >
             {task.title}
           </p>
-          {client && (
+          {task.clientName && (
             <p style={{ fontSize: 12, color: "#334155", margin: 0 }}>
-              {client.name}
+              {task.clientName}
             </p>
           )}
           {task.description && (
@@ -286,7 +283,6 @@ interface MonthViewProps {
   year: number
   month: number
   tasks: Task[]
-  clients: Client[]
   onEdit: (task: Task) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
   onDayClick?: (date: Date) => void
@@ -296,7 +292,6 @@ function MonthView({
   year,
   month,
   tasks,
-  clients,
   onEdit,
   onTaskReschedule,
   onDayClick,
@@ -381,7 +376,6 @@ function MonthView({
               isToday={isToday}
               visibleTasks={visibleTasks}
               overflow={overflow}
-              clients={clients}
               onEdit={onEdit}
               onTaskReschedule={onTaskReschedule}
               onDayClick={cellDate ? () => onDayClick?.(cellDate) : undefined}
@@ -401,7 +395,6 @@ interface MonthDayCellProps {
   isToday: boolean
   visibleTasks: Task[]
   overflow: number
-  clients: Client[]
   onEdit: (task: Task) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
   onDayClick?: () => void
@@ -415,7 +408,6 @@ function MonthDayCell({
   isToday,
   visibleTasks,
   overflow,
-  clients,
   onEdit,
   onTaskReschedule,
   onDayClick,
@@ -495,17 +487,9 @@ function MonthDayCell({
             {dayNum}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {visibleTasks.map((task) => {
-              const client = clients.find((c) => c.id === task.clientId)
-              return (
-                <TaskChip
-                  key={task.id}
-                  task={task}
-                  client={client}
-                  onEdit={onEdit}
-                />
-              )
-            })}
+            {visibleTasks.map((task) => (
+              <TaskChip key={task.id} task={task} onEdit={onEdit} />
+            ))}
             {overflow > 0 && (
               <span style={{ fontSize: 10, color: "#94A3B8", paddingLeft: 2 }}>
                 +{overflow} más
@@ -521,7 +505,6 @@ function MonthDayCell({
 interface WeekViewProps {
   selectedDate: Date
   tasks: Task[]
-  clients: Client[]
   onEdit: (task: Task) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
   onPrevWeek: () => void
@@ -531,7 +514,6 @@ interface WeekViewProps {
 function WeekView({
   selectedDate,
   tasks,
-  clients,
   onEdit,
   onTaskReschedule,
   onPrevWeek,
@@ -650,7 +632,6 @@ function WeekView({
                 tDate.getFullYear() === date.getFullYear()
               )
             })}
-            clients={clients}
             onEdit={onEdit}
             onTaskReschedule={onTaskReschedule}
           />
@@ -663,7 +644,6 @@ function WeekView({
 interface WeekDayColumnProps {
   date: Date
   tasks: Task[]
-  clients: Client[]
   onEdit: (task: Task) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
 }
@@ -671,7 +651,6 @@ interface WeekDayColumnProps {
 function WeekDayColumn({
   date,
   tasks,
-  clients,
   onEdit,
   onTaskReschedule,
 }: WeekDayColumnProps) {
@@ -727,17 +706,9 @@ function WeekDayColumn({
       }}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {tasks.map((task) => {
-          const client = clients.find((c) => c.id === task.clientId)
-          return (
-            <TaskChip
-              key={task.id}
-              task={task}
-              client={client}
-              onEdit={onEdit}
-            />
-          )
-        })}
+        {tasks.map((task) => (
+          <TaskChip key={task.id} task={task} onEdit={onEdit} />
+        ))}
       </div>
     </div>
   )
@@ -746,7 +717,6 @@ function WeekDayColumn({
 interface DayViewProps {
   selectedDate: Date
   tasks: Task[]
-  clients: Client[]
   onEdit: (task: Task) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
   onPrevDay: () => void
@@ -756,7 +726,6 @@ interface DayViewProps {
 function DayView({
   selectedDate,
   tasks,
-  clients,
   onEdit,
   onTaskReschedule,
   onPrevDay,
@@ -834,7 +803,6 @@ function DayView({
               timeLabel={timeLabel}
               tasks={hourTasks}
               date={selectedDate}
-              clients={clients}
               onEdit={onEdit}
               onTaskReschedule={onTaskReschedule}
             />
@@ -850,7 +818,6 @@ interface DayHourRowProps {
   timeLabel: string
   tasks: Task[]
   date: Date
-  clients: Client[]
   onEdit: (task: Task) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
 }
@@ -860,7 +827,6 @@ function DayHourRow({
   timeLabel,
   tasks,
   date,
-  clients,
   onEdit,
   onTaskReschedule,
 }: DayHourRowProps) {
@@ -932,17 +898,9 @@ function DayHourRow({
           gap: 2,
         }}
       >
-        {tasks.map((task) => {
-          const client = clients.find((c) => c.id === task.clientId)
-          return (
-            <TaskChip
-              key={task.id}
-              task={task}
-              client={client}
-              onEdit={onEdit}
-            />
-          )
-        })}
+        {tasks.map((task) => (
+          <TaskChip key={task.id} task={task} onEdit={onEdit} />
+        ))}
       </div>
     </>
   )
@@ -952,7 +910,6 @@ export function CalendarView({
   year,
   month,
   tasks,
-  clients,
   onEdit,
   onPrevMonth,
   onNextMonth,
@@ -1073,7 +1030,6 @@ export function CalendarView({
             year={year}
             month={month}
             tasks={tasks}
-            clients={clients}
             onEdit={onEdit}
             onTaskReschedule={onTaskReschedule}
             onDayClick={(date) => {
@@ -1089,7 +1045,6 @@ export function CalendarView({
         <WeekView
           selectedDate={currentSelectedDate}
           tasks={tasks}
-          clients={clients}
           onEdit={onEdit}
           onTaskReschedule={onTaskReschedule}
           onPrevWeek={handlePrevWeek}
@@ -1101,7 +1056,6 @@ export function CalendarView({
         <DayView
           selectedDate={currentSelectedDate}
           tasks={tasks}
-          clients={clients}
           onEdit={onEdit}
           onTaskReschedule={onTaskReschedule}
           onPrevDay={handlePrevDay}

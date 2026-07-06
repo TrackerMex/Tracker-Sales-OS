@@ -15,4 +15,6 @@ export class TaskEntity extends BaseEntity {
   scheduledAt: Date;
   completedAt: Date | null;
   status: TaskStatus;
+  clientName?: string | null;
+  contactName?: string | null;
 }

@@ -143,7 +143,7 @@ Usar `process.env.NOMBRE` en backend, `import.meta.env.VITE_NOMBRE` en frontend.
 ## TypeORM
 
 - Usar `softDelete` (campo `deletedAt`) en todas las entidades
-- Migraciones en `backend/src/database/migrations/`
-- `TYPEORM_SYNCHRONIZE=false` en producción — siempre usar migrations
+- Migraciones en `backend/src/migrations/` (CLI via `backend/src/data-source.ts`, scripts `pnpm migration:generate|run|revert` — ver `docs/verification.md`)
+- `TYPEORM_SYNCHRONIZE=false` en producción — siempre usar migrations. Toda columna/tabla/índice nuevo en una entidad requiere su migración idempotente en el mismo PR (ver `docs/verification.md`)
 - Nombres de tablas: `snake_case` plural (ej: `audit_logs`)
 - Nombres de columnas: `snake_case` (ej: `seller_id`)

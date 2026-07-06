@@ -1,15 +1,16 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { useAppStore } from '@/shared/store/app.store';
+import { useSellers } from '@/modules/equipo/application/hooks/useSellers';
 import { useCreateSale } from '../../application/hooks/useCreateSale';
 import { useSales } from '../../application/hooks/useSales';
 import { useDeleteSale } from '../../application/hooks/useDeleteSale';
-import { useClients } from '../../../clients/application/hooks/useClients';
 import type { CreateSaleInput, PaymentMethod, SaleSource, Sale } from '../../domain/sales.types';
 import { UserRole } from '@/core/domain/types/common.types';
 import { useApiFormErrors } from '@/shared/lib/api-errors';
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary';
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError';
+import { ClientCombobox } from '@/shared/components/forms/ClientCombobox';
 import { EditSaleModal } from '../components/EditSaleModal';
 import {
   Dialog,
@@ -42,8 +43,12 @@ function formatCurrency(value: number): string {
 
 export function SalesPage() {
   const currentUser = useAppStore((s) => s.currentUser);
-  const sellerId = currentUser?.sellerId ?? currentUser?.id ?? '';
+  const sellerId = currentUser?.sellerId ?? '';
   const isAdminOrDirector = currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Director;
+
+  // Sellers list for Admin/Director forms (hook is self-gated to Admin/Director)
+  const { data: sellersData } = useSellers();
+  const activeSellers = (sellersData ?? []).filter((s) => s.active);
 
   // Seller form state
   const [sellerClientId, setSellerClientId] = useState('');
@@ -58,6 +63,7 @@ export function SalesPage() {
   const [sellerNotes, setSellerNotes] = useState('');
 
   // Direction form state
+  const [dirSellerId, setDirSellerId] = useState('');
   const [dirProject, setDirProject] = useState('');
   const [dirUnits, setDirUnits] = useState<number | ''>('');
   const [dirAmount, setDirAmount] = useState<number | ''>('');
@@ -65,10 +71,19 @@ export function SalesPage() {
   const [dirNotes, setDirNotes] = useState('');
 
   // ATC form state
+  const [atcSellerId, setAtcSellerId] = useState('');
   const [atcUnits, setAtcUnits] = useState<number | ''>('');
   const [atcAmount, setAtcAmount] = useState<number | ''>('');
   const [atcDate, setAtcDate] = useState(today());
   const [atcNotes, setAtcNotes] = useState('');
+
+  // Default both dropdowns to the "Dirección Comercial" seller when the list loads
+  useEffect(() => {
+    const direccion = sellersData?.find((s) => s.active && s.name === 'Dirección Comercial');
+    if (!direccion) return;
+    setDirSellerId((prev) => prev || direccion.id);
+    setAtcSellerId((prev) => prev || direccion.id);
+  }, [sellersData]);
 
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [deletingSale, setDeletingSale] = useState<Sale | null>(null);
@@ -82,7 +97,6 @@ export function SalesPage() {
   const dirErrors = useApiFormErrors(createDirSale.error);
   const atcErrors = useApiFormErrors(createAtcSale.error);
 
-  const { data: clientsData } = useClients({ limit: 200 });
   const { data, isLoading: loadingList, isError } = useSales(
     !isAdminOrDirector ? { sellerId } : {},
   );
@@ -122,7 +136,7 @@ export function SalesPage() {
   function handleDirSubmit(e: FormEvent) {
     e.preventDefault();
     const input: CreateSaleInput = {
-      sellerId,
+      sellerId: dirSellerId,
       clientId: undefined,
       clientName: dirProject,
       clientType: 'Existente',
@@ -151,7 +165,7 @@ export function SalesPage() {
   function handleAtcSubmit(e: FormEvent) {
     e.preventDefault();
     const input: CreateSaleInput = {
-      sellerId,
+      sellerId: atcSellerId,
       clientId: undefined,
       clientName: 'ATC',
       clientType: 'Existente',
@@ -196,28 +210,17 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1">Cliente</label>
-              <select
-                className={sellerErrors.fieldErrors.clientId ? 'input input-error' : 'input'}
+              <ClientCombobox
                 value={sellerClientId}
-                onChange={(e) => {
-                  const client = clientsData?.data.find((c) => c.id === e.target.value);
-                  setSellerClientId(e.target.value);
+                onSelect={(client) => {
+                  setSellerClientId(client?.id ?? '');
                   setSellerClientName(client?.name ?? '');
-                  setSellerClientType(
-                    client?.type === 'Nuevo' ? 'Nuevo' : 'Existente',
-                  );
+                  setSellerClientType(client?.type === 'Nuevo' ? 'Nuevo' : 'Existente');
                   sellerErrors.clearField('clientId');
                 }}
-                required
-                {...fieldErrorProps('clientId', sellerErrors.fieldErrors.clientId)}
-              >
-                <option value="">Seleccionar cliente</option>
-                {clientsData?.data.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Seleccionar cliente"
+                error={!!sellerErrors.fieldErrors.clientId}
+              />
               <FieldError name="clientId" message={sellerErrors.fieldErrors.clientId} />
             </div>
 
@@ -347,6 +350,27 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
+                Vendedor
+              </label>
+              <select
+                className={dirErrors.fieldErrors.sellerId ? 'input input-error' : 'input'}
+                value={dirSellerId}
+                onChange={(e) => { setDirSellerId(e.target.value); dirErrors.clearField('sellerId'); }}
+                required
+                {...fieldErrorProps('sellerId', dirErrors.fieldErrors.sellerId)}
+              >
+                <option value="">Seleccionar vendedor</option>
+                {activeSellers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <FieldError name="sellerId" message={dirErrors.fieldErrors.sellerId} />
+            </div>
+
+            <div>
+              <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Fecha
               </label>
               <input
@@ -444,6 +468,25 @@ export function SalesPage() {
           <p className="mb-4 text-xs text-slate-500">ATC solo registra clientes existentes</p>
           <form ref={atcErrors.formRef} onSubmit={handleAtcSubmit} className="space-y-3">
             <FormErrorSummary error={atcErrors.summary} />
+
+            <div>
+              <label className="slabel mb-1">Vendedor</label>
+              <select
+                className={atcErrors.fieldErrors.sellerId ? 'input input-error' : 'input'}
+                value={atcSellerId}
+                onChange={(e) => { setAtcSellerId(e.target.value); atcErrors.clearField('sellerId'); }}
+                required
+                {...fieldErrorProps('sellerId', atcErrors.fieldErrors.sellerId)}
+              >
+                <option value="">Seleccionar vendedor</option>
+                {activeSellers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <FieldError name="sellerId" message={atcErrors.fieldErrors.sellerId} />
+            </div>
 
             <div>
               <label className="slabel mb-1">Fecha</label>
