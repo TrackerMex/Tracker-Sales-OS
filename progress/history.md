@@ -737,3 +737,15 @@ Batch 2:
 - Verificacion: tsc --noEmit limpio en backend y frontend. Sin specs afectados (no existe spec de ChangeDealStageUseCase).
 - Riesgos documentados: cliente con multiples deals solo mueve el mas reciente; escritura deal+client no transaccional.
 - Detalle: progress/impl_fix_client_stage_sync.md. Implementado por subagente Implementer, diff verificado por el Lider.
+
+## 2026-07-06 — Pre-merge a main: verificación contra prod + Feature 49
+
+- Objetivo: validar impacto en DB de prod (VPS Hostinger srv1178023, Dokploy, DB postgres:18 servicio "tracker-sales-os-trackersales-hibdzn", db sales-os) antes del merge de fix/auth-tasks-activities.
+- Acceso: llave SSH instalada en el VPS (fix: authorized_keys tenia llave previa sin newline final, la nuestra quedo concatenada en la misma linea; sed la separo).
+- Hallazgo critico: .env de prod ya tiene TYPEORM_MIGRATIONS_RUN=true (hoy ignorado, main hardcodea false). Al mergear, la baseline correra sola en el arranque.
+- Backup: /root/backups/salesos_pre_merge_20260706.dump (251K, pg_dump -F c).
+- Check de huerfanos (10 FKs de la baseline): 9 limpios, 1 blocker — 7 ventas (6 ATC + 1 Direccion, ~$1.02M) con seller_id = USER id de la cuenta admin (652194b4). Causa: SalesPage.tsx fallback `currentUser?.sellerId ?? currentUser?.id`. No era un seller borrado.
+- Fix datos (prod, transaccional): seller 'Direccion Comercial' creado (bd4b30ca-7d63-4bf7-9f56-0b4c6dcd4a3c) + UPDATE de las 7 ventas. Re-check: 0 huerfanos.
+- Tabla migrations de prod: 5 registros; incluye AlterActivitiesClientIdNullable1782345600000 cuyo archivo no existe en ningun branch (corrida manual, inofensiva — TypeORM la ignora). Tras merge solo queda pendiente la baseline.
+- Feature 49 (fix codigo): dropdown Vendedor en forms Direccion/ATC de SalesPage.tsx, default 'Direccion Comercial', fallback a user.id eliminado. Implementer + Reviewer independiente: 10/10 PASS. tsc frontend exit 0.
+- Pendiente no bloqueante: rotar JWT_SECRET de prod (usa el secret de dev, publico en el repo) y considerar rotar ANTHROPIC_API_KEY.
