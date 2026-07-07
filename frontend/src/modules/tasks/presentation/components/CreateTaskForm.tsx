@@ -12,6 +12,7 @@ import { DatePickerField } from '@/shared/components/forms/DatePickerField'
 import { useAppStore } from '@/shared/store/app.store'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -306,14 +307,15 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, in
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={isLoading || !objective.trim()}
-            className="btn-green"
-            style={{ justifyContent: 'center', padding: '10px', fontSize: 13 }}
+            variant="success"
+            size="lg"
+            className="justify-center"
           >
             {isLoading ? 'Guardando...' : 'Guardar tarea'}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

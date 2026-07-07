@@ -7,6 +7,7 @@ import { useDailyActivities } from "../../application/hooks/useDailyActivities"
 import { useCreateActivity } from "../../application/hooks/useCreateActivity"
 import { ActivityForm } from "../components/ActivityForm"
 import { ActivityHistoryModal } from "../components/ActivityHistoryModal"
+import { Button } from "@/components/ui/button"
 import type { CreateActivityInput } from "../../domain/activities.types"
 
 function getPointsBarColor(pct: number): string {
@@ -54,11 +55,11 @@ export function ActivitiesPage() {
         </div>
         <div className="flex gap-2">
           {showForm && (
-            <button onClick={() => setShowForm(false)} className="btn-ghost">Cancelar</button>
+            <Button variant="ghost" onClick={() => setShowForm(false)}>Cancelar</Button>
           )}
-          <button onClick={() => { resetCreate(); setShowForm((v) => !v) }} className="btn-primary">
+          <Button onClick={() => { resetCreate(); setShowForm((v) => !v) }}>
             {showForm ? 'Cerrar' : 'Registrar actividad'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -141,13 +142,13 @@ export function ActivitiesPage() {
                 <span className={`tag ${activity.status === 'Completada' ? 'tag-green' : activity.status === 'En curso' ? 'tag-blue' : activity.status === 'Cancelada' ? '' : 'tag-yellow'}`}>
                   {activity.status ?? 'Pendiente'}
                 </span>
-                <button
-                  className="btn-ghost"
-                  style={{ fontSize: 11, padding: '2px 8px' }}
+                <Button
+                  variant="ghost"
+                  size="xs"
                   onClick={() => setSelectedActivityId(activity.id)}
                 >
                   Ver historial
-                </button>
+                </Button>
               </div>
             </div>
           ))}

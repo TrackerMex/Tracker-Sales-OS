@@ -14,6 +14,7 @@ import { ClientCombobox } from '@/shared/components/forms/ClientCombobox';
 import { DatePickerField } from '@/shared/components/forms/DatePickerField';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -338,13 +339,14 @@ export function SalesPage() {
               <FieldError name="notes" message={sellerErrors.fieldErrors.notes} />
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="btn-green w-full"
+              variant="success"
+              className="w-full"
               disabled={createSellerSale.isPending}
             >
               {createSellerSale.isPending ? 'Guardando...' : 'Guardar venta vendedor'}
-            </button>
+            </Button>
           </form>
         </div>}
 
@@ -455,13 +457,14 @@ export function SalesPage() {
               <FieldError name="notes" message={dirErrors.fieldErrors.notes} />
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="btn-green w-full"
+              variant="success"
+              className="w-full"
               disabled={createDirSale.isPending}
             >
               {createDirSale.isPending ? 'Guardando...' : 'Guardar Venta Dirección'}
-            </button>
+            </Button>
           </form>
         </div>}
 
@@ -541,13 +544,13 @@ export function SalesPage() {
               <FieldError name="notes" message={atcErrors.fieldErrors.notes} />
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="btn-primary w-full"
+              className="w-full"
               disabled={createAtcSale.isPending}
             >
               {createAtcSale.isPending ? 'Guardando...' : 'Guardar ATC'}
-            </button>
+            </Button>
           </form>
         </div>}
       </div>
@@ -637,20 +640,20 @@ export function SalesPage() {
                     </span>
                     {isAdminOrDirector && (
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button
-                          className="btn-ghost"
-                          style={{ padding: '2px 8px', fontSize: 12 }}
+                        <Button
+                          variant="ghost"
+                          size="xs"
                           onClick={() => setEditingSale(sale)}
                         >
                           Editar
-                        </button>
-                        <button
-                          className="btn-ghost"
-                          style={{ padding: '2px 8px', fontSize: 12, color: '#ef4444' }}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="xs"
                           onClick={() => setDeletingSale(sale)}
                         >
                           Eliminar
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -678,12 +681,11 @@ export function SalesPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <button className="btn-ghost" onClick={() => setDeletingSale(null)}>
+            <Button variant="ghost" onClick={() => setDeletingSale(null)}>
               Cancelar
-            </button>
-            <button
-              className="btn-primary"
-              style={{ background: '#ef4444' }}
+            </Button>
+            <Button
+              variant="destructive"
               onClick={() => {
                 if (deletingSale) {
                   deleteSale(deletingSale.id);
@@ -692,7 +694,7 @@ export function SalesPage() {
               }}
             >
               Eliminar
-            </button>
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

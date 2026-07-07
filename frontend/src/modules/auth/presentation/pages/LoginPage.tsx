@@ -234,7 +234,8 @@ export function LoginPage() {
             <Button
               type="submit"
               disabled={isPending}
-              className="btn-green"
+              variant="success"
+              className="w-full"
               style={{ width: "100%" }}
             >
               {isPending ? "Entrando..." : "Entrar"}

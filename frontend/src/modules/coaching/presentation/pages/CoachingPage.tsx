@@ -4,6 +4,13 @@ import { UserRole } from "@/core/domain/types/common.types"
 import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
 import { useCoachingDaily } from "../../application/hooks/useCoachingDaily"
 import { useSettings } from "@/modules/settings/application/hooks/useSettings"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import type { EquipoSeller } from "@/modules/equipo/domain/equipo.types"
 import type { ActivityMixItem } from "../../domain/coaching.types"
 
@@ -218,19 +225,24 @@ export function CoachingPage() {
               <span className="text-[12px] font-semibold text-[#64748B]">
                 Vendedor:
               </span>
-              <select
-                className="input"
-                style={{ width: 220 }}
-                value={selectedSellerId ?? ""}
-                onChange={(e) => setSelectedSellerId(e.target.value || null)}
+              <Select
+                value={selectedSellerId ?? "all"}
+                onValueChange={(value) =>
+                  setSelectedSellerId(value === "all" ? null : value)
+                }
               >
-                <option value="">Todos los vendedores</option>
-                {activeSellers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue placeholder="Todos los vendedores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los vendedores</SelectItem>
+                  {activeSellers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div

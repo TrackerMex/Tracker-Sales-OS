@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import { useMiDia } from '../../application/hooks/useMiDia';
 import { useTodayTasks } from '../../../tasks/application/hooks/useTodayTasks';
 import { useCompleteTask } from '../../../tasks/application/hooks/useCompleteTask';
@@ -173,9 +174,9 @@ function SellerPicker({ onSelect }: { onSelect: (id: string, name: string) => vo
           <p className="text-[13px] m-0" style={{ color: 'var(--tracker-danger)' }}>
             No se pudo cargar la lista de vendedores.
           </p>
-          <button className="btn-ghost ml-3" onClick={() => void refetch()}>
+          <Button variant="ghost" className="ml-3" onClick={() => void refetch()}>
             Reintentar
-          </button>
+          </Button>
         </div>
       ) : active.length === 0 ? (
         <div className="empty-state">Sin vendedores activos.</div>
@@ -240,9 +241,9 @@ export function MiDiaPage() {
           <p className="text-[13px] m-0" style={{ color: 'var(--tracker-danger)' }}>
             No se pudo cargar los datos de Mi Día.
           </p>
-          <button className="btn-ghost ml-3" onClick={() => void refetch()}>
+          <Button variant="ghost" className="ml-3" onClick={() => void refetch()}>
             Reintentar
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -320,13 +321,13 @@ export function MiDiaPage() {
           <span>
             Viendo Mi Día de <strong>{selectedSeller.name}</strong>
           </span>
-          <button
-            className="btn-ghost"
+          <Button
+            variant="ghost"
             onClick={() => setSelectedSeller(null)}
             aria-label={`Cambiar vendedor (actualmente: ${selectedSeller.name})`}
           >
             Cambiar
-          </button>
+          </Button>
         </div>
       )}
 
@@ -485,14 +486,15 @@ export function MiDiaPage() {
                       {task.status === 'Pendiente' && !isAdminOrDirector && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <button
-                              className="btn-green btn-sm"
+                            <Button
+                              variant="success"
+                              size="sm"
                               disabled={isThisTaskPending}
                               aria-label={`Completar: ${task.title}`}
                               aria-busy={isThisTaskPending}
                             >
                               {isThisTaskPending ? '...' : 'Completar'}
-                            </button>
+                            </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
@@ -526,18 +528,19 @@ export function MiDiaPage() {
           </div>
           <p className="rule-title">{semaph.rule}</p>
           <p className="rule-desc">{semaph.desc}</p>
-          <button
-            className="btn-green w-full justify-center mb-2"
+          <Button
+            variant="success"
+            className="mb-2 w-full justify-center"
             onClick={() => void navigate({ to: '/agenda' })}
           >
             + Crear tarea
-          </button>
-          <button
-            className="btn-primary w-full justify-center"
+          </Button>
+          <Button
+            className="w-full justify-center"
             onClick={() => void navigate({ to: '/clientes' })}
           >
             + Nuevo prospecto
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
 
 const ALL_STAGES: PipelineStage[] = [
   "Prospecto",
@@ -239,21 +240,22 @@ export function PipelinePage() {
                 </Select>
               </div>
               <div className="flex gap-2 pt-2">
-                <button
+                <Button
                   type="button"
                   onClick={() => { setLossModal(null); setLossReason("") }}
-                  className="btn-ghost flex-1 justify-center"
+                  variant="ghost"
+                  className="flex-1 justify-center"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={handleConfirmLoss}
                   disabled={changeStage.isPending}
-                  className="btn-primary flex-1 justify-center"
+                  className="flex-1 justify-center"
                 >
                   {changeStage.isPending ? "Guardando..." : "Confirmar"}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

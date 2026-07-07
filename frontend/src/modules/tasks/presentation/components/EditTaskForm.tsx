@@ -8,6 +8,7 @@ import { ClientCombobox } from '@/shared/components/forms/ClientCombobox'
 import { DatePickerField } from '@/shared/components/forms/DatePickerField'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -213,14 +214,15 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={isLoading || !objective.trim()}
-            className="btn-green"
-            style={{ justifyContent: 'center', padding: '10px', fontSize: 13 }}
+            variant="success"
+            size="lg"
+            className="justify-center"
           >
             {isLoading ? 'Guardando...' : 'Actualizar tarea'}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

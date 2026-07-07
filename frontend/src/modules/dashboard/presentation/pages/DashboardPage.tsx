@@ -23,6 +23,7 @@ import { useSettings } from "@/modules/settings/application/hooks/useSettings"
 import { useAppStore } from "@/shared/store/app.store"
 import { UserRole } from "@/core/domain/types/common.types"
 import { formatCurrency } from "@/shared/lib/format"
+import { Button } from "@/components/ui/button"
 
 ChartJS.register(
   CategoryScale,
@@ -124,9 +125,9 @@ export function DashboardPage() {
           <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
             No se pudo cargar el resumen. Verifica tu conexión e intenta de nuevo.
           </p>
-          <button onClick={() => summary.refetch?.()} className="btn-ghost ml-3">
+          <Button variant="ghost" onClick={() => summary.refetch?.()} className="ml-3">
             Reintentar
-          </button>
+          </Button>
         </div>
       )}
 
@@ -209,9 +210,9 @@ export function DashboardPage() {
             <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
               No se pudo cargar el desempeño del equipo.
             </p>
-            <button onClick={() => sellers.refetch?.()} className="btn-ghost ml-3">
+            <Button variant="ghost" onClick={() => sellers.refetch?.()} className="ml-3">
               Reintentar
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -228,9 +229,9 @@ export function DashboardPage() {
               <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
                 No se pudo cargar el leaderboard.
               </p>
-              <button onClick={() => leaderboard.refetch?.()} className="btn-ghost ml-3">
+              <Button variant="ghost" onClick={() => leaderboard.refetch?.()} className="ml-3">
                 Reintentar
-              </button>
+              </Button>
             </div>
           ) : (
             <LeaderboardTable

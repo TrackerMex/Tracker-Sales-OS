@@ -10,6 +10,7 @@ import { useCreateSeller } from "../../application/hooks/useCreateSeller"
 import { useCreateUser } from "../../application/hooks/useCreateUser"
 import { useDeactivateSeller } from "../../application/hooks/useDeactivateSeller"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -99,9 +100,9 @@ export function EquipoPage() {
               onChange={(e) => setSellerProfile(e.target.value)}
               placeholder="Perfil / foco comercial"
             />
-            <button type="submit" disabled={createSeller.isPending} className="btn-primary justify-center">
+            <Button type="submit" disabled={createSeller.isPending} className="justify-center">
               {createSeller.isPending ? "Guardando..." : "Guardar comercial"}
-            </button>
+            </Button>
           </form>
         </div>
 
@@ -148,9 +149,9 @@ export function EquipoPage() {
                 </SelectContent>
               </Select>
             )}
-            <button type="submit" disabled={createUser.isPending} className="btn-green justify-center">
+            <Button type="submit" disabled={createUser.isPending} variant="success" className="justify-center">
               {createUser.isPending ? "Creando..." : "Crear acceso"}
-            </button>
+            </Button>
           </form>
         </div>
 

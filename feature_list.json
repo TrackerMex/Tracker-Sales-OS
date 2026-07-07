@@ -536,10 +536,20 @@
     "id": "52-shadcn-form-controls",
     "name": "UI: migrar selects, textareas, checkbox y date pickers a shadcn",
     "description": "Extensión de la feature 51 a todos los controles de formulario restantes: 30 <select> nativos → shadcn Select (Radix), 12 <textarea> → shadcn Textarea, checkbox Decisor → shadcn Checkbox, y campos type='date' → DatePicker (Popover + Calendar/react-day-picker) con locale es. Componentes ui re-estilizados con tokens tracker para mantener el look actual. time/datetime-local/month quedan como Input (sin equivalente shadcn).",
-    "status": "in_progress",
+    "status": "done",
     "priority": 52,
     "backend_modules": [],
     "frontend_modules": ["auth", "activities", "tasks", "clients", "sales", "settings", "equipo", "reports", "pipeline", "coaching"],
-    "notes": "Origen: pedido usuario 2026-07-06 ('tambien aplica en los select, calendar, todo los inputs posibles'). Dep nueva: react-day-picker (base del Calendar shadcn); radix-ui unificado ya incluye Checkbox, date-fns ya presente. Mismo criterio visual que feature 51: tokens tracker, aria-invalid para error."
+    "notes": "Origen: pedido usuario 2026-07-06 ('tambien aplica en los select, calendar, todo los inputs posibles'). Dep nueva: react-day-picker (base del Calendar shadcn); radix-ui unificado ya incluye Checkbox, date-fns ya presente. Mismo criterio visual que feature 51: tokens tracker, aria-invalid para error. Completada 2026-07-07. Continuacion final: selects nativos residuales en CoachingPage y AgendaPage migrados a shadcn Select, conservando filtros, sentinela 'all' y localStorage en Agenda. DatePickerField ya usa shadcn Calendar+Popover; Textarea/Checkbox/Select ui ya estaban re-estilizados con tokens tracker. Verificacion Lider: npx tsc --noEmit frontend exit 0; rg residual '<select|<textarea|<input' bajo frontend/src/modules sin coincidencias. Detalle: progress/impl_52-shadcn-form-controls.md."
+  },
+  {
+    "id": "53-shadcn-buttons-tabs",
+    "name": "UI: migrar botones y tabs a shadcn",
+    "description": "Reemplazar botones de accion legacy (.btn-primary/.btn-green/.btn-ghost/.btn-danger) por Button de shadcn re-estilizado con tokens tracker, y migrar controles segmentados tipo tabs (Lista/Calendario, Mes/Semana/Dia) a Tabs de shadcn. Mantener look tracker, estados disabled/loading y comportamientos existentes.",
+    "status": "done",
+    "priority": 53,
+    "backend_modules": [],
+    "frontend_modules": ["auth", "activities", "tasks", "clients", "sales", "settings", "equipo", "reports", "pipeline", "dashboard", "mi-dia", "import-export"],
+    "notes": "Origen: pedido usuario 2026-07-07 ('migra los botones y tabs'). Button/Tabs compartidos se re-estilizan con variantes tracker antes de migrar modulos. Completada 2026-07-07. Botones legacy btn-primary/btn-green/btn-ghost/btn-danger/btn-sm migrados a Button shadcn en modulos y Header compartido; segmentados Lista/Calendario y Mes/Semana/Dia migrados a Tabs shadcn. Residuos intencionales: celdas de calendario, cierres de modal, text-actions y controles custom que dependen de layout/interaccion especifica. Verificacion Lider: npx tsc --noEmit frontend exit 0; rg de clases btn-* legacy en frontend/src solo conserva definiciones CSS legacy sin uso. Detalle: progress/impl_53-shadcn-buttons-tabs.md."
   }
 ]

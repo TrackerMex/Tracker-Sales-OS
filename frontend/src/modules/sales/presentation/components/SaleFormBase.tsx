@@ -6,6 +6,7 @@ import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldErro
 import { DatePickerField } from '@/shared/components/forms/DatePickerField';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -244,13 +245,12 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading, submitError 
       </div>
 
       <div className="flex justify-end pt-2">
-        <button
+        <Button
           type="submit"
           disabled={isLoading}
-          className="btn-primary disabled:opacity-50"
         >
           {isLoading ? 'Registrando...' : 'Registrar venta'}
-        </button>
+        </Button>
       </div>
     </form>
   );

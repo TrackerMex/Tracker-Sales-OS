@@ -25,6 +25,7 @@ import { ClientCombobox } from "@/shared/components/forms/ClientCombobox"
 import { DatePickerField } from "@/shared/components/forms/DatePickerField"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -783,9 +784,9 @@ export function ActivityForm({
       </div>
 
       {/* Sección 6 — Submit */}
-      <button type="submit" disabled={isLoading} className="btn-green w-full">
+      <Button type="submit" disabled={isLoading} variant="success" className="w-full">
         {isLoading ? "Guardando..." : `Registrar · +${TASK_POINTS[type]}pts`}
-      </button>
+      </Button>
     </form>
   )
 }

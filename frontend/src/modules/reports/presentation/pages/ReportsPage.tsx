@@ -4,6 +4,7 @@ import { useMonthlyReport } from '../../application/hooks/useMonthlyReport';
 import { useWinLoss } from '../../application/hooks/useWinLoss';
 import { ExecutiveSlide, buildAnalysis, money, LABEL_STYLE } from '../components/ExecutiveSlide';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const STORAGE_KEY = 'tracker-report-goals';
 
@@ -141,14 +142,14 @@ export function ReportsPage() {
               <Input type="number" style={{ width: 140 }} min={1} value={goalPerSeller || ''} onChange={(e) => setGoalPerSeller(Number(e.target.value))} />
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7 }}>
-              <button onClick={saveGoals} className="btn-green">{savedMsg ? 'Guardado' : 'Guardar metas'}</button>
-              <button onClick={copyReportText} disabled={!data} className="btn-ghost">
+              <Button onClick={saveGoals} variant="success">{savedMsg ? 'Guardado' : 'Guardar metas'}</Button>
+              <Button onClick={copyReportText} disabled={!data} variant="ghost">
                 {copyMsg === 'ok' ? 'Copiado' : copyMsg === 'fail' ? 'Error al copiar' : 'Copiar informe'}
-              </button>
-              <button onClick={shareLink} className="btn-ghost">
+              </Button>
+              <Button onClick={shareLink} variant="ghost">
                 {shareLinkMsg === 'ok' ? 'Enlace copiado' : shareLinkMsg === 'fail' ? 'Error al copiar' : 'Compartir'}
-              </button>
-              <button onClick={openLamina} className="btn-primary">Abrir lámina</button>
+              </Button>
+              <Button onClick={openLamina}>Abrir lámina</Button>
             </div>
           </div>
         </div>
@@ -158,7 +159,7 @@ export function ReportsPage() {
       {error && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <p style={{ fontSize: 13, color: '#EF4444' }}>Error al cargar el reporte.</p>
-          <button className="btn-ghost" onClick={() => refetch()} style={{ fontSize: 12, padding: '4px 10px' }}>Reintentar</button>
+          <Button variant="ghost" size="sm" onClick={() => refetch()}>Reintentar</Button>
         </div>
       )}
 

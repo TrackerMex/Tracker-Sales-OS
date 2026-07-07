@@ -20,6 +20,7 @@ import { FieldError, fieldErrorProps } from "@/shared/components/forms/FieldErro
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -290,9 +291,9 @@ export function ClientesPage() {
   if (view.mode === "detail" && selectedClient) {
     return (
       <div className="p-6 space-y-4">
-        <button onClick={goToList} className="btn-ghost">
+        <Button variant="ghost" onClick={goToList}>
           ← Volver a clientes
-        </button>
+        </Button>
 
         <div className="grid gap-5" style={{ gridTemplateColumns: "280px 1fr" }}>
           {/* Left sidebar */}
@@ -344,12 +345,13 @@ export function ClientesPage() {
 
             <div className="pt-2 border-t border-white/10">
               <p className="slabel text-slate-400 mb-2">Registrar avance</p>
-              <button
+              <Button
                 onClick={() => openEdit(selectedClient)}
-                className="w-full rounded-lg bg-[#82bc00] px-3 py-2 text-xs font-bold text-[#002B49] transition-colors hover:bg-[#6da000]"
+                variant="success"
+                className="w-full justify-center"
               >
                 Editar cliente
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -432,21 +434,23 @@ export function ClientesPage() {
             placeholder="Buscar cliente..."
             className="max-w-[360px]"
           />
-          <button
+          <Button
             onClick={() => setCold((v) => !v)}
-            className={cold ? "btn-primary whitespace-nowrap" : "btn-ghost whitespace-nowrap"}
+            variant={cold ? "default" : "ghost"}
+            className="whitespace-nowrap"
           >
             Sin contacto
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setIncomplete((v) => !v)}
-            className={incomplete ? "btn-primary whitespace-nowrap" : "btn-ghost whitespace-nowrap"}
+            variant={incomplete ? "default" : "ghost"}
+            className="whitespace-nowrap"
           >
             Datos incompletos
-          </button>
-          <button onClick={openCreate} className="btn-primary whitespace-nowrap">
+          </Button>
+          <Button onClick={openCreate} className="whitespace-nowrap">
             + Nuevo cliente
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -493,12 +497,12 @@ export function ClientesPage() {
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <button onClick={() => openEdit(client)} className="btn-green">
+                <Button variant="success" onClick={() => openEdit(client)}>
                   Editar
-                </button>
-                <button onClick={() => setDeleteTarget(client)} className="btn-danger">
+                </Button>
+                <Button variant="destructive" onClick={() => setDeleteTarget(client)}>
                   Eliminar
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -521,14 +525,14 @@ export function ClientesPage() {
               ¿Seguro que deseas eliminar <b>{deleteTarget.name}</b>? Esta acción no se puede deshacer.
             </p>
             <div className="flex items-center justify-end gap-2">
-              <button onClick={() => setDeleteTarget(null)} className="btn-ghost">Cancelar</button>
-              <button
+              <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+              <Button
                 onClick={confirmDelete}
                 disabled={deleteClient.isPending}
-                className="btn-danger"
+                variant="destructive"
               >
                 {deleteClient.isPending ? "Eliminando..." : "Eliminar"}
-              </button>
+              </Button>
             </div>
             {deleteClient.isError && (
               <p className="text-xs text-red-600">
@@ -802,17 +806,18 @@ export function ClientesPage() {
             </div>
 
             {/* Save button - span 2 */}
-            <button
+            <Button
               type="submit"
               disabled={createClient.isPending || updateClient.isPending}
-              className="btn-primary col-span-2 justify-center py-2.5"
+              className="col-span-2 justify-center"
+              size="lg"
             >
               {createClient.isPending || updateClient.isPending
                 ? "Guardando..."
                 : editingClient
                   ? "Guardar cambios"
                   : "Guardar cliente"}
-            </button>
+            </Button>
 
           </form>
         </div>

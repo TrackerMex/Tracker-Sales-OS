@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 import type { Task } from '../../domain/tasks.types'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -116,21 +117,23 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
       </div>
 
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => onEdit(task)}
           title="Editar tarea"
-          style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: 6, cursor: 'pointer', padding: '5px 8px', color: '#64748B', display: 'flex', alignItems: 'center' }}
+          className="text-[#64748B]"
         >
           <HugeiconsIcon icon={PencilEdit02Icon} size={13} color="currentColor" strokeWidth={1.8} />
-        </button>
+        </Button>
 
         {task.status === 'Pendiente' ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <button className="btn-green" style={{ padding: '6px 11px', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <Button variant="success" size="sm">
                 <HugeiconsIcon icon={CheckmarkCircle02Icon} size={13} color="currentColor" strokeWidth={1.8} />
                 Completar
-              </button>
+              </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -151,12 +154,10 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
           <>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <button
-                  style={{ padding: '6px 11px', fontSize: 11, background: 'none', border: '1px solid #CBD5E1', borderRadius: 6, cursor: 'pointer', color: '#475569', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}
-                >
+                <Button variant="secondary" size="sm">
                   <HugeiconsIcon icon={ArrowReloadHorizontalIcon} size={13} color="currentColor" strokeWidth={1.8} />
                   Reactivar
-                </button>
+                </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -179,13 +180,14 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <button
+            <Button
+              variant="destructive"
+              size="sm"
               title="Eliminar tarea"
-              style={{ padding: '6px 11px', fontSize: 11, background: 'none', border: '1px solid #FCA5A5', borderRadius: 6, cursor: 'pointer', color: '#DC2626', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}
             >
               <HugeiconsIcon icon={Delete02Icon} size={13} color="currentColor" strokeWidth={1.8} />
               Eliminar
-            </button>
+            </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>

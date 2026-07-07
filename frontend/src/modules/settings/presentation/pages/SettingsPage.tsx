@@ -7,6 +7,7 @@ import { useApiFormErrors } from '@/shared/lib/api-errors'
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 const FIELD_LABELS: Record<string, string> = {
   dailyMinPoints: 'Puntos mínimos diarios',
@@ -91,9 +92,9 @@ export function SettingsPage() {
 
           {isAdmin && (
             <div className="flex items-center gap-3 pt-2">
-              <button type="submit" disabled={isPending} className="btn-primary">
+              <Button type="submit" disabled={isPending}>
                 {isPending ? 'Guardando...' : 'Guardar'}
-              </button>
+              </Button>
               {isSuccess && (
                 <span style={{ fontSize: 13, fontWeight: 500, color: '#16A34A' }}>
                   Configuración guardada

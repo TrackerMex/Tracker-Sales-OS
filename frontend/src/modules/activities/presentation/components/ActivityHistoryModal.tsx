@@ -9,6 +9,7 @@ import {
   useUpdateActivityStatus,
 } from "../../application/hooks/useActivityHistory"
 import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
 
 interface Props {
   activityId: string | null
@@ -83,16 +84,14 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
             {nextTransitions.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {nextTransitions.map((next) => (
-                  <button
+                  <Button
                     key={next}
-                    className={
-                      next === "Cancelada" ? "btn-ghost" : "btn-primary"
-                    }
+                    variant={next === "Cancelada" ? "ghost" : "default"}
                     disabled={isPending}
                     onClick={() => handleTransition(next)}
                   >
                     {TRANSITION_LABELS[next] ?? next}
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}

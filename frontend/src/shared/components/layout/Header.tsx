@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useAppStore } from '../../store/app.store';
+import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
 const ROUTE_TITLES: Record<string, { title: string; subtitle: string }> = {
@@ -52,23 +53,23 @@ export function Header({ title, subtitle }: HeaderProps) {
       {/* Right: quick actions (desktop only) */}
       <div className="flex items-center gap-2">
         <div className="hidden md:flex items-center gap-2">
-          <button className="btn-ghost" onClick={() => void navigate({ to: '/agenda' })}>
+          <Button variant="ghost" onClick={() => void navigate({ to: '/agenda' })}>
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
             Tarea
-          </button>
+          </Button>
 
-          <button className="btn-ghost" onClick={() => void navigate({ to: '/clientes' })}>
+          <Button variant="ghost" onClick={() => void navigate({ to: '/clientes' })}>
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
             Prospecto
-          </button>
+          </Button>
 
-          <button className="btn-green" onClick={() => void navigate({ to: '/actividades/nueva' })}>
+          <Button variant="success" onClick={() => void navigate({ to: '/actividades/nueva' })}>
             Registrar actividad
-          </button>
+          </Button>
 
           <div style={{ width: 1, height: 20, background: '#E2E8F0', margin: '0 4px' }} />
 
@@ -77,8 +78,8 @@ export function Header({ title, subtitle }: HeaderProps) {
           </span>
         </div>
 
-        <button
-          className="btn-ghost"
+        <Button
+          variant="ghost"
           onClick={() => { clearAuth(); void navigate({ to: '/login' }); }}
           aria-label="Cerrar sesión"
         >
@@ -86,7 +87,7 @@ export function Header({ title, subtitle }: HeaderProps) {
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
           </svg>
           <span className="hidden md:inline">Salir</span>
-        </button>
+        </Button>
       </div>
     </header>
   );

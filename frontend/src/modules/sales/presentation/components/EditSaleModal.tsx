@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/shared/components/forms/DatePickerField';
 import {
   Select,
@@ -200,12 +201,12 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
           </div>
 
           <DialogFooter>
-            <button type="button" className="btn-ghost" onClick={onClose}>
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancelar
-            </button>
-            <button type="submit" className="btn-primary" disabled={updateSale.isPending}>
+            </Button>
+            <Button type="submit" disabled={updateSale.isPending}>
               {updateSale.isPending ? 'Guardando...' : 'Guardar cambios'}
-            </button>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

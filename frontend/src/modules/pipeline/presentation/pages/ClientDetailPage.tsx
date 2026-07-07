@@ -8,6 +8,7 @@ import { useAppStore } from "@/shared/store/app.store"
 import { useChangeStage } from "../../application/hooks/useChangeStage"
 import type { Deal, PipelineStage } from "../../domain/pipeline.types"
 import type { Activity } from "@/modules/activities/domain/activities.types"
+import { Button } from "@/components/ui/button"
 
 interface Props {
   deal: Deal
@@ -242,13 +243,14 @@ export function ClientDetailPage({ deal, onBack }: Props) {
                             : activity.summary}
                         </p>
                         {activity.summary.length > 120 && (
-                          <button
-                            className="btn-ghost"
-                            style={{ fontSize: 10, padding: '1px 0', color: '#64748B' }}
+                          <Button
+                            variant="link"
+                            size="xs"
+                            className="h-auto px-0 py-0 text-[10px] text-[#64748B]"
                             onClick={() => toggleExpand(activity.id)}
                           >
                             {expandedIds.has(activity.id) ? 'Ver menos' : 'Ver más'}
-                          </button>
+                          </Button>
                         )}
                       </div>
                     )}
@@ -261,13 +263,13 @@ export function ClientDetailPage({ deal, onBack }: Props) {
                       <span style={{ fontSize: 10, color: '#94A3B8' }}>
                         +{activity.points}pts · {activity.quality}% cal.
                       </span>
-                      <button
-                        className="btn-ghost"
-                        style={{ fontSize: 10, padding: '1px 6px' }}
+                      <Button
+                        variant="ghost"
+                        size="xs"
                         onClick={() => setSelectedActivityId(activity.id)}
                       >
                         Detalle
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>

@@ -4,6 +4,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Task } from "../../domain/tasks.types"
 
 interface CalendarViewProps {
@@ -103,26 +104,19 @@ function CalendarViewToggle({
   ] as const
 
   return (
-    <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-      {modes.map(({ id, label }) => (
-        <button
-          key={id}
-          onClick={() => onChange(id)}
-          style={{
-            padding: "6px 12px",
-            border: viewMode === id ? "2px solid #3B82F6" : "1px solid #E2E8F0",
-            borderRadius: 6,
-            backgroundColor: viewMode === id ? "#EFF6FF" : "#FFFFFF",
-            color: viewMode === id ? "#2563EB" : "#475569",
-            fontWeight: viewMode === id ? 600 : 500,
-            cursor: "pointer",
-            fontSize: 13,
-          }}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+    <Tabs
+      value={viewMode}
+      onValueChange={(value) => onChange(value as "month" | "week" | "day")}
+      className="mb-4"
+    >
+      <TabsList>
+        {modes.map(({ id, label }) => (
+          <TabsTrigger key={id} value={id}>
+            {label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   )
 }
 
