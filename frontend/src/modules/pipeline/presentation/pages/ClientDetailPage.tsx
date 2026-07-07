@@ -24,7 +24,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface Props {
   deal: Deal
@@ -188,7 +188,10 @@ export function ClientDetailPage({ deal, onBack }: Props) {
 
       {/* Client info — 2 cols */}
       <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0' }}>
-        <Card size="sm" className="py-0">
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>Información del cliente</CardTitle>
+          </CardHeader>
           <CardContent>
             <Accordion type="multiple" defaultValue={['contacts']}>
               <AccordionItem value="contacts">
@@ -227,12 +230,11 @@ export function ClientDetailPage({ deal, onBack }: Props) {
 
       {/* Activity Timeline */}
       <div style={{ padding: '16px 20px', flex: 1 }}>
-        <Card size="sm" className="py-0">
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>Historial comercial</CardTitle>
+          </CardHeader>
           <CardContent>
-            <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 12 }}>
-              Historial comercial
-            </p>
-
             {clientActivities.length === 0 ? (
               <p style={{ fontSize: 12, color: '#94A3B8' }}>Sin actividades registradas</p>
             ) : (

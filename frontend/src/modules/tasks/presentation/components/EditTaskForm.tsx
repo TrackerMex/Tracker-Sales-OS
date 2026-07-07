@@ -6,7 +6,7 @@ import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
 import { ClientCombobox } from '@/shared/components/forms/ClientCombobox'
 import { DatePickerField } from '@/shared/components/forms/DatePickerField'
-import { Input } from '@/components/ui/input'
+import { TimePickerField } from '@/shared/components/forms/TimePickerField'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
@@ -196,11 +196,9 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
                 onChange={(v) => { setDate(v); clearField('scheduledAt') }}
                 {...fieldErrorProps('scheduledAt', fieldErrors.scheduledAt)}
               />
-              <Input
-                type="time"
+              <TimePickerField
                 value={time}
-                onChange={(e) => { setTime(e.target.value); clearField('scheduledAt') }}
-                required
+                onChange={(v) => { setTime(v); clearField('scheduledAt') }}
                 aria-invalid={!!fieldErrors.scheduledAt}
               />
             </div>

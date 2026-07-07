@@ -23,6 +23,7 @@ import {
 } from "@/shared/components/forms/FieldError"
 import { ClientCombobox } from "@/shared/components/forms/ClientCombobox"
 import { DatePickerField } from "@/shared/components/forms/DatePickerField"
+import { TimePickerField } from "@/shared/components/forms/TimePickerField"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -258,10 +259,23 @@ export function ActivityForm({
     setExecutedAt(`${value}T${execTime || "00:00"}`)
   }
 
-  function handleExecTimeChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleExecTimeChange(value: string) {
     clearField("executedAt")
     setExecutedAt(
-      `${execDate || new Date().toISOString().split("T")[0]}T${e.target.value}`
+      `${execDate || new Date().toISOString().split("T")[0]}T${value}`
+    )
+  }
+
+  const progDate = programmedAt.split("T")[0]
+  const progTime = programmedAt.includes("T") ? programmedAt.split("T")[1] : ""
+
+  function handleProgDateChange(value: string) {
+    setProgrammedAt(`${value}T${progTime || "00:00"}`)
+  }
+
+  function handleProgTimeChange(value: string) {
+    setProgrammedAt(
+      `${progDate || new Date().toISOString().split("T")[0]}T${value}`
     )
   }
 
@@ -455,12 +469,10 @@ export function ActivityForm({
             </div>
             <div>
               <label className="slabel">Hora</label>
-              <Input
-                type="time"
-                aria-invalid={!!fieldErrors.executedAt}
+              <TimePickerField
                 value={execTime}
                 onChange={handleExecTimeChange}
-                required
+                aria-invalid={!!fieldErrors.executedAt}
               />
             </div>
           </div>
@@ -531,14 +543,26 @@ export function ActivityForm({
           )}
         </div>
 
-        {/* Hora de captura */}
+        {/* Fecha + hora de captura */}
         <div>
-          <label className="slabel">Hora de captura</label>
-          <Input
-            type="datetime-local"
-            value={programmedAt}
-            onChange={(e) => setProgrammedAt(e.target.value)}
-          />
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
+          >
+            <div>
+              <label className="slabel">Fecha de captura</label>
+              <DatePickerField
+                value={progDate}
+                onChange={handleProgDateChange}
+              />
+            </div>
+            <div>
+              <label className="slabel">Hora de captura</label>
+              <TimePickerField
+                value={progTime}
+                onChange={handleProgTimeChange}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -704,15 +728,13 @@ export function ActivityForm({
             </div>
             <div>
               <label className="slabel">Hora próxima *</label>
-              <Input
-                type="time"
+              <TimePickerField
                 value={nextTime}
-                onChange={(e) => {
-                  setNextTime(e.target.value)
+                onChange={(v) => {
+                  setNextTime(v)
                   clearField("nextTime")
                 }}
-                required
-                {...fieldErrorProps("nextTime", fieldErrors.nextTime)}
+                aria-invalid={!!fieldErrors.nextTime}
               />
               <FieldError name="nextTime" message={fieldErrors.nextTime} />
             </div>

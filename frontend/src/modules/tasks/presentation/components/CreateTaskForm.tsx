@@ -9,8 +9,8 @@ import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
 import { ClientCombobox } from '@/shared/components/forms/ClientCombobox'
 import { DatePickerField } from '@/shared/components/forms/DatePickerField'
+import { TimePickerField } from '@/shared/components/forms/TimePickerField'
 import { useAppStore } from '@/shared/store/app.store'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -246,11 +246,9 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, in
                 onChange={(v) => { setDate(v); clearField('scheduledAt') }}
                 {...fieldErrorProps('scheduledAt', fieldErrors.scheduledAt)}
               />
-              <Input
-                type="time"
+              <TimePickerField
                 value={time}
-                onChange={(e) => { setTime(e.target.value); clearField('scheduledAt') }}
-                required
+                onChange={(v) => { setTime(v); clearField('scheduledAt') }}
                 aria-invalid={!!fieldErrors.scheduledAt}
               />
             </div>
