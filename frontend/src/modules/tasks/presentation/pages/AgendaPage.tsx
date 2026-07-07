@@ -12,6 +12,15 @@ import { useDeleteTask } from "../../application/hooks/useDeleteTask"
 import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
 import { useAppStore } from "@/shared/store/app.store"
 import { UserRole } from "@/core/domain/types/common.types"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TaskCard } from "../components/TaskCard"
 import { CalendarView } from "../components/CalendarView"
 import { CreateTaskForm } from "../components/CreateTaskForm"
@@ -84,8 +93,6 @@ export function AgendaPage() {
   const { mutate: deleteTask } = useDeleteTask()
   const navigate = useNavigate()
 
-  const isTeamMode = isAdminOrDirector && selectedSeller === 'all'
-
   const { data: monthTasksRaw = [] } = useMonthTasks(calYear, calMonth)
   const { data: teamMonthTasksRaw = [] } = useTeamMonthTasks(
     calYear,
@@ -100,7 +107,11 @@ export function AgendaPage() {
     sellerName: sellerMap[t.sellerId] ?? undefined,
   }))
 
-  const monthTasks = isTeamMode ? enrichedTeamTasks : monthTasksRaw
+  const monthTasks = isAdminOrDirector
+    ? selectedSeller === 'all'
+      ? enrichedTeamTasks
+      : enrichedTeamTasks.filter((t) => t.sellerId === selectedSeller)
+    : monthTasksRaw
 
   function handleToggleView(mode: "list" | "calendar") {
     setViewMode(mode)
@@ -215,73 +226,37 @@ export function AgendaPage() {
         </h1>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {viewMode === "calendar" && isAdminOrDirector && (
-            <select
+            <Select
               value={selectedSeller}
-              onChange={(e) => {
-                setSelectedSeller(e.target.value)
-                localStorage.setItem('tasks_team_seller_filter', e.target.value)
-              }}
-              style={{
-                fontSize: 13,
-                padding: '4px 8px',
-                border: '1px solid #E2E8F0',
-                borderRadius: 6,
-                backgroundColor: '#fff',
-                color: '#0F172A',
-                cursor: 'pointer',
+              onValueChange={(value) => {
+                setSelectedSeller(value)
+                localStorage.setItem('tasks_team_seller_filter', value)
               }}
             >
-              <option value="all">Todos los vendedores</option>
-              {sellers.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
+              <SelectTrigger className="h-8 w-[190px] rounded-md bg-white px-2 py-1 text-[13px]">
+                <SelectValue placeholder="Todos los vendedores" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los vendedores</SelectItem>
+                {sellers.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
-          <div
-            style={{
-              display: "flex",
-              border: "1px solid #E2E8F0",
-              borderRadius: 6,
-              overflow: "hidden",
-            }}
-          >
-            <button
-              onClick={() => handleToggleView("list")}
-              style={{
-                padding: "5px 12px",
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-                border: "none",
-                backgroundColor: viewMode === "list" ? "#0F172A" : "#FFFFFF",
-                color: viewMode === "list" ? "#FFFFFF" : "#475569",
-              }}
-            >
-              Lista
-            </button>
-            <button
-              onClick={() => handleToggleView("calendar")}
-              style={{
-                padding: "5px 12px",
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-                border: "none",
-                borderLeft: "1px solid #E2E8F0",
-                backgroundColor:
-                  viewMode === "calendar" ? "#0F172A" : "#FFFFFF",
-                color: viewMode === "calendar" ? "#FFFFFF" : "#475569",
-              }}
-            >
-              Calendario
-            </button>
-          </div>
-          <button
+          <Tabs value={viewMode} onValueChange={(value) => handleToggleView(value as "list" | "calendar")}>
+            <TabsList>
+              <TabsTrigger value="list">Lista</TabsTrigger>
+              <TabsTrigger value="calendar">Calendario</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Button
             onClick={() => {
               resetCreateTask()
               setShowCreateModal(true)
             }}
-            className="btn-primary"
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
@@ -292,7 +267,7 @@ export function AgendaPage() {
               />
             </svg>
             Crear tarea
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -309,23 +284,16 @@ export function AgendaPage() {
         ) : tasks.length === 0 ? (
           <div className="empty-state">
             <p>Sin tareas registradas</p>
-            <button
+            <Button
+              variant="link"
               onClick={() => {
                 resetCreateTask()
                 setShowCreateModal(true)
               }}
-              style={{
-                marginTop: 8,
-                fontSize: 12,
-                color: "#002B49",
-                textDecoration: "underline",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-              }}
+              className="mt-2 h-auto px-0 py-0 text-xs text-[#002B49]"
             >
               Crear una tarea
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="space-y-3">

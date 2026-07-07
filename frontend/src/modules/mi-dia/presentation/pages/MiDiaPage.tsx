@@ -15,6 +15,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Badge, type BadgeVariant } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useMiDia } from '../../application/hooks/useMiDia';
 import { useTodayTasks } from '../../../tasks/application/hooks/useTodayTasks';
 import { useCompleteTask } from '../../../tasks/application/hooks/useCompleteTask';
@@ -26,7 +28,7 @@ import { OfficeIcon, User02Icon, CheckListIcon } from '@hugeicons/core-free-icon
 type Semaphore = 'verde' | 'ambar' | 'rojo' | 'morado';
 type AlertVariant = 'danger' | 'warning' | 'purple' | 'success';
 
-const SEMAPHORE: Record<Semaphore, { tag: string; label: string; rule: string; desc: string }> = {
+const SEMAPHORE: Record<Semaphore, { tag: BadgeVariant; label: string; rule: string; desc: string }> = {
   verde: {
     tag: 'green',
     label: 'Todo OK',
@@ -173,9 +175,9 @@ function SellerPicker({ onSelect }: { onSelect: (id: string, name: string) => vo
           <p className="text-[13px] m-0" style={{ color: 'var(--tracker-danger)' }}>
             No se pudo cargar la lista de vendedores.
           </p>
-          <button className="btn-ghost ml-3" onClick={() => void refetch()}>
+          <Button variant="ghost" className="ml-3" onClick={() => void refetch()}>
             Reintentar
-          </button>
+          </Button>
         </div>
       ) : active.length === 0 ? (
         <div className="empty-state">Sin vendedores activos.</div>
@@ -240,9 +242,9 @@ export function MiDiaPage() {
           <p className="text-[13px] m-0" style={{ color: 'var(--tracker-danger)' }}>
             No se pudo cargar los datos de Mi Día.
           </p>
-          <button className="btn-ghost ml-3" onClick={() => void refetch()}>
+          <Button variant="ghost" className="ml-3" onClick={() => void refetch()}>
             Reintentar
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -320,13 +322,13 @@ export function MiDiaPage() {
           <span>
             Viendo Mi Día de <strong>{selectedSeller.name}</strong>
           </span>
-          <button
-            className="btn-ghost"
+          <Button
+            variant="ghost"
             onClick={() => setSelectedSeller(null)}
             aria-label={`Cambiar vendedor (actualmente: ${selectedSeller.name})`}
           >
             Cambiar
-          </button>
+          </Button>
         </div>
       )}
 
@@ -448,15 +450,15 @@ export function MiDiaPage() {
                     .join(' ');
                   const clientName = task.clientName ?? null;
                   const contactName = task.contactName ?? null;
-                  const typeTagClass = task.type ? (TYPE_TAG[task.type] ?? 'tag-gray') : null;
+                  const typeTagVariant = task.type ? (TYPE_TAG[task.type] ?? 'gray') : null;
                   return (
                     <div key={task.id} className={cls}>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
                           <p className="ti-title">{task.title}</p>
-                          {isOverdue && <span className="tag tag-red">Vencida</span>}
+                          {isOverdue && <Badge variant="red">Vencida</Badge>}
                         </div>
-                        {(clientName || contactName || typeTagClass) && (
+                        {(clientName || contactName || typeTagVariant) && (
                           <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                             {clientName && (
                               <span className="inline-flex items-center gap-1 text-[12px] font-semibold" style={{ color: '#334155' }}>
@@ -470,11 +472,11 @@ export function MiDiaPage() {
                                 {contactName}
                               </span>
                             )}
-                            {typeTagClass && (
-                              <span className={`tag ${typeTagClass} inline-flex items-center gap-1`}>
+                            {typeTagVariant && (
+                              <Badge variant={typeTagVariant} className="inline-flex items-center gap-1">
                                 <HugeiconsIcon icon={CheckListIcon} size={11} color="currentColor" strokeWidth={1.8} />
                                 {task.type}
-                              </span>
+                              </Badge>
                             )}
                           </div>
                         )}
@@ -485,14 +487,15 @@ export function MiDiaPage() {
                       {task.status === 'Pendiente' && !isAdminOrDirector && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <button
-                              className="btn-green btn-sm"
+                            <Button
+                              variant="success"
+                              size="sm"
                               disabled={isThisTaskPending}
                               aria-label={`Completar: ${task.title}`}
                               aria-busy={isThisTaskPending}
                             >
                               {isThisTaskPending ? '...' : 'Completar'}
-                            </button>
+                            </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
@@ -522,22 +525,23 @@ export function MiDiaPage() {
         <div className="card p-5 self-start">
           <p className="slabel mb-3">Regla del día</p>
           <div className="mb-3">
-            <span className={`tag tag-${semaph.tag}`}>{semaph.label}</span>
+            <Badge variant={semaph.tag}>{semaph.label}</Badge>
           </div>
           <p className="rule-title">{semaph.rule}</p>
           <p className="rule-desc">{semaph.desc}</p>
-          <button
-            className="btn-green w-full justify-center mb-2"
+          <Button
+            variant="success"
+            className="mb-2 w-full justify-center"
             onClick={() => void navigate({ to: '/agenda' })}
           >
             + Crear tarea
-          </button>
-          <button
-            className="btn-primary w-full justify-center"
+          </Button>
+          <Button
+            className="w-full justify-center"
             onClick={() => void navigate({ to: '/clientes' })}
           >
             + Nuevo prospecto
-          </button>
+          </Button>
         </div>
       </div>
     </div>

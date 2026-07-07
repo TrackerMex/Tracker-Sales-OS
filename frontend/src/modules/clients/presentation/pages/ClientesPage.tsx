@@ -2,6 +2,8 @@ import { useMemo, useState, useEffect } from "react"
 import type { FormEvent } from "react"
 import { toast } from "sonner"
 import { useQuery } from "@tanstack/react-query"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons"
 import { UserRole } from "@/core/domain/types/common.types"
 import { useAppStore } from "@/shared/store/app.store"
 import { activitiesApi } from "@/modules/activities/infrastructure/activities.api"
@@ -17,6 +19,48 @@ import { ALLOWED_TRANSITIONS } from "@/modules/pipeline/domain/pipeline.types"
 import { useApiFormErrors } from "@/shared/lib/api-errors"
 import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
 import { FieldError, fieldErrorProps } from "@/shared/components/forms/FieldError"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Badge, type BadgeVariant } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import type {
   Client,
   ClientSource,
@@ -49,14 +93,14 @@ const clientSources: ClientSource[] = [
   "Dirección Comercial",
 ]
 
-const stageTag: Record<PipelineStage, string> = {
-  Prospecto: "tag-gray",
-  Contactado: "tag-navy",
-  Interesado: "tag-navy",
-  Propuesta: "tag-amber",
-  Negociación: "tag-amber",
-  Cierre: "tag-green",
-  Perdido: "tag-red",
+const stageBadgeVariant: Record<PipelineStage, BadgeVariant> = {
+  Prospecto: "gray",
+  Contactado: "navy",
+  Interesado: "navy",
+  Propuesta: "amber",
+  Negociación: "amber",
+  Cierre: "green",
+  Perdido: "red",
 }
 
 const emptyContact: CreateContactInput = {
@@ -280,9 +324,9 @@ export function ClientesPage() {
   if (view.mode === "detail" && selectedClient) {
     return (
       <div className="p-6 space-y-4">
-        <button onClick={goToList} className="btn-ghost">
+        <Button variant="ghost" onClick={goToList}>
           ← Volver a clientes
-        </button>
+        </Button>
 
         <div className="grid gap-5" style={{ gridTemplateColumns: "280px 1fr" }}>
           {/* Left sidebar */}
@@ -290,10 +334,10 @@ export function ClientesPage() {
             <div>
               <h2 className="text-lg font-bold text-white">{selectedClient.name}</h2>
               <div className="flex items-center gap-2 mt-2">
-                <span className={`tag ${stageTag[selectedClient.stage]}`}>{selectedClient.stage}</span>
-                <span className={`tag ${selectedClient.dataQuality === 100 ? "tag-green" : selectedClient.dataQuality < 60 ? "tag-red" : "tag-amber"}`}>
+                <Badge variant={stageBadgeVariant[selectedClient.stage]}>{selectedClient.stage}</Badge>
+                <Badge variant={selectedClient.dataQuality === 100 ? "green" : selectedClient.dataQuality < 60 ? "red" : "amber"}>
                   Datos {selectedClient.dataQuality}%
-                </span>
+                </Badge>
                 <span className="text-[11px] text-slate-400">Seller {selectedClient.sellerId.slice(0, 8)}</span>
               </div>
             </div>
@@ -334,20 +378,23 @@ export function ClientesPage() {
 
             <div className="pt-2 border-t border-white/10">
               <p className="slabel text-slate-400 mb-2">Registrar avance</p>
-              <button
+              <Button
                 onClick={() => openEdit(selectedClient)}
-                className="w-full rounded-lg bg-[#82bc00] px-3 py-2 text-xs font-bold text-[#002B49] transition-colors hover:bg-[#6da000]"
+                variant="success"
+                className="w-full justify-center"
               >
                 Editar cliente
-              </button>
+              </Button>
             </div>
           </div>
 
           {/* Right content */}
           <div className="space-y-5">
             {/* Stage update */}
-            <div className="card p-5">
-              <p className="slabel mb-3">Actualizar stage</p>
+            <Card className="p-5">
+              <p className="slabel mb-3">
+                Actualizar stage
+              </p>
               <div className="flex flex-wrap gap-2">
                 {pipelineStages.map((s) => {
                   // With a deal, the deal stage is the pipeline source of truth
@@ -371,10 +418,10 @@ export function ClientesPage() {
                   )
                 })}
               </div>
-            </div>
+            </Card>
 
             {/* Activity history */}
-            <div className="card p-5">
+            <Card className="p-5">
               <p className="slabel mb-3">Historial de actividad ({clientActivities.length})</p>
               {clientActivities.length === 0 ? (
                 <div className="empty-state">Sin actividades registradas para este cliente</div>
@@ -396,7 +443,7 @@ export function ClientesPage() {
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
           </div>
         </div>
 
@@ -416,27 +463,29 @@ export function ClientesPage() {
           <p className="mt-1 text-sm text-slate-500">{data ? `${data.total} registros` : "Cartera comercial"}</p>
         </div>
         <div className="flex items-center gap-3">
-          <input
+          <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar cliente..."
-            className="input max-w-[360px]"
+            className="max-w-[360px]"
           />
-          <button
+          <Button
             onClick={() => setCold((v) => !v)}
-            className={cold ? "btn-primary whitespace-nowrap" : "btn-ghost whitespace-nowrap"}
+            variant={cold ? "default" : "ghost"}
+            className="whitespace-nowrap"
           >
             Sin contacto
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setIncomplete((v) => !v)}
-            className={incomplete ? "btn-primary whitespace-nowrap" : "btn-ghost whitespace-nowrap"}
+            variant={incomplete ? "default" : "ghost"}
+            className="whitespace-nowrap"
           >
             Datos incompletos
-          </button>
-          <button onClick={openCreate} className="btn-primary whitespace-nowrap">
+          </Button>
+          <Button onClick={openCreate} className="whitespace-nowrap">
             + Nuevo cliente
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -446,7 +495,7 @@ export function ClientesPage() {
       {/* Client grid */}
       <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
         {clientList.map((client) => (
-          <div key={client.id} className="card p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
+          <Card key={client.id} className="p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <button
@@ -457,12 +506,17 @@ export function ClientesPage() {
                 </button>
               </div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="tag tag-gray text-[9px]">{client.type}</span>
-                <span className={`tag ${stageTag[client.stage]} text-[9px]`}>{client.stage}</span>
-                {client.isCold && <span className="tag tag-red text-[9px]">Fría</span>}
-                <span className={`tag text-[9px] ${client.dataQuality === 100 ? "tag-green" : client.dataQuality < 60 ? "tag-red" : "tag-amber"}`}>
+                <Badge variant="gray" className="text-[9px]">{client.type}</Badge>
+                <Badge
+                  variant={stageBadgeVariant[client.stage]}
+                  className="text-[9px]"
+                >
+                  {client.stage}
+                </Badge>
+                {client.isCold && <Badge variant="red" className="text-[9px]">Fría</Badge>}
+                <Badge variant={client.dataQuality === 100 ? "green" : client.dataQuality < 60 ? "red" : "amber"} className="text-[9px]">
                   Datos {client.dataQuality}%
-                </span>
+                </Badge>
               </div>
               <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{client.pain || "Sin pain registrado"}</p>
               {client.contacts.length > 0 && (
@@ -482,16 +536,29 @@ export function ClientesPage() {
                   Última actividad: {client.lastActivityAt ? formatDate(client.lastActivityAt) : "Sin actividad"}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <button onClick={() => openEdit(client)} className="btn-green">
-                  Editar
-                </button>
-                <button onClick={() => setDeleteTarget(client)} className="btn-danger">
-                  Eliminar
-                </button>
-              </div>
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${client.name}`}>
+                        <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Acciones del cliente</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end" className="min-w-44">
+                  <DropdownMenuItem onSelect={() => openEdit(client)}>
+                    Editar cliente
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(client)}>
+                    Eliminar cliente
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
@@ -503,64 +570,71 @@ export function ClientesPage() {
       {showModal && renderModal()}
 
       {/* Delete confirmation */}
-      {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center modal-blur">
-          <div className="card w-full max-w-sm p-6 space-y-4">
-            <h3 className="text-sm font-bold text-[#002B49]">Eliminar cliente</h3>
-            <p className="text-xs text-slate-500">
-              ¿Seguro que deseas eliminar <b>{deleteTarget.name}</b>? Esta acción no se puede deshacer.
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar cliente</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Seguro que deseas eliminar <strong>{deleteTarget?.name}</strong>? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteClient.isError && (
+            <p className="text-xs text-red-600">
+              {deleteClient.error instanceof Error ? deleteClient.error.message : "No se pudo eliminar"}
             </p>
-            <div className="flex items-center justify-end gap-2">
-              <button onClick={() => setDeleteTarget(null)} className="btn-ghost">Cancelar</button>
-              <button
-                onClick={confirmDelete}
-                disabled={deleteClient.isPending}
-                className="btn-danger"
-              >
-                {deleteClient.isPending ? "Eliminando..." : "Eliminar"}
-              </button>
-            </div>
-            {deleteClient.isError && (
-              <p className="text-xs text-red-600">
-                {deleteClient.error instanceof Error ? deleteClient.error.message : "No se pudo eliminar"}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteClient.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault()
+                confirmDelete()
+              }}
+              disabled={deleteClient.isPending}
+              variant="destructive"
+            >
+              {deleteClient.isPending ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 
   // --- SHARED MODAL ---
   function renderModal() {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center modal-blur overflow-y-auto py-8">
-        <div className="card w-full max-w-[860px] p-7">
-          <div className="flex items-start justify-between mb-1">
-            <h3 className="text-base font-bold text-[#0F172A]">
+      <Dialog
+        open={showModal}
+        onOpenChange={(open) => {
+          if (!open) setShowModal(false)
+        }}
+      >
+        <DialogContent className="w-[min(calc(100vw-2rem),1120px)] max-w-none max-h-[92vh] overflow-y-auto sm:max-w-none sm:p-7">
+          <DialogHeader>
+            <DialogTitle>
               {editingClient ? "Editar cliente / prospecto" : "Nuevo cliente / prospecto"}
-            </h3>
-            <button
-              type="button"
-              onClick={() => setShowModal(false)}
-              className="text-slate-400 hover:text-slate-600 text-lg leading-none bg-transparent border-none cursor-pointer"
-            >
-              ×
-            </button>
-          </div>
-          <p className="text-xs text-slate-400 mb-5">Puedes registrar varios contactos: decisor, finanzas, operaciones, compras, etc.</p>
+            </DialogTitle>
+            <DialogDescription>
+              Puedes registrar varios contactos: decisor, finanzas, operaciones, compras, etc.
+            </DialogDescription>
+          </DialogHeader>
 
-          <form ref={formRef} onSubmit={submitClient} className="grid grid-cols-2 gap-3">
-            <FormErrorSummary error={saveError} className="col-span-2" />
+          <form ref={formRef} onSubmit={submitClient} className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <FormErrorSummary error={saveError} className="md:col-span-2" />
 
             {/* name - span 2 */}
-            <div className="col-span-2">
-              <input
+            <div className="md:col-span-2">
+              <Input
                 required
                 value={form.name}
                 onChange={(e) => updateForm("name", e.target.value)}
                 placeholder="Nombre de la cuenta"
-                className={fieldErrors.name ? "input input-error" : "input"}
                 {...fieldErrorProps("name", fieldErrors.name)}
               />
               <FieldError name="name" message={fieldErrors.name} />
@@ -568,74 +642,83 @@ export function ClientesPage() {
 
             {/* domain | type */}
             <div>
-              <input
+              <Input
                 value={form.domain}
                 onChange={(e) => updateForm("domain", e.target.value)}
                 placeholder="Dominio web. Ej: empresa.com"
-                className={fieldErrors.domain ? "input input-error" : "input"}
                 {...fieldErrorProps("domain", fieldErrors.domain)}
               />
               <FieldError name="domain" message={fieldErrors.domain} />
             </div>
             <div>
-              <select
+              <Select
                 value={form.type}
-                onChange={(e) => updateForm("type", e.target.value as ClientType)}
-                className={fieldErrors.type ? "input input-error" : "input"}
-                {...fieldErrorProps("type", fieldErrors.type)}
+                onValueChange={(v) => updateForm("type", v as ClientType)}
               >
-                {clientTypes.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
+                <SelectTrigger {...fieldErrorProps("type", fieldErrors.type)}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <FieldError name="type" message={fieldErrors.type} />
             </div>
 
             {/* person | seller */}
             <div>
-              <select
+              <Select
                 value={form.person}
-                onChange={(e) => updateForm("person", e.target.value as PersonType)}
-                className={fieldErrors.person ? "input input-error" : "input"}
-                {...fieldErrorProps("person", fieldErrors.person)}
+                onValueChange={(v) => updateForm("person", v as PersonType)}
               >
-                {personTypes.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
+                <SelectTrigger {...fieldErrorProps("person", fieldErrors.person)}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {personTypes.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <FieldError name="person" message={fieldErrors.person} />
             </div>
             {canChooseSeller ? (
               <div>
-                <select
+                <Select
                   value={form.sellerId}
-                  onChange={(e) => updateForm("sellerId", e.target.value)}
-                  className={fieldErrors.sellerId ? "input input-error" : "input"}
-                  {...fieldErrorProps("sellerId", fieldErrors.sellerId)}
+                  onValueChange={(v) => updateForm("sellerId", v)}
                 >
-                  <option value="">Seleccionar vendedor</option>
-                  {activeSellers.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
+                  <SelectTrigger {...fieldErrorProps("sellerId", fieldErrors.sellerId)}>
+                    <SelectValue placeholder="Seleccionar vendedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeSellers.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FieldError name="sellerId" message={fieldErrors.sellerId} />
               </div>
-            ) : <div />}
+            ) : <div className="hidden md:block" />}
 
             {/* source | provider */}
             <div>
-              <select
+              <Select
                 value={form.source}
-                onChange={(e) => updateForm("source", e.target.value as ClientSource)}
-                className={fieldErrors.source ? "input input-error" : "input"}
-                {...fieldErrorProps("source", fieldErrors.source)}
+                onValueChange={(v) => updateForm("source", v as ClientSource)}
               >
-                {clientSources.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+                <SelectTrigger {...fieldErrorProps("source", fieldErrors.source)}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientSources.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <FieldError name="source" message={fieldErrors.source} />
             </div>
             <div>
-              <input
+              <Input
                 value={form.provider}
                 onChange={(e) => updateForm("provider", e.target.value)}
                 placeholder="Proveedor actual"
-                className={fieldErrors.provider ? "input input-error" : "input"}
                 {...fieldErrorProps("provider", fieldErrors.provider)}
               />
               <FieldError name="provider" message={fieldErrors.provider} />
@@ -643,25 +726,23 @@ export function ClientesPage() {
 
             {/* units | amount */}
             <div>
-              <input
+              <Input
                 type="number"
                 min="0"
                 value={form.units || ''}
                 onChange={(e) => updateForm("units", Number(e.target.value))}
                 placeholder="Unidades potenciales"
-                className={fieldErrors.units ? "input input-error" : "input"}
                 {...fieldErrorProps("units", fieldErrors.units)}
               />
               <FieldError name="units" message={fieldErrors.units} />
             </div>
             <div>
-              <input
+              <Input
                 type="number"
                 min="0"
                 value={form.expectedAmount || ''}
                 onChange={(e) => updateForm("expectedAmount", Number(e.target.value))}
                 placeholder="Monto esperado"
-                className={fieldErrors.expectedAmount ? "input input-error" : "input"}
                 {...fieldErrorProps("expectedAmount", fieldErrors.expectedAmount)}
               />
               <FieldError name="expectedAmount" message={fieldErrors.expectedAmount} />
@@ -669,20 +750,23 @@ export function ClientesPage() {
 
             {/* stage - col 1 only */}
             <div>
-              <select
+              <Select
                 value={form.stage}
-                onChange={(e) => updateForm("stage", e.target.value as PipelineStage)}
-                className={fieldErrors.stage ? "input input-error" : "input"}
-                {...fieldErrorProps("stage", fieldErrors.stage)}
+                onValueChange={(v) => updateForm("stage", v as PipelineStage)}
               >
-                {pipelineStages.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+                <SelectTrigger {...fieldErrorProps("stage", fieldErrors.stage)}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {pipelineStages.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <FieldError name="stage" message={fieldErrors.stage} />
             </div>
-            <div />
+            <div className="hidden md:block" />
 
             {/* Contacts - span 2 */}
-            <div className="col-span-2">
+            <div className="md:col-span-2">
               <div className="flex items-center justify-between mb-2">
                 <p className="slabel">Contactos</p>
                 <button
@@ -697,8 +781,9 @@ export function ClientesPage() {
               </div>
               <div className="space-y-2">
                 {(form.contacts ?? []).map((contact, idx) => (
-                  <div key={idx} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-center rounded-lg bg-slate-50 border border-slate-100 p-2.5">
-                    <input
+                  <div key={idx} className="grid grid-cols-1 gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2.5 md:grid-cols-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.15fr)_auto] xl:items-center">
+                    <Input
+                      className="min-w-0"
                       value={contact.name}
                       onChange={(e) => {
                         const updated = [...(form.contacts ?? [])]
@@ -706,9 +791,9 @@ export function ClientesPage() {
                         updateForm("contacts", updated)
                       }}
                       placeholder="Nombre contacto"
-                      className="input"
                     />
-                    <input
+                    <Input
+                      className="min-w-0"
                       value={contact.role}
                       onChange={(e) => {
                         const updated = [...(form.contacts ?? [])]
@@ -716,9 +801,9 @@ export function ClientesPage() {
                         updateForm("contacts", updated)
                       }}
                       placeholder="Rol: decisor, finanzas..."
-                      className="input"
                     />
-                    <input
+                    <Input
+                      className="min-w-0"
                       value={contact.phone}
                       onChange={(e) => {
                         const updated = [...(form.contacts ?? [])]
@@ -726,9 +811,9 @@ export function ClientesPage() {
                         updateForm("contacts", updated)
                       }}
                       placeholder="Teléfono"
-                      className="input"
                     />
-                    <input
+                    <Input
+                      className="min-w-0"
                       value={contact.email}
                       onChange={(e) => {
                         const updated = [...(form.contacts ?? [])]
@@ -736,16 +821,14 @@ export function ClientesPage() {
                         updateForm("contacts", updated)
                       }}
                       placeholder="Correo"
-                      className="input"
                     />
-                    <div className="flex items-center gap-2 min-w-[110px]">
+                    <div className="flex flex-wrap items-center gap-2 md:col-span-2 xl:col-span-1 xl:min-w-[120px]">
                       <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-600 whitespace-nowrap cursor-pointer">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={contact.isDecisionMaker ?? false}
-                          onChange={(e) => {
+                          onCheckedChange={(checked) => {
                             const updated = [...(form.contacts ?? [])]
-                            updated[idx] = { ...updated[idx], isDecisionMaker: e.target.checked }
+                            updated[idx] = { ...updated[idx], isDecisionMaker: checked === true }
                             updateForm("contacts", updated)
                           }}
                         />
@@ -770,39 +853,40 @@ export function ClientesPage() {
             </div>
 
             {/* Pain - span 2 */}
-            <div className="col-span-2">
-              <textarea
+            <div className="md:col-span-2">
+              <Textarea
                 value={form.pain}
                 onChange={(e) => updateForm("pain", e.target.value)}
                 placeholder="¿Por qué crees que Tracker puede ayudarle? Dolor / necesidad detectada"
                 rows={4}
-                className={`input resize-none${fieldErrors.pain ? " input-error" : ""}`}
+                className="resize-none"
                 {...fieldErrorProps("pain", fieldErrors.pain)}
               />
               <FieldError name="pain" message={fieldErrors.pain} />
             </div>
 
             {/* AI Coach hint - span 2 */}
-            <div className="ai-box col-span-2">
+            <div className="ai-box md:col-span-2">
               <strong>Coach IA:</strong> Un buen registro debe identificar empresa, contactos clave, decisor, teléfono, correo/dominio y razón comercial.
             </div>
 
             {/* Save button - span 2 */}
-            <button
+            <Button
               type="submit"
               disabled={createClient.isPending || updateClient.isPending}
-              className="btn-primary col-span-2 justify-center py-2.5"
+              className="md:col-span-2 justify-center"
+              size="lg"
             >
               {createClient.isPending || updateClient.isPending
                 ? "Guardando..."
                 : editingClient
                   ? "Guardar cambios"
                   : "Guardar cliente"}
-            </button>
+            </Button>
 
           </form>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     )
   }
 }

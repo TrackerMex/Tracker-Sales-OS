@@ -476,3 +476,21 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] `tsc --noEmit` sin errores en frontend
 
 **Reviewer**: Review 1 FAILED — `selectedClient` arrancaba en `null` en `EditTaskForm`/`ActivityForm`, selector de Contacto deshabilitado/vacio al montar con cliente ya asignado. Fix-pass agrego prop `onResolve` a `ClientCombobox` (resuelve el `Client` completo por nombre via query puntual, una sola vez) + threading de `clientName` desde `AgendaPage`/`MiDiaPage`/`ClientDetailPage` hasta `ActivityForm`. Review 2 PASSED — 16/16 hallazgos verificados linea por linea, `tsc`/`eslint` limpios, sin cambios en backend/tests. Caveat aceptado: si el nombre conocido no matchea ningun resultado de busqueda (cliente renombrado/borrado), el selector de Contacto queda deshabilitado hasta reseleccion manual — no resoluble 100% sin `GET /clients/:id` en backend (fuera de alcance).
+
+---
+
+## 60-shadcn-card-accordion
+
+**Estado previo (trabajo sin commitear encontrado al iniciar la feature):** `ClientDetailPage.tsx`, `ActivityHistoryModal.tsx`, `ReportsPage.tsx` y `SettingsPage.tsx` ya tenian Card/Accordion aplicados de una sesion anterior no cerrada formalmente. `ClientesPage.tsx` tenia migracion parcial con un bug de tag JSX sin cerrar bien.
+
+- [x] `ClientesPage.tsx:359` — el bloque "Contactos" del sidebar oscuro (345-358) cierra con tag balanceado (`</div>`, no `</Card>` huerfano); sidebar se mantiene como `<div>` custom (tema oscuro, no Card claro) — no se abre `<Card>` a la fuerza
+- [x] `ClientDetailPage.tsx`: bloque info cliente usa `Card` + `Accordion` (contacts/pain/provider); bloque timeline usa `Card`; ninguno anidado dentro de otro Card (ambos son hermanos dentro del `Sheet` de `PipelinePage`)
+- [x] `ActivityHistoryModal.tsx`: bloque "Estado actual" usa `Card`; bloque historial usa `Accordion` de una sola seccion; ambos hermanos dentro del `Dialog`, sin Card anidado
+- [x] `ReportsPage.tsx`: filtros y "Detalle Top Vendedores"/"Resumen para Direccion" usan `Card`/`Accordion`; `ExecutiveSlide.tsx` NO se toca (permanece 100% inline-style, requerido para el export via `window.open`+`outerHTML`)
+- [x] `SettingsPage.tsx`: grupos de metas (daily/monthly/risk) en `Accordion` dentro de `Card` — sin cambios, ya conforme
+- [x] `ClientesPage.tsx` lineas 768-853 (contactos editables del formulario create/edit): se deja SIN Accordion — decision de criterio: es edicion activa de datos, no bloque de solo-lectura denso; colapsar añadiria friccion al capturar 2+ contactos
+- [x] No se crean Cards anidadas dentro de otras Cards en ningun archivo tocado
+- [x] `npx tsc --noEmit` sin errores en frontend
+- [x] `progress/impl_60-shadcn-card-accordion.md` documenta que se hizo, que ya estaba hecho, y la decision de no tocar el bloque de contactos editable ni ExecutiveSlide.tsx
+
+**Reviewer**: PASSED 10/10. Nota: sin commits entre features previas, no se pudo aislar via `git diff` que el fix fuera exactamente 1 linea — verificado por lectura directa (balance de tags) + timestamps de archivo consistentes con que solo `ClientesPage.tsx` cambio en este pase. Sin Cards/Accordion huerfanos en ningun modulo (chequeo extra en 51-60).

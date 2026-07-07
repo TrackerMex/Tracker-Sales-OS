@@ -7,10 +7,22 @@ import type { Sale, PaymentMethod, SaleSource } from '../../domain/sales.types';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { DatePickerField } from '@/shared/components/forms/DatePickerField';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const PAYMENT_METHODS: PaymentMethod[] = ['Pagado', 'Crédito', '50% anticipo', 'Pendiente'];
 const SALE_SOURCES: SaleSource[] = [
@@ -71,9 +83,12 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[min(calc(100vw-2rem),720px)] max-w-none max-h-[90vh] overflow-y-auto sm:max-w-none">
         <DialogHeader>
           <DialogTitle>Editar venta</DialogTitle>
+          <DialogDescription>
+            Actualiza los datos registrados para esta venta.
+          </DialogDescription>
         </DialogHeader>
 
         <form ref={errors.formRef} onSubmit={handleSubmit} className="space-y-3">
@@ -81,12 +96,9 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
 
           <div>
             <label className="slabel mb-1">Fecha</label>
-            <input
-              type="date"
-              className="input"
+            <DatePickerField
               value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
+              onChange={setDate}
             />
           </div>
 
@@ -95,9 +107,8 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
               <label className="slabel mb-1">
                 {sale.type === 'direction' ? 'Proyecto / Cuenta' : 'Cliente'}
               </label>
-              <input
+              <Input
                 type="text"
-                className="input"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 required
@@ -108,9 +119,8 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
           {sale.type === 'seller' && (
             <div>
               <label className="slabel mb-1">Producto</label>
-              <input
+              <Input
                 type="text"
-                className="input"
                 value={product}
                 onChange={(e) => setProduct(e.target.value)}
                 required
@@ -118,13 +128,12 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <label className="slabel mb-1">Unidades</label>
-              <input
+              <Input
                 type="number"
                 min="1"
-                className="input"
                 value={units}
                 onChange={(e) => setUnits(e.target.value === '' ? '' : Number(e.target.value))}
                 required
@@ -132,11 +141,10 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
             </div>
             <div>
               <label className="slabel mb-1">Monto</label>
-              <input
+              <Input
                 type="number"
                 min="0"
                 step="0.01"
-                className="input"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
                 required
@@ -148,40 +156,47 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
             <>
               <div>
                 <label className="slabel mb-1">Forma de pago</label>
-                <select
-                  className="input"
+                <Select
                   value={pay}
-                  onChange={(e) => setPay(e.target.value as PaymentMethod)}
+                  onValueChange={(v) => setPay(v as PaymentMethod)}
                 >
-                  {PAYMENT_METHODS.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <label className="slabel mb-1">Fuente</label>
-                <select
-                  className="input"
+                <Select
                   value={source}
-                  onChange={(e) => setSource(e.target.value as SaleSource)}
+                  onValueChange={(v) => setSource(v as SaleSource)}
                 >
-                  {SALE_SOURCES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SALE_SOURCES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </>
           )}
 
           <div>
             <label className="slabel mb-1">Notas</label>
-            <textarea
-              className="input"
+            <Textarea
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -190,12 +205,12 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
           </div>
 
           <DialogFooter>
-            <button type="button" className="btn-ghost" onClick={onClose}>
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancelar
-            </button>
-            <button type="submit" className="btn-primary" disabled={updateSale.isPending}>
+            </Button>
+            <Button type="submit" disabled={updateSale.isPending}>
               {updateSale.isPending ? 'Guardando...' : 'Guardar cambios'}
-            </button>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

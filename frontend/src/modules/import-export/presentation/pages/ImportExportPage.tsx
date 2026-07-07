@@ -5,6 +5,8 @@ import { UserRole } from '@/core/domain/types/common.types';
 import { useExportData } from '../../application/hooks/useExportData';
 import { useImportData } from '../../application/hooks/useImportData';
 import type { ExportData } from '../../domain/import-export.types';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const REQUIRED_KEYS: (keyof ExportData)[] = [
   'sellers', 'users', 'clients', 'contacts',
@@ -91,14 +93,13 @@ export function ImportExportPage() {
         <p style={{ fontSize: 13, color: '#64748B' }}>
           Descarga un archivo JSON con todos los datos del sistema.
         </p>
-        <button
+        <Button
           onClick={() => exportData()}
           disabled={isExporting}
-          className="btn-primary"
           style={isExporting ? { opacity: 0.6 } : {}}
         >
           {isExporting ? 'Descargando...' : 'Descargar respaldo JSON'}
-        </button>
+        </Button>
       </div>
 
       {/* Import */}
@@ -108,7 +109,7 @@ export function ImportExportPage() {
           Selecciona un archivo JSON de respaldo para importar.
         </p>
 
-        <input
+        <Input
           ref={fileRef}
           type="file"
           accept=".json"
@@ -132,17 +133,16 @@ export function ImportExportPage() {
               ))}
             </ul>
             <div className="flex items-center gap-2 pt-1">
-              <button
+              <Button
                 onClick={handleConfirmImport}
                 disabled={isImporting}
-                className="btn-primary"
                 style={isImporting ? { opacity: 0.6 } : {}}
               >
                 {isImporting ? 'Importando...' : 'Importar datos'}
-              </button>
-              <button onClick={handleCancel} disabled={isImporting} className="btn-ghost">
+              </Button>
+              <Button variant="ghost" onClick={handleCancel} disabled={isImporting}>
                 Cancelar
-              </button>
+              </Button>
             </div>
           </div>
         )}

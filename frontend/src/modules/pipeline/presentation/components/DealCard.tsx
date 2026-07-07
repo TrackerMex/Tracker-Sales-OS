@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import type { Deal } from "../../domain/pipeline.types"
 import { useSettings } from "@/modules/settings/application/hooks/useSettings"
+import { Badge } from "@/components/ui/badge"
 
 const STAGE_BADGE_COLORS: Record<string, string> = {
   Prospecto: '#002B49',
@@ -122,7 +123,7 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
         {deal.sellerName && (
           teamMode ? (
-            <span className="tag tag-navy" style={{ fontSize: 10 }}>{deal.sellerName}</span>
+            <Badge variant="navy">{deal.sellerName}</Badge>
           ) : (
             <span style={{ fontSize: '11px', color: '#94A3B8' }}>{deal.sellerName}</span>
           )

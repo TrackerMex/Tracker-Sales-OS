@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,6 +10,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Badge, type BadgeVariant } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import type { Task } from '../../domain/tasks.types'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -19,6 +34,7 @@ import {
   CheckmarkCircle02Icon,
   ArrowReloadHorizontalIcon,
   Delete02Icon,
+  MoreHorizontalCircle01Icon,
 } from '@hugeicons/core-free-icons'
 
 interface TaskCardProps {
@@ -46,24 +62,26 @@ function getAiComment(task: Task, clientName: string | null): string | null {
   return `Revisa: ¿esta tarea tiene un resultado medible? Si solo es "seguimiento", redefine con ${name}.`
 }
 
-export const TYPE_TAG: Record<string, string> = {
-  'Llamada': 'tag-navy',
-  'Videoconf': 'tag-navy',
-  'Reunión virtual': 'tag-navy',
-  'Visita': 'tag-green',
-  'Reunión presencial': 'tag-green',
-  'Propuesta': 'tag-amber',
-  'Seguimiento': 'tag-amber',
-  'Cierre': 'tag-green',
-  'Chat': 'tag-gray',
-  'WA': 'tag-gray',
-  'Correo': 'tag-gray',
+export const TYPE_TAG: Record<string, BadgeVariant> = {
+  'Llamada': 'navy',
+  'Videoconf': 'navy',
+  'Reunión virtual': 'navy',
+  'Visita': 'green',
+  'Reunión presencial': 'green',
+  'Propuesta': 'amber',
+  'Seguimiento': 'amber',
+  'Cierre': 'green',
+  'Chat': 'gray',
+  'WA': 'gray',
+  'Correo': 'gray',
 }
 
 export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, clientName, contactName }: TaskCardProps) {
+  const [reactivateOpen, setReactivateOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const isOverdue = task.isOverdue && task.status === 'Pendiente'
   const aiComment = getAiComment(task, clientName ?? null)
-  const typeTagClass = task.type ? (TYPE_TAG[task.type] ?? 'tag-gray') : null
+  const typeTagVariant = task.type ? (TYPE_TAG[task.type] ?? 'gray') : null
 
   return (
     <div
@@ -76,11 +94,11 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
           <span style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', lineHeight: 1 }}>
             {formatTime(task.scheduledAt)}
           </span>
-          {typeTagClass && (
-            <span className={`tag ${typeTagClass}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          {typeTagVariant && (
+            <Badge variant={typeTagVariant} className="inline-flex items-center gap-1">
               <HugeiconsIcon icon={CheckListIcon} size={11} color="currentColor" strokeWidth={1.8} />
               {task.type}
-            </span>
+            </Badge>
           )}
         </div>
 
@@ -105,7 +123,7 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
             </span>
           )}
           {isOverdue && (
-            <span className="tag tag-red">Vencida</span>
+            <Badge variant="red">Vencida</Badge>
           )}
         </div>
 
@@ -116,21 +134,13 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
       </div>
 
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-        <button
-          onClick={() => onEdit(task)}
-          title="Editar tarea"
-          style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: 6, cursor: 'pointer', padding: '5px 8px', color: '#64748B', display: 'flex', alignItems: 'center' }}
-        >
-          <HugeiconsIcon icon={PencilEdit02Icon} size={13} color="currentColor" strokeWidth={1.8} />
-        </button>
-
         {task.status === 'Pendiente' ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <button className="btn-green" style={{ padding: '6px 11px', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <Button variant="success" size="sm">
                 <HugeiconsIcon icon={CheckmarkCircle02Icon} size={13} color="currentColor" strokeWidth={1.8} />
                 Completar
-              </button>
+              </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -148,45 +158,58 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
             </AlertDialogContent>
           </AlertDialog>
         ) : (
-          <>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <button
-                  style={{ padding: '6px 11px', fontSize: 11, background: 'none', border: '1px solid #CBD5E1', borderRadius: 6, cursor: 'pointer', color: '#475569', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}
-                >
-                  <HugeiconsIcon icon={ArrowReloadHorizontalIcon} size={13} color="currentColor" strokeWidth={1.8} />
-                  Reactivar
-                </button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Reactivar esta tarea?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Volverá a estado Pendiente y podrás completarla de nuevo.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onReactivate(task.id)}>
-                    Sí, reactivar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            <span className="tag tag-gray">Completada</span>
-          </>
+          <Badge variant="gray">Completada</Badge>
         )}
 
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button
-              title="Eliminar tarea"
-              style={{ padding: '6px 11px', fontSize: 11, background: 'none', border: '1px solid #FCA5A5', borderRadius: 6, cursor: 'pointer', color: '#DC2626', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}
-            >
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm" aria-label="Acciones de tarea">
+                  <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Acciones de tarea</TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="end" className="min-w-44">
+            {task.status === 'Pendiente' ? (
+              <DropdownMenuItem onSelect={() => onEdit(task)}>
+                <HugeiconsIcon icon={PencilEdit02Icon} size={13} color="currentColor" strokeWidth={1.8} />
+                Editar tarea
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onSelect={() => setReactivateOpen(true)}>
+                <HugeiconsIcon icon={ArrowReloadHorizontalIcon} size={13} color="currentColor" strokeWidth={1.8} />
+                Reactivar tarea
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onSelect={() => setDeleteOpen(true)}>
               <HugeiconsIcon icon={Delete02Icon} size={13} color="currentColor" strokeWidth={1.8} />
-              Eliminar
-            </button>
-          </AlertDialogTrigger>
+              Eliminar tarea
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <AlertDialog open={reactivateOpen} onOpenChange={setReactivateOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Reactivar esta tarea?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Volverá a estado Pendiente y podrás completarla de nuevo.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => onReactivate(task.id)}>
+                Sí, reactivar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>¿Eliminar esta tarea?</AlertDialogTitle>

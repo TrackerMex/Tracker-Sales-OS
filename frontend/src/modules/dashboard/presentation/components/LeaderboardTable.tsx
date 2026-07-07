@@ -1,15 +1,24 @@
 import type { LeaderboardEntry } from '../../domain/dashboard.types';
+import { Badge, type BadgeVariant } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[];
   isLoading: boolean;
 }
 
-function rankBadgeClass(rank: number): string {
-  if (rank === 1) return 'tag tag-amber';
-  if (rank === 2) return 'tag tag-gray';
-  if (rank === 3) return 'tag tag-navy';
-  return '';
+function rankBadgeVariant(rank: number): BadgeVariant | null {
+  if (rank === 1) return 'amber';
+  if (rank === 2) return 'gray';
+  if (rank === 3) return 'navy';
+  return null;
 }
 
 function formatDelta(delta: number): { label: string; color: string } {
@@ -42,52 +51,52 @@ export function LeaderboardTable({ entries, isLoading }: LeaderboardTableProps) 
 
   return (
     <div className="p-4">
-      <table className="dt">
-        <thead>
-          <tr>
-            <th style={{ width: 56 }}>#</th>
-            <th>Vendedor</th>
-            <th className="text-right">Puntos mes</th>
-            <th className="text-right">Delta</th>
-            <th className="text-right">Racha</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead style={{ width: 56 }}>#</TableHead>
+            <TableHead>Vendedor</TableHead>
+            <TableHead className="text-right">Puntos mes</TableHead>
+            <TableHead className="text-right">Delta</TableHead>
+            <TableHead className="text-right">Racha</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {entries.map((entry) => {
             const delta = formatDelta(entry.pointsDelta);
-            const badgeClass = rankBadgeClass(entry.rank);
+            const badgeVariant = rankBadgeVariant(entry.rank);
             return (
-              <tr key={entry.sellerId}>
-                <td>
-                  {badgeClass ? (
-                    <span className={badgeClass}>{entry.rank}</span>
+              <TableRow key={entry.sellerId}>
+                <TableCell>
+                  {badgeVariant ? (
+                    <Badge variant={badgeVariant}>{entry.rank}</Badge>
                   ) : (
                     <span className="font-semibold" style={{ color: 'var(--tracker-text-secondary)' }}>
                       {entry.rank}
                     </span>
                   )}
-                </td>
-                <td className="font-semibold" style={{ color: 'var(--tracker-blue)' }}>
+                </TableCell>
+                <TableCell className="font-semibold" style={{ color: 'var(--tracker-blue)' }}>
                   {entry.sellerName}
-                </td>
-                <td className="text-right" style={{ color: 'var(--tracker-text-dim)' }}>
+                </TableCell>
+                <TableCell className="text-right" style={{ color: 'var(--tracker-text-dim)' }}>
                   {entry.monthlyPoints.toLocaleString('es-MX')}
-                </td>
-                <td className="text-right font-semibold" style={{ color: delta.color }}>
+                </TableCell>
+                <TableCell className="text-right font-semibold" style={{ color: delta.color }}>
                   {delta.label}
-                </td>
-                <td className="text-right">
+                </TableCell>
+                <TableCell className="text-right">
                   {entry.streakDays > 0 ? (
-                    <span className="tag tag-green">{entry.streakDays} d</span>
+                    <Badge variant="green">{entry.streakDays} d</Badge>
                   ) : (
                     <span style={{ color: 'var(--tracker-text-secondary)' }}>0 d</span>
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

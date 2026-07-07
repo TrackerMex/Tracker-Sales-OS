@@ -11,6 +11,28 @@ import { ClientDetailPage } from "./ClientDetailPage"
 import { UserRole } from "@/core/domain/types/common.types"
 import type { PipelineStage, Deal, PipelineGrouped, LossReason } from "../../domain/pipeline.types"
 import { formatCurrency } from "@/shared/lib/format"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 
 const ALL_STAGES: PipelineStage[] = [
   "Prospecto",
@@ -161,17 +183,17 @@ export function PipelinePage() {
         </div>
         <div className="flex items-center gap-4">
           {isAdminOrDirector && (
-            <select
-              value={selectedSeller}
-              onChange={(e) => handleSellerChange(e.target.value)}
-              className="input"
-              style={{ fontSize: 12, padding: '5px 10px', minWidth: 160 }}
-            >
-              <option value="all">Todos los vendedores</option>
-              {sellers.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
+            <Select value={selectedSeller} onValueChange={handleSellerChange}>
+              <SelectTrigger className="w-auto min-w-40 px-2.5 py-[5px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los vendedores</SelectItem>
+                {sellers.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
           {activeGrouped && (
             <div className="flex gap-6 text-right">
@@ -202,71 +224,81 @@ export function PipelinePage() {
         />
       )}
 
-      {lossModal && (
-        <div
-          className="modal-blur fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={(e) => { if (e.target === e.currentTarget) { setLossModal(null); setLossReason("") } }}
-        >
-          <div className="card w-full max-w-sm p-6">
-            <h3 style={{ marginBottom: 16, fontSize: 14, fontWeight: 700, color: '#002B49' }}>
-              Motivo de pérdida
-            </h3>
+      <Dialog
+        open={!!lossModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLossModal(null)
+            setLossReason("")
+          }
+        }}
+      >
+        <DialogContent className="w-[min(calc(100vw-2rem),460px)] max-w-none sm:max-w-none">
+          <DialogHeader>
+            <DialogTitle>Motivo de pérdida</DialogTitle>
+            <DialogDescription>
+              Registra un motivo opcional antes de marcar el deal como perdido.
+            </DialogDescription>
+          </DialogHeader>
             <div className="space-y-3">
               <div>
                 <label className="slabel mb-1 block">Motivo (opcional)</label>
-                <select
+                <Select
                   value={lossReason}
-                  onChange={(e) => setLossReason(e.target.value as LossReason | "")}
-                  className="input"
+                  onValueChange={(v) =>
+                    setLossReason(v === "__none__" ? "" : (v as LossReason))
+                  }
                 >
-                  <option value="">Selecciona un motivo...</option>
-                  {LOSS_REASONS.map((r) => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un motivo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin motivo</SelectItem>
+                    {LOSS_REASONS.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex gap-2 pt-2">
-                <button
+                <Button
                   type="button"
                   onClick={() => { setLossModal(null); setLossReason("") }}
-                  className="btn-ghost flex-1 justify-center"
+                  variant="ghost"
+                  className="flex-1 justify-center"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={handleConfirmLoss}
                   disabled={changeStage.isPending}
-                  className="btn-primary flex-1 justify-center"
+                  className="flex-1 justify-center"
                 >
                   {changeStage.isPending ? "Guardando..." : "Confirmar"}
-                </button>
+                </Button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {/* Deal Peek Panel — slide-over */}
-      {selectedDeal && (
-        <>
-          <div
-            onClick={() => setSelectedDeal(null)}
-            style={{
-              position: 'fixed', inset: 0, zIndex: 40,
-              background: 'rgba(0,0,0,0.25)',
-            }}
-          />
-          <div style={{
-            position: 'fixed', top: 0, right: 0, height: '100vh',
-            width: 480, zIndex: 50,
-            background: '#fff', boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
-            overflowY: 'auto', display: 'flex', flexDirection: 'column',
-          }}>
+      <Sheet
+        open={!!selectedDeal}
+        onOpenChange={(open) => {
+          if (!open) setSelectedDeal(null)
+        }}
+      >
+        <SheetContent side="right" showCloseButton={false} className="overflow-y-auto p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[640px] data-[side=right]:lg:max-w-[720px]">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Detalle de oportunidad</SheetTitle>
+            <SheetDescription>Panel lateral con detalle del cliente y su historial comercial.</SheetDescription>
+          </SheetHeader>
+          {selectedDeal && (
             <ClientDetailPage deal={selectedDeal} onBack={() => setSelectedDeal(null)} />
-          </div>
-        </>
-      )}
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }

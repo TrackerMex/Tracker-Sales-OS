@@ -2,12 +2,32 @@ import { useState } from "react"
 import { useSearch } from "@tanstack/react-router"
 import { toast } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { OfficeIcon, User02Icon, CheckListIcon } from "@hugeicons/core-free-icons"
+import { OfficeIcon, User02Icon, CheckListIcon, MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons"
 import { useDailyActivities } from "../../application/hooks/useDailyActivities"
 import { useCreateActivity } from "../../application/hooks/useCreateActivity"
 import { ActivityForm } from "../components/ActivityForm"
 import { ActivityHistoryModal } from "../components/ActivityHistoryModal"
+import { Badge, type BadgeVariant } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import type { CreateActivityInput } from "../../domain/activities.types"
+
+const STATUS_BADGE_VARIANTS: Record<string, BadgeVariant> = {
+  Completada: "green",
+  "En curso": "blue",
+  Cancelada: "gray",
+  Pendiente: "yellow",
+}
 
 function getPointsBarColor(pct: number): string {
   if (pct >= 100) return '#82bc00'
@@ -54,11 +74,11 @@ export function ActivitiesPage() {
         </div>
         <div className="flex gap-2">
           {showForm && (
-            <button onClick={() => setShowForm(false)} className="btn-ghost">Cancelar</button>
+            <Button variant="ghost" onClick={() => setShowForm(false)}>Cancelar</Button>
           )}
-          <button onClick={() => { resetCreate(); setShowForm((v) => !v) }} className="btn-primary">
+          <Button onClick={() => { resetCreate(); setShowForm((v) => !v) }}>
             {showForm ? 'Cerrar' : 'Registrar actividad'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -97,7 +117,7 @@ export function ActivitiesPage() {
           {activities.map((activity) => (
             <div key={activity.id} className="log-card flex items-start gap-4">
               <div className="flex flex-col items-center gap-1.5" style={{ minWidth: 64 }}>
-                <span className="tag tag-navy">{activity.type}</span>
+                <Badge variant="navy">{activity.type}</Badge>
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#82bc00' }}>+{activity.points} pts</span>
               </div>
               <div className="flex-1 min-w-0">
@@ -138,16 +158,26 @@ export function ActivitiesPage() {
                 <p style={{ marginTop: 2, fontSize: 11, color: '#94A3B8' }}>Calidad: {activity.quality}%</p>
               </div>
               <div className="flex flex-col items-end gap-1.5">
-                <span className={`tag ${activity.status === 'Completada' ? 'tag-green' : activity.status === 'En curso' ? 'tag-blue' : activity.status === 'Cancelada' ? '' : 'tag-yellow'}`}>
+                <Badge variant={STATUS_BADGE_VARIANTS[activity.status ?? "Pendiente"] ?? "yellow"}>
                   {activity.status ?? 'Pendiente'}
-                </span>
-                <button
-                  className="btn-ghost"
-                  style={{ fontSize: 11, padding: '2px 8px' }}
-                  onClick={() => setSelectedActivityId(activity.id)}
-                >
-                  Ver historial
-                </button>
+                </Badge>
+                <DropdownMenu>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon-xs" aria-label="Acciones de actividad">
+                          <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>Acciones de actividad</TooltipContent>
+                  </Tooltip>
+                  <DropdownMenuContent align="end" className="min-w-44">
+                    <DropdownMenuItem onSelect={() => setSelectedActivityId(activity.id)}>
+                      Ver historial
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           ))}

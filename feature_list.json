@@ -511,5 +511,115 @@
     "backend_modules": [],
     "frontend_modules": ["sales"],
     "notes": "Origen: pre-merge check contra prod 2026-07-06. Decisión usuario vía AskUserQuestion: dropdown (no seller fijo). Solo frontend — backend ya respeta body.sellerId para Admin/Director (feature 45) y la FK de DB validará post-merge. Completada 2026-07-06. Review 10/10 PASS (progress/review_49-sales-seller-dropdown.md). SalesPage.tsx único archivo tocado: sellerId = currentUser?.sellerId ?? '' (sin fallback a user.id), selects Vendedor en forms Dirección (dirSellerId) y ATC (atcSellerId) con useSellers() filtrado a activos, default por nombre 'Dirección Comercial' vía useEffect con updater prev||id (no pisa selección manual), required si no hay default, integrados a dirErrors/atcErrors campo sellerId, sin reset en onSuccess. tsc frontend exit 0. Caveat: default depende del nombre literal del seller; si se renombra, required cubre. En prod: seller 'Dirección Comercial' bd4b30ca-7d63-4bf7-9f56-0b4c6dcd4a3c creado 2026-07-06 y 7 ventas huérfanas (user id del admin en seller_id) reasignadas a él."
+  },
+  {
+    "id": "50-calendar-seller-filter",
+    "name": "BUG: filtro de vendedor no aplica en calendario de Agenda",
+    "description": "En Agenda y tareas (vista Calendario), el dropdown de vendedor solo funciona con 'Todos los vendedores'. Al elegir un seller específico, isTeamMode se vuelve false y el calendario cae a useMonthTasks (tareas propias del usuario logueado) en vez de filtrar las tareas del seller elegido.",
+    "status": "done",
+    "priority": 50,
+    "backend_modules": [],
+    "frontend_modules": ["tasks"],
+    "notes": "Origen: reporte usuario 2026-07-06. Causa raíz: AgendaPage.tsx:87-103 — monthTasks = isTeamMode ? enrichedTeamTasks : monthTasksRaw; seller específico → monthTasksRaw (tareas propias del usuario logueado), filtro nunca aplicaba. Completada 2026-07-06. Fix (solo AgendaPage.tsx, -2/+6): Admin/Director siempre parte de enrichedTeamTasks, filtra por t.sellerId === selectedSeller cuando no es 'all'; isTeamMode eliminada (sin usos); Seller sigue con monthTasksRaw. Sin backend — GET /api/tasks/team ya trae todos los sellers. Review Líder: diff verificado línea a línea + tsc frontend exit 0. progress/impl_50-calendar-seller-filter.md."
+  },
+  {
+    "id": "51-shadcn-input-migration",
+    "name": "UI: migrar inputs nativos al componente shadcn Input",
+    "description": "Reemplazar los ~57 <input> nativos (12 archivos de módulos) por el componente Input de shadcn (components/ui/input.tsx), re-estilizado con los tokens tracker (.input: rounded-lg, 13px, borde tracker, focus verde) para cero cambio visual. Estado de error migra de clase condicional 'input-error' a aria-invalid. Selects, textareas, checkbox y file input quedan fuera del alcance.",
+    "status": "done",
+    "priority": 51,
+    "backend_modules": [],
+    "frontend_modules": ["auth", "activities", "tasks", "clients", "sales", "settings", "equipo", "reports"],
+    "notes": "Origen: pedido usuario 2026-07-06. Decisión vía AskUserQuestion: mantener look tracker (re-estilizar input.tsx), no adoptar look shadcn default (rounded-4xl/h-9). Completada 2026-07-06. 58 inputs migrados en 12 archivos de módulos + input.tsx re-estilizado (tokens --tracker-*, focus verde, aria-invalid:border danger). Error state: clase condicional input-error eliminada donde fieldErrorProps ya pone aria-invalid; aria-invalid={!!err} manual en los 3 inputs time sin helper. File input de ImportExportPage migrado (visible, ref solo resetea value); checkbox Decisor de ClientesPage queda nativo. .input/.input-error CSS conservadas (selects/textareas/ClientCombobox/inputClass de SaleFormBase). Review Líder: tsc exit 0, grep residual limpio, spot-check de diffs PASS. progress/impl_51-shadcn-input-migration.md."
+  },
+  {
+    "id": "52-shadcn-form-controls",
+    "name": "UI: migrar selects, textareas, checkbox y date pickers a shadcn",
+    "description": "Extensión de la feature 51 a todos los controles de formulario restantes: 30 <select> nativos → shadcn Select (Radix), 12 <textarea> → shadcn Textarea, checkbox Decisor → shadcn Checkbox, y campos type='date' → DatePicker (Popover + Calendar/react-day-picker) con locale es. Componentes ui re-estilizados con tokens tracker para mantener el look actual. time/datetime-local/month quedan como Input (sin equivalente shadcn).",
+    "status": "done",
+    "priority": 52,
+    "backend_modules": [],
+    "frontend_modules": ["auth", "activities", "tasks", "clients", "sales", "settings", "equipo", "reports", "pipeline", "coaching"],
+    "notes": "Origen: pedido usuario 2026-07-06 ('tambien aplica en los select, calendar, todo los inputs posibles'). Dep nueva: react-day-picker (base del Calendar shadcn); radix-ui unificado ya incluye Checkbox, date-fns ya presente. Mismo criterio visual que feature 51: tokens tracker, aria-invalid para error. Completada 2026-07-07. Continuacion final: selects nativos residuales en CoachingPage y AgendaPage migrados a shadcn Select, conservando filtros, sentinela 'all' y localStorage en Agenda. DatePickerField ya usa shadcn Calendar+Popover; Textarea/Checkbox/Select ui ya estaban re-estilizados con tokens tracker. Verificacion Lider: npx tsc --noEmit frontend exit 0; rg residual '<select|<textarea|<input' bajo frontend/src/modules sin coincidencias. Detalle: progress/impl_52-shadcn-form-controls.md."
+  },
+  {
+    "id": "53-shadcn-buttons-tabs",
+    "name": "UI: migrar botones y tabs a shadcn",
+    "description": "Reemplazar botones de accion legacy (.btn-primary/.btn-green/.btn-ghost/.btn-danger) por Button de shadcn re-estilizado con tokens tracker, y migrar controles segmentados tipo tabs (Lista/Calendario, Mes/Semana/Dia) a Tabs de shadcn. Mantener look tracker, estados disabled/loading y comportamientos existentes.",
+    "status": "done",
+    "priority": 53,
+    "backend_modules": [],
+    "frontend_modules": ["auth", "activities", "tasks", "clients", "sales", "settings", "equipo", "reports", "pipeline", "dashboard", "mi-dia", "import-export"],
+    "notes": "Origen: pedido usuario 2026-07-07 ('migra los botones y tabs'). Button/Tabs compartidos se re-estilizan con variantes tracker antes de migrar modulos. Completada 2026-07-07. Botones legacy btn-primary/btn-green/btn-ghost/btn-danger/btn-sm migrados a Button shadcn en modulos y Header compartido; segmentados Lista/Calendario y Mes/Semana/Dia migrados a Tabs shadcn. Residuos intencionales: celdas de calendario, cierres de modal, text-actions y controles custom que dependen de layout/interaccion especifica. Verificacion Lider: npx tsc --noEmit frontend exit 0; rg de clases btn-* legacy en frontend/src solo conserva definiciones CSS legacy sin uso. Detalle: progress/impl_53-shadcn-buttons-tabs.md."
+  },
+  {
+    "id": "54-shadcn-dialogs-alerts",
+    "name": "UI: migrar modales custom y confirmaciones a shadcn",
+    "description": "Reemplazar overlays custom y confirmaciones manuales por Dialog, AlertDialog y Sheet de shadcn donde corresponda. Prioridad: ClientesPage, CreateTaskForm, EditTaskForm, ClientDetailPage, ActivityHistoryModal y ventas.",
+    "status": "done",
+    "priority": 54,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales"],
+    "notes": "Origen: pedido usuario 2026-07-07. Completada 2026-07-07. Overlays custom con fixed inset-0/modal-blur eliminados en ClientesPage, CreateTaskForm, EditTaskForm y PipelinePage. Clientes create/edit usa Dialog; delete cliente usa AlertDialog. Tareas create/edit usan Dialog. Pipeline loss reason usa Dialog y detalle lateral usa Sheet. Ventas delete usa AlertDialog. ActivityHistoryModal/EditSaleModal ya usaban Dialog; se agrego DialogDescription. Verificacion Lider: npx tsc --noEmit frontend exit 0; rg residual fixed inset-0/modal-blur/confirm/alert sin resultados en modules/shared/routes. Detalle: progress/impl_54-shadcn-dialogs-alerts.md."
+  },
+  {
+    "id": "55-shadcn-dialog-sizing",
+    "name": "UI: ampliar dialogs shadcn para formularios",
+    "description": "Ajustar tamanos responsivos de Dialog/Sheet migrados para que los formularios muestren inputs, placeholders y selects sin recortes visuales, priorizando Nuevo cliente/prospecto y revisando tareas, ventas, historial y pipeline.",
+    "status": "done",
+    "priority": 55,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales"],
+    "notes": "Origen: mejora solicitada por usuario 2026-07-07 con captura del dialog Nuevo cliente/prospecto donde varios inputs se ven truncados. Completada 2026-07-07. Clientes DialogContent ampliado a 1120px responsivo, formulario en grid mobile-first y contactos flexibles hasta xl para evitar inputs estrechos. Tareas create/edit ampliadas a 780px; EditSaleModal a 720px; ActivityHistoryModal a 760px; Pipeline loss dialog a 460px y detail Sheet a 640/720px. Verificacion Lider: npx tsc --noEmit frontend exit 0; rg residual fixed inset-0/modal-blur/confirm/alert sin resultados; git diff --check sin errores. Detalle: progress/impl_55-shadcn-dialog-sizing.md."
+  },
+  {
+    "id": "56-shadcn-tables",
+    "name": "UI: migrar tablas a shadcn Table",
+    "description": "Migrar tablas/listados tabulares legacy a componentes Table de shadcn, manteniendo densidad tracker, acciones por fila, empty states y responsividad.",
+    "status": "done",
+    "priority": 56,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "sales", "reports", "equipo", "dashboard", "activities", "tasks"],
+    "notes": "Completada 2026-07-07. Se ajusto frontend/src/components/ui/table.tsx para preservar densidad Tracker (headers compactos uppercase, celdas px-3 py-[10px], hover/bordes sutiles y overflow-x auto). Migradas las tablas legacy .dt visibles en DashboardPage (Deals en riesgo), LeaderboardTable y ReportsPage (Detalle Top Vendedores) a Table/TableHeader/TableBody/TableRow/TableHead/TableCell de shadcn. ExecutiveSlide se dejo con tablas inline por ser layout de lamina/print y no usar .dt/dt-scroll. Verificacion Lider: npx tsc --noEmit frontend exit 0; rg de className=\"dt\"/dt-scroll solo conserva definicion CSS legacy no referenciada en index.css; git diff --check sin errores."
+  },
+  {
+    "id": "57-shadcn-badges-tags",
+    "name": "UI: migrar badges y tags a shadcn Badge",
+    "description": "Reemplazar tags legacy (.tag, .tag-green, .tag-red, etc.) por Badge de shadcn con variantes tracker para estados comerciales, roles, calidad, pipeline, tareas y ventas.",
+    "status": "done",
+    "priority": 57,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales", "dashboard", "mi-dia", "coaching", "reports", "equipo"],
+    "notes": "Completada 2026-07-07. Badge shadcn re-estilizado para preservar densidad Tracker de .tag legacy y variantes tracker: navy, green, amber, red, gray, purple, blue, yellow. Migrados usos directos de .tag/.tag-* en modulos activities, dashboard, tasks, mi-dia, clients, pipeline, coaching y sales; maps de estado/tipo ahora devuelven BadgeVariant en vez de clases CSS. CalendarView conserva chips interactivos con Badge asChild. Verificacion Lider: rg de className=.*tag/tag-* en frontend/src/modules/shared/routes sin resultados; npx tsc --noEmit frontend exit 0; git diff --check sin errores. Detalle: progress/impl_57-shadcn-badges-tags.md."
+  },
+  {
+    "id": "58-shadcn-dropdown-actions",
+    "name": "UI: migrar acciones compactas a shadcn DropdownMenu",
+    "description": "Usar DropdownMenu de shadcn para grupos de acciones en cards, filas y listados: editar, eliminar, completar, reactivar, ver detalle y acciones secundarias.",
+    "status": "done",
+    "priority": 58,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales", "equipo", "reports"],
+    "notes": "Completada 2026-07-07. Migradas acciones compactas a shadcn DropdownMenu en cards/listados de clientes, tareas, ventas, equipo, actividades, detalle pipeline y reportes. Acciones primarias criticas siguen visibles: Completar tarea, Registrar actividad, Registrar avance y Abrir lamina. Destructivas/sensibles conservan confirmacion con AlertDialog: eliminar cliente/tarea/venta y bloquear/activar usuario o dar baja/reactivar vendedor en Equipo. Verificacion Lider: rg confirm()/alert() sin resultados en modules/shared/routes; busqueda de botones secundarios visibles sin resultados relevantes; npx tsc --noEmit frontend exit 0; git diff --check sin errores. Detalle: progress/impl_58-shadcn-dropdown-actions.md."
+  },
+  {
+    "id": "59-shadcn-tooltips",
+    "name": "UI: agregar Tooltips en icon buttons",
+    "description": "Agregar Tooltip de shadcn a botones icon-only y acciones compactas para mejorar descubribilidad sin agregar texto visible innecesario.",
+    "status": "done",
+    "priority": 59,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales", "dashboard", "mi-dia", "reports", "settings"],
+    "notes": "Completada 2026-07-07. App envuelta con TooltipProvider shadcn y agregados tooltips a triggers icon-only de acciones compactas en clientes, tareas, actividades, detalle pipeline, ventas, equipo y reportes. Se mantuvieron aria-labels, los DropdownMenuItems conservan texto visible y no se agregaron tooltips a botones con texto. Dashboard, Mi Dia y settings no tenian acciones compactas icon-only en el alcance final. Verificacion Lider: npx tsc --noEmit frontend exit 0; git diff --check sin errores. Detalle: progress/impl_59-shadcn-tooltips.md."
+  },
+  {
+    "id": "60-shadcn-card-accordion",
+    "name": "UI: usar Card y Accordion shadcn en secciones densas",
+    "description": "Introducir Card y Accordion de shadcn de forma selectiva en secciones repetidas o colapsables: historial, detalles, bloques secundarios y paneles con mucha informacion.",
+    "status": "done",
+    "priority": 60,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "pipeline", "activities", "tasks", "sales", "reports", "settings"],
+    "notes": "Completada 2026-07-07. Review Lider PASSED 10/10 (progress/impl_60-shadcn-card-accordion.md). ClientDetailPage.tsx (Card+Accordion contacts/pain/provider + Card timeline), ActivityHistoryModal.tsx (Card estado actual + Accordion historial), ReportsPage.tsx (Card+Accordion filtros/sellers/summary) y SettingsPage.tsx (Card+Accordion grupos de metas) ya venian de una sesion previa sin commitear. Unico fix de este pase: ClientesPage.tsx:359 tenia un </Card> huerfano cerrando un <div> (bug bloqueante de build) -> corregido a </div>, sidebar oscuro se mantiene <div> custom (no Card, tema oscuro). Decision de criterio: bloque de contactos editables del formulario create/edit (ClientesPage.tsx ~768-853) NO se convierte a Accordion por ser edicion activa de datos, no bloque de solo lectura. ExecutiveSlide.tsx explicitamente fuera de alcance (inline-style puro, requerido para export via window.open+outerHTML). tsc frontend exit 0. Sin Cards anidadas en ningun archivo."
   }
 ]

@@ -1,8 +1,33 @@
 import { useState } from 'react';
 import { useSearch } from '@tanstack/react-router';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { MoreHorizontalCircle01Icon } from '@hugeicons/core-free-icons';
 import { useMonthlyReport } from '../../application/hooks/useMonthlyReport';
 import { useWinLoss } from '../../application/hooks/useWinLoss';
 import { ExecutiveSlide, buildAnalysis, money, LABEL_STYLE } from '../components/ExecutiveSlide';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Card } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const STORAGE_KEY = 'tracker-report-goals';
 
@@ -110,7 +135,7 @@ export function ReportsPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Config panel */}
-      <div className="card" style={{ padding: 20 }}>
+      <Card style={{ padding: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Informe Ejecutivo Mensual</div>
@@ -124,40 +149,56 @@ export function ReportsPage() {
             ].map((f) => (
               <div key={f.label}>
                 <label style={{ ...LABEL_STYLE, color: '#94A3B8', display: 'block', marginBottom: 4 }}>{f.label}</label>
-                <input type={f.type} value={f.value} onChange={(e) => f.onChange(e.target.value)} className="input" style={{ width: f.width }} />
+                <Input type={f.type} value={f.value} onChange={(e) => f.onChange(e.target.value)} style={{ width: f.width }} />
               </div>
             ))}
             <div>
               <label style={{ ...LABEL_STYLE, color: '#94A3B8', display: 'block', marginBottom: 4 }}>Meta $ equipo</label>
-              <input type="number" className="input" style={{ width: 140 }} min={1} value={goalAmount || ''} onChange={(e) => setGoalAmount(Number(e.target.value))} />
+              <Input type="number" style={{ width: 140 }} min={1} value={goalAmount || ''} onChange={(e) => setGoalAmount(Number(e.target.value))} />
             </div>
             <div>
               <label style={{ ...LABEL_STYLE, color: '#94A3B8', display: 'block', marginBottom: 4 }}>Meta unidades</label>
-              <input type="number" className="input" style={{ width: 120 }} min={1} value={goalUnits || ''} onChange={(e) => setGoalUnits(Number(e.target.value))} />
+              <Input type="number" style={{ width: 120 }} min={1} value={goalUnits || ''} onChange={(e) => setGoalUnits(Number(e.target.value))} />
             </div>
             <div>
               <label style={{ ...LABEL_STYLE, color: '#94A3B8', display: 'block', marginBottom: 4 }}>Meta $ x vendedor</label>
-              <input type="number" className="input" style={{ width: 140 }} min={1} value={goalPerSeller || ''} onChange={(e) => setGoalPerSeller(Number(e.target.value))} />
+              <Input type="number" style={{ width: 140 }} min={1} value={goalPerSeller || ''} onChange={(e) => setGoalPerSeller(Number(e.target.value))} />
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7 }}>
-              <button onClick={saveGoals} className="btn-green">{savedMsg ? 'Guardado' : 'Guardar metas'}</button>
-              <button onClick={copyReportText} disabled={!data} className="btn-ghost">
-                {copyMsg === 'ok' ? 'Copiado' : copyMsg === 'fail' ? 'Error al copiar' : 'Copiar informe'}
-              </button>
-              <button onClick={shareLink} className="btn-ghost">
-                {shareLinkMsg === 'ok' ? 'Enlace copiado' : shareLinkMsg === 'fail' ? 'Error al copiar' : 'Compartir'}
-              </button>
-              <button onClick={openLamina} className="btn-primary">Abrir lámina</button>
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon-sm" aria-label="Acciones del informe">
+                        <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Acciones del informe</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end" className="min-w-48">
+                  <DropdownMenuItem onSelect={saveGoals}>
+                    {savedMsg ? 'Guardado' : 'Guardar metas'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled={!data} onSelect={copyReportText}>
+                    {copyMsg === 'ok' ? 'Copiado' : copyMsg === 'fail' ? 'Error al copiar' : 'Copiar informe'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={shareLink}>
+                    {shareLinkMsg === 'ok' ? 'Enlace copiado' : shareLinkMsg === 'fail' ? 'Error al copiar' : 'Compartir informe'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button onClick={openLamina}>Abrir lámina</Button>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       {isLoading && <p style={{ fontSize: 13, color: '#94A3B8' }}>Cargando reporte...</p>}
       {error && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <p style={{ fontSize: 13, color: '#EF4444' }}>Error al cargar el reporte.</p>
-          <button className="btn-ghost" onClick={() => refetch()} style={{ fontSize: 12, padding: '4px 10px' }}>Reintentar</button>
+          <Button variant="ghost" size="sm" onClick={() => refetch()}>Reintentar</Button>
         </div>
       )}
 
@@ -179,70 +220,80 @@ export function ReportsPage() {
 
             {/* Detalle Top Vendedores */}
             {data.sellers.length > 0 && (
-              <div className="card" style={{ padding: 20, overflowX: 'auto' }}>
-                <div className="slabel" style={{ marginBottom: 12 }}>Detalle Top Vendedores</div>
-                <table className="dt">
-                  <thead>
-                    <tr>
-                      <th>Vendedor</th>
-                      <th>Unidades</th>
-                      <th>Monto</th>
-                      <th>% Meta</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.sellers.map((r) => {
-                      const metaPct = goalPerSeller > 0 ? (r.amount / goalPerSeller) * 100 : 0;
-                      const metaColor = metaPct >= 100 ? '#4a7c00' : '#B45309';
-                      return (
-                        <tr key={r.sellerId}>
-                          <td style={{ fontWeight: 600, color: '#0F172A' }}>{r.sellerName}</td>
-                          <td>{r.units}</td>
-                          <td style={{ fontWeight: 600 }}>{money(r.amount)}</td>
-                          <td>
-                            <span style={{ fontSize: 11, fontWeight: 600, color: metaColor }}>
-                              {metaPct.toFixed(1)}%
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <Card style={{ padding: 20 }}>
+                <Accordion type="single" collapsible defaultValue="sellers">
+                  <AccordionItem value="sellers">
+                    <AccordionTrigger>Detalle Top Vendedores</AccordionTrigger>
+                    <AccordionContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Vendedor</TableHead>
+                            <TableHead>Unidades</TableHead>
+                            <TableHead>Monto</TableHead>
+                            <TableHead>% Meta</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {data.sellers.map((r) => {
+                            const metaPct = goalPerSeller > 0 ? (r.amount / goalPerSeller) * 100 : 0;
+                            const metaColor = metaPct >= 100 ? '#4a7c00' : '#B45309';
+                            return (
+                              <TableRow key={r.sellerId}>
+                                <TableCell style={{ fontWeight: 600, color: '#0F172A' }}>{r.sellerName}</TableCell>
+                                <TableCell>{r.units}</TableCell>
+                                <TableCell style={{ fontWeight: 600 }}>{money(r.amount)}</TableCell>
+                                <TableCell>
+                                  <span style={{ fontSize: 11, fontWeight: 600, color: metaColor }}>
+                                    {metaPct.toFixed(1)}%
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </Card>
             )}
 
             {/* Resumen para Dirección */}
-            <div id="executive-report-text" className="card" style={{ padding: 20 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', marginBottom: 12 }}>
-                Resumen para Dirección
-              </div>
-              <p style={{ fontSize: 13, lineHeight: 1.7, color: '#475569' }}>
-                <b>Meta vs Logro {month}:</b> Ventas globales: {money(data.total.amount)} contra
-                meta de {money(goalAmount)} ({((data.total.amount / goalAmount) * 100).toFixed(2)}%).
-                Unidades: {data.total.units} contra meta de {goalUnits} ({((data.total.units / goalUnits) * 100).toFixed(2)}%).
-                <br /><br />
-                <b>Dirección Comercial:</b> {data.direction.units} unidades por {money(data.direction.amount)}.
-                <br />
-                <b>ATC:</b> {data.atc.existingUnits} unidades existentes por {money(data.atc.existingAmount)}.
-                {data.sellers.length > 0 && (
-                  <>
-                    <br />
-                    <b>Equipo:</b>{' '}
-                    {data.sellers.slice(0, 5).map((r) => `${r.sellerName}: ${r.units} unidades, ${money(r.amount)}`).join(' · ')}.
-                  </>
-                )}
-                {data.bySource.length > 0 && (
-                  <>
-                    <br />
-                    <b>Origen de cuentas:</b>{' '}
-                    {data.bySource.slice(0, 5).map((s) => `${s.source}: ${s.count} cuentas, ${money(s.amount)}`).join(' · ')}.
-                  </>
-                )}
-                <br />
-                <b>Análisis IA:</b> Salud comercial {ai.health}/100 — {ai.status}
-              </p>
-            </div>
+            <Card id="executive-report-text" style={{ padding: 20 }}>
+              <Accordion type="single" collapsible defaultValue="summary">
+                <AccordionItem value="summary">
+                  <AccordionTrigger>Resumen para Dirección</AccordionTrigger>
+                  <AccordionContent>
+                    <p style={{ fontSize: 13, lineHeight: 1.7, color: '#475569' }}>
+                      <b>Meta vs Logro {month}:</b> Ventas globales: {money(data.total.amount)} contra
+                      meta de {money(goalAmount)} ({((data.total.amount / goalAmount) * 100).toFixed(2)}%).
+                      Unidades: {data.total.units} contra meta de {goalUnits} ({((data.total.units / goalUnits) * 100).toFixed(2)}%).
+                      <br /><br />
+                      <b>Dirección Comercial:</b> {data.direction.units} unidades por {money(data.direction.amount)}.
+                      <br />
+                      <b>ATC:</b> {data.atc.existingUnits} unidades existentes por {money(data.atc.existingAmount)}.
+                      {data.sellers.length > 0 && (
+                        <>
+                          <br />
+                          <b>Equipo:</b>{' '}
+                          {data.sellers.slice(0, 5).map((r) => `${r.sellerName}: ${r.units} unidades, ${money(r.amount)}`).join(' · ')}.
+                        </>
+                      )}
+                      {data.bySource.length > 0 && (
+                        <>
+                          <br />
+                          <b>Origen de cuentas:</b>{' '}
+                          {data.bySource.slice(0, 5).map((s) => `${s.source}: ${s.count} cuentas, ${money(s.amount)}`).join(' · ')}.
+                        </>
+                      )}
+                      <br />
+                      <b>Análisis IA:</b> Salud comercial {ai.health}/100 — {ai.status}
+                    </p>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </Card>
           </>
         );
       })()}

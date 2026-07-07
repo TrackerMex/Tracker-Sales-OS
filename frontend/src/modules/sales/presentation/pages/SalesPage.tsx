@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { MoreHorizontalCircle01Icon } from '@hugeicons/core-free-icons';
 import { useAppStore } from '@/shared/store/app.store';
 import { useSellers } from '@/modules/equipo/application/hooks/useSellers';
 import { useCreateSale } from '../../application/hooks/useCreateSale';
@@ -11,15 +13,42 @@ import { useApiFormErrors } from '@/shared/lib/api-errors';
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary';
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError';
 import { ClientCombobox } from '@/shared/components/forms/ClientCombobox';
+import { DatePickerField } from '@/shared/components/forms/DatePickerField';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { EditSaleModal } from '../components/EditSaleModal';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const PAYMENT_METHODS: PaymentMethod[] = ['Pagado', 'Crédito', '50% anticipo', 'Pendiente'];
 const SALE_SOURCES: SaleSource[] = [
@@ -203,7 +232,7 @@ export function SalesPage() {
       <div style={{ display: 'grid', gridTemplateColumns: isAdminOrDirector ? '1fr 1fr' : '1fr', gap: 16 }}>
 
         {/* Columna vendedor — solo Seller */}
-        {!isAdminOrDirector && <div className="card p-5">
+        {!isAdminOrDirector && <Card className="p-5">
           <h3 className="mb-4 text-sm font-black text-[#002B49]">Registrar venta del día</h3>
           <form ref={sellerErrors.formRef} onSubmit={handleSellerSubmit} className="space-y-3">
             <FormErrorSummary error={sellerErrors.summary} />
@@ -226,9 +255,8 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1">Producto</label>
-              <input
+              <Input
                 type="text"
-                className={sellerErrors.fieldErrors.product ? 'input input-error' : 'input'}
                 value={sellerProduct}
                 onChange={(e) => { setSellerProduct(e.target.value); sellerErrors.clearField('product'); }}
                 placeholder="Nombre del producto"
@@ -241,10 +269,9 @@ export function SalesPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <div>
                 <label className="slabel mb-1">Unidades</label>
-                <input
+                <Input
                   type="number"
                   min="1"
-                  className={sellerErrors.fieldErrors.units ? 'input input-error' : 'input'}
                   value={sellerUnits}
                   onChange={(e) => { setSellerUnits(e.target.value === '' ? '' : Number(e.target.value)); sellerErrors.clearField('units'); }}
                   required
@@ -254,11 +281,10 @@ export function SalesPage() {
               </div>
               <div>
                 <label className="slabel mb-1">Monto factura</label>
-                <input
+                <Input
                   type="number"
                   min="0"
                   step="0.01"
-                  className={sellerErrors.fieldErrors.amount ? 'input input-error' : 'input'}
                   value={sellerAmount}
                   onChange={(e) => { setSellerAmount(e.target.value === '' ? '' : Number(e.target.value)); sellerErrors.clearField('amount'); }}
                   required
@@ -271,55 +297,57 @@ export function SalesPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <div>
                 <label className="slabel mb-1">Fecha</label>
-                <input
-                  type="date"
-                  className={sellerErrors.fieldErrors.date ? 'input input-error' : 'input'}
+                <DatePickerField
                   value={sellerDate}
-                  onChange={(e) => { setSellerDate(e.target.value); sellerErrors.clearField('date'); }}
-                  required
+                  onChange={(v) => { setSellerDate(v); sellerErrors.clearField('date'); }}
                   {...fieldErrorProps('date', sellerErrors.fieldErrors.date)}
                 />
                 <FieldError name="date" message={sellerErrors.fieldErrors.date} />
               </div>
               <div>
                 <label className="slabel mb-1">Forma de pago</label>
-                <select
-                  className={sellerErrors.fieldErrors.pay ? 'input input-error' : 'input'}
+                <Select
                   value={sellerPay}
-                  onChange={(e) => { setSellerPay(e.target.value as PaymentMethod); sellerErrors.clearField('pay'); }}
-                  {...fieldErrorProps('pay', sellerErrors.fieldErrors.pay)}
+                  onValueChange={(v) => { setSellerPay(v as PaymentMethod); sellerErrors.clearField('pay'); }}
                 >
-                  {PAYMENT_METHODS.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger {...fieldErrorProps('pay', sellerErrors.fieldErrors.pay)}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FieldError name="pay" message={sellerErrors.fieldErrors.pay} />
               </div>
             </div>
 
             <div>
               <label className="slabel mb-1">Fuente</label>
-              <select
-                className={sellerErrors.fieldErrors.source ? 'input input-error' : 'input'}
+              <Select
                 value={sellerSource}
-                onChange={(e) => { setSellerSource(e.target.value as SaleSource); sellerErrors.clearField('source'); }}
-                {...fieldErrorProps('source', sellerErrors.fieldErrors.source)}
+                onValueChange={(v) => { setSellerSource(v as SaleSource); sellerErrors.clearField('source'); }}
               >
-                {SALE_SOURCES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger {...fieldErrorProps('source', sellerErrors.fieldErrors.source)}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SALE_SOURCES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FieldError name="source" message={sellerErrors.fieldErrors.source} />
             </div>
 
             <div>
               <label className="slabel mb-1">Notas de venta</label>
-              <textarea
-                className={sellerErrors.fieldErrors.notes ? 'input input-error' : 'input'}
+              <Textarea
                 rows={2}
                 value={sellerNotes}
                 onChange={(e) => { setSellerNotes(e.target.value); sellerErrors.clearField('notes'); }}
@@ -329,15 +357,16 @@ export function SalesPage() {
               <FieldError name="notes" message={sellerErrors.fieldErrors.notes} />
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="btn-green w-full"
+              variant="success"
+              className="w-full"
               disabled={createSellerSale.isPending}
             >
               {createSellerSale.isPending ? 'Guardando...' : 'Guardar venta vendedor'}
-            </button>
+            </Button>
           </form>
-        </div>}
+        </Card>}
 
         {/* Columna central: Dirección — solo Admin/Director */}
         {isAdminOrDirector && <div style={{ background: '#001524', borderRadius: 12, padding: 20 }}>
@@ -352,20 +381,21 @@ export function SalesPage() {
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Vendedor
               </label>
-              <select
-                className={dirErrors.fieldErrors.sellerId ? 'input input-error' : 'input'}
+              <Select
                 value={dirSellerId}
-                onChange={(e) => { setDirSellerId(e.target.value); dirErrors.clearField('sellerId'); }}
-                required
-                {...fieldErrorProps('sellerId', dirErrors.fieldErrors.sellerId)}
+                onValueChange={(v) => { setDirSellerId(v); dirErrors.clearField('sellerId'); }}
               >
-                <option value="">Seleccionar vendedor</option>
-                {activeSellers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger {...fieldErrorProps('sellerId', dirErrors.fieldErrors.sellerId)}>
+                  <SelectValue placeholder="Seleccionar vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeSellers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FieldError name="sellerId" message={dirErrors.fieldErrors.sellerId} />
             </div>
 
@@ -373,12 +403,9 @@ export function SalesPage() {
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Fecha
               </label>
-              <input
-                type="date"
-                className={dirErrors.fieldErrors.date ? 'input input-error' : 'input'}
+              <DatePickerField
                 value={dirDate}
-                onChange={(e) => { setDirDate(e.target.value); dirErrors.clearField('date'); }}
-                required
+                onChange={(v) => { setDirDate(v); dirErrors.clearField('date'); }}
                 {...fieldErrorProps('date', dirErrors.fieldErrors.date)}
               />
               <FieldError name="date" message={dirErrors.fieldErrors.date} />
@@ -388,9 +415,8 @@ export function SalesPage() {
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Cuenta / Proyecto
               </label>
-              <input
+              <Input
                 type="text"
-                className={dirErrors.fieldErrors.product || dirErrors.fieldErrors.clientName ? 'input input-error' : 'input'}
                 value={dirProject}
                 onChange={(e) => {
                   setDirProject(e.target.value);
@@ -408,10 +434,9 @@ export function SalesPage() {
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Unidades Dirección
               </label>
-              <input
+              <Input
                 type="number"
                 min="1"
-                className={dirErrors.fieldErrors.units ? 'input input-error' : 'input'}
                 value={dirUnits}
                 onChange={(e) => { setDirUnits(e.target.value === '' ? '' : Number(e.target.value)); dirErrors.clearField('units'); }}
                 required
@@ -424,11 +449,10 @@ export function SalesPage() {
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Monto Dirección
               </label>
-              <input
+              <Input
                 type="number"
                 min="0"
                 step="0.01"
-                className={dirErrors.fieldErrors.amount ? 'input input-error' : 'input'}
                 value={dirAmount}
                 onChange={(e) => { setDirAmount(e.target.value === '' ? '' : Number(e.target.value)); dirErrors.clearField('amount'); }}
                 required
@@ -441,8 +465,7 @@ export function SalesPage() {
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Notas Dirección
               </label>
-              <textarea
-                className={dirErrors.fieldErrors.notes ? 'input input-error' : 'input'}
+              <Textarea
                 rows={2}
                 value={dirNotes}
                 onChange={(e) => { setDirNotes(e.target.value); dirErrors.clearField('notes'); }}
@@ -452,18 +475,19 @@ export function SalesPage() {
               <FieldError name="notes" message={dirErrors.fieldErrors.notes} />
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="btn-green w-full"
+              variant="success"
+              className="w-full"
               disabled={createDirSale.isPending}
             >
               {createDirSale.isPending ? 'Guardando...' : 'Guardar Venta Dirección'}
-            </button>
+            </Button>
           </form>
         </div>}
 
         {/* Columna derecha: ATC — solo Admin/Director */}
-        {isAdminOrDirector && <div className="card p-5">
+        {isAdminOrDirector && <Card className="p-5">
           <h3 className="mb-1 text-sm font-black text-[#002B49]">Registrar ATC</h3>
           <p className="mb-4 text-xs text-slate-500">ATC solo registra clientes existentes</p>
           <form ref={atcErrors.formRef} onSubmit={handleAtcSubmit} className="space-y-3">
@@ -471,31 +495,29 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1">Vendedor</label>
-              <select
-                className={atcErrors.fieldErrors.sellerId ? 'input input-error' : 'input'}
+              <Select
                 value={atcSellerId}
-                onChange={(e) => { setAtcSellerId(e.target.value); atcErrors.clearField('sellerId'); }}
-                required
-                {...fieldErrorProps('sellerId', atcErrors.fieldErrors.sellerId)}
+                onValueChange={(v) => { setAtcSellerId(v); atcErrors.clearField('sellerId'); }}
               >
-                <option value="">Seleccionar vendedor</option>
-                {activeSellers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger {...fieldErrorProps('sellerId', atcErrors.fieldErrors.sellerId)}>
+                  <SelectValue placeholder="Seleccionar vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeSellers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FieldError name="sellerId" message={atcErrors.fieldErrors.sellerId} />
             </div>
 
             <div>
               <label className="slabel mb-1">Fecha</label>
-              <input
-                type="date"
-                className={atcErrors.fieldErrors.date ? 'input input-error' : 'input'}
+              <DatePickerField
                 value={atcDate}
-                onChange={(e) => { setAtcDate(e.target.value); atcErrors.clearField('date'); }}
-                required
+                onChange={(v) => { setAtcDate(v); atcErrors.clearField('date'); }}
                 {...fieldErrorProps('date', atcErrors.fieldErrors.date)}
               />
               <FieldError name="date" message={atcErrors.fieldErrors.date} />
@@ -503,10 +525,9 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1">Unidades ATC</label>
-              <input
+              <Input
                 type="number"
                 min="1"
-                className={atcErrors.fieldErrors.units ? 'input input-error' : 'input'}
                 value={atcUnits}
                 onChange={(e) => { setAtcUnits(e.target.value === '' ? '' : Number(e.target.value)); atcErrors.clearField('units'); }}
                 required
@@ -517,11 +538,10 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1">Monto pagado ATC</label>
-              <input
+              <Input
                 type="number"
                 min="0"
                 step="0.01"
-                className={atcErrors.fieldErrors.amount ? 'input input-error' : 'input'}
                 value={atcAmount}
                 onChange={(e) => { setAtcAmount(e.target.value === '' ? '' : Number(e.target.value)); atcErrors.clearField('amount'); }}
                 required
@@ -532,8 +552,7 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1">Notas ATC</label>
-              <textarea
-                className={atcErrors.fieldErrors.notes ? 'input input-error' : 'input'}
+              <Textarea
                 rows={2}
                 value={atcNotes}
                 onChange={(e) => { setAtcNotes(e.target.value); atcErrors.clearField('notes'); }}
@@ -543,15 +562,15 @@ export function SalesPage() {
               <FieldError name="notes" message={atcErrors.fieldErrors.notes} />
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="btn-primary w-full"
+              className="w-full"
               disabled={createAtcSale.isPending}
             >
               {createAtcSale.isPending ? 'Guardando...' : 'Guardar ATC'}
-            </button>
+            </Button>
           </form>
-        </div>}
+        </Card>}
       </div>
 
       {/* VENTAS REGISTRADAS */}
@@ -560,31 +579,31 @@ export function SalesPage() {
 
         {summary && (
           <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="card p-4">
+            <Card className="p-4">
               <p className="slabel mb-1">Total ventas</p>
               <p className="text-2xl font-black text-[#002B49]">{summary.total}</p>
-            </div>
-            <div className="card p-4">
+            </Card>
+            <Card className="p-4">
               <p className="slabel mb-1">Unidades</p>
               <p className="text-2xl font-black text-[#002B49]">{summary.totalUnits}</p>
-            </div>
-            <div className="card p-4">
+            </Card>
+            <Card className="p-4">
               <p className="slabel mb-1">Monto total</p>
               <p className="text-lg font-black text-[#82bc00]">
                 {formatCurrency(summary.totalAmount)}
               </p>
-            </div>
-            <div className="card p-4">
+            </Card>
+            <Card className="p-4">
               <p className="slabel mb-1">Nuevos / Existentes</p>
               <p className="text-base font-bold text-[#002B49]">
                 {summary.unitsByClientType.Nuevo} / {summary.unitsByClientType.Existente}
               </p>
               <p className="text-xs text-slate-400">unidades</p>
-            </div>
+            </Card>
           </div>
         )}
 
-        <div className="card">
+        <Card>
           {loadingList && (
             <div className="space-y-3 p-6">
               {[1, 2, 3].map((i) => (
@@ -614,53 +633,52 @@ export function SalesPage() {
                     </p>
                   </div>
                   <div className="ml-4 flex items-center gap-3">
-                    <span
-                      className={`tag ${
-                        sale.clientType === 'Nuevo'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
+                    <Badge variant={sale.clientType === 'Nuevo' ? 'blue' : 'gray'}>
                       {sale.clientType}
-                    </span>
-                    <span
-                      className={`tag ${
+                    </Badge>
+                    <Badge
+                      variant={
                         sale.type === 'seller'
-                          ? 'bg-[#002B49]/10 text-[#002B49]'
+                          ? 'navy'
                           : sale.type === 'atc'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-purple-100 text-purple-700'
-                      }`}
+                            ? 'amber'
+                            : 'purple'
+                      }
                     >
                       {sale.type}
-                    </span>
+                    </Badge>
                     <span className="text-sm font-bold text-[#82bc00]">
                       {formatCurrency(sale.amount)}
                     </span>
                     {isAdminOrDirector && (
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button
-                          className="btn-ghost"
-                          style={{ padding: '2px 8px', fontSize: 12 }}
-                          onClick={() => setEditingSale(sale)}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          className="btn-ghost"
-                          style={{ padding: '2px 8px', fontSize: 12, color: '#ef4444' }}
-                          onClick={() => setDeletingSale(sale)}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
+                      <DropdownMenu>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon-xs" aria-label={`Acciones de venta ${sale.clientName}`}>
+                                <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent>Acciones de venta</TooltipContent>
+                        </Tooltip>
+                        <DropdownMenuContent align="end" className="min-w-44">
+                          <DropdownMenuItem onSelect={() => setEditingSale(sale)}>
+                            Editar venta
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem variant="destructive" onSelect={() => setDeletingSale(sale)}>
+                            Eliminar venta
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
       {editingSale && (
@@ -671,22 +689,20 @@ export function SalesPage() {
         />
       )}
 
-      <Dialog open={!!deletingSale} onOpenChange={(open) => { if (!open) setDeletingSale(null); }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Eliminar venta</DialogTitle>
-            <DialogDescription>
+      <AlertDialog open={!!deletingSale} onOpenChange={(open) => { if (!open) setDeletingSale(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar venta</AlertDialogTitle>
+            <AlertDialogDescription>
               ¿Eliminar la venta de <strong>{deletingSale?.clientName}</strong>? Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <button className="btn-ghost" onClick={() => setDeletingSale(null)}>
-              Cancelar
-            </button>
-            <button
-              className="btn-primary"
-              style={{ background: '#ef4444' }}
-              onClick={() => {
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={(event) => {
+                event.preventDefault();
                 if (deletingSale) {
                   deleteSale(deletingSale.id);
                   setDeletingSale(null);
@@ -694,10 +710,10 @@ export function SalesPage() {
               }}
             >
               Eliminar
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

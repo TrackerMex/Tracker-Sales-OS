@@ -1,6 +1,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -9,17 +10,21 @@ import {
   useUpdateActivityStatus,
 } from "../../application/hooks/useActivityHistory"
 import { toast } from "sonner"
+import { Badge, type BadgeVariant } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Card, CardContent } from "@/components/ui/card"
 
 interface Props {
   activityId: string | null
   onClose: () => void
 }
 
-const STATUS_CLASSES: Record<string, string> = {
-  Pendiente: "tag tag-yellow",
-  "En curso": "tag tag-blue",
-  Completada: "tag tag-green",
-  Cancelada: "tag",
+const STATUS_VARIANTS: Record<string, BadgeVariant> = {
+  Pendiente: "yellow",
+  "En curso": "blue",
+  Completada: "green",
+  Cancelada: "gray",
 }
 
 const NEXT_TRANSITIONS: Record<string, string[]> = {
@@ -58,11 +63,14 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
         if (!open) onClose()
       }}
     >
-      <DialogContent className="max-w-lg">
+      <DialogContent className="w-[min(calc(100vw-2rem),760px)] max-w-none max-h-[90vh] overflow-y-auto sm:max-w-none">
         <DialogHeader>
           <DialogTitle>
             {isLoading ? "Cargando..." : `${activity?.type ?? ""} — Historial`}
           </DialogTitle>
+          <DialogDescription>
+            Consulta cambios de estado y actualiza la actividad seleccionada.
+          </DialogDescription>
         </DialogHeader>
 
         {isLoading && (
@@ -73,72 +81,80 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
 
         {activity && (
           <div className="space-y-4">
-            <div>
-              <p className="kl mb-1">Estado actual</p>
-              <span className={STATUS_CLASSES[currentStatus] ?? "tag"}>
-                {currentStatus}
-              </span>
-            </div>
+            <Card size="sm">
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="kl mb-1">Estado actual</p>
+                  <Badge variant={STATUS_VARIANTS[currentStatus] ?? "gray"}>
+                    {currentStatus}
+                  </Badge>
+                </div>
 
-            {nextTransitions.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {nextTransitions.map((next) => (
-                  <button
-                    key={next}
-                    className={
-                      next === "Cancelada" ? "btn-ghost" : "btn-primary"
-                    }
-                    disabled={isPending}
-                    onClick={() => handleTransition(next)}
-                  >
-                    {TRANSITION_LABELS[next] ?? next}
-                  </button>
-                ))}
-              </div>
-            )}
+                {nextTransitions.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {nextTransitions.map((next) => (
+                      <Button
+                        key={next}
+                        variant={next === "Cancelada" ? "ghost" : "default"}
+                        disabled={isPending}
+                        onClick={() => handleTransition(next)}
+                      >
+                        {TRANSITION_LABELS[next] ?? next}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-            <div>
-              <p className="kl mb-2">Historial de cambios</p>
-              {!activity.activityHistory ||
-              activity.activityHistory.length === 0 ? (
-                <p style={{ fontSize: 13, color: "#94A3B8" }}>
-                  Sin actualizaciones aún
-                </p>
-              ) : (
-                <ul className="space-y-2">
-                  {activity.activityHistory.map((entry, i) => (
-                    <li key={i} style={{ fontSize: 12, color: "#0F172A" }}>
-                      <span style={{ color: "#94A3B8" }}>
-                        {new Date(entry.changedAt).toLocaleString("es-MX", {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        })}
-                      </span>{" "}
-                      <span
-                        className={STATUS_CLASSES[entry.oldStatus] ?? "tag"}
-                      >
-                        {entry.oldStatus}
-                      </span>
-                      {" → "}
-                      <span
-                        className={STATUS_CLASSES[entry.newStatus] ?? "tag"}
-                      >
-                        {entry.newStatus}
-                      </span>{" "}
-                      <span style={{ color: "#64748B" }}>
-                        por: {entry.changedBy}
-                      </span>
-                      {entry.comment && (
-                        <span style={{ color: "#64748B" }}>
-                          {" "}
-                          — {entry.comment}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <Accordion
+              type="single"
+              collapsible
+              defaultValue={activity.activityHistory?.length ? "history" : undefined}
+            >
+              <AccordionItem value="history">
+                <AccordionTrigger>
+                  Historial de cambios ({activity.activityHistory?.length ?? 0})
+                </AccordionTrigger>
+                <AccordionContent>
+                  {!activity.activityHistory ||
+                  activity.activityHistory.length === 0 ? (
+                    <p style={{ fontSize: 13, color: "#94A3B8" }}>
+                      Sin actualizaciones aún
+                    </p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {activity.activityHistory.map((entry, i) => (
+                        <li key={i} style={{ fontSize: 12, color: "#0F172A" }}>
+                          <span style={{ color: "#94A3B8" }}>
+                            {new Date(entry.changedAt).toLocaleString("es-MX", {
+                              dateStyle: "short",
+                              timeStyle: "short",
+                            })}
+                          </span>{" "}
+                          <Badge variant={STATUS_VARIANTS[entry.oldStatus] ?? "gray"}>
+                            {entry.oldStatus}
+                          </Badge>
+                          {" → "}
+                          <Badge variant={STATUS_VARIANTS[entry.newStatus] ?? "gray"}>
+                            {entry.newStatus}
+                          </Badge>{" "}
+                          <span style={{ color: "#64748B" }}>
+                            por: {entry.changedBy}
+                          </span>
+                          {entry.comment && (
+                            <span style={{ color: "#64748B" }}>
+                              {" "}
+                              — {entry.comment}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         )}
       </DialogContent>

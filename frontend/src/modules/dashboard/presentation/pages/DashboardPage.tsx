@@ -23,6 +23,16 @@ import { useSettings } from "@/modules/settings/application/hooks/useSettings"
 import { useAppStore } from "@/shared/store/app.store"
 import { UserRole } from "@/core/domain/types/common.types"
 import { formatCurrency } from "@/shared/lib/format"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 ChartJS.register(
   CategoryScale,
@@ -124,9 +134,9 @@ export function DashboardPage() {
           <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
             No se pudo cargar el resumen. Verifica tu conexión e intenta de nuevo.
           </p>
-          <button onClick={() => summary.refetch?.()} className="btn-ghost ml-3">
+          <Button variant="ghost" onClick={() => summary.refetch?.()} className="ml-3">
             Reintentar
-          </button>
+          </Button>
         </div>
       )}
 
@@ -209,9 +219,9 @@ export function DashboardPage() {
             <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
               No se pudo cargar el desempeño del equipo.
             </p>
-            <button onClick={() => sellers.refetch?.()} className="btn-ghost ml-3">
+            <Button variant="ghost" onClick={() => sellers.refetch?.()} className="ml-3">
               Reintentar
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -228,9 +238,9 @@ export function DashboardPage() {
               <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
                 No se pudo cargar el leaderboard.
               </p>
-              <button onClick={() => leaderboard.refetch?.()} className="btn-ghost ml-3">
+              <Button variant="ghost" onClick={() => leaderboard.refetch?.()} className="ml-3">
                 Reintentar
-              </button>
+              </Button>
             </div>
           ) : (
             <LeaderboardTable
@@ -263,44 +273,40 @@ export function DashboardPage() {
               stalledDeals.data?.length === 0 ? (
                 <div className="empty-state">No hay deals estancados</div>
               ) : (
-                <div className="dt-scroll">
-                <table className="dt">
-                  <thead>
-                    <tr>
-                      <th>Cliente</th>
-                      <th>Stage</th>
-                      <th>Vendedor</th>
-                      <th className="text-right">Monto</th>
-                      <th className="text-right">Días estancado</th>
-                      <th className="text-center">Severidad</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Stage</TableHead>
+                      <TableHead>Vendedor</TableHead>
+                      <TableHead className="text-right">Monto</TableHead>
+                      <TableHead className="text-right">Días estancado</TableHead>
+                      <TableHead className="text-center">Severidad</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {stalledDeals.data?.map((item) => (
-                      <tr key={item.dealId}>
-                        <td className="font-medium" style={{ color: 'var(--tracker-blue)' }}>
+                      <TableRow key={item.dealId}>
+                        <TableCell className="font-medium" style={{ color: 'var(--tracker-blue)' }}>
                           {item.clientName}
-                        </td>
-                        <td style={{ color: 'var(--tracker-text-dim)' }}>{item.stage}</td>
-                        <td style={{ color: 'var(--tracker-text-dim)' }}>{item.sellerName || '—'}</td>
-                        <td className="text-right" style={{ color: 'var(--tracker-text-dim)' }}>
+                        </TableCell>
+                        <TableCell style={{ color: 'var(--tracker-text-dim)' }}>{item.stage}</TableCell>
+                        <TableCell style={{ color: 'var(--tracker-text-dim)' }}>{item.sellerName || '—'}</TableCell>
+                        <TableCell className="text-right" style={{ color: 'var(--tracker-text-dim)' }}>
                           {formatCurrency(item.amount)}
-                        </td>
-                        <td className="text-right" style={{ color: 'var(--tracker-text-dim)' }}>
+                        </TableCell>
+                        <TableCell className="text-right" style={{ color: 'var(--tracker-text-dim)' }}>
                           {item.daysStalled}
-                        </td>
-                        <td className="text-center">
-                          <span
-                            className={`tag ${item.severity === 'red' ? 'tag-red' : 'tag-amber'}`}
-                          >
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={item.severity === 'red' ? 'red' : 'amber'}>
                             {item.severity === 'red' ? 'Rojo' : 'Ámbar'}
-                          </span>
-                        </td>
-                      </tr>
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
-                </div>
+                  </TableBody>
+                </Table>
               )
             )}
           </div>

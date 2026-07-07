@@ -22,6 +22,18 @@ import {
   fieldErrorProps,
 } from "@/shared/components/forms/FieldError"
 import { ClientCombobox } from "@/shared/components/forms/ClientCombobox"
+import { DatePickerField } from "@/shared/components/forms/DatePickerField"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useTodayTasks } from "@/modules/tasks/application/hooks/useTodayTasks"
 import { useClientDeals } from "@/modules/pipeline/application/hooks/useClientDeals"
 import { usePipeline } from "@/modules/pipeline/application/hooks/usePipeline"
@@ -241,9 +253,9 @@ export function ActivityForm({
   const execDate = executedAt.split("T")[0]
   const execTime = executedAt.includes("T") ? executedAt.split("T")[1] : ""
 
-  function handleExecDateChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleExecDateChange(value: string) {
     clearField("executedAt")
-    setExecutedAt(`${e.target.value}T${execTime || "00:00"}`)
+    setExecutedAt(`${value}T${execTime || "00:00"}`)
   }
 
   function handleExecTimeChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -303,30 +315,37 @@ export function ActivityForm({
         {/* Contacto */}
         <div>
           <label className="slabel">Contacto</label>
-          <select
-            className={fieldErrors.contactId ? "input input-error" : "input"}
+          <Select
             value={contactId}
-            onChange={(e) => {
-              setContactId(e.target.value)
+            onValueChange={(v) => {
+              setContactId(v === "__none__" ? "" : v)
               clearField("contactId")
             }}
             disabled={!clientId || contacts.length === 0}
-            {...fieldErrorProps("contactId", fieldErrors.contactId)}
           >
-            <option value="">
-              {!clientId
-                ? "Selecciona un cliente primero"
-                : contacts.length === 0
-                  ? "Sin contactos"
-                  : "Seleccionar contacto..."}
-            </option>
-            {contacts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} — {c.role}
-                {c.isDecisionMaker ? " (Decisor)" : ""}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              {...fieldErrorProps("contactId", fieldErrors.contactId)}
+            >
+              <SelectValue
+                placeholder={
+                  !clientId
+                    ? "Selecciona un cliente primero"
+                    : contacts.length === 0
+                      ? "Sin contactos"
+                      : "Seleccionar contacto..."
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">Sin contacto</SelectItem>
+              {contacts.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name} — {c.role}
+                  {c.isDecisionMaker ? " (Decisor)" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <FieldError name="contactId" message={fieldErrors.contactId} />
         </div>
 
@@ -334,29 +353,34 @@ export function ActivityForm({
         {clientId && !isNonCommercial && (
           <div style={{ gridColumn: "1 / -1" }}>
             <label className="slabel">Oportunidad / Proyecto</label>
-            <select
-              className="input"
+            <Select
               value={selectedOpportunityId}
-              onChange={(e) => {
-                setSelectedOpportunityId(e.target.value)
-                const deal = clientDeals?.find((d) => d.id === e.target.value)
+              onValueChange={(v) => {
+                const next = v === "__none__" ? "" : v
+                setSelectedOpportunityId(next)
+                const deal = clientDeals?.find((d) => d.id === next)
                 if (deal && !stage) setStage(deal.stage)
               }}
             >
-              <option value="">
-                Sin oportunidad vinculada (deal principal)
-              </option>
-              {(clientDeals ?? []).map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.opportunityName ?? "Oportunidad principal"} — {d.stage}
-                </option>
-              ))}
-              <option value="__new__">+ Nueva oportunidad...</option>
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Sin oportunidad vinculada (deal principal)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">
+                  Sin oportunidad vinculada (deal principal)
+                </SelectItem>
+                {(clientDeals ?? []).map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.opportunityName ?? "Oportunidad principal"} — {d.stage}
+                  </SelectItem>
+                ))}
+                <SelectItem value="__new__">+ Nueva oportunidad...</SelectItem>
+              </SelectContent>
+            </Select>
             {isNewOpportunity && (
-              <input
+              <Input
                 type="text"
-                className="input mt-2"
+                className="mt-2"
                 placeholder="Nombre de la nueva oportunidad (ej. Flotilla GPS, Proyecto Cámaras)"
                 value={newOpportunityName}
                 onChange={(e) => setNewOpportunityName(e.target.value)}
@@ -369,44 +393,50 @@ export function ActivityForm({
         {/* Tipo de actividad */}
         <div>
           <label className="slabel">Tipo de actividad</label>
-          <select
-            className={fieldErrors.type ? "input input-error" : "input"}
+          <Select
             value={type}
-            onChange={(e) => {
-              const t = e.target.value as ActivityType
+            onValueChange={(v) => {
+              const t = v as ActivityType
               setType(t)
               if (NON_COMMERCIAL_TYPES.includes(t)) setClientError("")
               clearField("type")
             }}
-            {...fieldErrorProps("type", fieldErrors.type)}
           >
-            {ACTIVITY_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t} · {TASK_POINTS[t]}pts
-              </option>
-            ))}
-          </select>
+            <SelectTrigger {...fieldErrorProps("type", fieldErrors.type)}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ACTIVITY_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t} · {TASK_POINTS[t]}pts
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <FieldError name="type" message={fieldErrors.type} />
         </div>
 
         {/* Resultado */}
         <div>
           <label className="slabel">Resultado</label>
-          <select
-            className={fieldErrors.result ? "input input-error" : "input"}
+          <Select
             value={result}
-            onChange={(e) => {
-              setResult(e.target.value as ActivityResult)
+            onValueChange={(v) => {
+              setResult(v as ActivityResult)
               clearField("result")
             }}
-            {...fieldErrorProps("result", fieldErrors.result)}
           >
-            {ACTIVITY_RESULTS.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger {...fieldErrorProps("result", fieldErrors.result)}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ACTIVITY_RESULTS.map((r) => (
+                <SelectItem key={r} value={r}>
+                  {r}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <FieldError name="result" message={fieldErrors.result} />
         </div>
 
@@ -417,24 +447,17 @@ export function ActivityForm({
           >
             <div>
               <label className="slabel">Fecha de ejecución</label>
-              <input
-                type="date"
-                className={
-                  fieldErrors.executedAt ? "input input-error" : "input"
-                }
+              <DatePickerField
                 value={execDate}
                 onChange={handleExecDateChange}
-                required
                 {...fieldErrorProps("executedAt", fieldErrors.executedAt)}
               />
             </div>
             <div>
               <label className="slabel">Hora</label>
-              <input
+              <Input
                 type="time"
-                className={
-                  fieldErrors.executedAt ? "input input-error" : "input"
-                }
+                aria-invalid={!!fieldErrors.executedAt}
                 value={execTime}
                 onChange={handleExecTimeChange}
                 required
@@ -453,59 +476,66 @@ export function ActivityForm({
               <strong style={{ color: "#002B49" }}>{currentDeal.stage}</strong>
             </p>
           )}
-          <select
-            className="input"
+          <Select
             value={stage}
-            onChange={(e) => setStage(e.target.value)}
+            onValueChange={(v) => setStage(v === "__none__" ? "" : v)}
           >
-            <option value="">Sin cambio</option>
-            {PIPELINE_STAGES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger>
+              <SelectValue placeholder="Sin cambio" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">Sin cambio</SelectItem>
+              {PIPELINE_STAGES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Tarea vinculada */}
         <div>
           <label className="slabel">Tarea vinculada</label>
           {programmedTask ? (
-            <input
+            <Input
               type="text"
-              className="input"
               value={programmedTask}
               readOnly
               style={{ background: "#F8FAFC", color: "#94A3B8" }}
             />
           ) : (
-            <select
-              className="input"
+            <Select
               value={internalTaskId}
-              onChange={(e) => {
-                const task = pendingTasks.find((t) => t.id === e.target.value)
-                setInternalTaskId(e.target.value)
+              onValueChange={(v) => {
+                const next = v === "__none__" ? "" : v
+                const task = pendingTasks.find((t) => t.id === next)
+                setInternalTaskId(next)
                 if (task?.scheduledAt) {
                   setProgrammedAt(task.scheduledAt.slice(0, 16))
                 }
               }}
             >
-              <option value="">Sin tarea vinculada</option>
-              {pendingTasks.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.title}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Sin tarea vinculada" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Sin tarea vinculada</SelectItem>
+                {pendingTasks.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </div>
 
         {/* Hora de captura */}
         <div>
           <label className="slabel">Hora de captura</label>
-          <input
+          <Input
             type="datetime-local"
-            className="input"
             value={programmedAt}
             onChange={(e) => setProgrammedAt(e.target.value)}
           />
@@ -515,8 +545,7 @@ export function ActivityForm({
       {/* Sección 2 — ¿Qué pasó? (siempre visible) */}
       <div>
         <label className="slabel">¿Qué pasó? *</label>
-        <textarea
-          className={fieldErrors.summary ? "input input-error" : "input"}
+        <Textarea
           style={{ height: 100 }}
           value={summary}
           onChange={(e) => {
@@ -554,8 +583,7 @@ export function ActivityForm({
         ) : (
           <div>
             <label className="slabel">¿Qué descubrí?</label>
-            <textarea
-              className={fieldErrors.discovery ? "input input-error" : "input"}
+            <Textarea
               style={{ height: 80 }}
               value={discovery}
               onChange={(e) => {
@@ -586,8 +614,7 @@ export function ActivityForm({
         ) : (
           <div>
             <label className="slabel">¿Qué acordamos?</label>
-            <textarea
-              className={fieldErrors.agreement ? "input input-error" : "input"}
+            <Textarea
               style={{ height: 80 }}
               value={agreement}
               onChange={(e) => {
@@ -633,9 +660,8 @@ export function ActivityForm({
           >
             <div>
               <label className="slabel">Siguiente paso concreto *</label>
-              <input
+              <Input
                 type="text"
-                className={fieldErrors.nextStep ? "input input-error" : "input"}
                 value={nextStep}
                 onChange={(e) => {
                   setNextStep(e.target.value)
@@ -649,11 +675,8 @@ export function ActivityForm({
             </div>
             <div>
               <label className="slabel">Objetivo del siguiente paso</label>
-              <input
+              <Input
                 type="text"
-                className={
-                  fieldErrors.nextObjective ? "input input-error" : "input"
-                }
                 value={nextObjective}
                 onChange={(e) => {
                   setNextObjective(e.target.value)
@@ -669,24 +692,20 @@ export function ActivityForm({
             </div>
             <div>
               <label className="slabel">Fecha próxima *</label>
-              <input
-                type="date"
-                className={fieldErrors.nextDate ? "input input-error" : "input"}
+              <DatePickerField
                 value={nextDate}
-                onChange={(e) => {
-                  setNextDate(e.target.value)
+                onChange={(v) => {
+                  setNextDate(v)
                   clearField("nextDate")
                 }}
-                required
                 {...fieldErrorProps("nextDate", fieldErrors.nextDate)}
               />
               <FieldError name="nextDate" message={fieldErrors.nextDate} />
             </div>
             <div>
               <label className="slabel">Hora próxima *</label>
-              <input
+              <Input
                 type="time"
-                className={fieldErrors.nextTime ? "input input-error" : "input"}
                 value={nextTime}
                 onChange={(e) => {
                   setNextTime(e.target.value)
@@ -702,73 +721,74 @@ export function ActivityForm({
       )}
 
       {/* Sección 5 — AI Coach (colapsado por defecto) */}
-      <div>
-        <button
-          type="button"
-          onClick={() => setShowAiCoach((v) => !v)}
-          style={TOGGLE_STYLE}
-        >
-          Coach IA {showAiCoach ? "▲" : "▼"}
-        </button>
-        {showAiCoach && (
-          <div className="ai-box" style={{ marginTop: 8 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <p className="text-sm font-medium text-purple-900">
-                Sugerencias IA
-              </p>
-              <button
-                type="button"
-                onClick={fetchAiSuggestions}
-                disabled={aiLoading}
+      <Accordion
+        type="single"
+        collapsible
+        value={showAiCoach ? "coach" : ""}
+        onValueChange={(value) => setShowAiCoach(value === "coach")}
+      >
+        <AccordionItem value="coach">
+          <AccordionTrigger>Coach IA</AccordionTrigger>
+          <AccordionContent>
+            <div className="ai-box">
+              <div
                 style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "#7c3aed",
-                  background: "none",
-                  border: "1px solid #c4b5fd",
-                  borderRadius: 6,
-                  padding: "2px 10px",
-                  cursor: "pointer",
-                }}
-              >
-                {aiLoading ? "Cargando..." : "Obtener sugerencias"}
-              </button>
-            </div>
-            {aiTips.length > 0 ? (
-              <ul
-                style={{
-                  marginTop: 8,
-                  paddingLeft: 16,
                   display: "flex",
-                  flexDirection: "column",
-                  gap: 4,
+                  justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
-                {aiTips.map((tip, i) => (
-                  <li key={i} style={{ fontSize: 12, color: "#6d28d9" }}>
-                    {tip}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-1 text-sm text-purple-700">
-                {getCoachMessage()}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
+                <p className="text-sm font-medium text-purple-900">
+                  Sugerencias IA
+                </p>
+                <button
+                  type="button"
+                  onClick={fetchAiSuggestions}
+                  disabled={aiLoading}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "#7c3aed",
+                    background: "none",
+                    border: "1px solid #c4b5fd",
+                    borderRadius: 6,
+                    padding: "2px 10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {aiLoading ? "Cargando..." : "Obtener sugerencias"}
+                </button>
+              </div>
+              {aiTips.length > 0 ? (
+                <ul
+                  style={{
+                    marginTop: 8,
+                    paddingLeft: 16,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                  }}
+                >
+                  {aiTips.map((tip, i) => (
+                    <li key={i} style={{ fontSize: 12, color: "#6d28d9" }}>
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1 text-sm text-purple-700">
+                  {getCoachMessage()}
+                </p>
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {/* Sección 6 — Submit */}
-      <button type="submit" disabled={isLoading} className="btn-green w-full">
+      <Button type="submit" disabled={isLoading} variant="success" className="w-full">
         {isLoading ? "Guardando..." : `Registrar · +${TASK_POINTS[type]}pts`}
-      </button>
+      </Button>
     </form>
   )
 }

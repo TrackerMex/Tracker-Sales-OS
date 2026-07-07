@@ -4,6 +4,14 @@ import { UserRole } from "@/core/domain/types/common.types"
 import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
 import { useCoachingDaily } from "../../application/hooks/useCoachingDaily"
 import { useSettings } from "@/modules/settings/application/hooks/useSettings"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import type { EquipoSeller } from "@/modules/equipo/domain/equipo.types"
 import type { ActivityMixItem } from "../../domain/coaching.types"
 
@@ -28,12 +36,16 @@ interface StatCellProps {
   label: string
   valueClassName?: string
   valueColor?: string
+  background?: string
   children?: React.ReactNode
 }
 
-function StatCell({ value, label, valueClassName, valueColor, children }: StatCellProps) {
+function StatCell({ value, label, valueClassName, valueColor, background, children }: StatCellProps) {
   return (
-    <div className="bg-[#F8FAFC] rounded-[7px] px-2 py-[6px] text-center">
+    <div
+      className="rounded-[7px] px-2 py-[6px] text-center"
+      style={{ background: background ?? "#F8FAFC" }}
+    >
       <p
         className={valueClassName ?? "text-[22px] font-bold text-[#0F172A]"}
         style={valueColor ? { color: valueColor } : undefined}
@@ -97,6 +109,8 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
   const quality = data?.avgQuality ?? 0
   const overdue = data?.overdueCount ?? 0
   const tomorrow = data?.tomorrowTasksCount ?? 0
+  const totalActivities = data?.totalActivitiesToday ?? 0
+  const mixInsights = data?.mixInsights ?? []
 
   const qualityColor =
     quality >= 80 ? "#16a34a" : quality >= 50 ? "#d97706" : "#dc2626"
@@ -104,19 +118,40 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
     quality >= 75 ? "#82bc00" : quality >= 45 ? "#F59E0B" : "#EF4444"
   const recommendedAction = getRecommendedAction(points, minDaily, overdue)
   const meetsMinimum = points >= minDaily
+  const progressPct =
+    data?.progressPct ??
+    (minDaily > 0 ? Math.min(100, Math.round((points / minDaily) * 100)) : 100)
+  const progressBarColor = meetsMinimum
+    ? "var(--tracker-green)"
+    : progressPct >= 50
+      ? "#F59E0B"
+      : "#EF4444"
 
   return (
     <div className="card p-5">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <p className="font-bold text-[#0F172A] text-[15px]">{seller.name}</p>
-          <p className="text-[12px] text-[#94A3B8]">
-            {seller.profile ?? "Ejecutivo comercial"}
-          </p>
+      <div className="mb-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="font-bold text-[#0F172A] text-[15px]">{seller.name}</p>
+            <p className="text-[12px] text-[#94A3B8]">
+              {seller.profile ?? "Ejecutivo comercial"}
+            </p>
+          </div>
+          <div className="text-right">
+            <Badge variant={meetsMinimum ? "green" : "red"}>
+              {points}/{minDaily} pts
+            </Badge>
+            <p className="text-[10px] text-[#94A3B8] mt-1">
+              {totalActivities} actividades hoy
+            </p>
+          </div>
         </div>
-        <span className={`tag ${meetsMinimum ? "tag-green" : "tag-red"}`}>
-          {points}/{minDaily} pts
-        </span>
+        <div className="prog mt-2">
+          <div
+            className="prog-fill"
+            style={{ width: `${progressPct}%`, background: progressBarColor }}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-2 mb-3">
@@ -144,6 +179,7 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
           value={overdue}
           label="Vencidos"
           valueClassName={`text-[18px] font-bold ${overdue > 0 ? "text-red-600" : "text-[#0F172A]"}`}
+          background={overdue > 0 ? "#FEF2F2" : undefined}
         />
         <StatCell
           value={tomorrow}
@@ -153,8 +189,29 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
       </div>
 
       <div className="border-t border-slate-100 pt-2.5">
-        <p className="slabel mb-1">Acción recomendada</p>
-        <div className="ai-box">{recommendedAction}</div>
+        {mixInsights.length > 0 ? (
+          <div className="ai-box">
+            <p className="slabel mb-2" style={{ color: "var(--tracker-purple)" }}>
+              Coach IA
+            </p>
+            <ul className="m-0 pl-4">
+              {mixInsights.map((tip, i) => (
+                <li
+                  key={i}
+                  className="text-[12.5px]"
+                  style={{ marginBottom: i < mixInsights.length - 1 ? 5 : 0 }}
+                >
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <>
+            <p className="slabel mb-1">Acción recomendada</p>
+            <div className="ai-box">{recommendedAction}</div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -192,22 +249,18 @@ export function CoachingPage() {
 
   return (
     <div className="p-6 max-w-[1200px] mx-auto">
-      <div className="card p-6 mb-6">
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <div>
-            <h2 className="font-black text-[20px] text-[#0F172A] mb-1">
-              Reporte diario de coaching
-            </h2>
-            <p className="text-[13px] text-[#64748B]">
-              Termómetro exacto de actividad comercial por vendedor
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="slabel">Mínimo diario</span>
-            <span className="text-[18px] font-black text-[#002B49]">
-              {minDaily} pts
-            </span>
-          </div>
+      <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+        <div>
+          <h1 className="page-title">Reporte diario de coaching</h1>
+          <p className="page-subtitle">
+            Termómetro exacto de actividad comercial por vendedor
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="slabel">Mínimo diario</span>
+          <span className="text-[18px] font-black text-[#002B49]">
+            {minDaily} pts
+          </span>
         </div>
       </div>
 
@@ -218,19 +271,24 @@ export function CoachingPage() {
               <span className="text-[12px] font-semibold text-[#64748B]">
                 Vendedor:
               </span>
-              <select
-                className="input"
-                style={{ width: 220 }}
-                value={selectedSellerId ?? ""}
-                onChange={(e) => setSelectedSellerId(e.target.value || null)}
+              <Select
+                value={selectedSellerId ?? "all"}
+                onValueChange={(value) =>
+                  setSelectedSellerId(value === "all" ? null : value)
+                }
               >
-                <option value="">Todos los vendedores</option>
-                {activeSellers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue placeholder="Todos los vendedores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los vendedores</SelectItem>
+                  {activeSellers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div

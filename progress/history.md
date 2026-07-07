@@ -749,3 +749,37 @@ Batch 2:
 - Tabla migrations de prod: 5 registros; incluye AlterActivitiesClientIdNullable1782345600000 cuyo archivo no existe en ningun branch (corrida manual, inofensiva — TypeORM la ignora). Tras merge solo queda pendiente la baseline.
 - Feature 49 (fix codigo): dropdown Vendedor en forms Direccion/ATC de SalesPage.tsx, default 'Direccion Comercial', fallback a user.id eliminado. Implementer + Reviewer independiente: 10/10 PASS. tsc frontend exit 0.
 - Pendiente no bloqueante: rotar JWT_SECRET de prod (usa el secret de dev, publico en el repo) y considerar rotar ANTHROPIC_API_KEY.
+
+## 2026-07-06 — Deploy a prod: baseline ejecutada + hotfix de tipos
+
+- Merge PR #10 (fix/auth-tasks-activities, features 45-49) disparo deploy Dokploy con TYPEORM_MIGRATIONS_RUN=true (panel).
+- Baseline FALLO en prod: FK tasks.seller_id -> sellers "cannot be implemented" — en prod tasks.seller_id/client_id/contact_id eran varchar (synchronize viejo); la baseline los asume uuid porque se genero contra DB vacia. API en crash-loop ~1 min.
+- Mitigacion inmediata: TYPEORM_MIGRATIONS_RUN=false en .env del code dir + force-recreate backend. Servicio restaurado (rollback de flag, DB intacta — la migracion es transaccional).
+- Hotfix: migracion 1748999999998-NormalizeTasksFkColumnTypes (timestamp menor que la baseline, corre antes). Convierte tasks.seller_id y tasks.client_id a uuid, guardada por information_schema (no-op donde ya son uuid, ej. dev). Verificada contra copia restaurada del dump de prod (salesos_migtest): conversion + idempotencia + FKs de tasks OK. Datos verificados casteables (208 tasks, 0 valores invalidos).
+- Hallazgo colateral del test: prod ya tenia la FK de contacts (los guards duplicate_object de la baseline la saltan, como se esperaba).
+- Merge PR #11 → redeploy → EXITO: NormalizeTasksFkColumnTypes + BaselineSchemaReconcile registradas en migrations (7 total), 10 FKs creadas, tasks.seller_id/client_id uuid, app arriba, login E2E via HTTPS responde.
+- Backups en VPS /root/backups/: salesos_pre_merge_20260706.dump (pre-fix de ventas) y salesos_pre_baseline_20260706_1729.dump (pre-baseline).
+- Pendiente no bloqueante: rotar JWT_SECRET de prod (sigue el de dev) y valorar rotar ANTHROPIC_API_KEY.
+
+## 2026-07-06 — Feature 50: fix filtro de vendedor en calendario de Agenda
+
+- Reporte usuario: en Agendas y tareas (vista Calendario), el dropdown de vendedor solo funcionaba con "Todos los vendedores"; elegir un seller especifico no filtraba.
+- Causa raiz (AgendaPage.tsx:87-103): `monthTasks = isTeamMode ? enrichedTeamTasks : monthTasksRaw` — con seller especifico isTeamMode=false y el calendario caia a useMonthTasks (tareas propias del usuario logueado), nunca filtraba las del seller elegido.
+- Fix (Implementer, solo AgendaPage.tsx, -2/+6): Admin/Director siempre parte de enrichedTeamTasks y filtra por `t.sellerId === selectedSeller` cuando no es 'all'; variable isTeamMode eliminada (sin usos); rol Seller sigue con monthTasksRaw. Sin backend — GET /api/tasks/team ya trae todos los sellers.
+- Review Lider: diff verificado linea a linea, tsc frontend exit 0. Detalle: progress/impl_50-calendar-seller-filter.md.
+
+## 2026-07-06 — Feature 51: migracion de inputs nativos a shadcn Input
+
+- Pedido usuario: reemplazar inputs nativos por el componente Input de shadcn. Decision via AskUserQuestion: mantener look tracker (re-estilizar input.tsx), no adoptar look shadcn default.
+- input.tsx re-estilizado con tokens tracker: rounded-lg, borde 1.5px var(--tracker-border), bg var(--tracker-surface-alt), 13px, focus verde, aria-invalid:border var(--tracker-danger). Cero cambio visual perceptible.
+- 58 inputs migrados en 12 archivos: LoginPage 2, ActivityForm 9, CreateTaskForm 2, EditTaskForm 2, ClientesPage 10, SettingsPage 1, SaleFormBase 6, SalesPage 11, EditSaleModal 5, EquipoPage 5, ReportsPage 4, ImportExportPage 1 (file input visible, migrado).
+- Error state: clase condicional 'input input-error' eliminada donde fieldErrorProps ya pone aria-invalid; aria-invalid={!!err} manual en los 3 inputs time sin helper.
+- Fuera de alcance (intacto): selects, textareas, checkbox Decisor de ClientesPage, ClientCombobox; .input/.input-error CSS conservadas para ellos.
+- Review Lider: tsc frontend exit 0, grep '<input' en modules solo deja el checkbox, spot-check de diffs PASS. Detalle: progress/impl_51-shadcn-input-migration.md.
+
+## 2026-07-07 — Feature 60: Card y Accordion shadcn en secciones densas
+
+- Al iniciar, exploracion encontro trabajo sin commitear de una sesion previa no cerrada formalmente: ClientDetailPage.tsx (Card+Accordion en info cliente + Card en timeline), ActivityHistoryModal.tsx (Card en estado actual + Accordion en historial), ReportsPage.tsx (Card+Accordion en filtros/sellers/summary) y SettingsPage.tsx (Card+Accordion en grupos de metas) ya cumplian el checkpoint.
+- Bug bloqueante encontrado en ClientesPage.tsx:359 — bloque "Contactos" del sidebar oscuro abria `<div>` (linea 345) y cerraba `</Card>` huerfano (JSX desbalanceado, rompia build). Fix Implementer: cerro con `</div>`, sidebar se mantiene custom oscuro (no Card).
+- Decision de criterio: bloque de contactos editables del formulario create/edit (ClientesPage.tsx ~768-853) se deja SIN Accordion — es edicion activa de datos, colapsar añadiria friccion al capturar 2+ contactos. ExecutiveSlide.tsx fuera de alcance (100% inline-style, requerido para export via window.open+outerHTML).
+- Review Lider: PASSED 10/10, tsc frontend exit 0, sin Cards anidadas en ningun modulo. Detalle: progress/impl_60-shadcn-card-accordion.md.
