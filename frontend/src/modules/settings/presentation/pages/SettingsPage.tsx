@@ -6,6 +6,7 @@ import { useUpdateSettings } from '../../application/hooks/useUpdateSettings'
 import { useApiFormErrors } from '@/shared/lib/api-errors'
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
+import { Input } from '@/components/ui/input'
 
 const FIELD_LABELS: Record<string, string> = {
   dailyMinPoints: 'Puntos mínimos diarios',
@@ -71,13 +72,12 @@ export function SettingsPage() {
           {(Object.keys(form) as Array<keyof typeof form>).map((field) => (
             <div key={field}>
               <label className="slabel mb-1 block">{FIELD_LABELS[field]}</label>
-              <input
+              <Input
                 type="number"
                 value={form[field] || ''}
                 onChange={(e) => handleChange(field, e.target.value)}
                 disabled={!isAdmin}
                 min={['dailyMinPoints', 'dailyCallsGoal', 'stalledAmberDays', 'stalledRedDays', 'coldAccountDays'].includes(field) ? 1 : 0}
-                className={fieldErrors[field] ? 'input input-error' : 'input'}
                 style={!isAdmin ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 {...fieldErrorProps(field, fieldErrors[field])}
               />

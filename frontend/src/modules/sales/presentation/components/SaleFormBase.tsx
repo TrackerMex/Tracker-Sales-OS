@@ -3,6 +3,16 @@ import type { PaymentMethod, SaleSource, SaleType, CreateSaleInput } from '../..
 import { useApiFormErrors } from '@/shared/lib/api-errors';
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary';
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError';
+import { DatePickerField } from '@/shared/components/forms/DatePickerField';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const PAYMENT_METHODS: PaymentMethod[] = ['Pagado', 'Crédito', '50% anticipo', 'Pendiente'];
 const SALE_SOURCES: SaleSource[] = [
@@ -53,10 +63,6 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading, submitError 
 
   const { summary, fieldErrors, clearField, formRef } = useApiFormErrors(submitError);
 
-  function inputClass(field: string) {
-    return fieldErrors[field] ? 'input input-error' : 'input';
-  }
-
   function reset() {
     setClientId(defaultValues.clientId);
     setClientName(defaultValues.clientName);
@@ -96,9 +102,8 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading, submitError 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={labelClass}>ID del cliente</label>
-          <input
+          <Input
             type="text"
-            className={inputClass('clientId')}
             value={clientId}
             onChange={(e) => { setClientId(e.target.value); clearField('clientId'); }}
             placeholder="UUID del cliente"
@@ -109,9 +114,8 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading, submitError 
         </div>
         <div>
           <label className={labelClass}>Nombre del cliente</label>
-          <input
+          <Input
             type="text"
-            className={inputClass('clientName')}
             value={clientName}
             onChange={(e) => { setClientName(e.target.value); clearField('clientName'); }}
             placeholder="Nombre completo"
@@ -125,22 +129,24 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading, submitError 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={labelClass}>Tipo de cliente</label>
-          <select
-            className={inputClass('clientType')}
+          <Select
             value={clientType}
-            onChange={(e) => { setClientType(e.target.value as 'Nuevo' | 'Existente'); clearField('clientType'); }}
-            {...fieldErrorProps('clientType', fieldErrors.clientType)}
+            onValueChange={(v) => { setClientType(v as 'Nuevo' | 'Existente'); clearField('clientType'); }}
           >
-            <option value="Nuevo">Nuevo</option>
-            <option value="Existente">Existente</option>
-          </select>
+            <SelectTrigger {...fieldErrorProps('clientType', fieldErrors.clientType)}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Nuevo">Nuevo</SelectItem>
+              <SelectItem value="Existente">Existente</SelectItem>
+            </SelectContent>
+          </Select>
           <FieldError name="clientType" message={fieldErrors.clientType} />
         </div>
         <div>
           <label className={labelClass}>Producto</label>
-          <input
+          <Input
             type="text"
-            className={inputClass('product')}
             value={product}
             onChange={(e) => { setProduct(e.target.value); clearField('product'); }}
             placeholder="Nombre del producto"
@@ -154,10 +160,9 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading, submitError 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
           <label className={labelClass}>Unidades</label>
-          <input
+          <Input
             type="number"
             min="1"
-            className={inputClass('units')}
             value={units}
             onChange={(e) => { setUnits(e.target.value === '' ? '' : Number(e.target.value)); clearField('units'); }}
             required
@@ -167,11 +172,10 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading, submitError 
         </div>
         <div>
           <label className={labelClass}>Monto</label>
-          <input
+          <Input
             type="number"
             min="0"
             step="0.01"
-            className={inputClass('amount')}
             value={amount}
             onChange={(e) => { setAmount(e.target.value === '' ? '' : Number(e.target.value)); clearField('amount'); }}
             required
@@ -181,12 +185,9 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading, submitError 
         </div>
         <div>
           <label className={labelClass}>Fecha</label>
-          <input
-            type="date"
-            className={inputClass('date')}
+          <DatePickerField
             value={date}
-            onChange={(e) => { setDate(e.target.value); clearField('date'); }}
-            required
+            onChange={(v) => { setDate(v); clearField('date'); }}
             {...fieldErrorProps('date', fieldErrors.date)}
           />
           <FieldError name="date" message={fieldErrors.date} />
@@ -196,38 +197,43 @@ export function SaleFormBase({ type, sellerId, onSubmit, isLoading, submitError 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={labelClass}>Forma de pago</label>
-          <select
-            className={inputClass('pay')}
+          <Select
             value={pay}
-            onChange={(e) => { setPay(e.target.value as PaymentMethod); clearField('pay'); }}
-            {...fieldErrorProps('pay', fieldErrors.pay)}
+            onValueChange={(v) => { setPay(v as PaymentMethod); clearField('pay'); }}
           >
-            {PAYMENT_METHODS.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
+            <SelectTrigger {...fieldErrorProps('pay', fieldErrors.pay)}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAYMENT_METHODS.map((m) => (
+                <SelectItem key={m} value={m}>{m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <FieldError name="pay" message={fieldErrors.pay} />
         </div>
         <div>
           <label className={labelClass}>Fuente</label>
-          <select
-            className={inputClass('source')}
+          <Select
             value={source}
-            onChange={(e) => { setSource(e.target.value as SaleSource); clearField('source'); }}
-            {...fieldErrorProps('source', fieldErrors.source)}
+            onValueChange={(v) => { setSource(v as SaleSource); clearField('source'); }}
           >
-            {SALE_SOURCES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+            <SelectTrigger {...fieldErrorProps('source', fieldErrors.source)}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SALE_SOURCES.map((s) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <FieldError name="source" message={fieldErrors.source} />
         </div>
       </div>
 
       <div>
         <label className={labelClass}>Notas (opcional)</label>
-        <textarea
-          className={inputClass('notes')}
+        <Textarea
           rows={2}
           value={notes}
           onChange={(e) => { setNotes(e.target.value); clearField('notes'); }}

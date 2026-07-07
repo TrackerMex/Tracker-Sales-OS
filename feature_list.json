@@ -511,5 +511,35 @@
     "backend_modules": [],
     "frontend_modules": ["sales"],
     "notes": "Origen: pre-merge check contra prod 2026-07-06. Decisión usuario vía AskUserQuestion: dropdown (no seller fijo). Solo frontend — backend ya respeta body.sellerId para Admin/Director (feature 45) y la FK de DB validará post-merge. Completada 2026-07-06. Review 10/10 PASS (progress/review_49-sales-seller-dropdown.md). SalesPage.tsx único archivo tocado: sellerId = currentUser?.sellerId ?? '' (sin fallback a user.id), selects Vendedor en forms Dirección (dirSellerId) y ATC (atcSellerId) con useSellers() filtrado a activos, default por nombre 'Dirección Comercial' vía useEffect con updater prev||id (no pisa selección manual), required si no hay default, integrados a dirErrors/atcErrors campo sellerId, sin reset en onSuccess. tsc frontend exit 0. Caveat: default depende del nombre literal del seller; si se renombra, required cubre. En prod: seller 'Dirección Comercial' bd4b30ca-7d63-4bf7-9f56-0b4c6dcd4a3c creado 2026-07-06 y 7 ventas huérfanas (user id del admin en seller_id) reasignadas a él."
+  },
+  {
+    "id": "50-calendar-seller-filter",
+    "name": "BUG: filtro de vendedor no aplica en calendario de Agenda",
+    "description": "En Agenda y tareas (vista Calendario), el dropdown de vendedor solo funciona con 'Todos los vendedores'. Al elegir un seller específico, isTeamMode se vuelve false y el calendario cae a useMonthTasks (tareas propias del usuario logueado) en vez de filtrar las tareas del seller elegido.",
+    "status": "done",
+    "priority": 50,
+    "backend_modules": [],
+    "frontend_modules": ["tasks"],
+    "notes": "Origen: reporte usuario 2026-07-06. Causa raíz: AgendaPage.tsx:87-103 — monthTasks = isTeamMode ? enrichedTeamTasks : monthTasksRaw; seller específico → monthTasksRaw (tareas propias del usuario logueado), filtro nunca aplicaba. Completada 2026-07-06. Fix (solo AgendaPage.tsx, -2/+6): Admin/Director siempre parte de enrichedTeamTasks, filtra por t.sellerId === selectedSeller cuando no es 'all'; isTeamMode eliminada (sin usos); Seller sigue con monthTasksRaw. Sin backend — GET /api/tasks/team ya trae todos los sellers. Review Líder: diff verificado línea a línea + tsc frontend exit 0. progress/impl_50-calendar-seller-filter.md."
+  },
+  {
+    "id": "51-shadcn-input-migration",
+    "name": "UI: migrar inputs nativos al componente shadcn Input",
+    "description": "Reemplazar los ~57 <input> nativos (12 archivos de módulos) por el componente Input de shadcn (components/ui/input.tsx), re-estilizado con los tokens tracker (.input: rounded-lg, 13px, borde tracker, focus verde) para cero cambio visual. Estado de error migra de clase condicional 'input-error' a aria-invalid. Selects, textareas, checkbox y file input quedan fuera del alcance.",
+    "status": "done",
+    "priority": 51,
+    "backend_modules": [],
+    "frontend_modules": ["auth", "activities", "tasks", "clients", "sales", "settings", "equipo", "reports"],
+    "notes": "Origen: pedido usuario 2026-07-06. Decisión vía AskUserQuestion: mantener look tracker (re-estilizar input.tsx), no adoptar look shadcn default (rounded-4xl/h-9). Completada 2026-07-06. 58 inputs migrados en 12 archivos de módulos + input.tsx re-estilizado (tokens --tracker-*, focus verde, aria-invalid:border danger). Error state: clase condicional input-error eliminada donde fieldErrorProps ya pone aria-invalid; aria-invalid={!!err} manual en los 3 inputs time sin helper. File input de ImportExportPage migrado (visible, ref solo resetea value); checkbox Decisor de ClientesPage queda nativo. .input/.input-error CSS conservadas (selects/textareas/ClientCombobox/inputClass de SaleFormBase). Review Líder: tsc exit 0, grep residual limpio, spot-check de diffs PASS. progress/impl_51-shadcn-input-migration.md."
+  },
+  {
+    "id": "52-shadcn-form-controls",
+    "name": "UI: migrar selects, textareas, checkbox y date pickers a shadcn",
+    "description": "Extensión de la feature 51 a todos los controles de formulario restantes: 30 <select> nativos → shadcn Select (Radix), 12 <textarea> → shadcn Textarea, checkbox Decisor → shadcn Checkbox, y campos type='date' → DatePicker (Popover + Calendar/react-day-picker) con locale es. Componentes ui re-estilizados con tokens tracker para mantener el look actual. time/datetime-local/month quedan como Input (sin equivalente shadcn).",
+    "status": "in_progress",
+    "priority": 52,
+    "backend_modules": [],
+    "frontend_modules": ["auth", "activities", "tasks", "clients", "sales", "settings", "equipo", "reports", "pipeline", "coaching"],
+    "notes": "Origen: pedido usuario 2026-07-06 ('tambien aplica en los select, calendar, todo los inputs posibles'). Dep nueva: react-day-picker (base del Calendar shadcn); radix-ui unificado ya incluye Checkbox, date-fns ya presente. Mismo criterio visual que feature 51: tokens tracker, aria-invalid para error."
   }
 ]

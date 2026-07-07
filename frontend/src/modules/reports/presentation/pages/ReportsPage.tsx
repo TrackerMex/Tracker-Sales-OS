@@ -3,6 +3,7 @@ import { useSearch } from '@tanstack/react-router';
 import { useMonthlyReport } from '../../application/hooks/useMonthlyReport';
 import { useWinLoss } from '../../application/hooks/useWinLoss';
 import { ExecutiveSlide, buildAnalysis, money, LABEL_STYLE } from '../components/ExecutiveSlide';
+import { Input } from '@/components/ui/input';
 
 const STORAGE_KEY = 'tracker-report-goals';
 
@@ -124,20 +125,20 @@ export function ReportsPage() {
             ].map((f) => (
               <div key={f.label}>
                 <label style={{ ...LABEL_STYLE, color: '#94A3B8', display: 'block', marginBottom: 4 }}>{f.label}</label>
-                <input type={f.type} value={f.value} onChange={(e) => f.onChange(e.target.value)} className="input" style={{ width: f.width }} />
+                <Input type={f.type} value={f.value} onChange={(e) => f.onChange(e.target.value)} style={{ width: f.width }} />
               </div>
             ))}
             <div>
               <label style={{ ...LABEL_STYLE, color: '#94A3B8', display: 'block', marginBottom: 4 }}>Meta $ equipo</label>
-              <input type="number" className="input" style={{ width: 140 }} min={1} value={goalAmount || ''} onChange={(e) => setGoalAmount(Number(e.target.value))} />
+              <Input type="number" style={{ width: 140 }} min={1} value={goalAmount || ''} onChange={(e) => setGoalAmount(Number(e.target.value))} />
             </div>
             <div>
               <label style={{ ...LABEL_STYLE, color: '#94A3B8', display: 'block', marginBottom: 4 }}>Meta unidades</label>
-              <input type="number" className="input" style={{ width: 120 }} min={1} value={goalUnits || ''} onChange={(e) => setGoalUnits(Number(e.target.value))} />
+              <Input type="number" style={{ width: 120 }} min={1} value={goalUnits || ''} onChange={(e) => setGoalUnits(Number(e.target.value))} />
             </div>
             <div>
               <label style={{ ...LABEL_STYLE, color: '#94A3B8', display: 'block', marginBottom: 4 }}>Meta $ x vendedor</label>
-              <input type="number" className="input" style={{ width: 140 }} min={1} value={goalPerSeller || ''} onChange={(e) => setGoalPerSeller(Number(e.target.value))} />
+              <Input type="number" style={{ width: 140 }} min={1} value={goalPerSeller || ''} onChange={(e) => setGoalPerSeller(Number(e.target.value))} />
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7 }}>
               <button onClick={saveGoals} className="btn-green">{savedMsg ? 'Guardado' : 'Guardar metas'}</button>

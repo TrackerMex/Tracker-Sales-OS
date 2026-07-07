@@ -11,6 +11,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { DatePickerField } from '@/shared/components/forms/DatePickerField';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const PAYMENT_METHODS: PaymentMethod[] = ['Pagado', 'Crédito', '50% anticipo', 'Pendiente'];
 const SALE_SOURCES: SaleSource[] = [
@@ -81,12 +91,9 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
 
           <div>
             <label className="slabel mb-1">Fecha</label>
-            <input
-              type="date"
-              className="input"
+            <DatePickerField
               value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
+              onChange={setDate}
             />
           </div>
 
@@ -95,9 +102,8 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
               <label className="slabel mb-1">
                 {sale.type === 'direction' ? 'Proyecto / Cuenta' : 'Cliente'}
               </label>
-              <input
+              <Input
                 type="text"
-                className="input"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 required
@@ -108,9 +114,8 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
           {sale.type === 'seller' && (
             <div>
               <label className="slabel mb-1">Producto</label>
-              <input
+              <Input
                 type="text"
-                className="input"
                 value={product}
                 onChange={(e) => setProduct(e.target.value)}
                 required
@@ -121,10 +126,9 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <div>
               <label className="slabel mb-1">Unidades</label>
-              <input
+              <Input
                 type="number"
                 min="1"
-                className="input"
                 value={units}
                 onChange={(e) => setUnits(e.target.value === '' ? '' : Number(e.target.value))}
                 required
@@ -132,11 +136,10 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
             </div>
             <div>
               <label className="slabel mb-1">Monto</label>
-              <input
+              <Input
                 type="number"
                 min="0"
                 step="0.01"
-                className="input"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
                 required
@@ -148,40 +151,47 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
             <>
               <div>
                 <label className="slabel mb-1">Forma de pago</label>
-                <select
-                  className="input"
+                <Select
                   value={pay}
-                  onChange={(e) => setPay(e.target.value as PaymentMethod)}
+                  onValueChange={(v) => setPay(v as PaymentMethod)}
                 >
-                  {PAYMENT_METHODS.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <label className="slabel mb-1">Fuente</label>
-                <select
-                  className="input"
+                <Select
                   value={source}
-                  onChange={(e) => setSource(e.target.value as SaleSource)}
+                  onValueChange={(v) => setSource(v as SaleSource)}
                 >
-                  {SALE_SOURCES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SALE_SOURCES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </>
           )}
 
           <div>
             <label className="slabel mb-1">Notas</label>
-            <textarea
-              className="input"
+            <Textarea
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

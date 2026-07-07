@@ -11,6 +11,16 @@ import { useApiFormErrors } from '@/shared/lib/api-errors';
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary';
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError';
 import { ClientCombobox } from '@/shared/components/forms/ClientCombobox';
+import { DatePickerField } from '@/shared/components/forms/DatePickerField';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { EditSaleModal } from '../components/EditSaleModal';
 import {
   Dialog,
@@ -226,9 +236,8 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1">Producto</label>
-              <input
+              <Input
                 type="text"
-                className={sellerErrors.fieldErrors.product ? 'input input-error' : 'input'}
                 value={sellerProduct}
                 onChange={(e) => { setSellerProduct(e.target.value); sellerErrors.clearField('product'); }}
                 placeholder="Nombre del producto"
@@ -241,10 +250,9 @@ export function SalesPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <div>
                 <label className="slabel mb-1">Unidades</label>
-                <input
+                <Input
                   type="number"
                   min="1"
-                  className={sellerErrors.fieldErrors.units ? 'input input-error' : 'input'}
                   value={sellerUnits}
                   onChange={(e) => { setSellerUnits(e.target.value === '' ? '' : Number(e.target.value)); sellerErrors.clearField('units'); }}
                   required
@@ -254,11 +262,10 @@ export function SalesPage() {
               </div>
               <div>
                 <label className="slabel mb-1">Monto factura</label>
-                <input
+                <Input
                   type="number"
                   min="0"
                   step="0.01"
-                  className={sellerErrors.fieldErrors.amount ? 'input input-error' : 'input'}
                   value={sellerAmount}
                   onChange={(e) => { setSellerAmount(e.target.value === '' ? '' : Number(e.target.value)); sellerErrors.clearField('amount'); }}
                   required
@@ -271,55 +278,57 @@ export function SalesPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <div>
                 <label className="slabel mb-1">Fecha</label>
-                <input
-                  type="date"
-                  className={sellerErrors.fieldErrors.date ? 'input input-error' : 'input'}
+                <DatePickerField
                   value={sellerDate}
-                  onChange={(e) => { setSellerDate(e.target.value); sellerErrors.clearField('date'); }}
-                  required
+                  onChange={(v) => { setSellerDate(v); sellerErrors.clearField('date'); }}
                   {...fieldErrorProps('date', sellerErrors.fieldErrors.date)}
                 />
                 <FieldError name="date" message={sellerErrors.fieldErrors.date} />
               </div>
               <div>
                 <label className="slabel mb-1">Forma de pago</label>
-                <select
-                  className={sellerErrors.fieldErrors.pay ? 'input input-error' : 'input'}
+                <Select
                   value={sellerPay}
-                  onChange={(e) => { setSellerPay(e.target.value as PaymentMethod); sellerErrors.clearField('pay'); }}
-                  {...fieldErrorProps('pay', sellerErrors.fieldErrors.pay)}
+                  onValueChange={(v) => { setSellerPay(v as PaymentMethod); sellerErrors.clearField('pay'); }}
                 >
-                  {PAYMENT_METHODS.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger {...fieldErrorProps('pay', sellerErrors.fieldErrors.pay)}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FieldError name="pay" message={sellerErrors.fieldErrors.pay} />
               </div>
             </div>
 
             <div>
               <label className="slabel mb-1">Fuente</label>
-              <select
-                className={sellerErrors.fieldErrors.source ? 'input input-error' : 'input'}
+              <Select
                 value={sellerSource}
-                onChange={(e) => { setSellerSource(e.target.value as SaleSource); sellerErrors.clearField('source'); }}
-                {...fieldErrorProps('source', sellerErrors.fieldErrors.source)}
+                onValueChange={(v) => { setSellerSource(v as SaleSource); sellerErrors.clearField('source'); }}
               >
-                {SALE_SOURCES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger {...fieldErrorProps('source', sellerErrors.fieldErrors.source)}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SALE_SOURCES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FieldError name="source" message={sellerErrors.fieldErrors.source} />
             </div>
 
             <div>
               <label className="slabel mb-1">Notas de venta</label>
-              <textarea
-                className={sellerErrors.fieldErrors.notes ? 'input input-error' : 'input'}
+              <Textarea
                 rows={2}
                 value={sellerNotes}
                 onChange={(e) => { setSellerNotes(e.target.value); sellerErrors.clearField('notes'); }}
@@ -352,20 +361,21 @@ export function SalesPage() {
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Vendedor
               </label>
-              <select
-                className={dirErrors.fieldErrors.sellerId ? 'input input-error' : 'input'}
+              <Select
                 value={dirSellerId}
-                onChange={(e) => { setDirSellerId(e.target.value); dirErrors.clearField('sellerId'); }}
-                required
-                {...fieldErrorProps('sellerId', dirErrors.fieldErrors.sellerId)}
+                onValueChange={(v) => { setDirSellerId(v); dirErrors.clearField('sellerId'); }}
               >
-                <option value="">Seleccionar vendedor</option>
-                {activeSellers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger {...fieldErrorProps('sellerId', dirErrors.fieldErrors.sellerId)}>
+                  <SelectValue placeholder="Seleccionar vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeSellers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FieldError name="sellerId" message={dirErrors.fieldErrors.sellerId} />
             </div>
 
@@ -373,12 +383,9 @@ export function SalesPage() {
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Fecha
               </label>
-              <input
-                type="date"
-                className={dirErrors.fieldErrors.date ? 'input input-error' : 'input'}
+              <DatePickerField
                 value={dirDate}
-                onChange={(e) => { setDirDate(e.target.value); dirErrors.clearField('date'); }}
-                required
+                onChange={(v) => { setDirDate(v); dirErrors.clearField('date'); }}
                 {...fieldErrorProps('date', dirErrors.fieldErrors.date)}
               />
               <FieldError name="date" message={dirErrors.fieldErrors.date} />
@@ -388,9 +395,8 @@ export function SalesPage() {
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Cuenta / Proyecto
               </label>
-              <input
+              <Input
                 type="text"
-                className={dirErrors.fieldErrors.product || dirErrors.fieldErrors.clientName ? 'input input-error' : 'input'}
                 value={dirProject}
                 onChange={(e) => {
                   setDirProject(e.target.value);
@@ -408,10 +414,9 @@ export function SalesPage() {
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Unidades Dirección
               </label>
-              <input
+              <Input
                 type="number"
                 min="1"
-                className={dirErrors.fieldErrors.units ? 'input input-error' : 'input'}
                 value={dirUnits}
                 onChange={(e) => { setDirUnits(e.target.value === '' ? '' : Number(e.target.value)); dirErrors.clearField('units'); }}
                 required
@@ -424,11 +429,10 @@ export function SalesPage() {
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Monto Dirección
               </label>
-              <input
+              <Input
                 type="number"
                 min="0"
                 step="0.01"
-                className={dirErrors.fieldErrors.amount ? 'input input-error' : 'input'}
                 value={dirAmount}
                 onChange={(e) => { setDirAmount(e.target.value === '' ? '' : Number(e.target.value)); dirErrors.clearField('amount'); }}
                 required
@@ -441,8 +445,7 @@ export function SalesPage() {
               <label className="slabel mb-1" style={{ color: '#94A3B8' }}>
                 Notas Dirección
               </label>
-              <textarea
-                className={dirErrors.fieldErrors.notes ? 'input input-error' : 'input'}
+              <Textarea
                 rows={2}
                 value={dirNotes}
                 onChange={(e) => { setDirNotes(e.target.value); dirErrors.clearField('notes'); }}
@@ -471,31 +474,29 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1">Vendedor</label>
-              <select
-                className={atcErrors.fieldErrors.sellerId ? 'input input-error' : 'input'}
+              <Select
                 value={atcSellerId}
-                onChange={(e) => { setAtcSellerId(e.target.value); atcErrors.clearField('sellerId'); }}
-                required
-                {...fieldErrorProps('sellerId', atcErrors.fieldErrors.sellerId)}
+                onValueChange={(v) => { setAtcSellerId(v); atcErrors.clearField('sellerId'); }}
               >
-                <option value="">Seleccionar vendedor</option>
-                {activeSellers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger {...fieldErrorProps('sellerId', atcErrors.fieldErrors.sellerId)}>
+                  <SelectValue placeholder="Seleccionar vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeSellers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FieldError name="sellerId" message={atcErrors.fieldErrors.sellerId} />
             </div>
 
             <div>
               <label className="slabel mb-1">Fecha</label>
-              <input
-                type="date"
-                className={atcErrors.fieldErrors.date ? 'input input-error' : 'input'}
+              <DatePickerField
                 value={atcDate}
-                onChange={(e) => { setAtcDate(e.target.value); atcErrors.clearField('date'); }}
-                required
+                onChange={(v) => { setAtcDate(v); atcErrors.clearField('date'); }}
                 {...fieldErrorProps('date', atcErrors.fieldErrors.date)}
               />
               <FieldError name="date" message={atcErrors.fieldErrors.date} />
@@ -503,10 +504,9 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1">Unidades ATC</label>
-              <input
+              <Input
                 type="number"
                 min="1"
-                className={atcErrors.fieldErrors.units ? 'input input-error' : 'input'}
                 value={atcUnits}
                 onChange={(e) => { setAtcUnits(e.target.value === '' ? '' : Number(e.target.value)); atcErrors.clearField('units'); }}
                 required
@@ -517,11 +517,10 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1">Monto pagado ATC</label>
-              <input
+              <Input
                 type="number"
                 min="0"
                 step="0.01"
-                className={atcErrors.fieldErrors.amount ? 'input input-error' : 'input'}
                 value={atcAmount}
                 onChange={(e) => { setAtcAmount(e.target.value === '' ? '' : Number(e.target.value)); atcErrors.clearField('amount'); }}
                 required
@@ -532,8 +531,7 @@ export function SalesPage() {
 
             <div>
               <label className="slabel mb-1">Notas ATC</label>
-              <textarea
-                className={atcErrors.fieldErrors.notes ? 'input input-error' : 'input'}
+              <Textarea
                 rows={2}
                 value={atcNotes}
                 onChange={(e) => { setAtcNotes(e.target.value); atcErrors.clearField('notes'); }}

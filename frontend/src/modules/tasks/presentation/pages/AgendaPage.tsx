@@ -84,8 +84,6 @@ export function AgendaPage() {
   const { mutate: deleteTask } = useDeleteTask()
   const navigate = useNavigate()
 
-  const isTeamMode = isAdminOrDirector && selectedSeller === 'all'
-
   const { data: monthTasksRaw = [] } = useMonthTasks(calYear, calMonth)
   const { data: teamMonthTasksRaw = [] } = useTeamMonthTasks(
     calYear,
@@ -100,7 +98,11 @@ export function AgendaPage() {
     sellerName: sellerMap[t.sellerId] ?? undefined,
   }))
 
-  const monthTasks = isTeamMode ? enrichedTeamTasks : monthTasksRaw
+  const monthTasks = isAdminOrDirector
+    ? selectedSeller === 'all'
+      ? enrichedTeamTasks
+      : enrichedTeamTasks.filter((t) => t.sellerId === selectedSeller)
+    : monthTasksRaw
 
   function handleToggleView(mode: "list" | "calendar") {
     setViewMode(mode)

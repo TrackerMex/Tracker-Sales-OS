@@ -8,7 +8,17 @@ import { useApiFormErrors } from '@/shared/lib/api-errors'
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
 import { ClientCombobox } from '@/shared/components/forms/ClientCombobox'
+import { DatePickerField } from '@/shared/components/forms/DatePickerField'
 import { useAppStore } from '@/shared/store/app.store'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const TASK_TYPES = [
   'Chat',
@@ -176,46 +186,52 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, in
           {/* tipo | contacto */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
-              <select
+              <Select
                 value={type}
-                onChange={(e) => { setType(e.target.value); clearField('type') }}
-                className={fieldErrors.type ? 'input input-error' : 'input'}
-                {...fieldErrorProps('type', fieldErrors.type)}
+                onValueChange={(v) => { setType(v); clearField('type') }}
               >
-                {TASK_TYPES.map((t) => <option key={t}>{t}</option>)}
-              </select>
+                <SelectTrigger {...fieldErrorProps('type', fieldErrors.type)}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TASK_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <FieldError name="type" message={fieldErrors.type} />
             </div>
             <div>
-              <select
+              <Select
                 value={contactId}
-                onChange={(e) => { setContactId(e.target.value); clearField('contactId') }}
-                className={fieldErrors.contactId ? 'input input-error' : 'input'}
+                onValueChange={(v) => { setContactId(v === '__none__' ? '' : v); clearField('contactId') }}
                 disabled={!selectedClient}
-                {...fieldErrorProps('contactId', fieldErrors.contactId)}
               >
-                <option value="">
-                  {selectedClient ? 'Selecciona un contacto' : 'Selecciona primero una empresa'}
-                </option>
-                {contacts.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}{c.role ? ` · ${c.role}` : ''}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger {...fieldErrorProps('contactId', fieldErrors.contactId)}>
+                  <SelectValue
+                    placeholder={selectedClient ? 'Selecciona un contacto' : 'Selecciona primero una empresa'}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin contacto</SelectItem>
+                  {contacts.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}{c.role ? ` · ${c.role}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FieldError name="contactId" message={fieldErrors.contactId} />
             </div>
           </div>
 
           {/* objetivo */}
           <div>
-            <textarea
+            <Textarea
               value={objective}
               onChange={(e) => { setObjective(e.target.value); clearField('title') }}
               required
               style={{ height: 110 }}
               placeholder="¿Qué vas a hacer y para qué? Ej. Llamaré a Gerardo para validar si realizará la compra este mes..."
-              className={`input resize-none${fieldErrors.title ? ' input-error' : ''}`}
+              className="resize-none"
               {...fieldErrorProps('title', fieldErrors.title)}
             />
             <FieldError name="title" message={fieldErrors.title} />
@@ -223,20 +239,17 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, in
 
           <div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <input
-                type="date"
+              <DatePickerField
                 value={date}
-                onChange={(e) => { setDate(e.target.value); clearField('scheduledAt') }}
-                required
-                className={fieldErrors.scheduledAt ? 'input input-error' : 'input'}
+                onChange={(v) => { setDate(v); clearField('scheduledAt') }}
                 {...fieldErrorProps('scheduledAt', fieldErrors.scheduledAt)}
               />
-              <input
+              <Input
                 type="time"
                 value={time}
                 onChange={(e) => { setTime(e.target.value); clearField('scheduledAt') }}
                 required
-                className={fieldErrors.scheduledAt ? 'input input-error' : 'input'}
+                aria-invalid={!!fieldErrors.scheduledAt}
               />
             </div>
             <FieldError name="scheduledAt" message={fieldErrors.scheduledAt} />

@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useLogin } from "../../application/hooks/useLogin"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useApiFormErrors } from "@/shared/lib/api-errors"
 import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
 import {
@@ -194,13 +195,12 @@ export function LoginPage() {
               >
                 Usuario
               </label>
-              <input
+              <Input
                 {...register("username", {
                   onChange: () => clearField("username"),
                 })}
                 type="text"
                 autoComplete="username"
-                className={usernameError ? "input input-error" : "input"}
                 placeholder="admin"
                 {...fieldErrorProps("username", usernameError)}
               />
@@ -214,13 +214,12 @@ export function LoginPage() {
               >
                 Contrasena
               </label>
-              <input
+              <Input
                 {...register("password", {
                   onChange: () => clearField("password"),
                 })}
                 type="password"
                 autoComplete="current-password"
-                className={passwordError ? "input input-error" : "input"}
                 {...fieldErrorProps("password", passwordError)}
               />
               <FieldError name="password" message={passwordError} />

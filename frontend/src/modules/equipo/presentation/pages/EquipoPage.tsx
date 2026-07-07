@@ -9,6 +9,14 @@ import { useBlockUser } from "../../application/hooks/useBlockUser"
 import { useCreateSeller } from "../../application/hooks/useCreateSeller"
 import { useCreateUser } from "../../application/hooks/useCreateUser"
 import { useDeactivateSeller } from "../../application/hooks/useDeactivateSeller"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export function EquipoPage() {
   const currentUser = useAppStore((s) => s.currentUser)
@@ -80,18 +88,16 @@ export function EquipoPage() {
         <div className="card p-5">
           <div className="slabel mb-4">Alta comercial</div>
           <form onSubmit={handleCreateSeller} className="flex flex-col gap-3">
-            <input
+            <Input
               required
               value={sellerName}
               onChange={(e) => setSellerName(e.target.value)}
               placeholder="Nombre"
-              className="input"
             />
-            <input
+            <Input
               value={sellerProfile}
               onChange={(e) => setSellerProfile(e.target.value)}
               placeholder="Perfil / foco comercial"
-              className="input"
             />
             <button type="submit" disabled={createSeller.isPending} className="btn-primary justify-center">
               {createSeller.isPending ? "Guardando..." : "Guardar comercial"}
@@ -103,46 +109,44 @@ export function EquipoPage() {
         <div className="card p-5">
           <div className="slabel mb-4">Crear usuario</div>
           <form onSubmit={handleCreateUser} className="flex flex-col gap-3">
-            <input
+            <Input
               required
               value={userUsername}
               onChange={(e) => setUserUsername(e.target.value)}
               placeholder="Usuario"
-              className="input"
             />
-            <input
+            <Input
               required
               type="password"
               value={userPassword}
               onChange={(e) => setUserPassword(e.target.value)}
               placeholder="Contraseña"
-              className="input"
             />
-            <input
+            <Input
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               placeholder="Nombre completo"
-              className="input"
             />
-            <select
-              value={userRole}
-              onChange={(e) => setUserRole(e.target.value)}
-              className="input"
-            >
-              <option value="Seller">Comercial</option>
-              <option value="Admin">Dirección / Admin</option>
-            </select>
+            <Select value={userRole} onValueChange={setUserRole}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Seller">Comercial</SelectItem>
+                <SelectItem value="Admin">Dirección / Admin</SelectItem>
+              </SelectContent>
+            </Select>
             {userRole === "Seller" && (
-              <select
-                value={userSellerId}
-                onChange={(e) => setUserSellerId(e.target.value)}
-                className="input"
-              >
-                <option value="">Seleccionar vendedor</option>
-                {sellers?.filter(s => s.active).map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
+              <Select value={userSellerId} onValueChange={setUserSellerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sellers?.filter(s => s.active).map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
             <button type="submit" disabled={createUser.isPending} className="btn-green justify-center">
               {createUser.isPending ? "Creando..." : "Crear acceso"}

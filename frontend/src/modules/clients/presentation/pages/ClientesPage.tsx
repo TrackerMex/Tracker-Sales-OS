@@ -17,6 +17,16 @@ import { ALLOWED_TRANSITIONS } from "@/modules/pipeline/domain/pipeline.types"
 import { useApiFormErrors } from "@/shared/lib/api-errors"
 import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
 import { FieldError, fieldErrorProps } from "@/shared/components/forms/FieldError"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import type {
   Client,
   ClientSource,
@@ -416,11 +426,11 @@ export function ClientesPage() {
           <p className="mt-1 text-sm text-slate-500">{data ? `${data.total} registros` : "Cartera comercial"}</p>
         </div>
         <div className="flex items-center gap-3">
-          <input
+          <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar cliente..."
-            className="input max-w-[360px]"
+            className="max-w-[360px]"
           />
           <button
             onClick={() => setCold((v) => !v)}
@@ -555,12 +565,11 @@ export function ClientesPage() {
 
             {/* name - span 2 */}
             <div className="col-span-2">
-              <input
+              <Input
                 required
                 value={form.name}
                 onChange={(e) => updateForm("name", e.target.value)}
                 placeholder="Nombre de la cuenta"
-                className={fieldErrors.name ? "input input-error" : "input"}
                 {...fieldErrorProps("name", fieldErrors.name)}
               />
               <FieldError name="name" message={fieldErrors.name} />
@@ -568,74 +577,83 @@ export function ClientesPage() {
 
             {/* domain | type */}
             <div>
-              <input
+              <Input
                 value={form.domain}
                 onChange={(e) => updateForm("domain", e.target.value)}
                 placeholder="Dominio web. Ej: empresa.com"
-                className={fieldErrors.domain ? "input input-error" : "input"}
                 {...fieldErrorProps("domain", fieldErrors.domain)}
               />
               <FieldError name="domain" message={fieldErrors.domain} />
             </div>
             <div>
-              <select
+              <Select
                 value={form.type}
-                onChange={(e) => updateForm("type", e.target.value as ClientType)}
-                className={fieldErrors.type ? "input input-error" : "input"}
-                {...fieldErrorProps("type", fieldErrors.type)}
+                onValueChange={(v) => updateForm("type", v as ClientType)}
               >
-                {clientTypes.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
+                <SelectTrigger {...fieldErrorProps("type", fieldErrors.type)}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <FieldError name="type" message={fieldErrors.type} />
             </div>
 
             {/* person | seller */}
             <div>
-              <select
+              <Select
                 value={form.person}
-                onChange={(e) => updateForm("person", e.target.value as PersonType)}
-                className={fieldErrors.person ? "input input-error" : "input"}
-                {...fieldErrorProps("person", fieldErrors.person)}
+                onValueChange={(v) => updateForm("person", v as PersonType)}
               >
-                {personTypes.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
+                <SelectTrigger {...fieldErrorProps("person", fieldErrors.person)}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {personTypes.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <FieldError name="person" message={fieldErrors.person} />
             </div>
             {canChooseSeller ? (
               <div>
-                <select
+                <Select
                   value={form.sellerId}
-                  onChange={(e) => updateForm("sellerId", e.target.value)}
-                  className={fieldErrors.sellerId ? "input input-error" : "input"}
-                  {...fieldErrorProps("sellerId", fieldErrors.sellerId)}
+                  onValueChange={(v) => updateForm("sellerId", v)}
                 >
-                  <option value="">Seleccionar vendedor</option>
-                  {activeSellers.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
+                  <SelectTrigger {...fieldErrorProps("sellerId", fieldErrors.sellerId)}>
+                    <SelectValue placeholder="Seleccionar vendedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeSellers.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FieldError name="sellerId" message={fieldErrors.sellerId} />
               </div>
             ) : <div />}
 
             {/* source | provider */}
             <div>
-              <select
+              <Select
                 value={form.source}
-                onChange={(e) => updateForm("source", e.target.value as ClientSource)}
-                className={fieldErrors.source ? "input input-error" : "input"}
-                {...fieldErrorProps("source", fieldErrors.source)}
+                onValueChange={(v) => updateForm("source", v as ClientSource)}
               >
-                {clientSources.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+                <SelectTrigger {...fieldErrorProps("source", fieldErrors.source)}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientSources.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <FieldError name="source" message={fieldErrors.source} />
             </div>
             <div>
-              <input
+              <Input
                 value={form.provider}
                 onChange={(e) => updateForm("provider", e.target.value)}
                 placeholder="Proveedor actual"
-                className={fieldErrors.provider ? "input input-error" : "input"}
                 {...fieldErrorProps("provider", fieldErrors.provider)}
               />
               <FieldError name="provider" message={fieldErrors.provider} />
@@ -643,25 +661,23 @@ export function ClientesPage() {
 
             {/* units | amount */}
             <div>
-              <input
+              <Input
                 type="number"
                 min="0"
                 value={form.units || ''}
                 onChange={(e) => updateForm("units", Number(e.target.value))}
                 placeholder="Unidades potenciales"
-                className={fieldErrors.units ? "input input-error" : "input"}
                 {...fieldErrorProps("units", fieldErrors.units)}
               />
               <FieldError name="units" message={fieldErrors.units} />
             </div>
             <div>
-              <input
+              <Input
                 type="number"
                 min="0"
                 value={form.expectedAmount || ''}
                 onChange={(e) => updateForm("expectedAmount", Number(e.target.value))}
                 placeholder="Monto esperado"
-                className={fieldErrors.expectedAmount ? "input input-error" : "input"}
                 {...fieldErrorProps("expectedAmount", fieldErrors.expectedAmount)}
               />
               <FieldError name="expectedAmount" message={fieldErrors.expectedAmount} />
@@ -669,14 +685,17 @@ export function ClientesPage() {
 
             {/* stage - col 1 only */}
             <div>
-              <select
+              <Select
                 value={form.stage}
-                onChange={(e) => updateForm("stage", e.target.value as PipelineStage)}
-                className={fieldErrors.stage ? "input input-error" : "input"}
-                {...fieldErrorProps("stage", fieldErrors.stage)}
+                onValueChange={(v) => updateForm("stage", v as PipelineStage)}
               >
-                {pipelineStages.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+                <SelectTrigger {...fieldErrorProps("stage", fieldErrors.stage)}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {pipelineStages.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <FieldError name="stage" message={fieldErrors.stage} />
             </div>
             <div />
@@ -698,7 +717,7 @@ export function ClientesPage() {
               <div className="space-y-2">
                 {(form.contacts ?? []).map((contact, idx) => (
                   <div key={idx} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-center rounded-lg bg-slate-50 border border-slate-100 p-2.5">
-                    <input
+                    <Input
                       value={contact.name}
                       onChange={(e) => {
                         const updated = [...(form.contacts ?? [])]
@@ -706,9 +725,8 @@ export function ClientesPage() {
                         updateForm("contacts", updated)
                       }}
                       placeholder="Nombre contacto"
-                      className="input"
                     />
-                    <input
+                    <Input
                       value={contact.role}
                       onChange={(e) => {
                         const updated = [...(form.contacts ?? [])]
@@ -716,9 +734,8 @@ export function ClientesPage() {
                         updateForm("contacts", updated)
                       }}
                       placeholder="Rol: decisor, finanzas..."
-                      className="input"
                     />
-                    <input
+                    <Input
                       value={contact.phone}
                       onChange={(e) => {
                         const updated = [...(form.contacts ?? [])]
@@ -726,9 +743,8 @@ export function ClientesPage() {
                         updateForm("contacts", updated)
                       }}
                       placeholder="Teléfono"
-                      className="input"
                     />
-                    <input
+                    <Input
                       value={contact.email}
                       onChange={(e) => {
                         const updated = [...(form.contacts ?? [])]
@@ -736,16 +752,14 @@ export function ClientesPage() {
                         updateForm("contacts", updated)
                       }}
                       placeholder="Correo"
-                      className="input"
                     />
                     <div className="flex items-center gap-2 min-w-[110px]">
                       <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-600 whitespace-nowrap cursor-pointer">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={contact.isDecisionMaker ?? false}
-                          onChange={(e) => {
+                          onCheckedChange={(checked) => {
                             const updated = [...(form.contacts ?? [])]
-                            updated[idx] = { ...updated[idx], isDecisionMaker: e.target.checked }
+                            updated[idx] = { ...updated[idx], isDecisionMaker: checked === true }
                             updateForm("contacts", updated)
                           }}
                         />
@@ -771,12 +785,12 @@ export function ClientesPage() {
 
             {/* Pain - span 2 */}
             <div className="col-span-2">
-              <textarea
+              <Textarea
                 value={form.pain}
                 onChange={(e) => updateForm("pain", e.target.value)}
                 placeholder="¿Por qué crees que Tracker puede ayudarle? Dolor / necesidad detectada"
                 rows={4}
-                className={`input resize-none${fieldErrors.pain ? " input-error" : ""}`}
+                className="resize-none"
                 {...fieldErrorProps("pain", fieldErrors.pain)}
               />
               <FieldError name="pain" message={fieldErrors.pain} />

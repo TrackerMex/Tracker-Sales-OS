@@ -11,6 +11,13 @@ import { ClientDetailPage } from "./ClientDetailPage"
 import { UserRole } from "@/core/domain/types/common.types"
 import type { PipelineStage, Deal, PipelineGrouped, LossReason } from "../../domain/pipeline.types"
 import { formatCurrency } from "@/shared/lib/format"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const ALL_STAGES: PipelineStage[] = [
   "Prospecto",
@@ -161,17 +168,17 @@ export function PipelinePage() {
         </div>
         <div className="flex items-center gap-4">
           {isAdminOrDirector && (
-            <select
-              value={selectedSeller}
-              onChange={(e) => handleSellerChange(e.target.value)}
-              className="input"
-              style={{ fontSize: 12, padding: '5px 10px', minWidth: 160 }}
-            >
-              <option value="all">Todos los vendedores</option>
-              {sellers.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
+            <Select value={selectedSeller} onValueChange={handleSellerChange}>
+              <SelectTrigger className="w-auto min-w-40 px-2.5 py-[5px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los vendedores</SelectItem>
+                {sellers.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
           {activeGrouped && (
             <div className="flex gap-6 text-right">
@@ -214,16 +221,22 @@ export function PipelinePage() {
             <div className="space-y-3">
               <div>
                 <label className="slabel mb-1 block">Motivo (opcional)</label>
-                <select
+                <Select
                   value={lossReason}
-                  onChange={(e) => setLossReason(e.target.value as LossReason | "")}
-                  className="input"
+                  onValueChange={(v) =>
+                    setLossReason(v === "__none__" ? "" : (v as LossReason))
+                  }
                 >
-                  <option value="">Selecciona un motivo...</option>
-                  {LOSS_REASONS.map((r) => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un motivo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin motivo</SelectItem>
+                    {LOSS_REASONS.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex gap-2 pt-2">
                 <button

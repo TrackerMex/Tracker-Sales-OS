@@ -5,6 +5,7 @@ import { UserRole } from '@/core/domain/types/common.types';
 import { useExportData } from '../../application/hooks/useExportData';
 import { useImportData } from '../../application/hooks/useImportData';
 import type { ExportData } from '../../domain/import-export.types';
+import { Input } from '@/components/ui/input';
 
 const REQUIRED_KEYS: (keyof ExportData)[] = [
   'sellers', 'users', 'clients', 'contacts',
@@ -108,7 +109,7 @@ export function ImportExportPage() {
           Selecciona un archivo JSON de respaldo para importar.
         </p>
 
-        <input
+        <Input
           ref={fileRef}
           type="file"
           accept=".json"
