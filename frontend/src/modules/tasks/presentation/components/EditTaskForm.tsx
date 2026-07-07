@@ -10,6 +10,13 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -84,23 +91,16 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center modal-blur">
-      <div style={{ background: '#fff', borderRadius: 14, padding: 28, maxWidth: 640, width: '100%', maxHeight: '92vh', overflowY: 'auto' }}>
-        <div className="flex items-start justify-between mb-1">
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#0F172A' }}>Editar tarea</div>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: 18, lineHeight: 1, fontFamily: 'inherit' }}
-          >
-            ×
-          </button>
-        </div>
-        <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 20 }}>
-          Modifica los datos de la tarea.
-        </p>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="w-[min(calc(100vw-2rem),780px)] max-w-none max-h-[92vh] overflow-y-auto sm:max-w-none">
+        <DialogHeader>
+          <DialogTitle>Editar tarea</DialogTitle>
+          <DialogDescription>
+            Modifica los datos de la tarea.
+          </DialogDescription>
+        </DialogHeader>
 
-        <form ref={formRef} onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-[11px]">
           <FormErrorSummary error={errorSummary} />
 
           <div>
@@ -121,7 +121,7 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
             <FieldError name="clientId" message={fieldErrors.clientId} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             <div>
               <Select
                 value={type}
@@ -165,9 +165,8 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
               value={objective}
               onChange={(e) => { setObjective(e.target.value); clearField('title') }}
               required
-              style={{ height: 110 }}
               placeholder="¿Qué vas a hacer y para qué?"
-              className="resize-none"
+              className="h-[110px] resize-none"
               {...fieldErrorProps('title', fieldErrors.title)}
             />
             <FieldError name="title" message={fieldErrors.title} />
@@ -183,15 +182,14 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                style={{ height: 72 }}
                 placeholder="¿Cuál es el resultado esperado de esta tarea?"
-                className="resize-none"
+                className="h-[72px] resize-none"
               />
             )}
           </div>
 
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               <DatePickerField
                 value={date}
                 onChange={(v) => { setDate(v); clearField('scheduledAt') }}
@@ -224,7 +222,7 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
             {isLoading ? 'Guardando...' : 'Actualizar tarea'}
           </Button>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

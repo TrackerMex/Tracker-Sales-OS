@@ -7,6 +7,7 @@ import type { Sale, PaymentMethod, SaleSource } from '../../domain/sales.types';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -82,9 +83,12 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[min(calc(100vw-2rem),720px)] max-w-none max-h-[90vh] overflow-y-auto sm:max-w-none">
         <DialogHeader>
           <DialogTitle>Editar venta</DialogTitle>
+          <DialogDescription>
+            Actualiza los datos registrados para esta venta.
+          </DialogDescription>
         </DialogHeader>
 
         <form ref={errors.formRef} onSubmit={handleSubmit} className="space-y-3">
@@ -124,7 +128,7 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <label className="slabel mb-1">Unidades</label>
               <Input

@@ -22,6 +22,23 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -517,58 +534,66 @@ export function ClientesPage() {
       {showModal && renderModal()}
 
       {/* Delete confirmation */}
-      {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center modal-blur">
-          <div className="card w-full max-w-sm p-6 space-y-4">
-            <h3 className="text-sm font-bold text-[#002B49]">Eliminar cliente</h3>
-            <p className="text-xs text-slate-500">
-              ¿Seguro que deseas eliminar <b>{deleteTarget.name}</b>? Esta acción no se puede deshacer.
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar cliente</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Seguro que deseas eliminar <strong>{deleteTarget?.name}</strong>? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteClient.isError && (
+            <p className="text-xs text-red-600">
+              {deleteClient.error instanceof Error ? deleteClient.error.message : "No se pudo eliminar"}
             </p>
-            <div className="flex items-center justify-end gap-2">
-              <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
-              <Button
-                onClick={confirmDelete}
-                disabled={deleteClient.isPending}
-                variant="destructive"
-              >
-                {deleteClient.isPending ? "Eliminando..." : "Eliminar"}
-              </Button>
-            </div>
-            {deleteClient.isError && (
-              <p className="text-xs text-red-600">
-                {deleteClient.error instanceof Error ? deleteClient.error.message : "No se pudo eliminar"}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteClient.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault()
+                confirmDelete()
+              }}
+              disabled={deleteClient.isPending}
+              variant="destructive"
+            >
+              {deleteClient.isPending ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 
   // --- SHARED MODAL ---
   function renderModal() {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center modal-blur overflow-y-auto py-8">
-        <div className="card w-full max-w-[860px] p-7">
-          <div className="flex items-start justify-between mb-1">
-            <h3 className="text-base font-bold text-[#0F172A]">
+      <Dialog
+        open={showModal}
+        onOpenChange={(open) => {
+          if (!open) setShowModal(false)
+        }}
+      >
+        <DialogContent className="w-[min(calc(100vw-2rem),1120px)] max-w-none max-h-[92vh] overflow-y-auto sm:max-w-none sm:p-7">
+          <DialogHeader>
+            <DialogTitle>
               {editingClient ? "Editar cliente / prospecto" : "Nuevo cliente / prospecto"}
-            </h3>
-            <button
-              type="button"
-              onClick={() => setShowModal(false)}
-              className="text-slate-400 hover:text-slate-600 text-lg leading-none bg-transparent border-none cursor-pointer"
-            >
-              ×
-            </button>
-          </div>
-          <p className="text-xs text-slate-400 mb-5">Puedes registrar varios contactos: decisor, finanzas, operaciones, compras, etc.</p>
+            </DialogTitle>
+            <DialogDescription>
+              Puedes registrar varios contactos: decisor, finanzas, operaciones, compras, etc.
+            </DialogDescription>
+          </DialogHeader>
 
-          <form ref={formRef} onSubmit={submitClient} className="grid grid-cols-2 gap-3">
-            <FormErrorSummary error={saveError} className="col-span-2" />
+          <form ref={formRef} onSubmit={submitClient} className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <FormErrorSummary error={saveError} className="md:col-span-2" />
 
             {/* name - span 2 */}
-            <div className="col-span-2">
+            <div className="md:col-span-2">
               <Input
                 required
                 value={form.name}
@@ -636,7 +661,7 @@ export function ClientesPage() {
                 </Select>
                 <FieldError name="sellerId" message={fieldErrors.sellerId} />
               </div>
-            ) : <div />}
+            ) : <div className="hidden md:block" />}
 
             {/* source | provider */}
             <div>
@@ -702,10 +727,10 @@ export function ClientesPage() {
               </Select>
               <FieldError name="stage" message={fieldErrors.stage} />
             </div>
-            <div />
+            <div className="hidden md:block" />
 
             {/* Contacts - span 2 */}
-            <div className="col-span-2">
+            <div className="md:col-span-2">
               <div className="flex items-center justify-between mb-2">
                 <p className="slabel">Contactos</p>
                 <button
@@ -720,8 +745,9 @@ export function ClientesPage() {
               </div>
               <div className="space-y-2">
                 {(form.contacts ?? []).map((contact, idx) => (
-                  <div key={idx} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-center rounded-lg bg-slate-50 border border-slate-100 p-2.5">
+                  <div key={idx} className="grid grid-cols-1 gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2.5 md:grid-cols-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.15fr)_auto] xl:items-center">
                     <Input
+                      className="min-w-0"
                       value={contact.name}
                       onChange={(e) => {
                         const updated = [...(form.contacts ?? [])]
@@ -731,6 +757,7 @@ export function ClientesPage() {
                       placeholder="Nombre contacto"
                     />
                     <Input
+                      className="min-w-0"
                       value={contact.role}
                       onChange={(e) => {
                         const updated = [...(form.contacts ?? [])]
@@ -740,6 +767,7 @@ export function ClientesPage() {
                       placeholder="Rol: decisor, finanzas..."
                     />
                     <Input
+                      className="min-w-0"
                       value={contact.phone}
                       onChange={(e) => {
                         const updated = [...(form.contacts ?? [])]
@@ -749,6 +777,7 @@ export function ClientesPage() {
                       placeholder="Teléfono"
                     />
                     <Input
+                      className="min-w-0"
                       value={contact.email}
                       onChange={(e) => {
                         const updated = [...(form.contacts ?? [])]
@@ -757,7 +786,7 @@ export function ClientesPage() {
                       }}
                       placeholder="Correo"
                     />
-                    <div className="flex items-center gap-2 min-w-[110px]">
+                    <div className="flex flex-wrap items-center gap-2 md:col-span-2 xl:col-span-1 xl:min-w-[120px]">
                       <label className="flex items-center gap-1 text-[11px] font-semibold text-slate-600 whitespace-nowrap cursor-pointer">
                         <Checkbox
                           checked={contact.isDecisionMaker ?? false}
@@ -788,7 +817,7 @@ export function ClientesPage() {
             </div>
 
             {/* Pain - span 2 */}
-            <div className="col-span-2">
+            <div className="md:col-span-2">
               <Textarea
                 value={form.pain}
                 onChange={(e) => updateForm("pain", e.target.value)}
@@ -801,7 +830,7 @@ export function ClientesPage() {
             </div>
 
             {/* AI Coach hint - span 2 */}
-            <div className="ai-box col-span-2">
+            <div className="ai-box md:col-span-2">
               <strong>Coach IA:</strong> Un buen registro debe identificar empresa, contactos clave, decisor, teléfono, correo/dominio y razón comercial.
             </div>
 
@@ -809,7 +838,7 @@ export function ClientesPage() {
             <Button
               type="submit"
               disabled={createClient.isPending || updateClient.isPending}
-              className="col-span-2 justify-center"
+              className="md:col-span-2 justify-center"
               size="lg"
             >
               {createClient.isPending || updateClient.isPending
@@ -820,8 +849,8 @@ export function ClientesPage() {
             </Button>
 
           </form>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     )
   }
 }

@@ -1,6 +1,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -59,11 +60,14 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
         if (!open) onClose()
       }}
     >
-      <DialogContent className="max-w-lg">
+      <DialogContent className="w-[min(calc(100vw-2rem),760px)] max-w-none max-h-[90vh] overflow-y-auto sm:max-w-none">
         <DialogHeader>
           <DialogTitle>
             {isLoading ? "Cargando..." : `${activity?.type ?? ""} — Historial`}
           </DialogTitle>
+          <DialogDescription>
+            Consulta cambios de estado y actualiza la actividad seleccionada.
+          </DialogDescription>
         </DialogHeader>
 
         {isLoading && (

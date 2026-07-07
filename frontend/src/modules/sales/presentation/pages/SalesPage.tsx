@@ -24,13 +24,15 @@ import {
 } from '@/components/ui/select';
 import { EditSaleModal } from '../components/EditSaleModal';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const PAYMENT_METHODS: PaymentMethod[] = ['Pagado', 'Crédito', '50% anticipo', 'Pendiente'];
 const SALE_SOURCES: SaleSource[] = [
@@ -672,21 +674,20 @@ export function SalesPage() {
         />
       )}
 
-      <Dialog open={!!deletingSale} onOpenChange={(open) => { if (!open) setDeletingSale(null); }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Eliminar venta</DialogTitle>
-            <DialogDescription>
+      <AlertDialog open={!!deletingSale} onOpenChange={(open) => { if (!open) setDeletingSale(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar venta</AlertDialogTitle>
+            <AlertDialogDescription>
               ¿Eliminar la venta de <strong>{deletingSale?.clientName}</strong>? Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setDeletingSale(null)}>
-              Cancelar
-            </Button>
-            <Button
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
               variant="destructive"
-              onClick={() => {
+              onClick={(event) => {
+                event.preventDefault();
                 if (deletingSale) {
                   deleteSale(deletingSale.id);
                   setDeletingSale(null);
@@ -694,10 +695,10 @@ export function SalesPage() {
               }}
             >
               Eliminar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -19,6 +19,20 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 
 const ALL_STAGES: PipelineStage[] = [
   "Prospecto",
@@ -210,15 +224,22 @@ export function PipelinePage() {
         />
       )}
 
-      {lossModal && (
-        <div
-          className="modal-blur fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={(e) => { if (e.target === e.currentTarget) { setLossModal(null); setLossReason("") } }}
-        >
-          <div className="card w-full max-w-sm p-6">
-            <h3 style={{ marginBottom: 16, fontSize: 14, fontWeight: 700, color: '#002B49' }}>
-              Motivo de pérdida
-            </h3>
+      <Dialog
+        open={!!lossModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLossModal(null)
+            setLossReason("")
+          }
+        }}
+      >
+        <DialogContent className="w-[min(calc(100vw-2rem),460px)] max-w-none sm:max-w-none">
+          <DialogHeader>
+            <DialogTitle>Motivo de pérdida</DialogTitle>
+            <DialogDescription>
+              Registra un motivo opcional antes de marcar el deal como perdido.
+            </DialogDescription>
+          </DialogHeader>
             <div className="space-y-3">
               <div>
                 <label className="slabel mb-1 block">Motivo (opcional)</label>
@@ -258,30 +279,26 @@ export function PipelinePage() {
                 </Button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {/* Deal Peek Panel — slide-over */}
-      {selectedDeal && (
-        <>
-          <div
-            onClick={() => setSelectedDeal(null)}
-            style={{
-              position: 'fixed', inset: 0, zIndex: 40,
-              background: 'rgba(0,0,0,0.25)',
-            }}
-          />
-          <div style={{
-            position: 'fixed', top: 0, right: 0, height: '100vh',
-            width: 480, zIndex: 50,
-            background: '#fff', boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
-            overflowY: 'auto', display: 'flex', flexDirection: 'column',
-          }}>
+      <Sheet
+        open={!!selectedDeal}
+        onOpenChange={(open) => {
+          if (!open) setSelectedDeal(null)
+        }}
+      >
+        <SheetContent side="right" showCloseButton={false} className="overflow-y-auto p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[640px] data-[side=right]:lg:max-w-[720px]">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Detalle de oportunidad</SheetTitle>
+            <SheetDescription>Panel lateral con detalle del cliente y su historial comercial.</SheetDescription>
+          </SheetHeader>
+          {selectedDeal && (
             <ClientDetailPage deal={selectedDeal} onBack={() => setSelectedDeal(null)} />
-          </div>
-        </>
-      )}
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }

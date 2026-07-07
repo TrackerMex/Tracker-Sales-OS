@@ -551,5 +551,75 @@
     "backend_modules": [],
     "frontend_modules": ["auth", "activities", "tasks", "clients", "sales", "settings", "equipo", "reports", "pipeline", "dashboard", "mi-dia", "import-export"],
     "notes": "Origen: pedido usuario 2026-07-07 ('migra los botones y tabs'). Button/Tabs compartidos se re-estilizan con variantes tracker antes de migrar modulos. Completada 2026-07-07. Botones legacy btn-primary/btn-green/btn-ghost/btn-danger/btn-sm migrados a Button shadcn en modulos y Header compartido; segmentados Lista/Calendario y Mes/Semana/Dia migrados a Tabs shadcn. Residuos intencionales: celdas de calendario, cierres de modal, text-actions y controles custom que dependen de layout/interaccion especifica. Verificacion Lider: npx tsc --noEmit frontend exit 0; rg de clases btn-* legacy en frontend/src solo conserva definiciones CSS legacy sin uso. Detalle: progress/impl_53-shadcn-buttons-tabs.md."
+  },
+  {
+    "id": "54-shadcn-dialogs-alerts",
+    "name": "UI: migrar modales custom y confirmaciones a shadcn",
+    "description": "Reemplazar overlays custom y confirmaciones manuales por Dialog, AlertDialog y Sheet de shadcn donde corresponda. Prioridad: ClientesPage, CreateTaskForm, EditTaskForm, ClientDetailPage, ActivityHistoryModal y ventas.",
+    "status": "done",
+    "priority": 54,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales"],
+    "notes": "Origen: pedido usuario 2026-07-07. Completada 2026-07-07. Overlays custom con fixed inset-0/modal-blur eliminados en ClientesPage, CreateTaskForm, EditTaskForm y PipelinePage. Clientes create/edit usa Dialog; delete cliente usa AlertDialog. Tareas create/edit usan Dialog. Pipeline loss reason usa Dialog y detalle lateral usa Sheet. Ventas delete usa AlertDialog. ActivityHistoryModal/EditSaleModal ya usaban Dialog; se agrego DialogDescription. Verificacion Lider: npx tsc --noEmit frontend exit 0; rg residual fixed inset-0/modal-blur/confirm/alert sin resultados en modules/shared/routes. Detalle: progress/impl_54-shadcn-dialogs-alerts.md."
+  },
+  {
+    "id": "55-shadcn-dialog-sizing",
+    "name": "UI: ampliar dialogs shadcn para formularios",
+    "description": "Ajustar tamanos responsivos de Dialog/Sheet migrados para que los formularios muestren inputs, placeholders y selects sin recortes visuales, priorizando Nuevo cliente/prospecto y revisando tareas, ventas, historial y pipeline.",
+    "status": "done",
+    "priority": 55,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales"],
+    "notes": "Origen: mejora solicitada por usuario 2026-07-07 con captura del dialog Nuevo cliente/prospecto donde varios inputs se ven truncados. Completada 2026-07-07. Clientes DialogContent ampliado a 1120px responsivo, formulario en grid mobile-first y contactos flexibles hasta xl para evitar inputs estrechos. Tareas create/edit ampliadas a 780px; EditSaleModal a 720px; ActivityHistoryModal a 760px; Pipeline loss dialog a 460px y detail Sheet a 640/720px. Verificacion Lider: npx tsc --noEmit frontend exit 0; rg residual fixed inset-0/modal-blur/confirm/alert sin resultados; git diff --check sin errores. Detalle: progress/impl_55-shadcn-dialog-sizing.md."
+  },
+  {
+    "id": "56-shadcn-tables",
+    "name": "UI: migrar tablas a shadcn Table",
+    "description": "Migrar tablas/listados tabulares legacy a componentes Table de shadcn, manteniendo densidad tracker, acciones por fila, empty states y responsividad.",
+    "status": "pending",
+    "priority": 56,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "sales", "reports", "equipo", "dashboard", "activities", "tasks"],
+    "notes": "Planificado para ejecutar el 2026-07-08. Alcance sugerido: inventariar tablas y clases .dt/table legacy, crear/ajustar frontend/src/components/ui/table.tsx si hace falta, migrar primero las tablas mas visibles (ventas, equipo, reportes, clientes) y verificar npx tsc --noEmit."
+  },
+  {
+    "id": "57-shadcn-badges-tags",
+    "name": "UI: migrar badges y tags a shadcn Badge",
+    "description": "Reemplazar tags legacy (.tag, .tag-green, .tag-red, etc.) por Badge de shadcn con variantes tracker para estados comerciales, roles, calidad, pipeline, tareas y ventas.",
+    "status": "pending",
+    "priority": 57,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales", "dashboard", "mi-dia", "coaching", "reports", "equipo"],
+    "notes": "Planificado para ejecutar el 2026-07-08. Mantener semantica visual actual de estados verde/ambar/rojo/azul/gris/morado, eliminar uso directo de clases .tag donde aplique y verificar que no se rompan estados compactos en cards/tablas."
+  },
+  {
+    "id": "58-shadcn-dropdown-actions",
+    "name": "UI: migrar acciones compactas a shadcn DropdownMenu",
+    "description": "Usar DropdownMenu de shadcn para grupos de acciones en cards, filas y listados: editar, eliminar, completar, reactivar, ver detalle y acciones secundarias.",
+    "status": "pending",
+    "priority": 58,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales", "equipo", "reports"],
+    "notes": "Planificado para ejecutar el 2026-07-08. Priorizar zonas con demasiados botones visibles. Mantener acciones destructivas con AlertDialog y no ocultar acciones primarias criticas si afectan el flujo principal."
+  },
+  {
+    "id": "59-shadcn-tooltips",
+    "name": "UI: agregar Tooltips en icon buttons",
+    "description": "Agregar Tooltip de shadcn a botones icon-only y acciones compactas para mejorar descubribilidad sin agregar texto visible innecesario.",
+    "status": "pending",
+    "priority": 59,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales", "dashboard", "mi-dia", "reports", "settings"],
+    "notes": "Planificado para ejecutar el 2026-07-08. Cubrir icon buttons de editar, eliminar, cerrar, calendario, vista, acciones rapidas y controles compactos. No usar tooltips para informacion esencial que deba estar siempre visible."
+  },
+  {
+    "id": "60-shadcn-card-accordion",
+    "name": "UI: usar Card y Accordion shadcn en secciones densas",
+    "description": "Introducir Card y Accordion de shadcn de forma selectiva en secciones repetidas o colapsables: historial, detalles, bloques secundarios y paneles con mucha informacion.",
+    "status": "pending",
+    "priority": 60,
+    "backend_modules": [],
+    "frontend_modules": ["clients", "pipeline", "activities", "tasks", "sales", "reports", "settings"],
+    "notes": "Planificado para ejecutar el 2026-07-08. Aplicar con criterio: no convertir page sections completas en cards ni crear cards anidadas. Priorizar detalle de cliente, historial de actividad, secciones de formularios largos y bloques colapsables que reduzcan densidad visual."
   }
 ]
