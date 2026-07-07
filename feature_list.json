@@ -621,5 +621,65 @@
     "backend_modules": [],
     "frontend_modules": ["clients", "pipeline", "activities", "tasks", "sales", "reports", "settings"],
     "notes": "Completada 2026-07-07. Review Lider PASSED 10/10 (progress/impl_60-shadcn-card-accordion.md). ClientDetailPage.tsx (Card+Accordion contacts/pain/provider + Card timeline), ActivityHistoryModal.tsx (Card estado actual + Accordion historial), ReportsPage.tsx (Card+Accordion filtros/sellers/summary) y SettingsPage.tsx (Card+Accordion grupos de metas) ya venian de una sesion previa sin commitear. Unico fix de este pase: ClientesPage.tsx:359 tenia un </Card> huerfano cerrando un <div> (bug bloqueante de build) -> corregido a </div>, sidebar oscuro se mantiene <div> custom (no Card, tema oscuro). Decision de criterio: bloque de contactos editables del formulario create/edit (ClientesPage.tsx ~768-853) NO se convierte a Accordion por ser edicion activa de datos, no bloque de solo lectura. ExecutiveSlide.tsx explicitamente fuera de alcance (inline-style puro, requerido para export via window.open+outerHTML). tsc frontend exit 0. Sin Cards anidadas en ningun archivo."
+  },
+  {
+    "id": "61-ci-pipeline",
+    "name": "Fase 1 SaaS: CI con GitHub Actions",
+    "description": "Pipeline de CI en cada PR y push a main: tsc --noEmit backend+frontend, eslint, jest backend. Bloquea merge si falla. Base para crecer el suite de tests sin depender de verificación manual.",
+    "status": "pending",
+    "priority": 61,
+    "backend_modules": [],
+    "frontend_modules": [],
+    "notes": "Origen: auditoría de escalabilidad 2026-07-07 (progress/explore_auditoria_escalabilidad.md), Fase 1. Crear .github/workflows/ci.yml con jobs backend (npm ci, tsc, lint, jest) y frontend (npm ci, tsc, lint, build). Node 22. Cache npm. Sin e2e todavía (llega con feature 62). Cuidado: Dokploy auto-deploya main — CI no bloquea deploy, solo PRs; documentar en notes si se quiere branch protection."
+  },
+  {
+    "id": "62-critical-use-case-tests",
+    "name": "Fase 1 SaaS: tests de use-cases críticos",
+    "description": "Suite jest para la lógica de negocio que sostiene el producto: cálculo de score/semáforo, transiciones de pipeline (secuencial + Perdido + terminales), TASK_POINTS/calidad de actividad, authz (ownership Seller vs bypass Admin/Director), anti-solapamiento de tareas, anti-duplicados de clientes.",
+    "status": "pending",
+    "priority": 62,
+    "backend_modules": ["dashboard", "pipeline", "activities", "tasks", "clients", "auth"],
+    "frontend_modules": [],
+    "notes": "Origen: auditoría 2026-07-07, Fase 1 — riesgo #1: 3 archivos de test para ~25k LOC. Patrón existente: create-activity.use-case.spec.ts y login.use-case.spec.ts (mocks de repos por interfaz). Objetivo: ~15-20 specs de use-cases puros, sin DB. Meta de cobertura: use-cases de mutación y scoring, no controllers ni repos. Corre en CI (feature 61)."
+  },
+  {
+    "id": "63-refresh-tokens",
+    "name": "Fase 1 SaaS: refresh tokens + expiración corta",
+    "description": "Access token corto (15min) + refresh token (7d) con rotación. Endpoint POST /api/auth/refresh. Frontend: interceptor axios reintenta con refresh en 401. Logout invalida refresh token (hash en DB). Prerequisito de seguridad para vender a terceros.",
+    "status": "pending",
+    "priority": 63,
+    "backend_modules": ["auth", "users"],
+    "frontend_modules": ["auth"],
+    "notes": "Origen: auditoría 2026-07-07, Fase 1. Hoy: JWT único en localStorage sin revocación. Diseño: columna refresh_token_hash en users (o tabla sessions si se quiere multi-device), rotación en cada refresh, revocación en logout/block. Frontend: axios.ts interceptor de response 401 → POST /auth/refresh → retry; evitar loops (flag _retry). Migración idempotente nueva. Cuidado: no romper /lamina (auth propio, feature 40)."
+  },
+  {
+    "id": "64-structured-logging",
+    "name": "Fase 1 SaaS: logging estructurado",
+    "description": "Reemplazar console logger default de Nest por logging estructurado JSON (nestjs-pino): request logging con latencia/status/userId, correlation id, niveles por env. Necesario para operar clientes de pago en prod.",
+    "status": "pending",
+    "priority": 64,
+    "backend_modules": [],
+    "frontend_modules": [],
+    "notes": "Origen: auditoría 2026-07-07, Fase 1. Nota de feature 01 ('instalar winston') nunca ejecutada — decidir pino vs winston; pino recomendado (nestjs-pino, más rápido, JSON nativo). Solo main.ts/app.module.ts + deps — no toca modules/. Redactar Authorization header y password en logs. Verificar que Dokploy capture stdout JSON."
+  },
+  {
+    "id": "65-prod-db-backups",
+    "name": "Fase 1 SaaS: backups automatizados de DB en prod",
+    "description": "Backup diario automatizado de la DB postgres:18 del VPS (pg_dump + retención 14-30d), restore documentado y probado una vez. Sin backups verificados no se puede firmar con un cliente.",
+    "status": "pending",
+    "priority": 65,
+    "backend_modules": [],
+    "frontend_modules": [],
+    "notes": "Origen: auditoría 2026-07-07, Fase 1. Infra pura, sin código de app. Opciones: feature de backups de Dokploy (verificar si el plan lo incluye, destino S3/local) o cron en VPS con pg_dump + rotación. Documentar restore en docs/verification.md y ejecutarlo una vez contra DB temporal para validar. La DB de prod corre en contenedor postgres:18 separado (ver memoria project_prod_vps)."
+  },
+  {
+    "id": "66-multitenancy-org",
+    "name": "Fase 2 SaaS: multi-tenancy (org_id)",
+    "description": "Columna org_id en todas las tablas de negocio, tabla organizations, scoping por org en todos los repos, org en JWT, índices compuestos org-first, seed/onboarding de organización. Convierte la app single-company en SaaS multi-cliente.",
+    "status": "pending",
+    "priority": 66,
+    "backend_modules": ["auth", "users", "sellers", "clients", "activities", "tasks", "pipeline", "sales", "settings", "dashboard", "coaching", "reports", "import-export"],
+    "frontend_modules": [],
+    "notes": "Origen: auditoría 2026-07-07 + decisión usuario 2026-07-07: el producto SE VENDE a otras empresas → multi-tenancy va ANTES de configurabilidad (custom fields, catálogos). Feature grande — al llegar aquí, partirla en sub-features (schema+migración, JWT+guards, scoping repos por módulo, settings por org, onboarding). Decidir: scoping en repos (más simple) vs RLS Postgres (más seguro). La empresa actual en prod se migra como org #1. NO empezar hasta cerrar Fase 1 (61-65)."
   }
 ]
