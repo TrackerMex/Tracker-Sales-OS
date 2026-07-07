@@ -1,6 +1,8 @@
 import { useState, Fragment } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons"
 import { clientsApi } from "@/modules/clients/infrastructure/clients.api"
 import { activitiesApi } from "@/modules/activities/infrastructure/activities.api"
 import { ActivityHistoryModal } from "@/modules/activities/presentation/components/ActivityHistoryModal"
@@ -10,6 +12,19 @@ import type { Deal, PipelineStage } from "../../domain/pipeline.types"
 import type { Activity } from "@/modules/activities/domain/activities.types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Card, CardContent } from "@/components/ui/card"
 
 interface Props {
   deal: Deal
@@ -172,112 +187,135 @@ export function ClientDetailPage({ deal, onBack }: Props) {
       </div>
 
       {/* Client info — 2 cols */}
-      <div style={{
-        padding: '16px 20px', borderBottom: '1px solid #E2E8F0',
-        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
-      }}>
-        <div>
-          <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>
-            Contactos
-          </p>
-          {client?.contacts && client.contacts.length > 0 ? (
-            client.contacts.map((c) => (
-              <div key={c.id} style={{ marginBottom: 6 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>{c.name}</p>
-                <p style={{ fontSize: 11, color: '#94A3B8' }}>
-                  {c.role}{c.isDecisionMaker ? ' · Principal' : ''}
-                </p>
-              </div>
-            ))
-          ) : (
-            <p style={{ fontSize: 12, color: '#94A3B8' }}>Sin contactos</p>
-          )}
-        </div>
-        <div>
-          <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Dolor</p>
-          <p style={{ fontSize: 12, color: '#334155', marginBottom: 12 }}>{client?.pain ?? deal.painPoint ?? '-'}</p>
-          <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Proveedor</p>
-          <p style={{ fontSize: 12, color: '#334155' }}>{client?.provider ?? '-'}</p>
-        </div>
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0' }}>
+        <Card size="sm" className="py-0">
+          <CardContent>
+            <Accordion type="multiple" defaultValue={['contacts']}>
+              <AccordionItem value="contacts">
+                <AccordionTrigger>Contactos</AccordionTrigger>
+                <AccordionContent className="space-y-2">
+                  {client?.contacts && client.contacts.length > 0 ? (
+                    client.contacts.map((c) => (
+                      <div key={c.id}>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>{c.name}</p>
+                        <p style={{ fontSize: 11, color: '#94A3B8' }}>
+                          {c.role}{c.isDecisionMaker ? ' · Principal' : ''}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p style={{ fontSize: 12, color: '#94A3B8' }}>Sin contactos</p>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="pain">
+                <AccordionTrigger>Dolor / necesidad</AccordionTrigger>
+                <AccordionContent>
+                  <p style={{ fontSize: 12, color: '#334155' }}>{client?.pain ?? deal.painPoint ?? '-'}</p>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="provider">
+                <AccordionTrigger>Proveedor actual</AccordionTrigger>
+                <AccordionContent>
+                  <p style={{ fontSize: 12, color: '#334155' }}>{client?.provider ?? '-'}</p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Activity Timeline */}
       <div style={{ padding: '16px 20px', flex: 1 }}>
-        <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 12 }}>
-          Historial comercial
-        </p>
+        <Card size="sm" className="py-0">
+          <CardContent>
+            <p style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 12 }}>
+              Historial comercial
+            </p>
 
-        {clientActivities.length === 0 ? (
-          <p style={{ fontSize: 12, color: '#94A3B8' }}>Sin actividades registradas</p>
-        ) : (
-          <div style={{ position: 'relative' }}>
-            <div style={{
-              position: 'absolute', left: 9, top: 8, bottom: 8,
-              width: 2, background: '#E2E8F0',
-            }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {clientActivities.map((activity) => (
-                <div key={activity.id} style={{ display: 'flex', gap: 16, position: 'relative' }}>
-                  <div style={{
-                    width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                    background: activity.status === 'Completada' ? '#82bc00'
-                      : activity.status === 'Cancelada' ? '#94A3B8' : '#E2E8F0',
-                    border: '2px solid #fff', zIndex: 1, marginTop: 2,
-                  }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }}>
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <Badge variant="navy">{activity.type}</Badge>
-                        {activity.stage && (
-                          <Badge variant="gray">{activity.stage}</Badge>
+            {clientActivities.length === 0 ? (
+              <p style={{ fontSize: 12, color: '#94A3B8' }}>Sin actividades registradas</p>
+            ) : (
+              <div style={{ position: 'relative' }}>
+                <div style={{
+                  position: 'absolute', left: 9, top: 8, bottom: 8,
+                  width: 2, background: '#E2E8F0',
+                }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {clientActivities.map((activity) => (
+                    <div key={activity.id} style={{ display: 'flex', gap: 16, position: 'relative' }}>
+                      <div style={{
+                        width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                        background: activity.status === 'Completada' ? '#82bc00'
+                          : activity.status === 'Cancelada' ? '#94A3B8' : '#E2E8F0',
+                        border: '2px solid #fff', zIndex: 1, marginTop: 2,
+                      }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }}>
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                            <Badge variant="navy">{activity.type}</Badge>
+                            {activity.stage && (
+                              <Badge variant="gray">{activity.stage}</Badge>
+                            )}
+                          </div>
+                          <span style={{ fontSize: 11, color: '#94A3B8', flexShrink: 0, marginLeft: 8 }}>
+                            {new Date(activity.executedAt).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' })}
+                          </span>
+                        </div>
+                        {activity.summary && (
+                          <div style={{ marginBottom: 4 }}>
+                            <p style={{ fontSize: 12, color: '#334155', lineHeight: 1.4 }}>
+                              {activity.summary.length > 120 && !expandedIds.has(activity.id)
+                                ? activity.summary.slice(0, 120) + '...'
+                                : activity.summary}
+                            </p>
+                            {activity.summary.length > 120 && (
+                              <Button
+                                variant="link"
+                                size="xs"
+                                className="h-auto px-0 py-0 text-[10px] text-[#64748B]"
+                                onClick={() => toggleExpand(activity.id)}
+                              >
+                                {expandedIds.has(activity.id) ? 'Ver menos' : 'Ver más'}
+                              </Button>
+                            )}
+                          </div>
                         )}
-                      </div>
-                      <span style={{ fontSize: 11, color: '#94A3B8', flexShrink: 0, marginLeft: 8 }}>
-                        {new Date(activity.executedAt).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' })}
-                      </span>
-                    </div>
-                    {activity.summary && (
-                      <div style={{ marginBottom: 4 }}>
-                        <p style={{ fontSize: 12, color: '#334155', lineHeight: 1.4 }}>
-                          {activity.summary.length > 120 && !expandedIds.has(activity.id)
-                            ? activity.summary.slice(0, 120) + '...'
-                            : activity.summary}
-                        </p>
-                        {activity.summary.length > 120 && (
-                          <Button
-                            variant="link"
-                            size="xs"
-                            className="h-auto px-0 py-0 text-[10px] text-[#64748B]"
-                            onClick={() => toggleExpand(activity.id)}
-                          >
-                            {expandedIds.has(activity.id) ? 'Ver menos' : 'Ver más'}
-                          </Button>
+                        {activity.nextStep && (
+                          <p style={{ fontSize: 11, color: '#82bc00', fontWeight: 600 }}>
+                            → {activity.nextStep}
+                          </p>
                         )}
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 4 }}>
+                          <span style={{ fontSize: 10, color: '#94A3B8' }}>
+                            +{activity.points}pts · {activity.quality}% cal.
+                          </span>
+                          <DropdownMenu>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon-xs" aria-label="Acciones de actividad">
+                                    <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>Acciones de actividad</TooltipContent>
+                            </Tooltip>
+                            <DropdownMenuContent align="end" className="min-w-44">
+                              <DropdownMenuItem onSelect={() => setSelectedActivityId(activity.id)}>
+                                Ver detalle
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
-                    )}
-                    {activity.nextStep && (
-                      <p style={{ fontSize: 11, color: '#82bc00', fontWeight: 600 }}>
-                        → {activity.nextStep}
-                      </p>
-                    )}
-                    <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
-                      <span style={{ fontSize: 10, color: '#94A3B8' }}>
-                        +{activity.points}pts · {activity.quality}% cal.
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        onClick={() => setSelectedActivityId(activity.id)}
-                      >
-                        Detalle
-                      </Button>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Sticky footer */}

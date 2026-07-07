@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,6 +12,18 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Badge, type BadgeVariant } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import type { Task } from '../../domain/tasks.types'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -21,6 +34,7 @@ import {
   CheckmarkCircle02Icon,
   ArrowReloadHorizontalIcon,
   Delete02Icon,
+  MoreHorizontalCircle01Icon,
 } from '@hugeicons/core-free-icons'
 
 interface TaskCardProps {
@@ -63,6 +77,8 @@ export const TYPE_TAG: Record<string, BadgeVariant> = {
 }
 
 export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, clientName, contactName }: TaskCardProps) {
+  const [reactivateOpen, setReactivateOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const isOverdue = task.isOverdue && task.status === 'Pendiente'
   const aiComment = getAiComment(task, clientName ?? null)
   const typeTagVariant = task.type ? (TYPE_TAG[task.type] ?? 'gray') : null
@@ -118,16 +134,6 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
       </div>
 
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => onEdit(task)}
-          title="Editar tarea"
-          className="text-[#64748B]"
-        >
-          <HugeiconsIcon icon={PencilEdit02Icon} size={13} color="currentColor" strokeWidth={1.8} />
-        </Button>
-
         {task.status === 'Pendiente' ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -152,44 +158,58 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
             </AlertDialogContent>
           </AlertDialog>
         ) : (
-          <>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="secondary" size="sm">
-                  <HugeiconsIcon icon={ArrowReloadHorizontalIcon} size={13} color="currentColor" strokeWidth={1.8} />
-                  Reactivar
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Reactivar esta tarea?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Volverá a estado Pendiente y podrás completarla de nuevo.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onReactivate(task.id)}>
-                    Sí, reactivar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            <Badge variant="gray">Completada</Badge>
-          </>
+          <Badge variant="gray">Completada</Badge>
         )}
 
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="destructive"
-              size="sm"
-              title="Eliminar tarea"
-            >
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm" aria-label="Acciones de tarea">
+                  <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Acciones de tarea</TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="end" className="min-w-44">
+            {task.status === 'Pendiente' ? (
+              <DropdownMenuItem onSelect={() => onEdit(task)}>
+                <HugeiconsIcon icon={PencilEdit02Icon} size={13} color="currentColor" strokeWidth={1.8} />
+                Editar tarea
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onSelect={() => setReactivateOpen(true)}>
+                <HugeiconsIcon icon={ArrowReloadHorizontalIcon} size={13} color="currentColor" strokeWidth={1.8} />
+                Reactivar tarea
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onSelect={() => setDeleteOpen(true)}>
               <HugeiconsIcon icon={Delete02Icon} size={13} color="currentColor" strokeWidth={1.8} />
-              Eliminar
-            </Button>
-          </AlertDialogTrigger>
+              Eliminar tarea
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <AlertDialog open={reactivateOpen} onOpenChange={setReactivateOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Reactivar esta tarea?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Volverá a estado Pendiente y podrás completarla de nuevo.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => onReactivate(task.id)}>
+                Sí, reactivar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>¿Eliminar esta tarea?</AlertDialogTitle>

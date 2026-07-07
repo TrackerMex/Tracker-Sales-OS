@@ -12,6 +12,8 @@ import {
 import { toast } from "sonner"
 import { Badge, type BadgeVariant } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Card, CardContent } from "@/components/ui/card"
 
 interface Props {
   activityId: string | null
@@ -79,66 +81,80 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
 
         {activity && (
           <div className="space-y-4">
-            <div>
-              <p className="kl mb-1">Estado actual</p>
-              <Badge variant={STATUS_VARIANTS[currentStatus] ?? "gray"}>
-                {currentStatus}
-              </Badge>
-            </div>
+            <Card size="sm">
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="kl mb-1">Estado actual</p>
+                  <Badge variant={STATUS_VARIANTS[currentStatus] ?? "gray"}>
+                    {currentStatus}
+                  </Badge>
+                </div>
 
-            {nextTransitions.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {nextTransitions.map((next) => (
-                  <Button
-                    key={next}
-                    variant={next === "Cancelada" ? "ghost" : "default"}
-                    disabled={isPending}
-                    onClick={() => handleTransition(next)}
-                  >
-                    {TRANSITION_LABELS[next] ?? next}
-                  </Button>
-                ))}
-              </div>
-            )}
+                {nextTransitions.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {nextTransitions.map((next) => (
+                      <Button
+                        key={next}
+                        variant={next === "Cancelada" ? "ghost" : "default"}
+                        disabled={isPending}
+                        onClick={() => handleTransition(next)}
+                      >
+                        {TRANSITION_LABELS[next] ?? next}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-            <div>
-              <p className="kl mb-2">Historial de cambios</p>
-              {!activity.activityHistory ||
-              activity.activityHistory.length === 0 ? (
-                <p style={{ fontSize: 13, color: "#94A3B8" }}>
-                  Sin actualizaciones aún
-                </p>
-              ) : (
-                <ul className="space-y-2">
-                  {activity.activityHistory.map((entry, i) => (
-                    <li key={i} style={{ fontSize: 12, color: "#0F172A" }}>
-                      <span style={{ color: "#94A3B8" }}>
-                        {new Date(entry.changedAt).toLocaleString("es-MX", {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        })}
-                      </span>{" "}
-                      <Badge variant={STATUS_VARIANTS[entry.oldStatus] ?? "gray"}>
-                        {entry.oldStatus}
-                      </Badge>
-                      {" → "}
-                      <Badge variant={STATUS_VARIANTS[entry.newStatus] ?? "gray"}>
-                        {entry.newStatus}
-                      </Badge>{" "}
-                      <span style={{ color: "#64748B" }}>
-                        por: {entry.changedBy}
-                      </span>
-                      {entry.comment && (
-                        <span style={{ color: "#64748B" }}>
-                          {" "}
-                          — {entry.comment}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <Accordion
+              type="single"
+              collapsible
+              defaultValue={activity.activityHistory?.length ? "history" : undefined}
+            >
+              <AccordionItem value="history">
+                <AccordionTrigger>
+                  Historial de cambios ({activity.activityHistory?.length ?? 0})
+                </AccordionTrigger>
+                <AccordionContent>
+                  {!activity.activityHistory ||
+                  activity.activityHistory.length === 0 ? (
+                    <p style={{ fontSize: 13, color: "#94A3B8" }}>
+                      Sin actualizaciones aún
+                    </p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {activity.activityHistory.map((entry, i) => (
+                        <li key={i} style={{ fontSize: 12, color: "#0F172A" }}>
+                          <span style={{ color: "#94A3B8" }}>
+                            {new Date(entry.changedAt).toLocaleString("es-MX", {
+                              dateStyle: "short",
+                              timeStyle: "short",
+                            })}
+                          </span>{" "}
+                          <Badge variant={STATUS_VARIANTS[entry.oldStatus] ?? "gray"}>
+                            {entry.oldStatus}
+                          </Badge>
+                          {" → "}
+                          <Badge variant={STATUS_VARIANTS[entry.newStatus] ?? "gray"}>
+                            {entry.newStatus}
+                          </Badge>{" "}
+                          <span style={{ color: "#64748B" }}>
+                            por: {entry.changedBy}
+                          </span>
+                          {entry.comment && (
+                            <span style={{ color: "#64748B" }}>
+                              {" "}
+                              — {entry.comment}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         )}
       </DialogContent>

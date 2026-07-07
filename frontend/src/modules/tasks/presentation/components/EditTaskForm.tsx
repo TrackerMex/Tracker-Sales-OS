@@ -9,6 +9,7 @@ import { DatePickerField } from '@/shared/components/forms/DatePickerField'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import {
   Dialog,
   DialogContent,
@@ -207,9 +208,16 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
           </div>
 
           {showOutlookReminder && (
-            <div style={{ padding: '11px 13px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1D4ED8' }}>
-              Recordatorio: si es videoconferencia o cita, actualízala también en Outlook.
-            </div>
+            <Accordion type="single" collapsible defaultValue="outlook">
+              <AccordionItem value="outlook">
+                <AccordionTrigger>Recordatorio Outlook</AccordionTrigger>
+                <AccordionContent>
+                  <div style={{ padding: '11px 13px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1D4ED8' }}>
+                    Recordatorio: si es videoconferencia o cita, actualízala también en Outlook.
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           )}
 
           <Button

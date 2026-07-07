@@ -1,6 +1,8 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
 import { toast } from "sonner"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons"
 import { useAppStore } from "../../../../shared/store/app.store"
 import { UserRole } from "../../../../core/domain/types/common.types"
 import { useUsers } from "../../application/hooks/useUsers"
@@ -9,8 +11,30 @@ import { useBlockUser } from "../../application/hooks/useBlockUser"
 import { useCreateSeller } from "../../application/hooks/useCreateSeller"
 import { useCreateUser } from "../../application/hooks/useCreateUser"
 import { useDeactivateSeller } from "../../application/hooks/useDeactivateSeller"
+import type { EquipoSeller, EquipoUser } from "../../domain/equipo.types"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
   Select,
   SelectContent,
@@ -18,6 +42,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+
+type EquipoConfirmAction =
+  | { kind: "user"; target: EquipoUser }
+  | { kind: "seller"; target: EquipoSeller }
 
 export function EquipoPage() {
   const currentUser = useAppStore((s) => s.currentUser)
@@ -35,6 +63,39 @@ export function EquipoPage() {
   const [userName, setUserName] = useState("")
   const [userRole, setUserRole] = useState<string>("Seller")
   const [userSellerId, setUserSellerId] = useState<string>("")
+  const [confirmAction, setConfirmAction] = useState<EquipoConfirmAction | null>(null)
+
+  const isConfirmPending = blockUser.isPending || deactivateSeller.isPending
+  const confirmLabel = confirmAction
+    ? confirmAction.kind === "user"
+      ? confirmAction.target.active
+        ? "Bloquear usuario"
+        : "Activar usuario"
+      : confirmAction.target.active
+        ? "Dar baja vendedor"
+        : "Reactivar vendedor"
+    : ""
+  const confirmTargetName = confirmAction
+    ? confirmAction.kind === "user"
+      ? confirmAction.target.name || confirmAction.target.username
+      : confirmAction.target.name
+    : ""
+  const confirmVariant = confirmAction?.target.active ? "destructive" : "default"
+
+  function handleConfirmAction() {
+    if (!confirmAction || isConfirmPending) return
+
+    if (confirmAction.kind === "user") {
+      blockUser.mutate(confirmAction.target.id, {
+        onSettled: () => setConfirmAction(null),
+      })
+      return
+    }
+
+    deactivateSeller.mutate(confirmAction.target.id, {
+      onSettled: () => setConfirmAction(null),
+    })
+  }
 
   if (currentUser?.role === UserRole.Seller) {
     return (
@@ -172,14 +233,31 @@ export function EquipoPage() {
                     <p className="text-sm font-semibold" style={{ color: "#0F172A" }}>{user.name || user.username}</p>
                     <p className="text-xs" style={{ color: "#94A3B8" }}>{user.username} · {user.role}</p>
                   </div>
-                  <button
-                    onClick={() => blockUser.mutate(user.id)}
-                    disabled={blockUser.isPending || user.username === "admin"}
-                    className="text-xs font-semibold disabled:opacity-50"
-                    style={{ color: user.active ? "#DC2626" : "#4a7c00", background: "none", border: "none", cursor: "pointer" }}
-                  >
-                    {user.active ? "Bloquear" : "Activar"}
-                  </button>
+                  <DropdownMenu>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            disabled={blockUser.isPending || user.username === "admin"}
+                            aria-label={`Acciones de usuario ${user.username}`}
+                          >
+                            <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>Acciones de usuario</TooltipContent>
+                    </Tooltip>
+                    <DropdownMenuContent align="end" className="min-w-44">
+                      <DropdownMenuItem
+                        variant={user.active ? "destructive" : "default"}
+                        onSelect={() => setConfirmAction({ kind: "user", target: user })}
+                      >
+                        {user.active ? "Bloquear usuario" : "Activar usuario"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               ))
             )}
@@ -204,19 +282,63 @@ export function EquipoPage() {
                   <p className="text-sm font-semibold" style={{ color: "#0F172A" }}>{seller.name}</p>
                   <p className="text-xs" style={{ color: "#94A3B8", marginTop: 2 }}>{seller.profile || "Sin perfil"}</p>
                 </div>
-                <button
-                  onClick={() => deactivateSeller.mutate(seller.id)}
-                  disabled={deactivateSeller.isPending}
-                  className="text-xs font-semibold disabled:opacity-50"
-                  style={{ color: seller.active ? "#DC2626" : "#4a7c00", background: "none", border: "none", cursor: "pointer" }}
-                >
-                  {seller.active ? "Dar baja" : "Reactivar"}
-                </button>
+                <DropdownMenu>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          disabled={deactivateSeller.isPending}
+                          aria-label={`Acciones de vendedor ${seller.name}`}
+                        >
+                          <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>Acciones de vendedor</TooltipContent>
+                  </Tooltip>
+                  <DropdownMenuContent align="end" className="min-w-44">
+                    <DropdownMenuItem
+                      variant={seller.active ? "destructive" : "default"}
+                      onSelect={() => setConfirmAction({ kind: "seller", target: seller })}
+                    >
+                      {seller.active ? "Dar baja vendedor" : "Reactivar vendedor"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      <AlertDialog
+        open={!!confirmAction}
+        onOpenChange={(open) => {
+          if (!open && !isConfirmPending) setConfirmAction(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmLabel}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Confirma que quieres {confirmLabel.toLowerCase()} a {confirmTargetName}.
+              Esta acción actualizará el estado en Equipo Comercial.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isConfirmPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              variant={confirmVariant}
+              disabled={isConfirmPending}
+              onClick={handleConfirmAction}
+            >
+              {isConfirmPending ? "Procesando..." : confirmLabel}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

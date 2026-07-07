@@ -2,13 +2,24 @@ import { useState } from "react"
 import { useSearch } from "@tanstack/react-router"
 import { toast } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { OfficeIcon, User02Icon, CheckListIcon } from "@hugeicons/core-free-icons"
+import { OfficeIcon, User02Icon, CheckListIcon, MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons"
 import { useDailyActivities } from "../../application/hooks/useDailyActivities"
 import { useCreateActivity } from "../../application/hooks/useCreateActivity"
 import { ActivityForm } from "../components/ActivityForm"
 import { ActivityHistoryModal } from "../components/ActivityHistoryModal"
 import { Badge, type BadgeVariant } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import type { CreateActivityInput } from "../../domain/activities.types"
 
 const STATUS_BADGE_VARIANTS: Record<string, BadgeVariant> = {
@@ -150,13 +161,23 @@ export function ActivitiesPage() {
                 <Badge variant={STATUS_BADGE_VARIANTS[activity.status ?? "Pendiente"] ?? "yellow"}>
                   {activity.status ?? 'Pendiente'}
                 </Badge>
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => setSelectedActivityId(activity.id)}
-                >
-                  Ver historial
-                </Button>
+                <DropdownMenu>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon-xs" aria-label="Acciones de actividad">
+                          <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>Acciones de actividad</TooltipContent>
+                  </Tooltip>
+                  <DropdownMenuContent align="end" className="min-w-44">
+                    <DropdownMenuItem onSelect={() => setSelectedActivityId(activity.id)}>
+                      Ver historial
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           ))}

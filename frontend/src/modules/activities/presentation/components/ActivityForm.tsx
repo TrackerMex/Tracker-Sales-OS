@@ -26,6 +26,7 @@ import { DatePickerField } from "@/shared/components/forms/DatePickerField"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import {
   Select,
   SelectContent,
@@ -720,68 +721,69 @@ export function ActivityForm({
       )}
 
       {/* Sección 5 — AI Coach (colapsado por defecto) */}
-      <div>
-        <button
-          type="button"
-          onClick={() => setShowAiCoach((v) => !v)}
-          style={TOGGLE_STYLE}
-        >
-          Coach IA {showAiCoach ? "▲" : "▼"}
-        </button>
-        {showAiCoach && (
-          <div className="ai-box" style={{ marginTop: 8 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <p className="text-sm font-medium text-purple-900">
-                Sugerencias IA
-              </p>
-              <button
-                type="button"
-                onClick={fetchAiSuggestions}
-                disabled={aiLoading}
+      <Accordion
+        type="single"
+        collapsible
+        value={showAiCoach ? "coach" : ""}
+        onValueChange={(value) => setShowAiCoach(value === "coach")}
+      >
+        <AccordionItem value="coach">
+          <AccordionTrigger>Coach IA</AccordionTrigger>
+          <AccordionContent>
+            <div className="ai-box">
+              <div
                 style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "#7c3aed",
-                  background: "none",
-                  border: "1px solid #c4b5fd",
-                  borderRadius: 6,
-                  padding: "2px 10px",
-                  cursor: "pointer",
-                }}
-              >
-                {aiLoading ? "Cargando..." : "Obtener sugerencias"}
-              </button>
-            </div>
-            {aiTips.length > 0 ? (
-              <ul
-                style={{
-                  marginTop: 8,
-                  paddingLeft: 16,
                   display: "flex",
-                  flexDirection: "column",
-                  gap: 4,
+                  justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
-                {aiTips.map((tip, i) => (
-                  <li key={i} style={{ fontSize: 12, color: "#6d28d9" }}>
-                    {tip}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-1 text-sm text-purple-700">
-                {getCoachMessage()}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
+                <p className="text-sm font-medium text-purple-900">
+                  Sugerencias IA
+                </p>
+                <button
+                  type="button"
+                  onClick={fetchAiSuggestions}
+                  disabled={aiLoading}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "#7c3aed",
+                    background: "none",
+                    border: "1px solid #c4b5fd",
+                    borderRadius: 6,
+                    padding: "2px 10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {aiLoading ? "Cargando..." : "Obtener sugerencias"}
+                </button>
+              </div>
+              {aiTips.length > 0 ? (
+                <ul
+                  style={{
+                    marginTop: 8,
+                    paddingLeft: 16,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                  }}
+                >
+                  {aiTips.map((tip, i) => (
+                    <li key={i} style={{ fontSize: 12, color: "#6d28d9" }}>
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1 text-sm text-purple-700">
+                  {getCoachMessage()}
+                </p>
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {/* Sección 6 — Submit */}
       <Button type="submit" disabled={isLoading} variant="success" className="w-full">

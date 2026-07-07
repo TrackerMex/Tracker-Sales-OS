@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import {
   Dialog,
   DialogContent,
@@ -256,56 +257,74 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, in
             <FieldError name="scheduledAt" message={fieldErrors.scheduledAt} />
           </div>
 
-          {scheduledToday.length > 0 && (
-            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 12px' }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-                Ocupado ese día ({scheduledToday.length})
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {scheduledToday.map((t) => {
-                  const clientName = t.clientName ?? null
-                  return (
-                    <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
-                      <span style={{ fontWeight: 700, color: '#0F172A', minWidth: 42 }}>{formatScheduleTime(t.scheduledAt)}</span>
-                      {t.type && <Badge variant="gray">{t.type}</Badge>}
-                      {clientName && <span style={{ color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientName}</span>}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* AI box */}
-          <div className="ai-box">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#7c3aed' }}>Coach IA</span>
-              <button
-                type="button"
-                onClick={fetchAiSuggestions}
-                disabled={aiLoading}
-                style={{ fontSize: 11, fontWeight: 600, color: '#7c3aed', background: 'none', border: '1px solid #c4b5fd', borderRadius: 6, padding: '2px 10px', cursor: 'pointer' }}
-              >
-                {aiLoading ? 'Cargando...' : 'Obtener sugerencias'}
-              </button>
-            </div>
-            {aiTips.length > 0 ? (
-              <ul style={{ paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {aiTips.map((tip, i) => (
-                  <li key={i} style={{ fontSize: 12, color: '#6d28d9' }}>{tip}</li>
-                ))}
-              </ul>
-            ) : (
-              <span style={{ fontSize: 12, color: '#6d28d9' }}>{aiComment}</span>
+          <Accordion
+            key={`${scheduledToday.length}-${showOutlookReminder}`}
+            type="multiple"
+            defaultValue={[
+              ...(scheduledToday.length > 0 ? ['busy'] : []),
+              'coach',
+              ...(showOutlookReminder ? ['outlook'] : []),
+            ]}
+          >
+            {scheduledToday.length > 0 && (
+              <AccordionItem value="busy">
+                <AccordionTrigger>Ocupado ese día ({scheduledToday.length})</AccordionTrigger>
+                <AccordionContent>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {scheduledToday.map((t) => {
+                      const clientName = t.clientName ?? null
+                      return (
+                        <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+                          <span style={{ fontWeight: 700, color: '#0F172A', minWidth: 42 }}>{formatScheduleTime(t.scheduledAt)}</span>
+                          {t.type && <Badge variant="gray">{t.type}</Badge>}
+                          {clientName && <span style={{ color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientName}</span>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             )}
-          </div>
 
-          {/* outlook reminder */}
-          {showOutlookReminder && (
-            <div style={{ padding: '11px 13px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1D4ED8' }}>
-              Recordatorio: si es videoconferencia o cita, regístrala también en Outlook.
-            </div>
-          )}
+            <AccordionItem value="coach">
+              <AccordionTrigger>Coach IA</AccordionTrigger>
+              <AccordionContent>
+                <div className="ai-box">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#7c3aed' }}>Sugerencias IA</span>
+                    <button
+                      type="button"
+                      onClick={fetchAiSuggestions}
+                      disabled={aiLoading}
+                      style={{ fontSize: 11, fontWeight: 600, color: '#7c3aed', background: 'none', border: '1px solid #c4b5fd', borderRadius: 6, padding: '2px 10px', cursor: 'pointer' }}
+                    >
+                      {aiLoading ? 'Cargando...' : 'Obtener sugerencias'}
+                    </button>
+                  </div>
+                  {aiTips.length > 0 ? (
+                    <ul style={{ paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {aiTips.map((tip, i) => (
+                        <li key={i} style={{ fontSize: 12, color: '#6d28d9' }}>{tip}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span style={{ fontSize: 12, color: '#6d28d9' }}>{aiComment}</span>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {showOutlookReminder && (
+              <AccordionItem value="outlook">
+                <AccordionTrigger>Recordatorio Outlook</AccordionTrigger>
+                <AccordionContent>
+                  <div style={{ padding: '11px 13px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1D4ED8' }}>
+                    Recordatorio: si es videoconferencia o cita, regístrala también en Outlook.
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+          </Accordion>
 
           <Button
             type="submit"

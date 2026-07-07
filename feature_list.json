@@ -596,30 +596,30 @@
     "id": "58-shadcn-dropdown-actions",
     "name": "UI: migrar acciones compactas a shadcn DropdownMenu",
     "description": "Usar DropdownMenu de shadcn para grupos de acciones en cards, filas y listados: editar, eliminar, completar, reactivar, ver detalle y acciones secundarias.",
-    "status": "pending",
+    "status": "done",
     "priority": 58,
     "backend_modules": [],
     "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales", "equipo", "reports"],
-    "notes": "Planificado para ejecutar el 2026-07-08. Priorizar zonas con demasiados botones visibles. Mantener acciones destructivas con AlertDialog y no ocultar acciones primarias criticas si afectan el flujo principal."
+    "notes": "Completada 2026-07-07. Migradas acciones compactas a shadcn DropdownMenu en cards/listados de clientes, tareas, ventas, equipo, actividades, detalle pipeline y reportes. Acciones primarias criticas siguen visibles: Completar tarea, Registrar actividad, Registrar avance y Abrir lamina. Destructivas/sensibles conservan confirmacion con AlertDialog: eliminar cliente/tarea/venta y bloquear/activar usuario o dar baja/reactivar vendedor en Equipo. Verificacion Lider: rg confirm()/alert() sin resultados en modules/shared/routes; busqueda de botones secundarios visibles sin resultados relevantes; npx tsc --noEmit frontend exit 0; git diff --check sin errores. Detalle: progress/impl_58-shadcn-dropdown-actions.md."
   },
   {
     "id": "59-shadcn-tooltips",
     "name": "UI: agregar Tooltips en icon buttons",
     "description": "Agregar Tooltip de shadcn a botones icon-only y acciones compactas para mejorar descubribilidad sin agregar texto visible innecesario.",
-    "status": "pending",
+    "status": "done",
     "priority": 59,
     "backend_modules": [],
     "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales", "dashboard", "mi-dia", "reports", "settings"],
-    "notes": "Planificado para ejecutar el 2026-07-08. Cubrir icon buttons de editar, eliminar, cerrar, calendario, vista, acciones rapidas y controles compactos. No usar tooltips para informacion esencial que deba estar siempre visible."
+    "notes": "Completada 2026-07-07. App envuelta con TooltipProvider shadcn y agregados tooltips a triggers icon-only de acciones compactas en clientes, tareas, actividades, detalle pipeline, ventas, equipo y reportes. Se mantuvieron aria-labels, los DropdownMenuItems conservan texto visible y no se agregaron tooltips a botones con texto. Dashboard, Mi Dia y settings no tenian acciones compactas icon-only en el alcance final. Verificacion Lider: npx tsc --noEmit frontend exit 0; git diff --check sin errores. Detalle: progress/impl_59-shadcn-tooltips.md."
   },
   {
     "id": "60-shadcn-card-accordion",
     "name": "UI: usar Card y Accordion shadcn en secciones densas",
     "description": "Introducir Card y Accordion de shadcn de forma selectiva en secciones repetidas o colapsables: historial, detalles, bloques secundarios y paneles con mucha informacion.",
-    "status": "pending",
+    "status": "done",
     "priority": 60,
     "backend_modules": [],
     "frontend_modules": ["clients", "pipeline", "activities", "tasks", "sales", "reports", "settings"],
-    "notes": "Planificado para ejecutar el 2026-07-08. Aplicar con criterio: no convertir page sections completas en cards ni crear cards anidadas. Priorizar detalle de cliente, historial de actividad, secciones de formularios largos y bloques colapsables que reduzcan densidad visual."
+    "notes": "Completada 2026-07-07. Review Lider PASSED 10/10 (progress/impl_60-shadcn-card-accordion.md). ClientDetailPage.tsx (Card+Accordion contacts/pain/provider + Card timeline), ActivityHistoryModal.tsx (Card estado actual + Accordion historial), ReportsPage.tsx (Card+Accordion filtros/sellers/summary) y SettingsPage.tsx (Card+Accordion grupos de metas) ya venian de una sesion previa sin commitear. Unico fix de este pase: ClientesPage.tsx:359 tenia un </Card> huerfano cerrando un <div> (bug bloqueante de build) -> corregido a </div>, sidebar oscuro se mantiene <div> custom (no Card, tema oscuro). Decision de criterio: bloque de contactos editables del formulario create/edit (ClientesPage.tsx ~768-853) NO se convierte a Accordion por ser edicion activa de datos, no bloque de solo lectura. ExecutiveSlide.tsx explicitamente fuera de alcance (inline-style puro, requerido para export via window.open+outerHTML). tsc frontend exit 0. Sin Cards anidadas en ningun archivo."
   }
 ]

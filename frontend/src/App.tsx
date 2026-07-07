@@ -16,6 +16,7 @@ import { reportesRoute } from './routes/_app/reportes';
 import { equipoRoute } from './routes/_app/equipo';
 import { configuracionRoute } from './routes/_app/configuracion';
 import { importExportRoute } from './routes/_app/import-export';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -46,5 +47,9 @@ declare module '@tanstack/react-router' {
 }
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <TooltipProvider>
+      <RouterProvider router={router} />
+    </TooltipProvider>
+  );
 }

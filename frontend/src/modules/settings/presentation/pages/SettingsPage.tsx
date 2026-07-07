@@ -8,6 +8,8 @@ import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
 import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const FIELD_LABELS: Record<string, string> = {
   dailyMinPoints: 'Puntos mínimos diarios',
@@ -19,6 +21,24 @@ const FIELD_LABELS: Record<string, string> = {
   stalledRedDays: 'Días rojo (deals estancados)',
   coldAccountDays: 'Días sin contacto para cuenta fría',
 }
+
+const SETTINGS_GROUPS = [
+  {
+    value: 'daily',
+    label: 'Metas diarias',
+    fields: ['dailyMinPoints', 'dailyCallsGoal'],
+  },
+  {
+    value: 'monthly',
+    label: 'Metas mensuales',
+    fields: ['monthlyAmountGoal', 'monthlyUnitGoal', 'sellerMonthlyAmountGoal'],
+  },
+  {
+    value: 'risk',
+    label: 'Riesgo y cartera',
+    fields: ['stalledAmberDays', 'stalledRedDays', 'coldAccountDays'],
+  },
+] as const
 
 export function SettingsPage() {
   const currentUser = useAppStore((s) => s.currentUser)
@@ -65,26 +85,38 @@ export function SettingsPage() {
       <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Configuración</h1>
 
       <form ref={formRef} onSubmit={handleSubmit}>
-        <div className="card p-5 space-y-4">
-          <div className="slabel">Metas del sistema</div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Metas del sistema</CardTitle>
+          </CardHeader>
 
+          <CardContent className="space-y-4">
           <FormErrorSummary error={errorSummary} />
 
-          {(Object.keys(form) as Array<keyof typeof form>).map((field) => (
-            <div key={field}>
-              <label className="slabel mb-1 block">{FIELD_LABELS[field]}</label>
-              <Input
-                type="number"
-                value={form[field] || ''}
-                onChange={(e) => handleChange(field, e.target.value)}
-                disabled={!isAdmin}
-                min={['dailyMinPoints', 'dailyCallsGoal', 'stalledAmberDays', 'stalledRedDays', 'coldAccountDays'].includes(field) ? 1 : 0}
-                style={!isAdmin ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
-                {...fieldErrorProps(field, fieldErrors[field])}
-              />
-              <FieldError name={field} message={fieldErrors[field]} />
-            </div>
-          ))}
+          <Accordion type="multiple" defaultValue={['daily', 'monthly', 'risk']}>
+            {SETTINGS_GROUPS.map((group) => (
+              <AccordionItem key={group.value} value={group.value}>
+                <AccordionTrigger>{group.label}</AccordionTrigger>
+                <AccordionContent className="grid gap-3">
+                  {group.fields.map((field) => (
+                    <div key={field}>
+                      <label className="slabel mb-1 block">{FIELD_LABELS[field]}</label>
+                      <Input
+                        type="number"
+                        value={form[field] || ''}
+                        onChange={(e) => handleChange(field, e.target.value)}
+                        disabled={!isAdmin}
+                        min={['dailyMinPoints', 'dailyCallsGoal', 'stalledAmberDays', 'stalledRedDays', 'coldAccountDays'].includes(field) ? 1 : 0}
+                        style={!isAdmin ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                        {...fieldErrorProps(field, fieldErrors[field])}
+                      />
+                      <FieldError name={field} message={fieldErrors[field]} />
+                    </div>
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
 
           {!isAdmin && (
             <p style={{ fontSize: 12, color: '#94A3B8' }}>Solo los administradores pueden modificar la configuración.</p>
@@ -102,7 +134,8 @@ export function SettingsPage() {
               )}
             </div>
           )}
-        </div>
+          </CardContent>
+        </Card>
       </form>
     </div>
   )

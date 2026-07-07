@@ -2,6 +2,8 @@ import { useMemo, useState, useEffect } from "react"
 import type { FormEvent } from "react"
 import { toast } from "sonner"
 import { useQuery } from "@tanstack/react-query"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons"
 import { UserRole } from "@/core/domain/types/common.types"
 import { useAppStore } from "@/shared/store/app.store"
 import { activitiesApi } from "@/modules/activities/infrastructure/activities.api"
@@ -22,6 +24,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge, type BadgeVariant } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -376,7 +391,7 @@ export function ClientesPage() {
           {/* Right content */}
           <div className="space-y-5">
             {/* Stage update */}
-            <div className="card p-5">
+            <Card className="p-5">
               <p className="slabel mb-3">
                 Actualizar stage
               </p>
@@ -403,10 +418,10 @@ export function ClientesPage() {
                   )
                 })}
               </div>
-            </div>
+            </Card>
 
             {/* Activity history */}
-            <div className="card p-5">
+            <Card className="p-5">
               <p className="slabel mb-3">Historial de actividad ({clientActivities.length})</p>
               {clientActivities.length === 0 ? (
                 <div className="empty-state">Sin actividades registradas para este cliente</div>
@@ -428,7 +443,7 @@ export function ClientesPage() {
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
           </div>
         </div>
 
@@ -480,7 +495,7 @@ export function ClientesPage() {
       {/* Client grid */}
       <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
         {clientList.map((client) => (
-          <div key={client.id} className="card p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
+          <Card key={client.id} className="p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <button
@@ -521,16 +536,29 @@ export function ClientesPage() {
                   Última actividad: {client.lastActivityAt ? formatDate(client.lastActivityAt) : "Sin actividad"}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Button variant="success" onClick={() => openEdit(client)}>
-                  Editar
-                </Button>
-                <Button variant="destructive" onClick={() => setDeleteTarget(client)}>
-                  Eliminar
-                </Button>
-              </div>
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${client.name}`}>
+                        <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Acciones del cliente</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end" className="min-w-44">
+                  <DropdownMenuItem onSelect={() => openEdit(client)}>
+                    Editar cliente
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(client)}>
+                    Eliminar cliente
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 

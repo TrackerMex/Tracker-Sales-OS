@@ -1,10 +1,25 @@
 import { useState } from 'react';
 import { useSearch } from '@tanstack/react-router';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { MoreHorizontalCircle01Icon } from '@hugeicons/core-free-icons';
 import { useMonthlyReport } from '../../application/hooks/useMonthlyReport';
 import { useWinLoss } from '../../application/hooks/useWinLoss';
 import { ExecutiveSlide, buildAnalysis, money, LABEL_STYLE } from '../components/ExecutiveSlide';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Card } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Table,
   TableBody,
@@ -120,7 +135,7 @@ export function ReportsPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Config panel */}
-      <div className="card" style={{ padding: 20 }}>
+      <Card style={{ padding: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Informe Ejecutivo Mensual</div>
@@ -150,18 +165,34 @@ export function ReportsPage() {
               <Input type="number" style={{ width: 140 }} min={1} value={goalPerSeller || ''} onChange={(e) => setGoalPerSeller(Number(e.target.value))} />
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7 }}>
-              <Button onClick={saveGoals} variant="success">{savedMsg ? 'Guardado' : 'Guardar metas'}</Button>
-              <Button onClick={copyReportText} disabled={!data} variant="ghost">
-                {copyMsg === 'ok' ? 'Copiado' : copyMsg === 'fail' ? 'Error al copiar' : 'Copiar informe'}
-              </Button>
-              <Button onClick={shareLink} variant="ghost">
-                {shareLinkMsg === 'ok' ? 'Enlace copiado' : shareLinkMsg === 'fail' ? 'Error al copiar' : 'Compartir'}
-              </Button>
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon-sm" aria-label="Acciones del informe">
+                        <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Acciones del informe</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end" className="min-w-48">
+                  <DropdownMenuItem onSelect={saveGoals}>
+                    {savedMsg ? 'Guardado' : 'Guardar metas'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled={!data} onSelect={copyReportText}>
+                    {copyMsg === 'ok' ? 'Copiado' : copyMsg === 'fail' ? 'Error al copiar' : 'Copiar informe'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={shareLink}>
+                    {shareLinkMsg === 'ok' ? 'Enlace copiado' : shareLinkMsg === 'fail' ? 'Error al copiar' : 'Compartir informe'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button onClick={openLamina}>Abrir lámina</Button>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       {isLoading && <p style={{ fontSize: 13, color: '#94A3B8' }}>Cargando reporte...</p>}
       {error && (
@@ -189,70 +220,80 @@ export function ReportsPage() {
 
             {/* Detalle Top Vendedores */}
             {data.sellers.length > 0 && (
-              <div className="card" style={{ padding: 20 }}>
-                <div className="slabel" style={{ marginBottom: 12 }}>Detalle Top Vendedores</div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Vendedor</TableHead>
-                      <TableHead>Unidades</TableHead>
-                      <TableHead>Monto</TableHead>
-                      <TableHead>% Meta</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.sellers.map((r) => {
-                      const metaPct = goalPerSeller > 0 ? (r.amount / goalPerSeller) * 100 : 0;
-                      const metaColor = metaPct >= 100 ? '#4a7c00' : '#B45309';
-                      return (
-                        <TableRow key={r.sellerId}>
-                          <TableCell style={{ fontWeight: 600, color: '#0F172A' }}>{r.sellerName}</TableCell>
-                          <TableCell>{r.units}</TableCell>
-                          <TableCell style={{ fontWeight: 600 }}>{money(r.amount)}</TableCell>
-                          <TableCell>
-                            <span style={{ fontSize: 11, fontWeight: 600, color: metaColor }}>
-                              {metaPct.toFixed(1)}%
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+              <Card style={{ padding: 20 }}>
+                <Accordion type="single" collapsible defaultValue="sellers">
+                  <AccordionItem value="sellers">
+                    <AccordionTrigger>Detalle Top Vendedores</AccordionTrigger>
+                    <AccordionContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Vendedor</TableHead>
+                            <TableHead>Unidades</TableHead>
+                            <TableHead>Monto</TableHead>
+                            <TableHead>% Meta</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {data.sellers.map((r) => {
+                            const metaPct = goalPerSeller > 0 ? (r.amount / goalPerSeller) * 100 : 0;
+                            const metaColor = metaPct >= 100 ? '#4a7c00' : '#B45309';
+                            return (
+                              <TableRow key={r.sellerId}>
+                                <TableCell style={{ fontWeight: 600, color: '#0F172A' }}>{r.sellerName}</TableCell>
+                                <TableCell>{r.units}</TableCell>
+                                <TableCell style={{ fontWeight: 600 }}>{money(r.amount)}</TableCell>
+                                <TableCell>
+                                  <span style={{ fontSize: 11, fontWeight: 600, color: metaColor }}>
+                                    {metaPct.toFixed(1)}%
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </Card>
             )}
 
             {/* Resumen para Dirección */}
-            <div id="executive-report-text" className="card" style={{ padding: 20 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', marginBottom: 12 }}>
-                Resumen para Dirección
-              </div>
-              <p style={{ fontSize: 13, lineHeight: 1.7, color: '#475569' }}>
-                <b>Meta vs Logro {month}:</b> Ventas globales: {money(data.total.amount)} contra
-                meta de {money(goalAmount)} ({((data.total.amount / goalAmount) * 100).toFixed(2)}%).
-                Unidades: {data.total.units} contra meta de {goalUnits} ({((data.total.units / goalUnits) * 100).toFixed(2)}%).
-                <br /><br />
-                <b>Dirección Comercial:</b> {data.direction.units} unidades por {money(data.direction.amount)}.
-                <br />
-                <b>ATC:</b> {data.atc.existingUnits} unidades existentes por {money(data.atc.existingAmount)}.
-                {data.sellers.length > 0 && (
-                  <>
-                    <br />
-                    <b>Equipo:</b>{' '}
-                    {data.sellers.slice(0, 5).map((r) => `${r.sellerName}: ${r.units} unidades, ${money(r.amount)}`).join(' · ')}.
-                  </>
-                )}
-                {data.bySource.length > 0 && (
-                  <>
-                    <br />
-                    <b>Origen de cuentas:</b>{' '}
-                    {data.bySource.slice(0, 5).map((s) => `${s.source}: ${s.count} cuentas, ${money(s.amount)}`).join(' · ')}.
-                  </>
-                )}
-                <br />
-                <b>Análisis IA:</b> Salud comercial {ai.health}/100 — {ai.status}
-              </p>
-            </div>
+            <Card id="executive-report-text" style={{ padding: 20 }}>
+              <Accordion type="single" collapsible defaultValue="summary">
+                <AccordionItem value="summary">
+                  <AccordionTrigger>Resumen para Dirección</AccordionTrigger>
+                  <AccordionContent>
+                    <p style={{ fontSize: 13, lineHeight: 1.7, color: '#475569' }}>
+                      <b>Meta vs Logro {month}:</b> Ventas globales: {money(data.total.amount)} contra
+                      meta de {money(goalAmount)} ({((data.total.amount / goalAmount) * 100).toFixed(2)}%).
+                      Unidades: {data.total.units} contra meta de {goalUnits} ({((data.total.units / goalUnits) * 100).toFixed(2)}%).
+                      <br /><br />
+                      <b>Dirección Comercial:</b> {data.direction.units} unidades por {money(data.direction.amount)}.
+                      <br />
+                      <b>ATC:</b> {data.atc.existingUnits} unidades existentes por {money(data.atc.existingAmount)}.
+                      {data.sellers.length > 0 && (
+                        <>
+                          <br />
+                          <b>Equipo:</b>{' '}
+                          {data.sellers.slice(0, 5).map((r) => `${r.sellerName}: ${r.units} unidades, ${money(r.amount)}`).join(' · ')}.
+                        </>
+                      )}
+                      {data.bySource.length > 0 && (
+                        <>
+                          <br />
+                          <b>Origen de cuentas:</b>{' '}
+                          {data.bySource.slice(0, 5).map((s) => `${s.source}: ${s.count} cuentas, ${money(s.amount)}`).join(' · ')}.
+                        </>
+                      )}
+                      <br />
+                      <b>Análisis IA:</b> Salud comercial {ai.health}/100 — {ai.status}
+                    </p>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </Card>
           </>
         );
       })()}

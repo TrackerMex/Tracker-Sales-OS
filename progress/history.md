@@ -776,3 +776,10 @@ Batch 2:
 - Error state: clase condicional 'input input-error' eliminada donde fieldErrorProps ya pone aria-invalid; aria-invalid={!!err} manual en los 3 inputs time sin helper.
 - Fuera de alcance (intacto): selects, textareas, checkbox Decisor de ClientesPage, ClientCombobox; .input/.input-error CSS conservadas para ellos.
 - Review Lider: tsc frontend exit 0, grep '<input' en modules solo deja el checkbox, spot-check de diffs PASS. Detalle: progress/impl_51-shadcn-input-migration.md.
+
+## 2026-07-07 — Feature 60: Card y Accordion shadcn en secciones densas
+
+- Al iniciar, exploracion encontro trabajo sin commitear de una sesion previa no cerrada formalmente: ClientDetailPage.tsx (Card+Accordion en info cliente + Card en timeline), ActivityHistoryModal.tsx (Card en estado actual + Accordion en historial), ReportsPage.tsx (Card+Accordion en filtros/sellers/summary) y SettingsPage.tsx (Card+Accordion en grupos de metas) ya cumplian el checkpoint.
+- Bug bloqueante encontrado en ClientesPage.tsx:359 — bloque "Contactos" del sidebar oscuro abria `<div>` (linea 345) y cerraba `</Card>` huerfano (JSX desbalanceado, rompia build). Fix Implementer: cerro con `</div>`, sidebar se mantiene custom oscuro (no Card).
+- Decision de criterio: bloque de contactos editables del formulario create/edit (ClientesPage.tsx ~768-853) se deja SIN Accordion — es edicion activa de datos, colapsar añadiria friccion al capturar 2+ contactos. ExecutiveSlide.tsx fuera de alcance (100% inline-style, requerido para export via window.open+outerHTML).
+- Review Lider: PASSED 10/10, tsc frontend exit 0, sin Cards anidadas en ningun modulo. Detalle: progress/impl_60-shadcn-card-accordion.md.

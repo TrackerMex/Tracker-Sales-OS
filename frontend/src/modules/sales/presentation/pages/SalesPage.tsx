@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { MoreHorizontalCircle01Icon } from '@hugeicons/core-free-icons';
 import { useAppStore } from '@/shared/store/app.store';
 import { useSellers } from '@/modules/equipo/application/hooks/useSellers';
 import { useCreateSale } from '../../application/hooks/useCreateSale';
@@ -16,6 +18,19 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Select,
   SelectContent,
@@ -217,7 +232,7 @@ export function SalesPage() {
       <div style={{ display: 'grid', gridTemplateColumns: isAdminOrDirector ? '1fr 1fr' : '1fr', gap: 16 }}>
 
         {/* Columna vendedor — solo Seller */}
-        {!isAdminOrDirector && <div className="card p-5">
+        {!isAdminOrDirector && <Card className="p-5">
           <h3 className="mb-4 text-sm font-black text-[#002B49]">Registrar venta del día</h3>
           <form ref={sellerErrors.formRef} onSubmit={handleSellerSubmit} className="space-y-3">
             <FormErrorSummary error={sellerErrors.summary} />
@@ -351,7 +366,7 @@ export function SalesPage() {
               {createSellerSale.isPending ? 'Guardando...' : 'Guardar venta vendedor'}
             </Button>
           </form>
-        </div>}
+        </Card>}
 
         {/* Columna central: Dirección — solo Admin/Director */}
         {isAdminOrDirector && <div style={{ background: '#001524', borderRadius: 12, padding: 20 }}>
@@ -472,7 +487,7 @@ export function SalesPage() {
         </div>}
 
         {/* Columna derecha: ATC — solo Admin/Director */}
-        {isAdminOrDirector && <div className="card p-5">
+        {isAdminOrDirector && <Card className="p-5">
           <h3 className="mb-1 text-sm font-black text-[#002B49]">Registrar ATC</h3>
           <p className="mb-4 text-xs text-slate-500">ATC solo registra clientes existentes</p>
           <form ref={atcErrors.formRef} onSubmit={handleAtcSubmit} className="space-y-3">
@@ -555,7 +570,7 @@ export function SalesPage() {
               {createAtcSale.isPending ? 'Guardando...' : 'Guardar ATC'}
             </Button>
           </form>
-        </div>}
+        </Card>}
       </div>
 
       {/* VENTAS REGISTRADAS */}
@@ -564,31 +579,31 @@ export function SalesPage() {
 
         {summary && (
           <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="card p-4">
+            <Card className="p-4">
               <p className="slabel mb-1">Total ventas</p>
               <p className="text-2xl font-black text-[#002B49]">{summary.total}</p>
-            </div>
-            <div className="card p-4">
+            </Card>
+            <Card className="p-4">
               <p className="slabel mb-1">Unidades</p>
               <p className="text-2xl font-black text-[#002B49]">{summary.totalUnits}</p>
-            </div>
-            <div className="card p-4">
+            </Card>
+            <Card className="p-4">
               <p className="slabel mb-1">Monto total</p>
               <p className="text-lg font-black text-[#82bc00]">
                 {formatCurrency(summary.totalAmount)}
               </p>
-            </div>
-            <div className="card p-4">
+            </Card>
+            <Card className="p-4">
               <p className="slabel mb-1">Nuevos / Existentes</p>
               <p className="text-base font-bold text-[#002B49]">
                 {summary.unitsByClientType.Nuevo} / {summary.unitsByClientType.Existente}
               </p>
               <p className="text-xs text-slate-400">unidades</p>
-            </div>
+            </Card>
           </div>
         )}
 
-        <div className="card">
+        <Card>
           {loadingList && (
             <div className="space-y-3 p-6">
               {[1, 2, 3].map((i) => (
@@ -636,29 +651,34 @@ export function SalesPage() {
                       {formatCurrency(sale.amount)}
                     </span>
                     {isAdminOrDirector && (
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          onClick={() => setEditingSale(sale)}
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="xs"
-                          onClick={() => setDeletingSale(sale)}
-                        >
-                          Eliminar
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon-xs" aria-label={`Acciones de venta ${sale.clientName}`}>
+                                <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent>Acciones de venta</TooltipContent>
+                        </Tooltip>
+                        <DropdownMenuContent align="end" className="min-w-44">
+                          <DropdownMenuItem onSelect={() => setEditingSale(sale)}>
+                            Editar venta
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem variant="destructive" onSelect={() => setDeletingSale(sale)}>
+                            Eliminar venta
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
       {editingSale && (
