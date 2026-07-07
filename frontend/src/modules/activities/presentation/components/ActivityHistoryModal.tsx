@@ -10,6 +10,7 @@ import {
   useUpdateActivityStatus,
 } from "../../application/hooks/useActivityHistory"
 import { toast } from "sonner"
+import { Badge, type BadgeVariant } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 interface Props {
@@ -17,11 +18,11 @@ interface Props {
   onClose: () => void
 }
 
-const STATUS_CLASSES: Record<string, string> = {
-  Pendiente: "tag tag-yellow",
-  "En curso": "tag tag-blue",
-  Completada: "tag tag-green",
-  Cancelada: "tag",
+const STATUS_VARIANTS: Record<string, BadgeVariant> = {
+  Pendiente: "yellow",
+  "En curso": "blue",
+  Completada: "green",
+  Cancelada: "gray",
 }
 
 const NEXT_TRANSITIONS: Record<string, string[]> = {
@@ -80,9 +81,9 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
           <div className="space-y-4">
             <div>
               <p className="kl mb-1">Estado actual</p>
-              <span className={STATUS_CLASSES[currentStatus] ?? "tag"}>
+              <Badge variant={STATUS_VARIANTS[currentStatus] ?? "gray"}>
                 {currentStatus}
-              </span>
+              </Badge>
             </div>
 
             {nextTransitions.length > 0 && (
@@ -117,17 +118,13 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
                           timeStyle: "short",
                         })}
                       </span>{" "}
-                      <span
-                        className={STATUS_CLASSES[entry.oldStatus] ?? "tag"}
-                      >
+                      <Badge variant={STATUS_VARIANTS[entry.oldStatus] ?? "gray"}>
                         {entry.oldStatus}
-                      </span>
+                      </Badge>
                       {" → "}
-                      <span
-                        className={STATUS_CLASSES[entry.newStatus] ?? "tag"}
-                      >
+                      <Badge variant={STATUS_VARIANTS[entry.newStatus] ?? "gray"}>
                         {entry.newStatus}
-                      </span>{" "}
+                      </Badge>{" "}
                       <span style={{ color: "#64748B" }}>
                         por: {entry.changedBy}
                       </span>

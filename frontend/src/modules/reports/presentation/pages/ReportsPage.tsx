@@ -5,6 +5,14 @@ import { useWinLoss } from '../../application/hooks/useWinLoss';
 import { ExecutiveSlide, buildAnalysis, money, LABEL_STYLE } from '../components/ExecutiveSlide';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const STORAGE_KEY = 'tracker-report-goals';
 
@@ -181,36 +189,36 @@ export function ReportsPage() {
 
             {/* Detalle Top Vendedores */}
             {data.sellers.length > 0 && (
-              <div className="card" style={{ padding: 20, overflowX: 'auto' }}>
+              <div className="card" style={{ padding: 20 }}>
                 <div className="slabel" style={{ marginBottom: 12 }}>Detalle Top Vendedores</div>
-                <table className="dt">
-                  <thead>
-                    <tr>
-                      <th>Vendedor</th>
-                      <th>Unidades</th>
-                      <th>Monto</th>
-                      <th>% Meta</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Vendedor</TableHead>
+                      <TableHead>Unidades</TableHead>
+                      <TableHead>Monto</TableHead>
+                      <TableHead>% Meta</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {data.sellers.map((r) => {
                       const metaPct = goalPerSeller > 0 ? (r.amount / goalPerSeller) * 100 : 0;
                       const metaColor = metaPct >= 100 ? '#4a7c00' : '#B45309';
                       return (
-                        <tr key={r.sellerId}>
-                          <td style={{ fontWeight: 600, color: '#0F172A' }}>{r.sellerName}</td>
-                          <td>{r.units}</td>
-                          <td style={{ fontWeight: 600 }}>{money(r.amount)}</td>
-                          <td>
+                        <TableRow key={r.sellerId}>
+                          <TableCell style={{ fontWeight: 600, color: '#0F172A' }}>{r.sellerName}</TableCell>
+                          <TableCell>{r.units}</TableCell>
+                          <TableCell style={{ fontWeight: 600 }}>{money(r.amount)}</TableCell>
+                          <TableCell>
                             <span style={{ fontSize: 11, fontWeight: 600, color: metaColor }}>
                               {metaPct.toFixed(1)}%
                             </span>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )}
 

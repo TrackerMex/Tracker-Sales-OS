@@ -4,6 +4,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
+import { Badge, type BadgeVariant } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Task } from "../../domain/tasks.types"
 
@@ -22,18 +23,18 @@ interface CalendarViewProps {
   onDayClick?: (date: Date) => void
 }
 
-const TYPE_TAG: Record<string, string> = {
-  Llamada: "tag-navy",
-  Videoconf: "tag-navy",
-  "Reunión virtual": "tag-navy",
-  Visita: "tag-green",
-  "Reunión presencial": "tag-green",
-  Propuesta: "tag-amber",
-  Seguimiento: "tag-amber",
-  Cierre: "tag-green",
-  Chat: "tag-gray",
-  WA: "tag-gray",
-  Correo: "tag-gray",
+const TYPE_TAG: Record<string, BadgeVariant> = {
+  Llamada: "navy",
+  Videoconf: "navy",
+  "Reunión virtual": "navy",
+  Visita: "green",
+  "Reunión presencial": "green",
+  Propuesta: "amber",
+  Seguimiento: "amber",
+  Cierre: "green",
+  Chat: "gray",
+  WA: "gray",
+  Correo: "gray",
 }
 
 const DAY_NAMES = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
@@ -155,7 +156,7 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
     setupDragAndDrop()
   }, [task.id])
 
-  const tagClass = task.type ? (TYPE_TAG[task.type] ?? "tag-gray") : "tag-gray"
+  const tagVariant = task.type ? (TYPE_TAG[task.type] ?? "gray") : "gray"
   const chipLabel = [
     formatTime(task.scheduledAt),
     task.type ?? null,
@@ -168,31 +169,24 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
   return (
     <HoverCard openDelay={200} closeDelay={100}>
       <HoverCardTrigger asChild>
-        <button
-          ref={taskRef}
-          onClick={() => onEdit?.(task)}
-          className={`tag ${tagClass}`}
-          style={{
-            fontSize: 11,
-            cursor: "grab",
-            textAlign: "left",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: "100%",
-            border: "none",
-            display: "block",
-            width: "100%",
-            opacity:
-              internalDragging || isDragging
-                ? 0.5
-                : task.status === "Completado"
+        <Badge variant={tagVariant} asChild>
+          <button
+            ref={taskRef}
+            onClick={() => onEdit?.(task)}
+            className="w-full max-w-full justify-start truncate border-0 text-[11px]"
+            style={{
+              cursor: "grab",
+              opacity:
+                internalDragging || isDragging
                   ? 0.5
-                  : 1,
-          }}
-        >
-          {chipLabel}
-        </button>
+                  : task.status === "Completado"
+                    ? 0.5
+                    : 1,
+            }}
+          >
+            {chipLabel}
+          </button>
+        </Badge>
       </HoverCardTrigger>
       <HoverCardContent
         side="right"
@@ -216,25 +210,25 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
             }}
           >
             {task.type && (
-              <span className={`tag ${tagClass}`} style={{ fontSize: 11 }}>
+              <Badge variant={tagVariant} className="text-[11px]">
                 {task.type}
-              </span>
+              </Badge>
             )}
             {task.sellerName && (
-              <span className="tag tag-navy" style={{ fontSize: 11 }}>
+              <Badge variant="navy" className="text-[11px]">
                 {task.sellerName}
-              </span>
+              </Badge>
             )}
-            <span
-              className={`tag ${task.status === "Completado" ? "tag-gray" : task.isOverdue ? "tag-red" : "tag-green"}`}
-              style={{ fontSize: 11, marginLeft: "auto" }}
+            <Badge
+              variant={task.status === "Completado" ? "gray" : task.isOverdue ? "red" : "green"}
+              className="ml-auto text-[11px]"
             >
               {task.status === "Completado"
                 ? "Completada"
                 : task.isOverdue
                   ? "Vencida"
                   : "Pendiente"}
-            </span>
+            </Badge>
           </div>
           <p
             style={{

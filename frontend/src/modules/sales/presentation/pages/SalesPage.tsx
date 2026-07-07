@@ -15,6 +15,7 @@ import { DatePickerField } from '@/shared/components/forms/DatePickerField';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -617,26 +618,20 @@ export function SalesPage() {
                     </p>
                   </div>
                   <div className="ml-4 flex items-center gap-3">
-                    <span
-                      className={`tag ${
-                        sale.clientType === 'Nuevo'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
+                    <Badge variant={sale.clientType === 'Nuevo' ? 'blue' : 'gray'}>
                       {sale.clientType}
-                    </span>
-                    <span
-                      className={`tag ${
+                    </Badge>
+                    <Badge
+                      variant={
                         sale.type === 'seller'
-                          ? 'bg-[#002B49]/10 text-[#002B49]'
+                          ? 'navy'
                           : sale.type === 'atc'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-purple-100 text-purple-700'
-                      }`}
+                            ? 'amber'
+                            : 'purple'
+                      }
                     >
                       {sale.type}
-                    </span>
+                    </Badge>
                     <span className="text-sm font-bold text-[#82bc00]">
                       {formatCurrency(sale.amount)}
                     </span>

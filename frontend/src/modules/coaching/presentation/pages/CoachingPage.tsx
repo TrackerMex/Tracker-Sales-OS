@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import type { EquipoSeller } from "@/modules/equipo/domain/equipo.types"
 import type { ActivityMixItem } from "../../domain/coaching.types"
 
@@ -121,9 +122,9 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
             {seller.profile ?? "Ejecutivo comercial"}
           </p>
         </div>
-        <span className={`tag ${meetsMinimum ? "tag-green" : "tag-red"}`}>
+        <Badge variant={meetsMinimum ? "green" : "red"}>
           {points}/{minDaily} pts
-        </span>
+        </Badge>
       </div>
 
       <div className="grid grid-cols-4 gap-2 mb-3">

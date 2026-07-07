@@ -12,6 +12,7 @@ import { DatePickerField } from '@/shared/components/forms/DatePickerField'
 import { useAppStore } from '@/shared/store/app.store'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -266,7 +267,7 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, in
                   return (
                     <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
                       <span style={{ fontWeight: 700, color: '#0F172A', minWidth: 42 }}>{formatScheduleTime(t.scheduledAt)}</span>
-                      {t.type && <span className="tag tag-gray" style={{ fontSize: 10 }}>{t.type}</span>}
+                      {t.type && <Badge variant="gray">{t.type}</Badge>}
                       {clientName && <span style={{ color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientName}</span>}
                     </div>
                   )

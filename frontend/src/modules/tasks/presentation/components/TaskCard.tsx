@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Badge, type BadgeVariant } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { Task } from '../../domain/tasks.types'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -47,24 +48,24 @@ function getAiComment(task: Task, clientName: string | null): string | null {
   return `Revisa: ¿esta tarea tiene un resultado medible? Si solo es "seguimiento", redefine con ${name}.`
 }
 
-export const TYPE_TAG: Record<string, string> = {
-  'Llamada': 'tag-navy',
-  'Videoconf': 'tag-navy',
-  'Reunión virtual': 'tag-navy',
-  'Visita': 'tag-green',
-  'Reunión presencial': 'tag-green',
-  'Propuesta': 'tag-amber',
-  'Seguimiento': 'tag-amber',
-  'Cierre': 'tag-green',
-  'Chat': 'tag-gray',
-  'WA': 'tag-gray',
-  'Correo': 'tag-gray',
+export const TYPE_TAG: Record<string, BadgeVariant> = {
+  'Llamada': 'navy',
+  'Videoconf': 'navy',
+  'Reunión virtual': 'navy',
+  'Visita': 'green',
+  'Reunión presencial': 'green',
+  'Propuesta': 'amber',
+  'Seguimiento': 'amber',
+  'Cierre': 'green',
+  'Chat': 'gray',
+  'WA': 'gray',
+  'Correo': 'gray',
 }
 
 export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, clientName, contactName }: TaskCardProps) {
   const isOverdue = task.isOverdue && task.status === 'Pendiente'
   const aiComment = getAiComment(task, clientName ?? null)
-  const typeTagClass = task.type ? (TYPE_TAG[task.type] ?? 'tag-gray') : null
+  const typeTagVariant = task.type ? (TYPE_TAG[task.type] ?? 'gray') : null
 
   return (
     <div
@@ -77,11 +78,11 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
           <span style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', lineHeight: 1 }}>
             {formatTime(task.scheduledAt)}
           </span>
-          {typeTagClass && (
-            <span className={`tag ${typeTagClass}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          {typeTagVariant && (
+            <Badge variant={typeTagVariant} className="inline-flex items-center gap-1">
               <HugeiconsIcon icon={CheckListIcon} size={11} color="currentColor" strokeWidth={1.8} />
               {task.type}
-            </span>
+            </Badge>
           )}
         </div>
 
@@ -106,7 +107,7 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
             </span>
           )}
           {isOverdue && (
-            <span className="tag tag-red">Vencida</span>
+            <Badge variant="red">Vencida</Badge>
           )}
         </div>
 
@@ -174,7 +175,7 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <span className="tag tag-gray">Completada</span>
+            <Badge variant="gray">Completada</Badge>
           </>
         )}
 

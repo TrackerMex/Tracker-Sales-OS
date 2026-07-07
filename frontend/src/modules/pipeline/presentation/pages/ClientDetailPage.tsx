@@ -8,6 +8,7 @@ import { useAppStore } from "@/shared/store/app.store"
 import { useChangeStage } from "../../application/hooks/useChangeStage"
 import type { Deal, PipelineStage } from "../../domain/pipeline.types"
 import type { Activity } from "@/modules/activities/domain/activities.types"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 interface Props {
@@ -226,9 +227,9 @@ export function ClientDetailPage({ deal, onBack }: Props) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }}>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span className="tag tag-navy" style={{ fontSize: 10 }}>{activity.type}</span>
+                        <Badge variant="navy">{activity.type}</Badge>
                         {activity.stage && (
-                          <span className="tag" style={{ fontSize: 10 }}>{activity.stage}</span>
+                          <Badge variant="gray">{activity.stage}</Badge>
                         )}
                       </div>
                       <span style={{ fontSize: 11, color: '#94A3B8', flexShrink: 0, marginLeft: 8 }}>

@@ -20,6 +20,7 @@ import { FieldError, fieldErrorProps } from "@/shared/components/forms/FieldErro
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Badge, type BadgeVariant } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -77,14 +78,14 @@ const clientSources: ClientSource[] = [
   "Dirección Comercial",
 ]
 
-const stageTag: Record<PipelineStage, string> = {
-  Prospecto: "tag-gray",
-  Contactado: "tag-navy",
-  Interesado: "tag-navy",
-  Propuesta: "tag-amber",
-  Negociación: "tag-amber",
-  Cierre: "tag-green",
-  Perdido: "tag-red",
+const stageBadgeVariant: Record<PipelineStage, BadgeVariant> = {
+  Prospecto: "gray",
+  Contactado: "navy",
+  Interesado: "navy",
+  Propuesta: "amber",
+  Negociación: "amber",
+  Cierre: "green",
+  Perdido: "red",
 }
 
 const emptyContact: CreateContactInput = {
@@ -318,10 +319,10 @@ export function ClientesPage() {
             <div>
               <h2 className="text-lg font-bold text-white">{selectedClient.name}</h2>
               <div className="flex items-center gap-2 mt-2">
-                <span className={`tag ${stageTag[selectedClient.stage]}`}>{selectedClient.stage}</span>
-                <span className={`tag ${selectedClient.dataQuality === 100 ? "tag-green" : selectedClient.dataQuality < 60 ? "tag-red" : "tag-amber"}`}>
+                <Badge variant={stageBadgeVariant[selectedClient.stage]}>{selectedClient.stage}</Badge>
+                <Badge variant={selectedClient.dataQuality === 100 ? "green" : selectedClient.dataQuality < 60 ? "red" : "amber"}>
                   Datos {selectedClient.dataQuality}%
-                </span>
+                </Badge>
                 <span className="text-[11px] text-slate-400">Seller {selectedClient.sellerId.slice(0, 8)}</span>
               </div>
             </div>
@@ -376,7 +377,9 @@ export function ClientesPage() {
           <div className="space-y-5">
             {/* Stage update */}
             <div className="card p-5">
-              <p className="slabel mb-3">Actualizar stage</p>
+              <p className="slabel mb-3">
+                Actualizar stage
+              </p>
               <div className="flex flex-wrap gap-2">
                 {pipelineStages.map((s) => {
                   // With a deal, the deal stage is the pipeline source of truth
@@ -488,12 +491,17 @@ export function ClientesPage() {
                 </button>
               </div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="tag tag-gray text-[9px]">{client.type}</span>
-                <span className={`tag ${stageTag[client.stage]} text-[9px]`}>{client.stage}</span>
-                {client.isCold && <span className="tag tag-red text-[9px]">Fría</span>}
-                <span className={`tag text-[9px] ${client.dataQuality === 100 ? "tag-green" : client.dataQuality < 60 ? "tag-red" : "tag-amber"}`}>
+                <Badge variant="gray" className="text-[9px]">{client.type}</Badge>
+                <Badge
+                  variant={stageBadgeVariant[client.stage]}
+                  className="text-[9px]"
+                >
+                  {client.stage}
+                </Badge>
+                {client.isCold && <Badge variant="red" className="text-[9px]">Fría</Badge>}
+                <Badge variant={client.dataQuality === 100 ? "green" : client.dataQuality < 60 ? "red" : "amber"} className="text-[9px]">
                   Datos {client.dataQuality}%
-                </span>
+                </Badge>
               </div>
               <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{client.pain || "Sin pain registrado"}</p>
               {client.contacts.length > 0 && (

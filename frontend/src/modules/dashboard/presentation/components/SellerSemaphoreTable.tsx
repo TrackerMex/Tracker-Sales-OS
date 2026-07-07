@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { Badge, type BadgeVariant } from '@/components/ui/badge';
 import type { SellerScore } from '../../domain/dashboard.types';
 
 interface SellerSemaphoreTableProps {
@@ -12,10 +13,10 @@ function getBarColor(score: number): string {
   return 'var(--tracker-danger)';
 }
 
-function getSemaphoreTag(score: number): string {
-  if (score >= 75) return 'tag tag-green';
-  if (score >= 45) return 'tag tag-amber';
-  return 'tag tag-red';
+function getSemaphoreVariant(score: number): BadgeVariant {
+  if (score >= 75) return 'green';
+  if (score >= 45) return 'amber';
+  return 'red';
 }
 
 export function SellerSemaphoreTable({ sellers, isLoading }: SellerSemaphoreTableProps) {
@@ -62,12 +63,13 @@ export function SellerSemaphoreTable({ sellers, isLoading }: SellerSemaphoreTabl
             >
               {seller.sellerName}
             </span>
-            <span
-              className={`${getSemaphoreTag(seller.score)} flex-shrink-0`}
+            <Badge
+              variant={getSemaphoreVariant(seller.score)}
+              className="flex-shrink-0"
               aria-label={`Puntuación ${seller.score} de 100`}
             >
               {seller.score}
-            </span>
+            </Badge>
           </div>
           <div className="prog mt-2">
             <div

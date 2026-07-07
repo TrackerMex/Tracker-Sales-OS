@@ -576,21 +576,21 @@
     "id": "56-shadcn-tables",
     "name": "UI: migrar tablas a shadcn Table",
     "description": "Migrar tablas/listados tabulares legacy a componentes Table de shadcn, manteniendo densidad tracker, acciones por fila, empty states y responsividad.",
-    "status": "pending",
+    "status": "done",
     "priority": 56,
     "backend_modules": [],
     "frontend_modules": ["clients", "sales", "reports", "equipo", "dashboard", "activities", "tasks"],
-    "notes": "Planificado para ejecutar el 2026-07-08. Alcance sugerido: inventariar tablas y clases .dt/table legacy, crear/ajustar frontend/src/components/ui/table.tsx si hace falta, migrar primero las tablas mas visibles (ventas, equipo, reportes, clientes) y verificar npx tsc --noEmit."
+    "notes": "Completada 2026-07-07. Se ajusto frontend/src/components/ui/table.tsx para preservar densidad Tracker (headers compactos uppercase, celdas px-3 py-[10px], hover/bordes sutiles y overflow-x auto). Migradas las tablas legacy .dt visibles en DashboardPage (Deals en riesgo), LeaderboardTable y ReportsPage (Detalle Top Vendedores) a Table/TableHeader/TableBody/TableRow/TableHead/TableCell de shadcn. ExecutiveSlide se dejo con tablas inline por ser layout de lamina/print y no usar .dt/dt-scroll. Verificacion Lider: npx tsc --noEmit frontend exit 0; rg de className=\"dt\"/dt-scroll solo conserva definicion CSS legacy no referenciada en index.css; git diff --check sin errores."
   },
   {
     "id": "57-shadcn-badges-tags",
     "name": "UI: migrar badges y tags a shadcn Badge",
     "description": "Reemplazar tags legacy (.tag, .tag-green, .tag-red, etc.) por Badge de shadcn con variantes tracker para estados comerciales, roles, calidad, pipeline, tareas y ventas.",
-    "status": "pending",
+    "status": "done",
     "priority": 57,
     "backend_modules": [],
     "frontend_modules": ["clients", "tasks", "pipeline", "activities", "sales", "dashboard", "mi-dia", "coaching", "reports", "equipo"],
-    "notes": "Planificado para ejecutar el 2026-07-08. Mantener semantica visual actual de estados verde/ambar/rojo/azul/gris/morado, eliminar uso directo de clases .tag donde aplique y verificar que no se rompan estados compactos en cards/tablas."
+    "notes": "Completada 2026-07-07. Badge shadcn re-estilizado para preservar densidad Tracker de .tag legacy y variantes tracker: navy, green, amber, red, gray, purple, blue, yellow. Migrados usos directos de .tag/.tag-* en modulos activities, dashboard, tasks, mi-dia, clients, pipeline, coaching y sales; maps de estado/tipo ahora devuelven BadgeVariant en vez de clases CSS. CalendarView conserva chips interactivos con Badge asChild. Verificacion Lider: rg de className=.*tag/tag-* en frontend/src/modules/shared/routes sin resultados; npx tsc --noEmit frontend exit 0; git diff --check sin errores. Detalle: progress/impl_57-shadcn-badges-tags.md."
   },
   {
     "id": "58-shadcn-dropdown-actions",
