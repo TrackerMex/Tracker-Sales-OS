@@ -696,7 +696,7 @@
     "id": "68-pipeline-client-coverage",
     "name": "Pipeline: mostrar todos los clientes iniciados del seller",
     "description": "Corregir el caso reportado donde un seller tiene 49 clientes con proceso comercial iniciado pero el pipeline solo muestra 19. El pipeline individual y la vista de equipo deben incluir todos los clientes iniciados del seller, sin topes implícitos de 20, pérdidas por paginación ni huecos de sincronización entre clients, activities y deals.",
-    "status": "pending",
+    "status": "in_progress",
     "priority": 68,
     "backend_modules": ["pipeline", "clients", "activities"],
     "frontend_modules": ["pipeline"],
