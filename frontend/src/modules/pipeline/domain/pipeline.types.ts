@@ -8,10 +8,10 @@ export type LossReason = 'precio' | 'competencia' | 'sin_respuesta' | 'timing' |
 // Mirrors ALLOWED_TRANSITIONS in backend deal.entity.ts
 export const ALLOWED_TRANSITIONS: Record<PipelineStage, PipelineStage[]> = {
   Prospecto: ['Contactado', 'Perdido'],
-  Contactado: ['Interesado', 'Perdido'],
-  Interesado: ['Propuesta', 'Perdido'],
-  Propuesta: ['Negociación', 'Perdido'],
-  Negociación: ['Cierre', 'Perdido'],
+  Contactado: ['Interesado', 'Prospecto', 'Perdido'],
+  Interesado: ['Propuesta', 'Contactado', 'Perdido'],
+  Propuesta: ['Negociación', 'Interesado', 'Perdido'],
+  Negociación: ['Cierre', 'Propuesta', 'Perdido'],
   Cierre: [],
   Perdido: [],
 }

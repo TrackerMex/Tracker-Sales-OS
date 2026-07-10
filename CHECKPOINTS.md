@@ -479,6 +479,63 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ---
 
+## 67-pipeline-backward-stage
+
+**Backend — pipeline (regla central):**
+- [ ] `ALLOWED_TRANSITIONS` (`backend/src/modules/pipeline/domain/entities/deal.entity.ts`) permite, además de lo ya existente, retroceder exactamente una etapa dentro del tramo activo: `Contactado → Prospecto`, `Interesado → Contactado`, `Propuesta → Interesado`, `Negociacion → Propuesta`
+- [ ] `Cierre` y `Perdido` siguen sin transiciones de salida (`[]`) — no reabribles
+- [ ] `Prospecto` no gana transición de retroceso (es la primera etapa)
+- [ ] `PATCH /deals/:id/stage` acepta el retroceso de una etapa y lo persiste en `stageHistory` (mismo mecanismo que hoy, sin cambios en `change-deal-stage.use-case.ts` más allá de heredar el mapa actualizado)
+- [ ] Un intento de retroceder más de una etapa (ej. `Negociacion → Prospecto`) sigue devolviendo 400
+
+**Backend — clients (cierre de bypass, mismo alcance):**
+- [ ] `UpdateClientUseCase` (`backend/src/modules/clients/application/use-cases/update-client.use-case.ts`) valida `ALLOWED_TRANSITIONS` cuando `dto.stage` viene presente y difiere del `stage` actual del cliente; lanza `BadRequestException` igual que `change-deal-stage.use-case.ts` si la transición no está permitida
+- [ ] Si `dto.stage` no viene en el patch, o es igual al actual, no se agrega validación ni efectos secundarios nuevos
+- [ ] `tsc --noEmit` sin errores en backend
+
+**Frontend:**
+- [ ] `ALLOWED_TRANSITIONS` en `frontend/src/modules/pipeline/domain/pipeline.types.ts` queda idéntico al mapa del backend (mismo comentario "Mirrors ALLOWED_TRANSITIONS in backend deal.entity.ts")
+- [ ] `ClientesPage.tsx` — botones "Actualizar stage" habilitan el retroceso de una etapa cuando hay `activeDeal` (se deriva automáticamente del mirror, sin lógica nueva)
+- [ ] Kanban (`KanbanColumn.tsx` / `DealCard.tsx`) sigue sin bloquear el drag hacia atrás antes del request (comportamiento ya existente, fuera de alcance); el toast de error/success ya cubre el caso de transición inválida (>1 etapa)
+- [ ] `tsc --noEmit` sin errores en frontend
+
+**Fuera de alcance (documentar si se toca):**
+- No se agrega bloqueo de drag-and-drop preventivo en el Kanban (mejora de UX, no pedida)
+- No se reabren `Cierre`/`Perdido`
+- No se toca `create-activity.use-case.ts` (syncPipelineForDeal) — hereda el mapa sin cambios de código
+
+---
+
+## 68-pipeline-client-coverage
+
+**Diagnóstico y regla de negocio:**
+- [x] Ejecutar una auditoría read-only para el seller reportado: contar clientes no eliminados asignados, `clientId` distintos en deals no eliminados y clientes con actividades no eliminadas; listar exactamente cuáles faltan en pipeline y por qué
+- [x] Confirmar y documentar la causa raíz antes de implementar; no atribuir el faltante a un límite de 20 porque `findDetailedBySellerId` actualmente no usa `limit`, `take` ni paginación
+- [x] Documentar una definición única de "cliente iniciado" basada en datos persistidos y aplicarla igual en creación, sincronización, backfill y consultas
+- [x] La comparación de cobertura usa `clientId` distintos, no el total de deals, porque un cliente puede tener más de una oportunidad
+
+**Backend e integridad de datos:**
+- [x] Todo cliente no eliminado asignado al seller que cumpla la regla de "iniciado" tiene al menos un deal no eliminado visible para ese mismo seller
+- [x] Se corrige la ruta exacta que deja clientes iniciados sin deal (creación de cliente, registro de actividad o sincronización de etapa, según revele el diagnóstico)
+- [x] La creación/sincronización es idempotente: reintentar la operación no crea oportunidades duplicadas
+- [x] Existe un backfill/migración idempotente para clientes históricos iniciados sin deal; conserva seller, clientId, etapa e importe esperados y no revive deals eliminados sin una regla explícita
+- [x] `GET /api/pipeline/seller/:id` devuelve todos los deals no eliminados del seller sin truncamiento implícito
+- [x] `GET /api/pipeline/team` mantiene la misma cobertura para Admin/Director y no pierde clientes al agrupar sellers
+- [x] El scoping es estricto: ningún cliente o deal de otro seller aparece en el pipeline consultado
+
+**Frontend y regresión:**
+- [x] `PipelinePage` y `KanbanBoard` renderizan todas las tarjetas recibidas, sin `slice`, top-N, límites por columna ni paginación incompleta
+- [x] Caso automatizado: seller con 49 clientes iniciados y una oportunidad por cliente obtiene 49 `clientId` distintos en el pipeline
+- [x] Caso automatizado: más de 20 clientes en una misma etapa se devuelven y renderizan completos
+- [x] Caso automatizado: clientes no iniciados quedan fuera si así lo establece la regla documentada; clientes iniciados no desaparecen por tener varias actividades
+- [x] `tsc --noEmit` sin errores en backend y frontend; tests relevantes en verde
+- [x] Guardar resumen en `progress/impl_68-pipeline-client-coverage.md` y review independiente con baseline real 19/49 y resultado esperado determinista del backfill
+
+**Seguimiento operativo no bloqueante:**
+- [ ] Tras desplegar y ejecutar la migración en producción, confirmar `COUNT(DISTINCT client_id)` 19 → 49 para Fernanda
+
+---
+
 ## 60-shadcn-card-accordion
 
 **Estado previo (trabajo sin commitear encontrado al iniciar la feature):** `ClientDetailPage.tsx`, `ActivityHistoryModal.tsx`, `ReportsPage.tsx` y `SettingsPage.tsx` ya tenian Card/Accordion aplicados de una sesion anterior no cerrada formalmente. `ClientesPage.tsx` tenia migracion parcial con un bug de tag JSX sin cerrar bien.

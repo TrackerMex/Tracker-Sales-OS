@@ -3,6 +3,9 @@ import { CreateActivityUseCase } from './create-activity.use-case';
 import { ActivityType, ActivityResult } from '../../domain/entities/activity.entity';
 import { IActivityRepository } from '../../domain/repositories/activity.repository.interface';
 import { IDealsRepository } from '../../../pipeline/domain/repositories/deal.repository.interface';
+import { IClientRepository } from '../../../clients/domain/repositories/client.repository.interface';
+import { PipelineStage } from '../../../clients/domain/entities/client.entity';
+import { ActivityRepositoryImpl } from '../../infrastructure/repositories/activity.repository.impl';
 
 const makeMockRepo = (): jest.Mocked<IActivityRepository> => ({
   create: jest.fn(),
@@ -16,6 +19,7 @@ const makeMockRepo = (): jest.Mocked<IActivityRepository> => ({
   sumPointsByDayForSellers: jest.fn(),
   updateStatus: jest.fn(),
   findByClientId: jest.fn(),
+  createWithPipelineSync: jest.fn(),
 });
 
 const makeMockDealRepo = (): jest.Mocked<IDealsRepository> => ({
@@ -48,11 +52,117 @@ describe('CreateActivityUseCase', () => {
   let useCase: CreateActivityUseCase;
   let repo: jest.Mocked<IActivityRepository>;
   let dealRepo: jest.Mocked<IDealsRepository>;
+  let clientRepo: jest.Mocked<IClientRepository>;
 
   beforeEach(() => {
     repo = makeMockRepo();
+    repo.createWithPipelineSync.mockImplementation(async (activity) => ({
+      ...activity,
+      id: 'activity-atomic',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    } as any));
     dealRepo = makeMockDealRepo();
-    useCase = new CreateActivityUseCase(repo as any, dealRepo as any);
+    dealRepo.findByClientIdAndSellerId.mockResolvedValue({
+      id: 'existing-deal', stage: PipelineStage.Contactado,
+    } as any);
+    clientRepo = {
+      create: jest.fn(), findById: jest.fn(), findAll: jest.fn(), update: jest.fn(),
+      softDelete: jest.fn(), findBySellerId: jest.fn(), findWithFilters: jest.fn(),
+      checkDuplicates: jest.fn(), addContact: jest.fn(), syncContacts: jest.fn(),
+    };
+    clientRepo.findById.mockResolvedValue({
+      id: baseInput.clientId,
+      sellerId: baseInput.sellerId,
+      name: 'Cliente prueba',
+      stage: PipelineStage.Contactado,
+      expectedAmount: 1250,
+    } as any);
+    useCase = new CreateActivityUseCase(repo, dealRepo, clientRepo);
+  });
+
+  it('creates one deal from the persisted client stage when the first activity has no stage', async () => {
+    repo.create.mockResolvedValue({ ...baseInput, type: ActivityType.Chat, id: 'activity-1' } as any);
+    dealRepo.findByClientIdAndSellerId.mockResolvedValue(null);
+
+    await useCase.execute({ ...baseInput, type: ActivityType.Chat });
+
+    expect(repo.createWithPipelineSync).toHaveBeenCalledTimes(1);
+    expect(repo.createWithPipelineSync).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({
+      clientId: baseInput.clientId,
+      sellerId: baseInput.sellerId,
+      clientName: 'Cliente prueba',
+      stage: PipelineStage.Contactado,
+      amount: 1250,
+    }));
+    expect(repo.createWithPipelineSync).toHaveBeenCalledWith(
+      expect.objectContaining({ stage: PipelineStage.Contactado }),
+      expect.any(Object),
+    );
+  });
+
+  it('prefers the activity stage over the persisted client stage', async () => {
+    repo.create.mockResolvedValue({ ...baseInput, type: ActivityType.Chat, id: 'activity-1' } as any);
+    dealRepo.findByClientIdAndSellerId.mockResolvedValue(null);
+
+    await useCase.execute({ ...baseInput, type: ActivityType.Chat, stage: PipelineStage.Interesado });
+
+    expect(repo.createWithPipelineSync).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ stage: PipelineStage.Interesado }),
+    );
+  });
+
+  it('does not create a deal when the client cannot be resolved', async () => {
+    repo.create.mockResolvedValue({ ...baseInput, type: ActivityType.Chat, id: 'activity-1' } as any);
+    dealRepo.findByClientIdAndSellerId.mockResolvedValue(null);
+    clientRepo.findById.mockResolvedValue(null);
+
+    await useCase.execute({ ...baseInput, type: ActivityType.Chat });
+
+    expect(repo.createWithPipelineSync).not.toHaveBeenCalled();
+    expect(repo.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not duplicate a deal for a later activity or retry', async () => {
+    repo.create.mockResolvedValue({ ...baseInput, type: ActivityType.Chat, id: 'activity-1' } as any);
+    dealRepo.findByClientIdAndSellerId.mockResolvedValue({
+      id: 'deal-1', stage: PipelineStage.Contactado,
+    } as any);
+
+    await useCase.execute({ ...baseInput, type: ActivityType.Chat });
+
+    expect(repo.createWithPipelineSync).not.toHaveBeenCalled();
+    expect(clientRepo.findById).not.toHaveBeenCalled();
+  });
+
+  it('does not create a deal when the activity has no clientId', async () => {
+    repo.create.mockResolvedValue({ ...baseInput, clientId: null, type: ActivityType.Prospeccion, id: 'activity-1' } as any);
+
+    await useCase.execute({
+      sellerId: baseInput.sellerId,
+      type: ActivityType.Prospeccion,
+      result: ActivityResult.Interesado,
+      summary: 'Prospeccion sin cliente',
+      executedAt: baseInput.executedAt,
+    });
+
+    expect(repo.createWithPipelineSync).not.toHaveBeenCalled();
+    expect(clientRepo.findById).not.toHaveBeenCalled();
+  });
+
+  it('does not create a deal under a seller different from the client owner', async () => {
+    repo.create.mockResolvedValue({ ...baseInput, type: ActivityType.Chat, id: 'activity-1' } as any);
+    clientRepo.findById.mockResolvedValue({
+      id: baseInput.clientId,
+      sellerId: '00000000-0000-0000-0000-000000000099',
+      stage: PipelineStage.Contactado,
+    } as any);
+
+    await useCase.execute({ ...baseInput, type: ActivityType.Chat });
+
+    expect(repo.createWithPipelineSync).not.toHaveBeenCalled();
   });
 
   it('assigns correct points for Chat (1)', async () => {
@@ -126,5 +236,83 @@ describe('CreateActivityUseCase', () => {
     const call = repo.create.mock.calls[0][0];
     expect((call as any).delayMinutes).toBeGreaterThanOrEqual(4);
     expect((call as any).delayMinutes).toBeLessThanOrEqual(6);
+  });
+});
+
+describe('ActivityRepositoryImpl.createWithPipelineSync', () => {
+  const dealSeed = {
+    clientId: baseInput.clientId,
+    clientName: 'Cliente prueba',
+    sellerId: baseInput.sellerId,
+    stage: PipelineStage.Contactado,
+    amount: 100,
+    probability: 15,
+    opportunityName: null,
+  };
+
+  it('locks, ensures one active deal and saves the activity in one transaction', async () => {
+    const query = jest.fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    const save = jest.fn().mockResolvedValue({ id: 'activity-1' });
+    const manager = {
+      query,
+      getRepository: jest.fn().mockReturnValue({
+        create: jest.fn((value) => value),
+        save,
+      }),
+    };
+    const transaction = jest.fn(async (work) => work(manager));
+    const repository = new ActivityRepositoryImpl({ manager: { transaction } } as any);
+
+    await repository.createWithPipelineSync({ sellerId: baseInput.sellerId }, dealSeed);
+
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(String(query.mock.calls[0][0])).toContain('pg_advisory_xact_lock');
+    expect(String(query.mock.calls[1][0])).toContain('"deleted_at" IS NULL');
+    expect(String(query.mock.calls[2][0])).toContain('INSERT INTO "deals"');
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not insert a duplicate deal after the transactional lock finds coverage', async () => {
+    const query = jest.fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 'deal-existing' }]);
+    const manager = {
+      query,
+      getRepository: jest.fn().mockReturnValue({
+        create: jest.fn((value) => value),
+        save: jest.fn().mockResolvedValue({ id: 'activity-2' }),
+      }),
+    };
+    const repository = new ActivityRepositoryImpl({
+      manager: { transaction: jest.fn(async (work) => work(manager)) },
+    } as any);
+
+    await repository.createWithPipelineSync({ sellerId: baseInput.sellerId }, dealSeed);
+
+    expect(query).toHaveBeenCalledTimes(2);
+    expect(query.mock.calls.some(([sql]) => String(sql).includes('INSERT INTO "deals"'))).toBe(false);
+  });
+
+  it('propagates activity persistence failure from the transaction', async () => {
+    const failure = new Error('activity write failed');
+    const manager = {
+      query: jest.fn()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: 'deal-existing' }]),
+      getRepository: jest.fn().mockReturnValue({
+        create: jest.fn((value) => value),
+        save: jest.fn().mockRejectedValue(failure),
+      }),
+    };
+    const repository = new ActivityRepositoryImpl({
+      manager: { transaction: jest.fn(async (work) => work(manager)) },
+    } as any);
+
+    await expect(
+      repository.createWithPipelineSync({ sellerId: baseInput.sellerId }, dealSeed),
+    ).rejects.toThrow('activity write failed');
   });
 });

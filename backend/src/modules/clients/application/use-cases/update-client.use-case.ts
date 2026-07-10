@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Inject,
@@ -13,6 +14,7 @@ import {
   IClientRepository,
 } from '../../domain/repositories/client.repository.interface';
 import { ClientDto, RequestUserDto, UpdateClientDto } from '../dtos/client.dto';
+import { ALLOWED_TRANSITIONS } from '../../../pipeline/domain/entities/deal.entity';
 
 export interface UpdateClientInput {
   id: string;
@@ -34,6 +36,15 @@ export class UpdateClientUseCase implements IUseCase<UpdateClientInput, ClientDt
     }
 
     this.assertCanAccess(current, input.user);
+
+    if (input.dto.stage && input.dto.stage !== current.stage) {
+      const allowed = ALLOWED_TRANSITIONS[current.stage] ?? [];
+      if (!allowed.includes(input.dto.stage)) {
+        throw new BadRequestException(
+          `Transición de ${current.stage} a ${input.dto.stage} no permitida`,
+        );
+      }
+    }
 
     if (input.dto.name || input.dto.domain) {
       const duplicate = await this.clientRepo.checkDuplicates({

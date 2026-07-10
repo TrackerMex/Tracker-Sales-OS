@@ -783,3 +783,28 @@ Batch 2:
 - Bug bloqueante encontrado en ClientesPage.tsx:359 — bloque "Contactos" del sidebar oscuro abria `<div>` (linea 345) y cerraba `</Card>` huerfano (JSX desbalanceado, rompia build). Fix Implementer: cerro con `</div>`, sidebar se mantiene custom oscuro (no Card).
 - Decision de criterio: bloque de contactos editables del formulario create/edit (ClientesPage.tsx ~768-853) se deja SIN Accordion — es edicion activa de datos, colapsar añadiria friccion al capturar 2+ contactos. ExecutiveSlide.tsx fuera de alcance (100% inline-style, requerido para export via window.open+outerHTML).
 - Review Lider: PASSED 10/10, tsc frontend exit 0, sin Cards anidadas en ningun modulo. Detalle: progress/impl_60-shadcn-card-accordion.md.
+
+## 2026-07-09 — Feature 67: retroceso de una etapa en el pipeline (rama multi-tenant)
+
+- Pedido usuario: permitir retroceder etapa (ej. Contactado → Prospecto), hoy bloqueado. Decision via AskUserQuestion: retroceso de un solo paso (no salto libre a cualquier etapa anterior); Cierre/Perdido siguen terminales (no reabribles).
+- Backend: ALLOWED_TRANSITIONS (deal.entity.ts) ahora Contactado→[Interesado,Prospecto,Perdido], Interesado→[Propuesta,Contactado,Perdido], Propuesta→[Negociacion,Interesado,Perdido], Negociacion→[Cierre,Propuesta,Perdido]; Prospecto/Cierre/Perdido sin cambio. change-deal-stage.use-case.ts hereda el mapa sin tocarse.
+- Bug relacionado encontrado en exploracion y cerrado en la misma feature: update-client.use-case.ts (PATCH /clients/:id) no validaba ALLOWED_TRANSITIONS al cambiar client.stage — bypass total alcanzable desde ClientesPage cuando el cliente no tiene deal activo. Ahora valida igual que change-deal-stage.use-case.ts cuando dto.stage esta presente y difiere del actual.
+- Frontend: mirror en pipeline.types.ts actualizado; ClientesPage/Kanban derivan el nuevo comportamiento automaticamente sin cambios de codigo.
+- Review Lider (via subagente Reviewer independiente): PASSED 15/15, tsc backend+frontend exit 0 (verificado dos veces, por Implementer y Reviewer). Nota de proceso: package-lock.json de ambos proyectos cambio como efecto colateral de npm install (node_modules no existia en el checkout) y se revirtio antes de cerrar — package.json intacto en ambos. Detalle: progress/impl_67-pipeline-backward-stage.md.
+
+## 2026-07-09 — Feature 68 registrada: cobertura completa de clientes iniciados en pipeline
+
+- Reporte usuario: un seller tiene 49 clientes con proceso comercial iniciado, pero su pipeline solo muestra 19; deben aparecer los 49.
+- Estado: `pending`, solo registrada; no se implemento codigo en este pase.
+- Exploracion inicial: el endpoint individual y `findDetailedBySellerId` no tienen limite de 20 ni paginacion. La implementacion debera auditar la relacion entre clients, activities y deals para encontrar la causa real.
+- Criterio central: medir por `clientId` distintos (un cliente puede tener varias oportunidades), cerrar la ruta que genera huecos y ejecutar un backfill idempotente sin duplicar deals.
+- Checkpoints: `CHECKPOINTS.md`, seccion `68-pipeline-client-coverage`.
+
+## 2026-07-10 — Feature 68 completada: cobertura de clientes iniciados en pipeline
+
+- Diagnostico read-only en prod: Fernanda tiene 58 clientes activos, 49 con actividad activa del mismo seller y solo 19 clientId con deal visible. Causa: el pipeline no truncaba; faltaban deals para clientes ya trabajados.
+- Regla final: cliente iniciado = cliente activo con al menos una actividad activa del mismo seller.
+- Runtime: primera actividad + aseguramiento del deal dentro de una transaccion TypeORM; advisory lock por client+seller+oportunidad, re-check bajo lock, insert condicional y rollback conjunto. Cliente inexistente/eliminado/ajeno no genera deal.
+- Backfill: migracion `1783700000000-BackfillInitiatedClientDeals` crea un deal activo para iniciados sin deal activo, sin modificar soft-deleted y preservando stage/expectedAmount/probabilidad.
+- Review independiente PASSED para codigo/pre-deploy. Backend+frontend tsc PASS; Jest 6 suites/27 tests PASS; seller/team prueban 49 distintos y mas de 20 en una etapa.
+- Pendiente operativo no bloqueante: tras deploy ejecutar migracion y confirmar en prod 19→49 con `COUNT(DISTINCT client_id)`.

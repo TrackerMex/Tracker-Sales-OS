@@ -5,8 +5,9 @@ import { CreateActivityDto } from '../dtos/create-activity.dto';
 import { ACTIVITY_REPOSITORY, IActivityRepository } from '../../domain/repositories/activity.repository.interface';
 import { TASK_POINTS, REQUIRES_NEXT_STEP } from '../../domain/entities/activity.entity';
 import { DEAL_REPOSITORY, IDealsRepository } from '../../../pipeline/domain/repositories/deal.repository.interface';
-import { ALLOWED_TRANSITIONS, STAGE_PROBABILITY } from '../../../pipeline/domain/entities/deal.entity';
-import { PipelineStage } from '../../../clients/domain/entities/client.entity';
+import { ALLOWED_TRANSITIONS, DealEntity, STAGE_PROBABILITY } from '../../../pipeline/domain/entities/deal.entity';
+import { ClientEntity, PipelineStage } from '../../../clients/domain/entities/client.entity';
+import { CLIENT_REPOSITORY, IClientRepository } from '../../../clients/domain/repositories/client.repository.interface';
 
 @Injectable()
 export class CreateActivityUseCase implements IUseCase<CreateActivityDto, ActivityDto> {
@@ -15,6 +16,8 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
     private readonly activityRepo: IActivityRepository,
     @Inject(DEAL_REPOSITORY)
     private readonly dealRepo: IDealsRepository,
+    @Inject(CLIENT_REPOSITORY)
+    private readonly clientRepo: IClientRepository,
   ) {}
 
   async execute(input: CreateActivityDto): Promise<ActivityDto> {
@@ -34,9 +37,11 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
 
     // Stage snapshot + conditional pipeline sync
     let resolvedStage: string | null = input.stage ?? null;
+    let existingDeal: DealEntity | null = null;
+    let clientForNewDeal: ClientEntity | null = null;
 
     if (input.clientId) {
-      const existingDeal = input.opportunityName
+      existingDeal = input.opportunityName
         ? await this.dealRepo.findByOpportunity(input.clientId, input.sellerId, input.opportunityName)
         : await this.dealRepo.findByClientIdAndSellerId(input.clientId, input.sellerId);
 
@@ -45,11 +50,14 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
         resolvedStage = existingDeal.stage;
       }
 
-      if (input.stage) {
-        if (!existingDeal) {
-          // Crear nuevo deal (con o sin opportunityName)
-          await this.syncPipeline(input.clientId, input.sellerId, input.stage, input.opportunityName);
-        } else if (input.stage !== existingDeal.stage) {
+      if (!existingDeal) {
+        const client = await this.clientRepo.findById(input.clientId);
+        if (client && client.sellerId === input.sellerId) {
+          clientForNewDeal = client;
+          resolvedStage = input.stage ?? client.stage;
+        }
+      } else if (input.stage) {
+        if (input.stage !== existingDeal.stage) {
           // Avanzar SOLO el deal de esta oportunidad
           await this.syncPipelineForDeal(existingDeal.id, input.stage, input.sellerId);
         }
@@ -57,7 +65,7 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
       }
     }
 
-    const entity = await this.activityRepo.create({
+    const activity = {
       ...input,
       clientId: input.clientId ?? null,
       contactId: input.contactId ?? null,
@@ -75,21 +83,26 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
       delayMinutes,
       points,
       quality,
-    });
+    };
+
+    let entity;
+    if (!existingDeal && clientForNewDeal) {
+      const stage = input.stage ?? clientForNewDeal.stage;
+      activity.stage = stage;
+      entity = await this.activityRepo.createWithPipelineSync(activity, {
+        clientId: clientForNewDeal.id,
+        clientName: clientForNewDeal.name,
+        sellerId: input.sellerId,
+        stage,
+        amount: clientForNewDeal.expectedAmount,
+        probability: STAGE_PROBABILITY[stage],
+        opportunityName: input.opportunityName ?? null,
+      });
+    }
+
+    entity ??= await this.activityRepo.create(activity);
 
     return ActivityDto.fromEntity(entity);
-  }
-
-  private async syncPipeline(clientId: string, sellerId: string, stage: PipelineStage, opportunityName?: string): Promise<void> {
-    await this.dealRepo.create({
-      clientId,
-      sellerId,
-      stage,
-      amount: 0,
-      probability: STAGE_PROBABILITY[stage],
-      stageHistory: [],
-      opportunityName: opportunityName ?? null,
-    });
   }
 
   private async syncPipelineForDeal(dealId: string, stage: PipelineStage, sellerId: string): Promise<void> {

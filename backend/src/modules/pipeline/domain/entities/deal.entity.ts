@@ -22,10 +22,10 @@ export const STAGE_PROBABILITY: Record<PipelineStage, number> = {
 
 export const ALLOWED_TRANSITIONS: Partial<Record<PipelineStage, PipelineStage[]>> = {
   [PipelineStage.Prospecto]: [PipelineStage.Contactado, PipelineStage.Perdido],
-  [PipelineStage.Contactado]: [PipelineStage.Interesado, PipelineStage.Perdido],
-  [PipelineStage.Interesado]: [PipelineStage.Propuesta, PipelineStage.Perdido],
-  [PipelineStage.Propuesta]: [PipelineStage.Negociacion, PipelineStage.Perdido],
-  [PipelineStage.Negociacion]: [PipelineStage.Cierre, PipelineStage.Perdido],
+  [PipelineStage.Contactado]: [PipelineStage.Interesado, PipelineStage.Prospecto, PipelineStage.Perdido],
+  [PipelineStage.Interesado]: [PipelineStage.Propuesta, PipelineStage.Contactado, PipelineStage.Perdido],
+  [PipelineStage.Propuesta]: [PipelineStage.Negociacion, PipelineStage.Interesado, PipelineStage.Perdido],
+  [PipelineStage.Negociacion]: [PipelineStage.Cierre, PipelineStage.Propuesta, PipelineStage.Perdido],
   [PipelineStage.Cierre]: [],
   [PipelineStage.Perdido]: [],
 };
