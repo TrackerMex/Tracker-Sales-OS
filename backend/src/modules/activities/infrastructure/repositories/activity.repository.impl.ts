@@ -5,7 +5,10 @@ import {
   ActivityEntity,
   ActivityHistoryEntry,
 } from '../../domain/entities/activity.entity';
-import { IActivityRepository } from '../../domain/repositories/activity.repository.interface';
+import {
+  IActivityRepository,
+  PipelineDealSeed,
+} from '../../domain/repositories/activity.repository.interface';
 import { ActivityTypeormEntity } from '../entities/activity.typeorm.entity';
 import { FindAllOptions } from '../../../../core/domain/repository.interface';
 
@@ -43,6 +46,58 @@ export class ActivityRepositoryImpl implements IActivityRepository {
       this.repo.create(entity as Partial<ActivityTypeormEntity>),
     );
     return this.toDomain(saved);
+  }
+
+  async createWithPipelineSync(
+    activity: Partial<ActivityEntity>,
+    deal: PipelineDealSeed,
+  ): Promise<ActivityEntity> {
+    return this.repo.manager.transaction(async (manager) => {
+      const lockKey = `${deal.clientId}:${deal.sellerId}:${deal.opportunityName ?? '*'}`;
+      await manager.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [lockKey]);
+
+      const opportunityPredicate = deal.opportunityName
+        ? 'AND "opportunity_name" = $3'
+        : '';
+      const parameters = deal.opportunityName
+        ? [deal.clientId, deal.sellerId, deal.opportunityName]
+        : [deal.clientId, deal.sellerId];
+      const existing: unknown[] = await manager.query(
+        `SELECT "id" FROM "deals"
+         WHERE "client_id" = $1 AND "seller_id" = $2
+           AND "deleted_at" IS NULL ${opportunityPredicate}
+         LIMIT 1`,
+        parameters,
+      );
+
+      if (existing.length === 0) {
+        await manager.query(
+          `INSERT INTO "deals" (
+             "id", "client_id", "client_name", "seller_id", "stage", "amount",
+             "probability", "stage_history", "opportunity_name", "created_at",
+             "updated_at", "deleted_at", "version"
+           ) VALUES (
+             uuid_generate_v4(), $1, $2, $3, $4, $5, $6, '[]'::jsonb, $7,
+             NOW(), NOW(), NULL, 1
+           )`,
+          [
+            deal.clientId,
+            deal.clientName,
+            deal.sellerId,
+            deal.stage,
+            deal.amount,
+            deal.probability,
+            deal.opportunityName,
+          ],
+        );
+      }
+
+      const activityRepo = manager.getRepository(ActivityTypeormEntity);
+      const saved = await activityRepo.save(
+        activityRepo.create(activity as Partial<ActivityTypeormEntity>),
+      );
+      return this.toDomain(saved);
+    });
   }
 
   async update(

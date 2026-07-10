@@ -122,3 +122,95 @@ LEFT JOIN LATERAL (
 WHERE c.seller_id = :'seller_id'
   AND c.deleted_at IS NULL
   AND c.stage <> 'Prospecto';
+
+-- ============================================================================
+-- Q8. Comparar definiciones posibles de "cliente iniciado"
+-- Ejecutar antes del fix para decidir el alcance exacto del backfill.
+-- Cuenta client_id distintos y evita inflar resultados por varias actividades
+-- u oportunidades del mismo cliente.
+-- ============================================================================
+WITH client_flags AS (
+  SELECT
+    c.id,
+    c.stage,
+    (NULLIF(BTRIM(c.next_step), '') IS NOT NULL
+      OR c.next_date IS NOT NULL
+      OR c.next_time IS NOT NULL) AS tiene_siguiente_paso,
+    EXISTS (
+      SELECT 1
+      FROM activities a
+      WHERE a.client_id = c.id
+        AND a.seller_id = c.seller_id
+        AND a.deleted_at IS NULL
+    ) AS tiene_actividad,
+    EXISTS (
+      SELECT 1
+      FROM deals d
+      WHERE d.client_id = c.id
+        AND d.seller_id = c.seller_id
+        AND d.deleted_at IS NULL
+    ) AS tiene_deal
+  FROM clients c
+  WHERE c.seller_id = :'seller_id'
+    AND c.deleted_at IS NULL
+)
+SELECT
+  count(*) AS clientes_totales,
+  count(*) FILTER (WHERE stage <> 'Prospecto') AS stage_avanzado,
+  count(*) FILTER (WHERE tiene_siguiente_paso) AS con_siguiente_paso,
+  count(*) FILTER (WHERE tiene_actividad) AS con_actividad,
+  count(*) FILTER (WHERE tiene_deal) AS con_deal,
+  count(*) FILTER (
+    WHERE stage <> 'Prospecto'
+       OR tiene_siguiente_paso
+       OR tiene_actividad
+       OR tiene_deal
+  ) AS iniciados_union,
+  count(*) FILTER (
+    WHERE (stage <> 'Prospecto'
+       OR tiene_siguiente_paso
+       OR tiene_actividad)
+      AND NOT tiene_deal
+  ) AS iniciados_sin_deal
+FROM client_flags;
+
+-- Q9. Detalle de los clientes que solo entran por actividad/siguiente paso,
+-- pero siguen en Prospecto y no tienen deal. Sirve para revisar si deben formar
+-- parte del pipeline antes de fijar la regla definitiva.
+WITH client_flags AS (
+  SELECT
+    c.id,
+    c.name,
+    c.stage,
+    c.next_step,
+    c.next_date,
+    c.next_time,
+    EXISTS (
+      SELECT 1
+      FROM activities a
+      WHERE a.client_id = c.id
+        AND a.seller_id = c.seller_id
+        AND a.deleted_at IS NULL
+    ) AS tiene_actividad,
+    EXISTS (
+      SELECT 1
+      FROM deals d
+      WHERE d.client_id = c.id
+        AND d.seller_id = c.seller_id
+        AND d.deleted_at IS NULL
+    ) AS tiene_deal
+  FROM clients c
+  WHERE c.seller_id = :'seller_id'
+    AND c.deleted_at IS NULL
+)
+SELECT id, name, stage, next_step, next_date, next_time, tiene_actividad
+FROM client_flags
+WHERE stage = 'Prospecto'
+  AND NOT tiene_deal
+  AND (
+    tiene_actividad
+    OR NULLIF(BTRIM(next_step), '') IS NOT NULL
+    OR next_date IS NOT NULL
+    OR next_time IS NOT NULL
+  )
+ORDER BY name;

@@ -10,9 +10,10 @@ import { UpdateActivityStatusUseCase } from './application/use-cases/update-acti
 import { ActivitiesController } from './presentation/activities.controller';
 import { AuthModule } from '../auth/auth.module';
 import { PipelineModule } from '../pipeline/pipeline.module';
+import { ClientsModule } from '../clients/clients.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ActivityTypeormEntity]), AuthModule, PipelineModule],
+  imports: [TypeOrmModule.forFeature([ActivityTypeormEntity]), AuthModule, PipelineModule, ClientsModule],
   controllers: [ActivitiesController],
   providers: [
     { provide: ACTIVITY_REPOSITORY, useClass: ActivityRepositoryImpl },

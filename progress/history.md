@@ -799,3 +799,12 @@ Batch 2:
 - Exploracion inicial: el endpoint individual y `findDetailedBySellerId` no tienen limite de 20 ni paginacion. La implementacion debera auditar la relacion entre clients, activities y deals para encontrar la causa real.
 - Criterio central: medir por `clientId` distintos (un cliente puede tener varias oportunidades), cerrar la ruta que genera huecos y ejecutar un backfill idempotente sin duplicar deals.
 - Checkpoints: `CHECKPOINTS.md`, seccion `68-pipeline-client-coverage`.
+
+## 2026-07-10 — Feature 68 completada: cobertura de clientes iniciados en pipeline
+
+- Diagnostico read-only en prod: Fernanda tiene 58 clientes activos, 49 con actividad activa del mismo seller y solo 19 clientId con deal visible. Causa: el pipeline no truncaba; faltaban deals para clientes ya trabajados.
+- Regla final: cliente iniciado = cliente activo con al menos una actividad activa del mismo seller.
+- Runtime: primera actividad + aseguramiento del deal dentro de una transaccion TypeORM; advisory lock por client+seller+oportunidad, re-check bajo lock, insert condicional y rollback conjunto. Cliente inexistente/eliminado/ajeno no genera deal.
+- Backfill: migracion `1783700000000-BackfillInitiatedClientDeals` crea un deal activo para iniciados sin deal activo, sin modificar soft-deleted y preservando stage/expectedAmount/probabilidad.
+- Review independiente PASSED para codigo/pre-deploy. Backend+frontend tsc PASS; Jest 6 suites/27 tests PASS; seller/team prueban 49 distintos y mas de 20 en una etapa.
+- Pendiente operativo no bloqueante: tras deploy ejecutar migracion y confirmar en prod 19→49 con `COUNT(DISTINCT client_id)`.
