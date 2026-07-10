@@ -783,3 +783,11 @@ Batch 2:
 - Bug bloqueante encontrado en ClientesPage.tsx:359 — bloque "Contactos" del sidebar oscuro abria `<div>` (linea 345) y cerraba `</Card>` huerfano (JSX desbalanceado, rompia build). Fix Implementer: cerro con `</div>`, sidebar se mantiene custom oscuro (no Card).
 - Decision de criterio: bloque de contactos editables del formulario create/edit (ClientesPage.tsx ~768-853) se deja SIN Accordion — es edicion activa de datos, colapsar añadiria friccion al capturar 2+ contactos. ExecutiveSlide.tsx fuera de alcance (100% inline-style, requerido para export via window.open+outerHTML).
 - Review Lider: PASSED 10/10, tsc frontend exit 0, sin Cards anidadas en ningun modulo. Detalle: progress/impl_60-shadcn-card-accordion.md.
+
+## 2026-07-09 — Feature 67: retroceso de una etapa en el pipeline (rama multi-tenant)
+
+- Pedido usuario: permitir retroceder etapa (ej. Contactado → Prospecto), hoy bloqueado. Decision via AskUserQuestion: retroceso de un solo paso (no salto libre a cualquier etapa anterior); Cierre/Perdido siguen terminales (no reabribles).
+- Backend: ALLOWED_TRANSITIONS (deal.entity.ts) ahora Contactado→[Interesado,Prospecto,Perdido], Interesado→[Propuesta,Contactado,Perdido], Propuesta→[Negociacion,Interesado,Perdido], Negociacion→[Cierre,Propuesta,Perdido]; Prospecto/Cierre/Perdido sin cambio. change-deal-stage.use-case.ts hereda el mapa sin tocarse.
+- Bug relacionado encontrado en exploracion y cerrado en la misma feature: update-client.use-case.ts (PATCH /clients/:id) no validaba ALLOWED_TRANSITIONS al cambiar client.stage — bypass total alcanzable desde ClientesPage cuando el cliente no tiene deal activo. Ahora valida igual que change-deal-stage.use-case.ts cuando dto.stage esta presente y difiere del actual.
+- Frontend: mirror en pipeline.types.ts actualizado; ClientesPage/Kanban derivan el nuevo comportamiento automaticamente sin cambios de codigo.
+- Review Lider (via subagente Reviewer independiente): PASSED 15/15, tsc backend+frontend exit 0 (verificado dos veces, por Implementer y Reviewer). Nota de proceso: package-lock.json de ambos proyectos cambio como efecto colateral de npm install (node_modules no existia en el checkout) y se revirtio antes de cerrar — package.json intacto en ambos. Detalle: progress/impl_67-pipeline-backward-stage.md.

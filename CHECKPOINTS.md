@@ -479,6 +479,33 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ---
 
+## 67-pipeline-backward-stage
+
+**Backend — pipeline (regla central):**
+- [ ] `ALLOWED_TRANSITIONS` (`backend/src/modules/pipeline/domain/entities/deal.entity.ts`) permite, además de lo ya existente, retroceder exactamente una etapa dentro del tramo activo: `Contactado → Prospecto`, `Interesado → Contactado`, `Propuesta → Interesado`, `Negociacion → Propuesta`
+- [ ] `Cierre` y `Perdido` siguen sin transiciones de salida (`[]`) — no reabribles
+- [ ] `Prospecto` no gana transición de retroceso (es la primera etapa)
+- [ ] `PATCH /deals/:id/stage` acepta el retroceso de una etapa y lo persiste en `stageHistory` (mismo mecanismo que hoy, sin cambios en `change-deal-stage.use-case.ts` más allá de heredar el mapa actualizado)
+- [ ] Un intento de retroceder más de una etapa (ej. `Negociacion → Prospecto`) sigue devolviendo 400
+
+**Backend — clients (cierre de bypass, mismo alcance):**
+- [ ] `UpdateClientUseCase` (`backend/src/modules/clients/application/use-cases/update-client.use-case.ts`) valida `ALLOWED_TRANSITIONS` cuando `dto.stage` viene presente y difiere del `stage` actual del cliente; lanza `BadRequestException` igual que `change-deal-stage.use-case.ts` si la transición no está permitida
+- [ ] Si `dto.stage` no viene en el patch, o es igual al actual, no se agrega validación ni efectos secundarios nuevos
+- [ ] `tsc --noEmit` sin errores en backend
+
+**Frontend:**
+- [ ] `ALLOWED_TRANSITIONS` en `frontend/src/modules/pipeline/domain/pipeline.types.ts` queda idéntico al mapa del backend (mismo comentario "Mirrors ALLOWED_TRANSITIONS in backend deal.entity.ts")
+- [ ] `ClientesPage.tsx` — botones "Actualizar stage" habilitan el retroceso de una etapa cuando hay `activeDeal` (se deriva automáticamente del mirror, sin lógica nueva)
+- [ ] Kanban (`KanbanColumn.tsx` / `DealCard.tsx`) sigue sin bloquear el drag hacia atrás antes del request (comportamiento ya existente, fuera de alcance); el toast de error/success ya cubre el caso de transición inválida (>1 etapa)
+- [ ] `tsc --noEmit` sin errores en frontend
+
+**Fuera de alcance (documentar si se toca):**
+- No se agrega bloqueo de drag-and-drop preventivo en el Kanban (mejora de UX, no pedida)
+- No se reabren `Cierre`/`Perdido`
+- No se toca `create-activity.use-case.ts` (syncPipelineForDeal) — hereda el mapa sin cambios de código
+
+---
+
 ## 60-shadcn-card-accordion
 
 **Estado previo (trabajo sin commitear encontrado al iniciar la feature):** `ClientDetailPage.tsx`, `ActivityHistoryModal.tsx`, `ReportsPage.tsx` y `SettingsPage.tsx` ya tenian Card/Accordion aplicados de una sesion anterior no cerrada formalmente. `ClientesPage.tsx` tenia migracion parcial con un bug de tag JSX sin cerrar bien.

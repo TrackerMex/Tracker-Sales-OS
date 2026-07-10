@@ -673,6 +673,16 @@
     "notes": "Origen: auditoría 2026-07-07, Fase 1. Infra pura, sin código de app. Opciones: feature de backups de Dokploy (verificar si el plan lo incluye, destino S3/local) o cron en VPS con pg_dump + rotación. Documentar restore en docs/verification.md y ejecutarlo una vez contra DB temporal para validar. La DB de prod corre en contenedor postgres:18 separado (ver memoria project_prod_vps)."
   },
   {
+    "id": "67-pipeline-backward-stage",
+    "name": "Pipeline: permitir retroceder una etapa",
+    "description": "Hoy ALLOWED_TRANSITIONS (deal.entity.ts) solo permite avanzar (o saltar a Perdido); mover un deal hacia atrás (ej. Contactado → Prospecto) es rechazado con 400. Nueva regla: permitir retroceder exactamente una etapa dentro del tramo activo (Prospecto..Negociación). Cierre y Perdido siguen siendo terminales (sin transiciones de salida). Decisión usuario vía AskUserQuestion 2026-07-09: retroceso de un solo paso (no salto libre a cualquier etapa anterior), estados finales NO reabribles.",
+    "status": "done",
+    "priority": 67,
+    "backend_modules": ["pipeline", "clients"],
+    "frontend_modules": ["pipeline", "clients"],
+    "notes": "Origen: pedido usuario 2026-07-09, rama multi-tenant. Completada 2026-07-09. Review 15/15 PASS (progress/impl_67-pipeline-backward-stage.md). Backend: ALLOWED_TRANSITIONS (deal.entity.ts) ahora Contactado→[Interesado,Prospecto,Perdido], Interesado→[Propuesta,Contactado,Perdido], Propuesta→[Negociacion,Interesado,Perdido], Negociacion→[Cierre,Propuesta,Perdido]; Prospecto/Cierre/Perdido sin cambio de semántica. change-deal-stage.use-case.ts hereda el mapa sin tocarse. Bug relacionado cerrado en la misma feature: update-client.use-case.ts (PATCH /clients/:id) no validaba ALLOWED_TRANSITIONS al cambiar client.stage (bypass alcanzable desde ClientesPage cuando el cliente no tiene deal activo) — ahora valida igual que change-deal-stage cuando dto.stage está presente y difiere del actual. Frontend: mirror en pipeline.types.ts actualizado; ClientesPage/Kanban derivan el nuevo comportamiento sin cambios de código. tsc backend+frontend exit 0 (verificado por Implementer y Reviewer independientemente). create-activity.use-case.ts (syncPipelineForDeal) no tocado, fuera de alcance. Nota de proceso: package-lock.json de ambos proyectos se modificó como efecto colateral de npm install (node_modules no existía) y se revirtió antes de cerrar — package.json sin cambios en ningún caso."
+  },
+  {
     "id": "66-multitenancy-org",
     "name": "Fase 2 SaaS: multi-tenancy (org_id)",
     "description": "Columna org_id en todas las tablas de negocio, tabla organizations, scoping por org en todos los repos, org en JWT, índices compuestos org-first, seed/onboarding de organización. Convierte la app single-company en SaaS multi-cliente.",
