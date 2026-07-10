@@ -673,6 +673,16 @@
     "notes": "Origen: auditoría 2026-07-07, Fase 1. Infra pura, sin código de app. Opciones: feature de backups de Dokploy (verificar si el plan lo incluye, destino S3/local) o cron en VPS con pg_dump + rotación. Documentar restore en docs/verification.md y ejecutarlo una vez contra DB temporal para validar. La DB de prod corre en contenedor postgres:18 separado (ver memoria project_prod_vps)."
   },
   {
+    "id": "66-multitenancy-org",
+    "name": "Fase 2 SaaS: multi-tenancy (org_id)",
+    "description": "Columna org_id en todas las tablas de negocio, tabla organizations, scoping por org en todos los repos, org en JWT, índices compuestos org-first, seed/onboarding de organización. Convierte la app single-company en SaaS multi-cliente.",
+    "status": "pending",
+    "priority": 66,
+    "backend_modules": ["auth", "users", "sellers", "clients", "activities", "tasks", "pipeline", "sales", "settings", "dashboard", "coaching", "reports", "import-export"],
+    "frontend_modules": [],
+    "notes": "Origen: auditoría 2026-07-07 + decisión usuario 2026-07-07: el producto SE VENDE a otras empresas → multi-tenancy va ANTES de configurabilidad (custom fields, catálogos). Feature grande — al llegar aquí, partirla en sub-features (schema+migración, JWT+guards, scoping repos por módulo, settings por org, onboarding). Decidir: scoping en repos (más simple) vs RLS Postgres (más seguro). La empresa actual en prod se migra como org #1. NO empezar hasta cerrar Fase 1 (61-65)."
+  },
+  {
     "id": "67-pipeline-backward-stage",
     "name": "Pipeline: permitir retroceder una etapa",
     "description": "Hoy ALLOWED_TRANSITIONS (deal.entity.ts) solo permite avanzar (o saltar a Perdido); mover un deal hacia atrás (ej. Contactado → Prospecto) es rechazado con 400. Nueva regla: permitir retroceder exactamente una etapa dentro del tramo activo (Prospecto..Negociación). Cierre y Perdido siguen siendo terminales (sin transiciones de salida). Decisión usuario vía AskUserQuestion 2026-07-09: retroceso de un solo paso (no salto libre a cualquier etapa anterior), estados finales NO reabribles.",
@@ -691,15 +701,5 @@
     "backend_modules": ["pipeline", "clients", "activities"],
     "frontend_modules": ["pipeline"],
     "notes": "Origen: reporte usuario 2026-07-09, rama multi-tenant. Caso de aceptación: seller con 49 clientes cuyo proceso ya fue iniciado debe ver los 49 clientId distintos en su pipeline. Exploración inicial: GET /pipeline/seller/:id y DealRepositoryImpl.findDetailedBySellerId no tienen limit/take ni paginación; por ello no asumir que el problema es un simple límite de 20. Auditar en datos reales, de forma read-only, clients.seller_id vs deals.seller_id/client_id/deleted_at y activities.seller_id/client_id/stage para identificar si faltan deals, están soft-deleted, pertenecen a otro seller o se pierden en otra capa. Definir cliente iniciado como cliente no eliminado asignado al seller con evidencia de proceso comercial (deal no eliminado o actividad no eliminada vinculada que inició/sincronizó etapa); documentar la regla final antes de reparar datos. El fix debe cerrar la causa de creación/sincronización, ser idempotente y recuperar los clientes históricos faltantes sin duplicar oportunidades existentes. Validar por clientId distintos porque un cliente puede tener varias oportunidades. Sin dependencias nuevas."
-  },
-  {
-    "id": "66-multitenancy-org",
-    "name": "Fase 2 SaaS: multi-tenancy (org_id)",
-    "description": "Columna org_id en todas las tablas de negocio, tabla organizations, scoping por org en todos los repos, org en JWT, índices compuestos org-first, seed/onboarding de organización. Convierte la app single-company en SaaS multi-cliente.",
-    "status": "pending",
-    "priority": 66,
-    "backend_modules": ["auth", "users", "sellers", "clients", "activities", "tasks", "pipeline", "sales", "settings", "dashboard", "coaching", "reports", "import-export"],
-    "frontend_modules": [],
-    "notes": "Origen: auditoría 2026-07-07 + decisión usuario 2026-07-07: el producto SE VENDE a otras empresas → multi-tenancy va ANTES de configurabilidad (custom fields, catálogos). Feature grande — al llegar aquí, partirla en sub-features (schema+migración, JWT+guards, scoping repos por módulo, settings por org, onboarding). Decidir: scoping en repos (más simple) vs RLS Postgres (más seguro). La empresa actual en prod se migra como org #1. NO empezar hasta cerrar Fase 1 (61-65)."
   }
 ]
