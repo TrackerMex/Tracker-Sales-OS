@@ -711,5 +711,15 @@
     "backend_modules": ["pipeline", "clients"],
     "frontend_modules": ["pipeline", "clients"],
     "notes": "Origen: decisión del usuario 2026-07-10. Completada 2026-07-10; review independiente PASSED 11/11. Las 7 fases permiten saltar a cualquiera de las otras 6, incluyendo reabrir desde Cierre y Perdido. Backend y frontend comparten mapas semánticamente idénticos; se conservan historial, changedBy, probabilidad automática y lossReason opcional solo al entrar en Perdido. Jest backend 1 suite/5 tests PASS; tsc backend+frontend PASS. Resumen: progress/impl_69-pipeline-free-stage.md."
+  },
+  {
+    "id": "70-pipeline-activity-updated-at",
+    "name": "Pipeline: fecha de actualización por actividad",
+    "description": "Al registrar una actividad asociada a un cliente y oportunidad existentes, actualizar la fecha updatedAt del deal sin alterar su fecha de creación ni su fase. La tarjeta del pipeline muestra la última actualización en lugar de la fecha original de alta.",
+    "status": "done",
+    "priority": 70,
+    "backend_modules": ["activities", "pipeline"],
+    "frontend_modules": ["pipeline"],
+    "notes": "Origen: caso de producción reportado 2026-07-10. Completada 2026-07-10; revisión backend PASSED 12/12 y ajuste visual PASSED 4/4. Para deals existentes, createAndTouchDeal persiste actividad y actualiza exclusivamente deals.updated_at en una transacción, con rollback si el deal no existe. Scoping por el deal resuelto para clientId+sellerId+opportunityName; sin clientId y creación inicial conservan sus flujos. DealCard muestra solo la fecha updatedAt (fallback createdAt) y el badge de días usa la misma fecha para reiniciarse con cada actividad. Sin migración ni dependencias. Jest 20/20 PASS; tsc backend+frontend PASS. Resumen: progress/impl_70-pipeline-activity-updated-at.md."
   }
 ]

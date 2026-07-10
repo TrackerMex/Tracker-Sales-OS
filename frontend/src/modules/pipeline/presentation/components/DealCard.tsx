@@ -34,12 +34,10 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
   const contactInfo = [deal.contactName, deal.contactRole].filter(Boolean).join(' · ')
   const badgeColor = STAGE_BADGE_COLORS[deal.stage] || '#002B49'
   const { data: settings } = useSettings()
+  const activityDate = deal.updatedAt ?? deal.createdAt
 
-  const lastChange = deal.stageHistory?.length > 0
-    ? deal.stageHistory[deal.stageHistory.length - 1].changedAt
-    : (deal.createdAt as string | undefined)
-  const daysStalled = lastChange
-    ? Math.floor((Date.now() - new Date(lastChange).getTime()) / 86400000)
+  const daysStalled = activityDate
+    ? Math.floor((Date.now() - new Date(activityDate).getTime()) / 86400000)
     : 0
   const amberDays = settings?.stalledAmberDays ?? 7
   const redDays = settings?.stalledRedDays ?? 14
@@ -142,7 +140,7 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
             </span>
           )}
           <span style={{ fontSize: '11px', color: '#94A3B8' }}>
-            {deal.createdAt ? formatDate(deal.createdAt as unknown as string) : ''}
+            {activityDate ? formatDate(activityDate) : ''}
           </span>
         </div>
       </div>

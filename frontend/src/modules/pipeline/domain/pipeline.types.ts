@@ -95,6 +95,7 @@ export interface Deal {
   nextDate?: string
   nextTime?: string
   createdAt?: string
+  updatedAt?: string
 }
 
 export interface CreateDealInput {

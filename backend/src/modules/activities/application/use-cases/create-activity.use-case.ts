@@ -100,6 +100,10 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
       });
     }
 
+    if (!entity && existingDeal) {
+      entity = await this.activityRepo.createAndTouchDeal(activity, existingDeal.id);
+    }
+
     entity ??= await this.activityRepo.create(activity);
 
     return ActivityDto.fromEntity(entity);

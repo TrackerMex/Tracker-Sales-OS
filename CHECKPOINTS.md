@@ -557,6 +557,28 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ---
 
+## 70-pipeline-activity-updated-at
+
+**Backend:**
+- [x] Registrar una actividad con `clientId` y deal existente actualiza `deals.updated_at` aunque la fase no cambie
+- [x] La actividad y el touch de `deals.updated_at` ocurren en una misma transacción; si falla cualquiera, no queda persistencia parcial
+- [x] El touch afecta solo el deal resuelto para el cliente, seller y `opportunityName` aplicables
+- [x] La fecha `created_at`, la fase, probabilidad y `stage_history` del deal no cambian por el touch
+- [x] Registrar actividad sin `clientId` conserva el flujo actual y no intenta tocar un deal
+- [x] Crear la primera actividad de un cliente sin deal conserva la creación transaccional del deal y deja `created_at`/`updated_at` iniciales válidos
+
+**Frontend:**
+- [x] El tipo `Deal` incluye `updatedAt`, ya expuesto por `DealDto`
+- [x] `DealCard` muestra únicamente la fecha de `updatedAt`, sin label, y usa `createdAt` solo como fallback compatible
+- [x] El badge de días se calcula desde `updatedAt`, con fallback a `createdAt`, para reiniciarse cuando se agrega una actividad
+
+**Verificación:**
+- [x] Tests automatizados cubren actividad con deal existente, ausencia de `clientId`, selección por oportunidad y rollback/error transaccional relevante
+- [x] `tsc --noEmit` pasa en backend y frontend; tests relevantes pasan
+- [x] Resumen guardado en `progress/impl_70-pipeline-activity-updated-at.md`
+
+---
+
 ## 60-shadcn-card-accordion
 
 **Estado previo (trabajo sin commitear encontrado al iniciar la feature):** `ClientDetailPage.tsx`, `ActivityHistoryModal.tsx`, `ReportsPage.tsx` y `SettingsPage.tsx` ya tenian Card/Accordion aplicados de una sesion anterior no cerrada formalmente. `ClientesPage.tsx` tenia migracion parcial con un bug de tag JSX sin cerrar bien.
