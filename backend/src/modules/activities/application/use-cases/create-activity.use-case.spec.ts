@@ -20,6 +20,7 @@ const makeMockRepo = (): jest.Mocked<IActivityRepository> => ({
   updateStatus: jest.fn(),
   findByClientId: jest.fn(),
   createWithPipelineSync: jest.fn(),
+  createAndTouchDeal: jest.fn(),
 });
 
 const makeMockDealRepo = (): jest.Mocked<IDealsRepository> => ({
@@ -59,6 +60,13 @@ describe('CreateActivityUseCase', () => {
     repo.createWithPipelineSync.mockImplementation(async (activity) => ({
       ...activity,
       id: 'activity-atomic',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    } as any));
+    repo.createAndTouchDeal.mockImplementation(async (activity) => ({
+      ...activity,
+      id: 'activity-touched',
       createdAt: new Date(),
       updatedAt: new Date(),
       deletedAt: null,
@@ -134,6 +142,10 @@ describe('CreateActivityUseCase', () => {
     await useCase.execute({ ...baseInput, type: ActivityType.Chat });
 
     expect(repo.createWithPipelineSync).not.toHaveBeenCalled();
+    expect(repo.createAndTouchDeal).toHaveBeenCalledWith(
+      expect.any(Object),
+      'deal-1',
+    );
     expect(clientRepo.findById).not.toHaveBeenCalled();
   });
 
@@ -149,6 +161,7 @@ describe('CreateActivityUseCase', () => {
     });
 
     expect(repo.createWithPipelineSync).not.toHaveBeenCalled();
+    expect(repo.createAndTouchDeal).not.toHaveBeenCalled();
     expect(clientRepo.findById).not.toHaveBeenCalled();
   });
 
@@ -169,28 +182,28 @@ describe('CreateActivityUseCase', () => {
     const entity = { ...baseInput, type: ActivityType.Chat, points: 1, quality: 0, id: '1', createdAt: new Date(), updatedAt: new Date(), deletedAt: null, contactId: null, discovery: null, agreement: null, nextStep: null, nextDate: null, nextTime: null, programmedAt: null, capturedAt: new Date(), delayMinutes: 0, executedAt: new Date() };
     repo.create.mockResolvedValue(entity as any);
     await useCase.execute({ ...baseInput, type: ActivityType.Chat });
-    expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ points: 1 }));
+    expect(repo.createAndTouchDeal).toHaveBeenCalledWith(expect.objectContaining({ points: 1 }), 'existing-deal');
   });
 
   it('assigns correct points for Llamada (3)', async () => {
     const entity = { ...baseInput, type: ActivityType.Llamada, points: 3, quality: 0, id: '1', createdAt: new Date(), updatedAt: new Date(), deletedAt: null, contactId: null, discovery: null, agreement: null, nextStep: 'call back', nextDate: '2025-01-01', nextTime: '10:00', programmedAt: null, capturedAt: new Date(), delayMinutes: 0, executedAt: new Date() };
     repo.create.mockResolvedValue(entity as any);
     await useCase.execute({ ...baseInput, type: ActivityType.Llamada, nextStep: 'call back', nextDate: '2025-01-01', nextTime: '10:00' });
-    expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ points: 3 }));
+    expect(repo.createAndTouchDeal).toHaveBeenCalledWith(expect.objectContaining({ points: 3 }), 'existing-deal');
   });
 
   it('assigns correct points for Cierre (25)', async () => {
     const entity = { ...baseInput, type: ActivityType.Cierre, points: 25, quality: 0, id: '1', createdAt: new Date(), updatedAt: new Date(), deletedAt: null, contactId: null, discovery: null, agreement: null, nextStep: null, nextDate: null, nextTime: null, programmedAt: null, capturedAt: new Date(), delayMinutes: 0, executedAt: new Date() };
     repo.create.mockResolvedValue(entity as any);
     await useCase.execute({ ...baseInput, type: ActivityType.Cierre });
-    expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ points: 25 }));
+    expect(repo.createAndTouchDeal).toHaveBeenCalledWith(expect.objectContaining({ points: 25 }), 'existing-deal');
   });
 
   it('calculates quality=0 when all fields are empty/short', async () => {
     const entity = { ...baseInput, type: ActivityType.Chat, points: 1, quality: 0, id: '1', createdAt: new Date(), updatedAt: new Date(), deletedAt: null, contactId: null, discovery: null, agreement: null, nextStep: null, nextDate: null, nextTime: null, programmedAt: null, capturedAt: new Date(), delayMinutes: 0, executedAt: new Date() };
     repo.create.mockResolvedValue(entity as any);
     await useCase.execute({ ...baseInput, type: ActivityType.Chat, summary: 'short' });
-    expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ quality: 0 }));
+    expect(repo.createAndTouchDeal).toHaveBeenCalledWith(expect.objectContaining({ quality: 0 }), 'existing-deal');
   });
 
   it('calculates quality=100 when all 5 conditions are met', async () => {
@@ -206,7 +219,7 @@ describe('CreateActivityUseCase', () => {
       nextDate: '2025-01-01',
       nextTime: '10:00',
     });
-    expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ quality: 100 }));
+    expect(repo.createAndTouchDeal).toHaveBeenCalledWith(expect.objectContaining({ quality: 100 }), 'existing-deal');
   });
 
   it('calculates quality=40 when only summary(>20) + nextDate + nextTime present', async () => {
@@ -219,7 +232,7 @@ describe('CreateActivityUseCase', () => {
       nextDate: '2025-01-01',
       nextTime: '10:00',
     });
-    expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ quality: 40 }));
+    expect(repo.createAndTouchDeal).toHaveBeenCalledWith(expect.objectContaining({ quality: 40 }), 'existing-deal');
   });
 
   it('throws BadRequestException if type=Llamada and nextStep is missing', async () => {
@@ -233,9 +246,75 @@ describe('CreateActivityUseCase', () => {
     const entity = { ...baseInput, type: ActivityType.Chat, points: 1, quality: 0, id: '1', createdAt: new Date(), updatedAt: new Date(), deletedAt: null, contactId: null, discovery: null, agreement: null, nextStep: null, nextDate: null, nextTime: null, programmedAt: null, capturedAt: new Date(), delayMinutes: 5, executedAt: pastDate };
     repo.create.mockResolvedValue(entity as any);
     await useCase.execute({ ...baseInput, type: ActivityType.Chat, executedAt: pastDate.toISOString() });
-    const call = repo.create.mock.calls[0][0];
+    const call = repo.createAndTouchDeal.mock.calls[0][0];
     expect((call as any).delayMinutes).toBeGreaterThanOrEqual(4);
     expect((call as any).delayMinutes).toBeLessThanOrEqual(6);
+  });
+
+  it('touches only the deal resolved by opportunity name', async () => {
+    dealRepo.findByOpportunity.mockResolvedValue({
+      id: 'opportunity-deal',
+      stage: PipelineStage.Propuesta,
+    } as any);
+
+    await useCase.execute({
+      ...baseInput,
+      type: ActivityType.Chat,
+      opportunityName: 'Renovación anual',
+    });
+
+    expect(dealRepo.findByOpportunity).toHaveBeenCalledWith(
+      baseInput.clientId,
+      baseInput.sellerId,
+      'Renovación anual',
+    );
+    expect(repo.createAndTouchDeal).toHaveBeenCalledWith(
+      expect.objectContaining({ stage: PipelineStage.Propuesta }),
+      'opportunity-deal',
+    );
+  });
+});
+
+describe('ActivityRepositoryImpl.createAndTouchDeal', () => {
+  it('saves the activity and touches only updated_at in one transaction', async () => {
+    const save = jest.fn().mockResolvedValue({ id: 'activity-1' });
+    const query = jest.fn().mockResolvedValue([{ id: 'deal-1' }]);
+    const manager = {
+      query,
+      getRepository: jest.fn().mockReturnValue({
+        create: jest.fn((value) => value),
+        save,
+      }),
+    };
+    const transaction = jest.fn(async (work) => work(manager));
+    const repository = new ActivityRepositoryImpl({ manager: { transaction } } as any);
+
+    await repository.createAndTouchDeal({ sellerId: baseInput.sellerId }, 'deal-1');
+
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(save).toHaveBeenCalledTimes(1);
+    const sql = String(query.mock.calls[0][0]);
+    expect(sql).toContain('SET "updated_at" = NOW()');
+    expect(sql).not.toContain('created_at');
+    expect(sql).not.toContain('stage_history');
+    expect(query).toHaveBeenCalledWith(expect.any(String), ['deal-1']);
+  });
+
+  it('throws when the resolved deal cannot be touched so the transaction rolls back', async () => {
+    const manager = {
+      query: jest.fn().mockResolvedValue([]),
+      getRepository: jest.fn().mockReturnValue({
+        create: jest.fn((value) => value),
+        save: jest.fn().mockResolvedValue({ id: 'activity-1' }),
+      }),
+    };
+    const repository = new ActivityRepositoryImpl({
+      manager: { transaction: jest.fn(async (work) => work(manager)) },
+    } as any);
+
+    await expect(
+      repository.createAndTouchDeal({ sellerId: baseInput.sellerId }, 'missing-deal'),
+    ).rejects.toThrow('Deal missing-deal not found');
   });
 });
 

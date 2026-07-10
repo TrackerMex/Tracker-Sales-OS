@@ -100,6 +100,29 @@ export class ActivityRepositoryImpl implements IActivityRepository {
     });
   }
 
+  async createAndTouchDeal(
+    activity: Partial<ActivityEntity>,
+    dealId: string,
+  ): Promise<ActivityEntity> {
+    return this.repo.manager.transaction(async (manager) => {
+      const activityRepo = manager.getRepository(ActivityTypeormEntity);
+      const saved = await activityRepo.save(
+        activityRepo.create(activity as Partial<ActivityTypeormEntity>),
+      );
+      const touched: unknown[] = await manager.query(
+        `UPDATE "deals"
+         SET "updated_at" = NOW()
+         WHERE "id" = $1 AND "deleted_at" IS NULL
+         RETURNING "id"`,
+        [dealId],
+      );
+      if (touched.length === 0) {
+        throw new NotFoundException(`Deal ${dealId} not found`);
+      }
+      return this.toDomain(saved);
+    });
+  }
+
   async update(
     id: string,
     entity: Partial<ActivityEntity>,

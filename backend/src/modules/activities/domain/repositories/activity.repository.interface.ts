@@ -28,4 +28,8 @@ export interface IActivityRepository extends IRepository<ActivityEntity> {
     activity: Partial<ActivityEntity>,
     deal: PipelineDealSeed,
   ): Promise<ActivityEntity>;
+  createAndTouchDeal(
+    activity: Partial<ActivityEntity>,
+    dealId: string,
+  ): Promise<ActivityEntity>;
 }
