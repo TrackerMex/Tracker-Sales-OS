@@ -3,17 +3,71 @@ import type { PipelineStage } from "@/modules/clients/domain/clients.types"
 
 export type { PipelineStage }
 
-export type LossReason = 'precio' | 'competencia' | 'sin_respuesta' | 'timing' | 'otro'
+export type LossReason =
+  | "precio"
+  | "competencia"
+  | "sin_respuesta"
+  | "timing"
+  | "otro"
 
 // Mirrors ALLOWED_TRANSITIONS in backend deal.entity.ts
 export const ALLOWED_TRANSITIONS: Record<PipelineStage, PipelineStage[]> = {
-  Prospecto: ['Contactado', 'Perdido'],
-  Contactado: ['Interesado', 'Prospecto', 'Perdido'],
-  Interesado: ['Propuesta', 'Contactado', 'Perdido'],
-  Propuesta: ['Negociación', 'Interesado', 'Perdido'],
-  Negociación: ['Cierre', 'Propuesta', 'Perdido'],
-  Cierre: [],
-  Perdido: [],
+  Prospecto: [
+    "Contactado",
+    "Interesado",
+    "Propuesta",
+    "Negociación",
+    "Cierre",
+    "Perdido",
+  ],
+  Contactado: [
+    "Prospecto",
+    "Interesado",
+    "Propuesta",
+    "Negociación",
+    "Cierre",
+    "Perdido",
+  ],
+  Interesado: [
+    "Prospecto",
+    "Contactado",
+    "Propuesta",
+    "Negociación",
+    "Cierre",
+    "Perdido",
+  ],
+  Propuesta: [
+    "Prospecto",
+    "Contactado",
+    "Interesado",
+    "Negociación",
+    "Cierre",
+    "Perdido",
+  ],
+  Negociación: [
+    "Prospecto",
+    "Contactado",
+    "Interesado",
+    "Propuesta",
+    "Cierre",
+    "Perdido",
+  ],
+  Cierre: [
+    "Prospecto",
+    "Contactado",
+    "Interesado",
+    "Propuesta",
+    "Negociación",
+    "Perdido",
+  ],
+  Perdido: [
+    "Prospecto",
+    "Contactado",
+    "Interesado",
+    "Propuesta",
+    "Negociación",
+    "Cierre",
+  ],
 }
 
 export interface StageHistoryEntry {

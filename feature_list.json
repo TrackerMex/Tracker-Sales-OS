@@ -701,5 +701,15 @@
     "backend_modules": ["pipeline", "clients", "activities"],
     "frontend_modules": ["pipeline"],
     "notes": "Origen: reporte usuario 2026-07-09, rama multi-tenant. Completada 2026-07-10; review independiente PASSED para código/pre-deploy (progress/impl_68-pipeline-client-coverage.md). Diagnóstico real prod Fernanda: 58 clientes activos, 49 con actividad activa del mismo seller y 19 clientId con deal visible; sin límite/paginación y sin seller desincronizado. Regla final: iniciado = cliente activo con al menos una actividad activa del mismo seller. CreateActivity resuelve cliente/stage y usa IActivityRepository.createWithPipelineSync: transacción única, advisory lock por client+seller+oportunidad, re-check activo bajo lock, insert condicional del deal y persistencia de actividad; rollback conjunto y sin deal para cliente inexistente/eliminado/ajeno. Migración 1783700000000 backfillea clientes iniciados sin deal activo, conserva nombre/seller/stage/expectedAmount/probabilidad y crea nuevo activo sin revivir soft-deleted. Tests seller/team: 49 distintos y 25/30 en una etapa; backend+frontend tsc PASS; Jest 6 suites/27 tests PASS; diff-check PASS. Seguimiento operativo no bloqueante: tras deploy/migration confirmar en prod COUNT(DISTINCT client_id) 19→49. Sin dependencias nuevas."
+  },
+  {
+    "id": "69-pipeline-free-stage",
+    "name": "Pipeline: movimiento libre entre fases",
+    "description": "Permitir mover una oportunidad directamente desde cualquier fase hacia cualquier otra fase del pipeline. Cierre y Perdido dejan de ser terminales y pueden reabrirse; al entrar en Perdido se conserva la captura opcional del motivo de pérdida.",
+    "status": "done",
+    "priority": 69,
+    "backend_modules": ["pipeline", "clients"],
+    "frontend_modules": ["pipeline", "clients"],
+    "notes": "Origen: decisión del usuario 2026-07-10. Completada 2026-07-10; review independiente PASSED 11/11. Las 7 fases permiten saltar a cualquiera de las otras 6, incluyendo reabrir desde Cierre y Perdido. Backend y frontend comparten mapas semánticamente idénticos; se conservan historial, changedBy, probabilidad automática y lossReason opcional solo al entrar en Perdido. Jest backend 1 suite/5 tests PASS; tsc backend+frontend PASS. Resumen: progress/impl_69-pipeline-free-stage.md."
   }
 ]

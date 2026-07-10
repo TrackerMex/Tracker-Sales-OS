@@ -1,7 +1,12 @@
 import { BaseEntity } from '../../../../core/domain/base.entity';
 import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 
-export type LossReason = 'precio' | 'competencia' | 'sin_respuesta' | 'timing' | 'otro';
+export type LossReason =
+  | 'precio'
+  | 'competencia'
+  | 'sin_respuesta'
+  | 'timing'
+  | 'otro';
 
 export interface StageHistoryEntry {
   stage: PipelineStage;
@@ -20,14 +25,65 @@ export const STAGE_PROBABILITY: Record<PipelineStage, number> = {
   [PipelineStage.Perdido]: 0,
 };
 
-export const ALLOWED_TRANSITIONS: Partial<Record<PipelineStage, PipelineStage[]>> = {
-  [PipelineStage.Prospecto]: [PipelineStage.Contactado, PipelineStage.Perdido],
-  [PipelineStage.Contactado]: [PipelineStage.Interesado, PipelineStage.Prospecto, PipelineStage.Perdido],
-  [PipelineStage.Interesado]: [PipelineStage.Propuesta, PipelineStage.Contactado, PipelineStage.Perdido],
-  [PipelineStage.Propuesta]: [PipelineStage.Negociacion, PipelineStage.Interesado, PipelineStage.Perdido],
-  [PipelineStage.Negociacion]: [PipelineStage.Cierre, PipelineStage.Propuesta, PipelineStage.Perdido],
-  [PipelineStage.Cierre]: [],
-  [PipelineStage.Perdido]: [],
+export const ALLOWED_TRANSITIONS: Partial<
+  Record<PipelineStage, PipelineStage[]>
+> = {
+  [PipelineStage.Prospecto]: [
+    PipelineStage.Contactado,
+    PipelineStage.Interesado,
+    PipelineStage.Propuesta,
+    PipelineStage.Negociacion,
+    PipelineStage.Cierre,
+    PipelineStage.Perdido,
+  ],
+  [PipelineStage.Contactado]: [
+    PipelineStage.Prospecto,
+    PipelineStage.Interesado,
+    PipelineStage.Propuesta,
+    PipelineStage.Negociacion,
+    PipelineStage.Cierre,
+    PipelineStage.Perdido,
+  ],
+  [PipelineStage.Interesado]: [
+    PipelineStage.Prospecto,
+    PipelineStage.Contactado,
+    PipelineStage.Propuesta,
+    PipelineStage.Negociacion,
+    PipelineStage.Cierre,
+    PipelineStage.Perdido,
+  ],
+  [PipelineStage.Propuesta]: [
+    PipelineStage.Prospecto,
+    PipelineStage.Contactado,
+    PipelineStage.Interesado,
+    PipelineStage.Negociacion,
+    PipelineStage.Cierre,
+    PipelineStage.Perdido,
+  ],
+  [PipelineStage.Negociacion]: [
+    PipelineStage.Prospecto,
+    PipelineStage.Contactado,
+    PipelineStage.Interesado,
+    PipelineStage.Propuesta,
+    PipelineStage.Cierre,
+    PipelineStage.Perdido,
+  ],
+  [PipelineStage.Cierre]: [
+    PipelineStage.Prospecto,
+    PipelineStage.Contactado,
+    PipelineStage.Interesado,
+    PipelineStage.Propuesta,
+    PipelineStage.Negociacion,
+    PipelineStage.Perdido,
+  ],
+  [PipelineStage.Perdido]: [
+    PipelineStage.Prospecto,
+    PipelineStage.Contactado,
+    PipelineStage.Interesado,
+    PipelineStage.Propuesta,
+    PipelineStage.Negociacion,
+    PipelineStage.Cierre,
+  ],
 };
 
 export class DealEntity extends BaseEntity {
