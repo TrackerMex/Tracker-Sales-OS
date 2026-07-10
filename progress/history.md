@@ -791,3 +791,11 @@ Batch 2:
 - Bug relacionado encontrado en exploracion y cerrado en la misma feature: update-client.use-case.ts (PATCH /clients/:id) no validaba ALLOWED_TRANSITIONS al cambiar client.stage — bypass total alcanzable desde ClientesPage cuando el cliente no tiene deal activo. Ahora valida igual que change-deal-stage.use-case.ts cuando dto.stage esta presente y difiere del actual.
 - Frontend: mirror en pipeline.types.ts actualizado; ClientesPage/Kanban derivan el nuevo comportamiento automaticamente sin cambios de codigo.
 - Review Lider (via subagente Reviewer independiente): PASSED 15/15, tsc backend+frontend exit 0 (verificado dos veces, por Implementer y Reviewer). Nota de proceso: package-lock.json de ambos proyectos cambio como efecto colateral de npm install (node_modules no existia en el checkout) y se revirtio antes de cerrar — package.json intacto en ambos. Detalle: progress/impl_67-pipeline-backward-stage.md.
+
+## 2026-07-09 — Feature 68 registrada: cobertura completa de clientes iniciados en pipeline
+
+- Reporte usuario: un seller tiene 49 clientes con proceso comercial iniciado, pero su pipeline solo muestra 19; deben aparecer los 49.
+- Estado: `pending`, solo registrada; no se implemento codigo en este pase.
+- Exploracion inicial: el endpoint individual y `findDetailedBySellerId` no tienen limite de 20 ni paginacion. La implementacion debera auditar la relacion entre clients, activities y deals para encontrar la causa real.
+- Criterio central: medir por `clientId` distintos (un cliente puede tener varias oportunidades), cerrar la ruta que genera huecos y ejecutar un backfill idempotente sin duplicar deals.
+- Checkpoints: `CHECKPOINTS.md`, seccion `68-pipeline-client-coverage`.

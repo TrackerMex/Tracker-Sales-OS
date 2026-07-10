@@ -506,6 +506,33 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ---
 
+## 68-pipeline-client-coverage
+
+**Diagnóstico y regla de negocio:**
+- [ ] Ejecutar una auditoría read-only para el seller reportado: contar clientes no eliminados asignados, `clientId` distintos en deals no eliminados y clientes con actividades no eliminadas; listar exactamente cuáles faltan en pipeline y por qué
+- [ ] Confirmar y documentar la causa raíz antes de implementar; no atribuir el faltante a un límite de 20 porque `findDetailedBySellerId` actualmente no usa `limit`, `take` ni paginación
+- [ ] Documentar una definición única de "cliente iniciado" basada en datos persistidos y aplicarla igual en creación, sincronización, backfill y consultas
+- [ ] La comparación de cobertura usa `clientId` distintos, no el total de deals, porque un cliente puede tener más de una oportunidad
+
+**Backend e integridad de datos:**
+- [ ] Todo cliente no eliminado asignado al seller que cumpla la regla de "iniciado" tiene al menos un deal no eliminado visible para ese mismo seller
+- [ ] Se corrige la ruta exacta que deja clientes iniciados sin deal (creación de cliente, registro de actividad o sincronización de etapa, según revele el diagnóstico)
+- [ ] La creación/sincronización es idempotente: reintentar la operación no crea oportunidades duplicadas
+- [ ] Existe un backfill/migración idempotente para clientes históricos iniciados sin deal; conserva seller, clientId, etapa e importe esperados y no revive deals eliminados sin una regla explícita
+- [ ] `GET /api/pipeline/seller/:id` devuelve todos los deals no eliminados del seller sin truncamiento implícito
+- [ ] `GET /api/pipeline/team` mantiene la misma cobertura para Admin/Director y no pierde clientes al agrupar sellers
+- [ ] El scoping es estricto: ningún cliente o deal de otro seller aparece en el pipeline consultado
+
+**Frontend y regresión:**
+- [ ] `PipelinePage` y `KanbanBoard` renderizan todas las tarjetas recibidas, sin `slice`, top-N, límites por columna ni paginación incompleta
+- [ ] Caso automatizado: seller con 49 clientes iniciados y una oportunidad por cliente obtiene 49 `clientId` distintos en el pipeline
+- [ ] Caso automatizado: más de 20 clientes en una misma etapa se devuelven y renderizan completos
+- [ ] Caso automatizado: clientes no iniciados quedan fuera si así lo establece la regla documentada; clientes iniciados no desaparecen por tener varias actividades
+- [ ] `tsc --noEmit` sin errores en backend y frontend; tests relevantes en verde
+- [ ] Guardar resumen en `progress/impl_68-pipeline-client-coverage.md` y review independiente con conteos antes/después
+
+---
+
 ## 60-shadcn-card-accordion
 
 **Estado previo (trabajo sin commitear encontrado al iniciar la feature):** `ClientDetailPage.tsx`, `ActivityHistoryModal.tsx`, `ReportsPage.tsx` y `SettingsPage.tsx` ya tenian Card/Accordion aplicados de una sesion anterior no cerrada formalmente. `ClientesPage.tsx` tenia migracion parcial con un bug de tag JSX sin cerrar bien.
