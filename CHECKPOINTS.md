@@ -536,6 +536,27 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ---
 
+## 69-pipeline-free-stage
+
+**Regla de negocio:**
+- [x] `ALLOWED_TRANSITIONS` del backend permite, para cada una de las 7 fases, las otras 6 fases y no incluye la fase actual
+- [x] `Cierre` y `Perdido` permiten transiciones de salida, por lo que una oportunidad puede reabrirse
+- [x] `PATCH /api/deals/:id/stage` conserva `stageHistory`, `changedBy`, probabilidad automática y `lossReason` opcional solo cuando el destino es `Perdido`
+- [x] `UpdateClientUseCase` hereda la misma regla libre mediante el mapa compartido del backend
+
+**Frontend:**
+- [x] `ALLOWED_TRANSITIONS` en `frontend/src/modules/pipeline/domain/pipeline.types.ts` es idéntico al mapa del backend
+- [x] Kanban permite arrastrar una oportunidad desde cualquier fase hacia cualquier otra, incluyendo salir de `Cierre` y `Perdido`
+- [x] Clientes habilita cualquier fase distinta de la actual cuando existe un deal activo
+- [x] Entrar en `Perdido` mantiene el diálogo shadcn de motivo opcional; salir de `Perdido` no lo muestra
+
+**Verificación:**
+- [x] Tests automatizados cubren salto libre, reapertura desde `Cierre` y `Perdido`, y rechazo/no-op de la misma fase según el comportamiento existente
+- [x] `tsc --noEmit` pasa en backend y frontend
+- [x] Resumen guardado en `progress/impl_69-pipeline-free-stage.md`
+
+---
+
 ## 60-shadcn-card-accordion
 
 **Estado previo (trabajo sin commitear encontrado al iniciar la feature):** `ClientDetailPage.tsx`, `ActivityHistoryModal.tsx`, `ReportsPage.tsx` y `SettingsPage.tsx` ya tenian Card/Accordion aplicados de una sesion anterior no cerrada formalmente. `ClientesPage.tsx` tenia migracion parcial con un bug de tag JSX sin cerrar bien.
