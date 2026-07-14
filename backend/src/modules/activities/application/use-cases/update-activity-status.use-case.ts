@@ -1,7 +1,15 @@
-import { Injectable, Inject, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
 import { ActivityDto } from '../dtos/activity.dto';
-import { ACTIVITY_REPOSITORY, IActivityRepository } from '../../domain/repositories/activity.repository.interface';
+import {
+  ACTIVITY_REPOSITORY,
+  IActivityRepository,
+} from '../../domain/repositories/activity.repository.interface';
 
 export interface UpdateActivityStatusInput {
   id: string;
@@ -11,14 +19,17 @@ export interface UpdateActivityStatusInput {
 }
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  'Pendiente': ['En curso', 'Cancelada'],
+  Pendiente: ['En curso', 'Cancelada'],
   'En curso': ['Completada', 'Cancelada'],
-  'Completada': [],
-  'Cancelada': [],
+  Completada: [],
+  Cancelada: [],
 };
 
 @Injectable()
-export class UpdateActivityStatusUseCase implements IUseCase<UpdateActivityStatusInput, ActivityDto> {
+export class UpdateActivityStatusUseCase implements IUseCase<
+  UpdateActivityStatusInput,
+  ActivityDto
+> {
   constructor(
     @Inject(ACTIVITY_REPOSITORY)
     private readonly activityRepo: IActivityRepository,
@@ -44,7 +55,11 @@ export class UpdateActivityStatusUseCase implements IUseCase<UpdateActivityStatu
       comment: input.comment,
     };
 
-    const updated = await this.activityRepo.updateStatus(input.id, input.newStatus, historyEntry);
+    const updated = await this.activityRepo.updateStatus(
+      input.id,
+      input.newStatus,
+      historyEntry,
+    );
     return ActivityDto.fromEntity(updated);
   }
 }

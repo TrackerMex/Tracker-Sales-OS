@@ -1,5 +1,9 @@
 import { IRepository } from '../../../../core/domain/repository.interface';
-import { ClientEntity, ClientType, PipelineStage } from '../entities/client.entity';
+import {
+  ClientEntity,
+  ClientType,
+  PipelineStage,
+} from '../entities/client.entity';
 
 export const CLIENT_REPOSITORY = 'CLIENT_REPOSITORY';
 
@@ -24,8 +28,16 @@ export interface ClientFilters {
 
 export interface IClientRepository extends IRepository<ClientEntity> {
   findBySellerId(sellerId: string): Promise<ClientEntity[]>;
-  findWithFilters(filters: ClientFilters): Promise<{ data: ClientEntity[]; total: number }>;
+  findWithFilters(
+    filters: ClientFilters,
+  ): Promise<{ data: ClientEntity[]; total: number }>;
   checkDuplicates(params: DuplicateCheckParams): Promise<ClientEntity | null>;
-  addContact(clientId: string, contact: Partial<ClientEntity['contacts'][number]>): Promise<ClientEntity>;
-  syncContacts(clientId: string, contacts: Partial<ClientEntity['contacts'][number]>[]): Promise<ClientEntity>;
+  addContact(
+    clientId: string,
+    contact: Partial<ClientEntity['contacts'][number]>,
+  ): Promise<ClientEntity>;
+  syncContacts(
+    clientId: string,
+    contacts: Partial<ClientEntity['contacts'][number]>[],
+  ): Promise<ClientEntity>;
 }

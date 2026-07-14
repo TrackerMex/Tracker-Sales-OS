@@ -67,10 +67,14 @@ export class GenerateSuggestionUseCase {
     try {
       const raw = await this.llm.complete({ system, user, maxTokens: 400 });
       const clean = raw.replace(/```json|```/g, '').trim();
-      const tips: string[] = JSON.parse(clean);
-      if (!Array.isArray(tips) || tips.length === 0)
+      const parsed: unknown = JSON.parse(clean) as unknown;
+      if (
+        !Array.isArray(parsed) ||
+        parsed.length === 0 ||
+        !parsed.every((tip): tip is string => typeof tip === 'string')
+      )
         throw new Error('Formato inválido');
-      return { tips: tips.slice(0, 3), source: 'llm' };
+      return { tips: parsed.slice(0, 3), source: 'llm' };
     } catch (err) {
       this.logger.warn(`LLM falló, usando fallback: ${(err as Error).message}`);
       return {
@@ -122,7 +126,9 @@ export class GenerateSuggestionUseCase {
           const daysInStage = Math.floor(
             (Date.now() - lastChange.getTime()) / 86400000,
           );
-          context.push(`Días en la etapa actual (${deal.stage}): ${daysInStage}`);
+          context.push(
+            `Días en la etapa actual (${deal.stage}): ${daysInStage}`,
+          );
 
           const settings = await this.getSettings.execute();
           const amber = settings.stalledAmberDays ?? 7;

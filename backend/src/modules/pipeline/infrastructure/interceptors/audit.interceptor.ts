@@ -18,13 +18,11 @@ export class AuditInterceptor implements NestInterceptor {
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const req = context
-      .switchToHttp()
-      .getRequest<{
-        body: { newStage: string; changedBy: string };
-        params: { id: string };
-        user?: { sub: string };
-      }>();
+    const req = context.switchToHttp().getRequest<{
+      body: { newStage: string; changedBy: string };
+      params: { id: string };
+      user?: { sub: string };
+    }>();
     const requestedNewStage = req.body.newStage;
     const changedBy = req.body.changedBy;
     const dealId = req.params.id;

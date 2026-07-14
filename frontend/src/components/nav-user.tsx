@@ -13,8 +13,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar"
+import { useSidebar } from "@/components/ui/sidebar-context"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { UnfoldMoreIcon, LogoutIcon } from "@hugeicons/core-free-icons"
 

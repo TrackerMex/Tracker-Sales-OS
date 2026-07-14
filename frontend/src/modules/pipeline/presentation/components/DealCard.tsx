@@ -14,6 +14,8 @@ const STAGE_BADGE_COLORS: Record<string, string> = {
   Perdido: '#DC2626',
 }
 
+const PAGE_LOADED_AT = Date.now()
+
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('es-MX', {
     year: 'numeric',
@@ -30,6 +32,7 @@ interface DealCardProps {
 
 export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
   const [isDragging, setIsDragging] = useState(false)
+  const [currentTime, setCurrentTime] = useState(PAGE_LOADED_AT)
   const ref = useRef<HTMLDivElement>(null)
   const contactInfo = [deal.contactName, deal.contactRole].filter(Boolean).join(' · ')
   const badgeColor = STAGE_BADGE_COLORS[deal.stage] || '#002B49'
@@ -37,12 +40,17 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
   const activityDate = deal.updatedAt ?? deal.createdAt
 
   const daysStalled = activityDate
-    ? Math.floor((Date.now() - new Date(activityDate).getTime()) / 86400000)
+    ? Math.floor((currentTime - new Date(activityDate).getTime()) / 86400000)
     : 0
   const amberDays = settings?.stalledAmberDays ?? 7
   const redDays = settings?.stalledRedDays ?? 14
   const showRed = daysStalled >= redDays
   const showAmber = !showRed && daysStalled >= amberDays
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(Date.now()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const el = ref.current

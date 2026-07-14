@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
-import { ISaleRepository, SALE_REPOSITORY } from '../../domain/repositories/sale.repository.interface';
+import {
+  ISaleRepository,
+  SALE_REPOSITORY,
+} from '../../domain/repositories/sale.repository.interface';
 import { SaleFiltersDto } from '../dtos/sale-filters.dto';
 import { SaleResponseDto, SalesSummary } from '../dtos/sale-response.dto';
 import { SaleEntity } from '../../domain/entities/sale.entity';
@@ -18,7 +21,10 @@ export interface GetSalesOutput {
 }
 
 @Injectable()
-export class GetSalesUseCase implements IUseCase<GetSalesInput, GetSalesOutput> {
+export class GetSalesUseCase implements IUseCase<
+  GetSalesInput,
+  GetSalesOutput
+> {
   constructor(
     @Inject(SALE_REPOSITORY)
     private readonly saleRepo: ISaleRepository,
@@ -26,7 +32,11 @@ export class GetSalesUseCase implements IUseCase<GetSalesInput, GetSalesOutput> 
 
   async execute(input: GetSalesInput): Promise<GetSalesOutput> {
     const { filters, page, limit } = input;
-    const { data, total } = await this.saleRepo.findWithFilters(filters, page, limit);
+    const { data, total } = await this.saleRepo.findWithFilters(
+      filters,
+      page,
+      limit,
+    );
     const summary = this.computeSummary(data);
     return {
       data: data.map((e) => SaleResponseDto.fromEntity(e)),

@@ -594,3 +594,34 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] `progress/impl_60-shadcn-card-accordion.md` documenta que se hizo, que ya estaba hecho, y la decision de no tocar el bloque de contactos editable ni ExecutiveSlide.tsx
 
 **Reviewer**: PASSED 10/10. Nota: sin commits entre features previas, no se pudo aislar via `git diff` que el fix fuera exactamente 1 linea — verificado por lectura directa (balance de tags) + timestamps de archivo consistentes con que solo `ClientesPage.tsx` cambio en este pase. Sin Cards/Accordion huerfanos en ningun modulo (chequeo extra en 51-60).
+
+---
+
+## 61-ci-pipeline
+
+**Workflow:**
+- [x] Existe `.github/workflows/ci.yml` y se ejecuta en cada `pull_request` y en cada `push` a `main`
+- [x] Usa Node.js 22 y cache npm con los lockfiles separados de backend y frontend
+- [x] Aplica permisos minimos de solo lectura y cancela ejecuciones anteriores de la misma rama/PR mediante `concurrency`
+
+**Backend:**
+- [x] Job independiente ejecuta `npm ci` desde `backend/`
+- [x] Ejecuta TypeScript con `npx tsc --noEmit`
+- [x] Ejecuta ESLint en modo read-only, sin `--fix`
+- [x] Ejecuta Jest unitario sin incluir E2E y finaliza de forma determinista en CI
+
+**Frontend:**
+- [x] Job independiente ejecuta `npm ci` desde `frontend/`
+- [x] Ejecuta TypeScript con `npm run typecheck`
+- [x] Ejecuta ESLint con `npm run lint`
+- [x] Ejecuta build de producción con `npm run build`
+
+**Documentación y verificación:**
+- [x] `docs/verification.md` documenta el pipeline y aclara que bloquear merges exige configurar branch protection/ruleset con ambos jobs como required checks
+- [x] Los mismos comandos del workflow pasan localmente en backend y frontend
+- [x] No se agregan dependencias ni se ejecutan tests E2E en esta feature
+- [x] Resumen guardado en `progress/impl_61-ci-pipeline.md`
+
+**Reviewer 2026-07-13**: FAILED 14/15. Workflow y documentacion correctos. Bloqueante: backend lint (632 errores), frontend lint (76 errores) y frontend build local (binding nativo Tailwind + `spawn EPERM`) no terminan en cero; `npm ci` tampoco pudo verificarse localmente por restricciones de cache/red. Ver `progress/review_61-ci-pipeline.md`.
+
+**Re-review final 2026-07-13**: PASSED 15/15. Deuda eliminada sin desactivar reglas: backend y frontend lint 0 errores/0 warnings; ambos `npm ci` PASS; TypeScript PASS; backend Jest 7 suites/35 tests PASS; builds PASS. El P2 detectado en el primer review semantico (`useApiFormErrors` no enfocaba el primer campo invalido) fue corregido y re-revisado PASSED. Ver `progress/review_61-ci-pipeline.md`.

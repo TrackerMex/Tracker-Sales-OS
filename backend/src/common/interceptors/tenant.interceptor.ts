@@ -23,7 +23,9 @@ export class TenantInterceptor implements NestInterceptor {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const request = context.switchToHttp().getRequest<{ user?: { sellerId?: string | null } }>();
+    const request = context
+      .switchToHttp()
+      .getRequest<{ user?: { sellerId?: string | null } }>();
     const sellerId: string = request.user?.sellerId ?? '';
 
     return from(

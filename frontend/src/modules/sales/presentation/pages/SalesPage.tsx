@@ -11,7 +11,8 @@ import type { CreateSaleInput, PaymentMethod, SaleSource, Sale } from '../../dom
 import { UserRole } from '@/core/domain/types/common.types';
 import { useApiFormErrors } from '@/shared/lib/api-errors';
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary';
-import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError';
+import { FieldError } from '@/shared/components/forms/FieldError';
+import { fieldErrorProps } from '@/shared/components/forms/field-error-props';
 import { ClientCombobox } from '@/shared/components/forms/ClientCombobox';
 import { DatePickerField } from '@/shared/components/forms/DatePickerField';
 import { Input } from '@/components/ui/input';
@@ -110,8 +111,11 @@ export function SalesPage() {
   useEffect(() => {
     const direccion = sellersData?.find((s) => s.active && s.name === 'Dirección Comercial');
     if (!direccion) return;
-    setDirSellerId((prev) => prev || direccion.id);
-    setAtcSellerId((prev) => prev || direccion.id);
+    const frame = requestAnimationFrame(() => {
+      setDirSellerId((prev) => prev || direccion.id);
+      setAtcSellerId((prev) => prev || direccion.id);
+    });
+    return () => cancelAnimationFrame(frame);
   }, [sellersData]);
 
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
@@ -122,9 +126,9 @@ export function SalesPage() {
   const createAtcSale = useCreateSale();
   const { mutate: deleteSale } = useDeleteSale();
 
-  const sellerErrors = useApiFormErrors(createSellerSale.error);
-  const dirErrors = useApiFormErrors(createDirSale.error);
-  const atcErrors = useApiFormErrors(createAtcSale.error);
+  const { formRef: sellerFormRef, ...sellerErrors } = useApiFormErrors(createSellerSale.error);
+  const { formRef: dirFormRef, ...dirErrors } = useApiFormErrors(createDirSale.error);
+  const { formRef: atcFormRef, ...atcErrors } = useApiFormErrors(createAtcSale.error);
 
   const { data, isLoading: loadingList, isError } = useSales(
     !isAdminOrDirector ? { sellerId } : {},
@@ -234,7 +238,7 @@ export function SalesPage() {
         {/* Columna vendedor — solo Seller */}
         {!isAdminOrDirector && <Card className="p-5">
           <h3 className="mb-4 text-sm font-black text-[#002B49]">Registrar venta del día</h3>
-          <form ref={sellerErrors.formRef} onSubmit={handleSellerSubmit} className="space-y-3">
+          <form ref={sellerFormRef} onSubmit={handleSellerSubmit} className="space-y-3">
             <FormErrorSummary error={sellerErrors.summary} />
 
             <div>
@@ -374,7 +378,7 @@ export function SalesPage() {
           <p className="mb-4 text-xs text-slate-400">
             Cuentas cerradas directamente por Dirección Comercial
           </p>
-          <form ref={dirErrors.formRef} onSubmit={handleDirSubmit} className="space-y-3">
+          <form ref={dirFormRef} onSubmit={handleDirSubmit} className="space-y-3">
             <FormErrorSummary error={dirErrors.summary} />
 
             <div>
@@ -490,7 +494,7 @@ export function SalesPage() {
         {isAdminOrDirector && <Card className="p-5">
           <h3 className="mb-1 text-sm font-black text-[#002B49]">Registrar ATC</h3>
           <p className="mb-4 text-xs text-slate-500">ATC solo registra clientes existentes</p>
-          <form ref={atcErrors.formRef} onSubmit={handleAtcSubmit} className="space-y-3">
+          <form ref={atcFormRef} onSubmit={handleAtcSubmit} className="space-y-3">
             <FormErrorSummary error={atcErrors.summary} />
 
             <div>

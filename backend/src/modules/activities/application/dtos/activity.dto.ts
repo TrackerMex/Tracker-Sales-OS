@@ -1,4 +1,9 @@
-import { ActivityEntity, ActivityType, ActivityResult, ActivityHistoryEntry } from '../../domain/entities/activity.entity';
+import {
+  ActivityEntity,
+  ActivityType,
+  ActivityResult,
+  ActivityHistoryEntry,
+} from '../../domain/entities/activity.entity';
 
 export class ActivityDto {
   id: string;

@@ -19,7 +19,7 @@ export class AnthropicAdapter implements LlmProvider {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: this.config.get('ANTHROPIC_MODEL') ?? 'claude-haiku-4-5',
+        model: this.config.get<string>('ANTHROPIC_MODEL') ?? 'claude-haiku-4-5',
         max_tokens: req.maxTokens,
         system: req.system,
         messages: [{ role: 'user', content: req.user }],
@@ -28,7 +28,27 @@ export class AnthropicAdapter implements LlmProvider {
     });
     if (!res.ok)
       throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
-    const data = (await res.json()) as { content?: Array<{ text?: string }> };
+    const data: unknown = await res.json();
+    if (!this.isAnthropicResponse(data)) return '';
     return data.content?.[0]?.text ?? '';
+  }
+
+  private isAnthropicResponse(
+    value: unknown,
+  ): value is { content?: Array<{ text?: string }> } {
+    if (typeof value !== 'object' || value === null) return false;
+    const content: unknown = 'content' in value ? value.content : undefined;
+    if (content === undefined) return true;
+    return (
+      Array.isArray(content) &&
+      content.every(
+        (item: unknown) =>
+          typeof item === 'object' &&
+          item !== null &&
+          (!('text' in item) ||
+            item.text === undefined ||
+            typeof item.text === 'string'),
+      )
+    );
   }
 }

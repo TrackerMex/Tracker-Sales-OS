@@ -28,7 +28,7 @@ export class CoachingController {
   @Get('seller/:id/daily')
   getDailyReport(
     @Param('id') sellerId: string,
-    @Request() req: { user: { role: string; sellerId: string | null } },
+    @Request() req: { user: { role: UserRole; sellerId: string | null } },
   ) {
     if (req.user.role === UserRole.Seller && req.user.sellerId !== sellerId) {
       throw new ForbiddenException();

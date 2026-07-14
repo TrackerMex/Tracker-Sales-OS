@@ -1,13 +1,23 @@
-import { Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { IUserRepository, USER_REPOSITORY } from '../../domain/repositories/user.repository.interface';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '../../domain/repositories/user.repository.interface';
 import { UserRole } from '../../domain/entities/user.entity';
 
 @Injectable()
 export class SeedUseCase implements OnApplicationBootstrap {
   private readonly logger = new Logger(SeedUseCase.name);
 
-  constructor(@Inject(USER_REPOSITORY) private readonly userRepo: IUserRepository) {}
+  constructor(
+    @Inject(USER_REPOSITORY) private readonly userRepo: IUserRepository,
+  ) {}
 
   async onApplicationBootstrap() {
     const { total } = await this.userRepo.findAll();

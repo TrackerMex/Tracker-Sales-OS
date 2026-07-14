@@ -3,13 +3,28 @@ import { DealEntity } from '../../domain/entities/deal.entity';
 import { IDealsRepository } from '../../domain/repositories/deal.repository.interface';
 import { GetPipelineBySellerUseCase } from './get-pipeline-by-seller.use-case';
 
-const makeMockDealRepo = (): jest.Mocked<IDealsRepository> => ({
-  create: jest.fn(), findById: jest.fn(), findAll: jest.fn(), update: jest.fn(),
-  softDelete: jest.fn(), findBySellerId: jest.fn(), findByStage: jest.fn(),
-  findByClientIdAndSellerId: jest.fn(), findAllByClientAndSeller: jest.fn(),
-  findByOpportunity: jest.fn(), findDetailedBySellerId: jest.fn(),
-  findDetailedAllSellers: jest.fn(), getWeightedForecast: jest.fn(),
-  findStalledDeals: jest.fn(), findAllForAnalysis: jest.fn(),
+type MockedMethods<T> = {
+  [Key in keyof T]: T[Key] extends (...args: never[]) => unknown
+    ? jest.MockedFunction<T[Key]>
+    : never;
+};
+
+const makeMockDealRepo = (): MockedMethods<IDealsRepository> => ({
+  create: jest.fn(),
+  findById: jest.fn(),
+  findAll: jest.fn(),
+  update: jest.fn(),
+  softDelete: jest.fn(),
+  findBySellerId: jest.fn(),
+  findByStage: jest.fn(),
+  findByClientIdAndSellerId: jest.fn(),
+  findAllByClientAndSeller: jest.fn(),
+  findByOpportunity: jest.fn(),
+  findDetailedBySellerId: jest.fn(),
+  findDetailedAllSellers: jest.fn(),
+  getWeightedForecast: jest.fn(),
+  findStalledDeals: jest.fn(),
+  findAllForAnalysis: jest.fn(),
 });
 
 describe('GetPipelineBySellerUseCase', () => {

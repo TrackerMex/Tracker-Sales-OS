@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
 import { LoginUseCase } from './login.use-case';
-import { IUserRepository, USER_REPOSITORY } from '../../domain/repositories/user.repository.interface';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '../../domain/repositories/user.repository.interface';
 import { UserEntity, UserRole } from '../../domain/entities/user.entity';
 
 jest.mock('bcrypt', () => ({
@@ -27,9 +30,12 @@ const mockUser: UserEntity = {
 describe('LoginUseCase', () => {
   let useCase: LoginUseCase;
   let userRepo: jest.Mocked<IUserRepository>;
-  let jwtService: jest.Mocked<JwtService>;
+  let sign: jest.Mock<string, [payload: object]>;
 
   beforeEach(async () => {
+    sign = jest
+      .fn<string, [payload: object]>()
+      .mockReturnValue('mock.jwt.token');
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LoginUseCase,
@@ -42,7 +48,7 @@ describe('LoginUseCase', () => {
         {
           provide: JwtService,
           useValue: {
-            sign: jest.fn().mockReturnValue('mock.jwt.token'),
+            sign,
           },
         },
       ],
@@ -50,7 +56,6 @@ describe('LoginUseCase', () => {
 
     useCase = module.get(LoginUseCase);
     userRepo = module.get(USER_REPOSITORY);
-    jwtService = module.get(JwtService);
   });
 
   describe('execute', () => {
@@ -58,7 +63,10 @@ describe('LoginUseCase', () => {
       userRepo.findByUsername.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      const result = await useCase.execute({ username: 'john', password: 'secret123' });
+      const result = await useCase.execute({
+        username: 'john',
+        password: 'secret123',
+      });
 
       expect(result.accessToken).toBe('mock.jwt.token');
       expect(result.user).toEqual({
@@ -101,7 +109,7 @@ describe('LoginUseCase', () => {
 
       await useCase.execute({ username: 'john', password: 'secret123' });
 
-      expect(jwtService.sign).toHaveBeenCalledWith({
+      expect(sign).toHaveBeenCalledWith({
         sub: mockUser.id,
         username: mockUser.username,
         role: mockUser.role,

@@ -1,11 +1,17 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
-import { ISaleRepository, SALE_REPOSITORY } from '../../domain/repositories/sale.repository.interface';
+import {
+  ISaleRepository,
+  SALE_REPOSITORY,
+} from '../../domain/repositories/sale.repository.interface';
 import { CreateSaleDto } from '../dtos/create-sale.dto';
 import { SaleResponseDto } from '../dtos/sale-response.dto';
 
 @Injectable()
-export class CreateSaleUseCase implements IUseCase<CreateSaleDto, SaleResponseDto> {
+export class CreateSaleUseCase implements IUseCase<
+  CreateSaleDto,
+  SaleResponseDto
+> {
   constructor(
     @Inject(SALE_REPOSITORY)
     private readonly saleRepo: ISaleRepository,

@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Inject, Request, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Inject,
+  Request,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { IsString, IsIn, IsOptional } from 'class-validator';
 import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
@@ -12,7 +25,10 @@ import { UpdateActivityStatusUseCase } from '../application/use-cases/update-act
 import { CreateActivityDto } from '../application/dtos/create-activity.dto';
 import { GetActivitiesQueryDto } from '../application/dtos/get-activities-query.dto';
 import { ActivityDto } from '../application/dtos/activity.dto';
-import { ACTIVITY_REPOSITORY, IActivityRepository } from '../domain/repositories/activity.repository.interface';
+import {
+  ACTIVITY_REPOSITORY,
+  IActivityRepository,
+} from '../domain/repositories/activity.repository.interface';
 
 class UpdateActivityStatusDto {
   @IsString() @IsIn(['En curso', 'Completada', 'Cancelada']) newStatus: string;
@@ -29,7 +45,8 @@ export class ActivitiesController {
     private readonly getDailyActivities: GetDailyActivitiesUseCase,
     private readonly getSellerActivities: GetSellerActivitiesUseCase,
     private readonly updateActivityStatus: UpdateActivityStatusUseCase,
-    @Inject(ACTIVITY_REPOSITORY) private readonly activityRepo: IActivityRepository,
+    @Inject(ACTIVITY_REPOSITORY)
+    private readonly activityRepo: IActivityRepository,
   ) {}
 
   @Post()
@@ -37,7 +54,7 @@ export class ActivitiesController {
   @ApiOperation({ summary: 'Register a new activity' })
   create(
     @Body() dto: CreateActivityDto,
-    @Request() req: { user: { role: string; sellerId: string | null } },
+    @Request() req: { user: { role: UserRole; sellerId: string | null } },
   ) {
     if (req.user.role === UserRole.Seller) {
       if (!req.user.sellerId) throw new ForbiddenException();
@@ -52,7 +69,7 @@ export class ActivitiesController {
   getDailyPoints(
     @Param('id') sellerId: string,
     @Query() query: GetActivitiesQueryDto,
-    @Request() req: { user: { role: string; sellerId: string | null } },
+    @Request() req: { user: { role: UserRole; sellerId: string | null } },
   ) {
     if (req.user.role === UserRole.Seller && req.user.sellerId !== sellerId) {
       throw new ForbiddenException();
@@ -66,7 +83,7 @@ export class ActivitiesController {
   findBySeller(
     @Param('id') sellerId: string,
     @Query() query: GetActivitiesQueryDto,
-    @Request() req: { user: { role: string; sellerId: string | null } },
+    @Request() req: { user: { role: UserRole; sellerId: string | null } },
   ) {
     if (req.user.role === UserRole.Seller && req.user.sellerId !== sellerId) {
       throw new ForbiddenException();
@@ -103,7 +120,7 @@ export class ActivitiesController {
       user: {
         id: string;
         username: string;
-        role: string;
+        role: UserRole;
         sellerId: string | null;
       };
     },

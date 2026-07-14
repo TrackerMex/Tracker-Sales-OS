@@ -27,6 +27,6 @@ export class GetTodayTasksUseCase implements IUseCase<
       input.sellerId,
       date,
     );
-    return entities.map(TaskDto.fromEntity);
+    return entities.map((task) => TaskDto.fromEntity(task));
   }
 }

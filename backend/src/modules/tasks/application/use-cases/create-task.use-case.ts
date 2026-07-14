@@ -17,10 +17,21 @@ export class CreateTaskUseCase implements IUseCase<CreateTaskDto, TaskDto> {
 
   async execute(input: CreateTaskDto): Promise<TaskDto> {
     const scheduledAt = new Date(input.scheduledAt);
-    const conflict = await this.taskRepo.findConflictingTask(input.sellerId, scheduledAt);
+    const conflict = await this.taskRepo.findConflictingTask(
+      input.sellerId,
+      scheduledAt,
+    );
     if (conflict) {
-      const fecha = scheduledAt.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      const hora = scheduledAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const fecha = scheduledAt.toLocaleDateString('es-MX', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+      const hora = scheduledAt.toLocaleTimeString('es-MX', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
       throw new ConflictException(
         `Ya tienes una tarea programada para el ${fecha} a las ${hora}: "${conflict.title}"`,
       );

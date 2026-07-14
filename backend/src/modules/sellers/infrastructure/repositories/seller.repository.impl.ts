@@ -47,7 +47,7 @@ export class SellerRepositoryImpl implements ISellerRepository {
     id: string,
     partial: Partial<SellerEntity>,
   ): Promise<SellerEntity> {
-    await this.repo.update(id, partial as Partial<SellerTypeormEntity>);
+    await this.repo.update(id, partial);
     const updated = await this.repo.findOneOrFail({ where: { id } });
     return this.toDomain(updated);
   }

@@ -11,7 +11,11 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PaymentMethod, SaleSource, SaleType } from '../../domain/entities/sale.entity';
+import {
+  PaymentMethod,
+  SaleSource,
+  SaleType,
+} from '../../domain/entities/sale.entity';
 
 export class CreateSaleDto {
   @ApiProperty() @IsUUID() sellerId: string;
@@ -30,7 +34,9 @@ export class CreateSaleDto {
 
   @ApiProperty() @IsNumber() @Min(0) amount: number;
 
-  @ApiProperty({ enum: PaymentMethod }) @IsEnum(PaymentMethod) pay: PaymentMethod;
+  @ApiProperty({ enum: PaymentMethod })
+  @IsEnum(PaymentMethod)
+  pay: PaymentMethod;
 
   @ApiProperty({ enum: SaleSource }) @IsEnum(SaleSource) source: SaleSource;
 

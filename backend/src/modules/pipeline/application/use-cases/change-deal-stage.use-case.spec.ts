@@ -9,7 +9,13 @@ import {
 import { IDealsRepository } from '../../domain/repositories/deal.repository.interface';
 import { ChangeDealStageUseCase } from './change-deal-stage.use-case';
 
-const makeMockDealRepo = (): jest.Mocked<IDealsRepository> => ({
+type MockedMethods<T> = {
+  [Key in keyof T]: T[Key] extends (...args: never[]) => unknown
+    ? jest.MockedFunction<T[Key]>
+    : never;
+};
+
+const makeMockDealRepo = (): MockedMethods<IDealsRepository> => ({
   create: jest.fn(),
   findById: jest.fn(),
   findAll: jest.fn(),
@@ -27,7 +33,7 @@ const makeMockDealRepo = (): jest.Mocked<IDealsRepository> => ({
   findAllForAnalysis: jest.fn(),
 });
 
-const makeMockClientRepo = (): jest.Mocked<IClientRepository> => ({
+const makeMockClientRepo = (): MockedMethods<IClientRepository> => ({
   create: jest.fn(),
   findById: jest.fn(),
   findAll: jest.fn(),
@@ -77,14 +83,9 @@ describe('ChangeDealStageUseCase', () => {
     const dealRepo = makeMockDealRepo();
     const clientRepo = makeMockClientRepo();
     const deal = makeDeal(from);
-    const updated = Object.assign(makeDeal(to), {
-      stageHistory: [
-        { stage: to, changedAt: expect.any(String), changedBy: 'user-1' },
-      ],
-    });
     dealRepo.findById.mockResolvedValue(deal);
-    dealRepo.update.mockImplementation(async (_id, patch) =>
-      Object.assign(makeDeal(to), patch),
+    dealRepo.update.mockImplementation((_id, patch) =>
+      Promise.resolve(Object.assign(makeDeal(to), patch)),
     );
     clientRepo.update.mockResolvedValue({} as never);
 
@@ -103,7 +104,9 @@ describe('ChangeDealStageUseCase', () => {
       expect.objectContaining({
         stage: to,
         probability: STAGE_PROBABILITY[to],
-        stageHistory: updated.stageHistory,
+        stageHistory: [
+          expect.objectContaining({ stage: to, changedBy: 'user-1' }),
+        ],
       }),
     );
     expect(clientRepo.update).toHaveBeenCalledWith(deal.clientId, {

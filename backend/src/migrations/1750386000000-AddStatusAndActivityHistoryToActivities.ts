@@ -13,7 +13,11 @@ export class AddStatusAndActivityHistoryToActivities1750386000000 implements Mig
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "activities" DROP COLUMN IF EXISTS "activity_history"`);
-    await queryRunner.query(`ALTER TABLE "activities" DROP COLUMN IF EXISTS "status"`);
+    await queryRunner.query(
+      `ALTER TABLE "activities" DROP COLUMN IF EXISTS "activity_history"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "activities" DROP COLUMN IF EXISTS "status"`,
+    );
   }
 }

@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { SaleEntity } from '../../domain/entities/sale.entity';
-import { ISaleRepository, SaleFilters } from '../../domain/repositories/sale.repository.interface';
+import {
+  ISaleRepository,
+  SaleFilters,
+} from '../../domain/repositories/sale.repository.interface';
 import { SaleTypeormEntity } from '../entities/sale.typeorm.entity';
 import { FindAllOptions } from '../../../../core/domain/repository.interface';
 

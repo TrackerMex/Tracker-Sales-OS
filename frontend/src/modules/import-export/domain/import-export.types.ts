@@ -1,13 +1,13 @@
 export interface ExportData {
-  sellers: any[];
-  users: any[];
-  clients: any[];
-  contacts: any[];
-  deals: any[];
-  tasks: any[];
-  activities: any[];
-  sales: any[];
-  settings: any[];
+  sellers: unknown[];
+  users: unknown[];
+  clients: unknown[];
+  contacts: unknown[];
+  deals: unknown[];
+  tasks: unknown[];
+  activities: unknown[];
+  sales: unknown[];
+  settings: unknown[];
 }
 
 export interface ImportResult {

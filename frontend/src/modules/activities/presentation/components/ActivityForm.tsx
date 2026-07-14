@@ -17,10 +17,8 @@ import { useAppStore } from "@/shared/store/app.store"
 import { coachingApi } from "@/modules/coaching/infrastructure/coaching.api"
 import { useApiFormErrors } from "@/shared/lib/api-errors"
 import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
-import {
-  FieldError,
-  fieldErrorProps,
-} from "@/shared/components/forms/FieldError"
+import { FieldError } from "@/shared/components/forms/FieldError"
+import { fieldErrorProps } from "@/shared/components/forms/field-error-props"
 import { ClientCombobox } from "@/shared/components/forms/ClientCombobox"
 import { DatePickerField } from "@/shared/components/forms/DatePickerField"
 import { TimePickerField } from "@/shared/components/forms/TimePickerField"
@@ -138,10 +136,6 @@ export function ActivityForm({
   const [showAiCoach, setShowAiCoach] = useState(false)
   const [clientError, setClientError] = useState("")
 
-  useEffect(() => {
-    if (discovery.length > 0) setShowDiscovery(true)
-  }, [discovery])
-
   const { data: pipelineGrouped } = usePipeline(sellerId || null)
   const { data: todayTasks } = useTodayTasks()
   const pendingTasks = (todayTasks ?? []).filter(
@@ -167,12 +161,15 @@ export function ActivityForm({
   const isNonCommercial = NON_COMMERCIAL_TYPES.includes(type)
 
   useEffect(() => {
-    if (currentDeal?.stage && !isNonCommercial) {
-      setStage(currentDeal.stage)
-    } else if (!currentDeal) {
-      setStage("")
-    }
-  }, [currentDeal?.stage, isNonCommercial])
+    const frame = requestAnimationFrame(() => {
+      if (currentDeal?.stage && !isNonCommercial) {
+        setStage(currentDeal.stage)
+      } else if (!currentDeal) {
+        setStage("")
+      }
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [currentDeal, isNonCommercial])
 
   const quality = calcQuality({
     summary,
@@ -612,6 +609,7 @@ export function ActivityForm({
               value={discovery}
               onChange={(e) => {
                 setDiscovery(e.target.value)
+                if (e.target.value) setShowDiscovery(true)
                 clearField("discovery")
               }}
               {...fieldErrorProps("discovery", fieldErrors.discovery)}

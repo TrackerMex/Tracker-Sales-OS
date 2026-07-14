@@ -10,7 +10,11 @@ import {
   CLIENT_REPOSITORY,
   IClientRepository,
 } from '../../domain/repositories/client.repository.interface';
-import { ClientDto, GetClientsQueryDto, RequestUserDto } from '../dtos/client.dto';
+import {
+  ClientDto,
+  GetClientsQueryDto,
+  RequestUserDto,
+} from '../dtos/client.dto';
 
 export interface GetClientsInput {
   query: GetClientsQueryDto;
@@ -18,9 +22,10 @@ export interface GetClientsInput {
 }
 
 @Injectable()
-export class GetClientsUseCase
-  implements IUseCase<GetClientsInput, { data: ClientDto[]; total: number }>
-{
+export class GetClientsUseCase implements IUseCase<
+  GetClientsInput,
+  { data: ClientDto[]; total: number }
+> {
   constructor(
     @Inject(CLIENT_REPOSITORY)
     private readonly clientRepo: IClientRepository,
@@ -29,15 +34,21 @@ export class GetClientsUseCase
     private readonly getSettings: GetSettingsUseCase,
   ) {}
 
-  async execute(input: GetClientsInput): Promise<{ data: ClientDto[]; total: number }> {
+  async execute(
+    input: GetClientsInput,
+  ): Promise<{ data: ClientDto[]; total: number }> {
     if (input.user.role === UserRole.Seller && !input.user.sellerId) {
       return { data: [], total: 0 };
     }
     const sellerId =
-      input.user.role === UserRole.Seller ? input.user.sellerId! : input.query.seller;
+      input.user.role === UserRole.Seller
+        ? input.user.sellerId!
+        : input.query.seller;
 
     const settings = await this.getSettings.execute();
-    const coldBefore = new Date(Date.now() - settings.coldAccountDays * 24 * 60 * 60 * 1000);
+    const coldBefore = new Date(
+      Date.now() - settings.coldAccountDays * 24 * 60 * 60 * 1000,
+    );
 
     const { data, total } = await this.clientRepo.findWithFilters({
       stage: input.query.stage,
@@ -51,7 +62,10 @@ export class GetClientsUseCase
     });
 
     const lastMap = await this.getLastActivityMap(data.map((c) => c.id));
-    return { data: data.map((client) => this.toDto(client, lastMap, coldBefore)), total };
+    return {
+      data: data.map((client) => this.toDto(client, lastMap, coldBefore)),
+      total,
+    };
   }
 
   private async getLastActivityMap(ids: string[]): Promise<Map<string, Date>> {
@@ -69,15 +83,19 @@ export class GetClientsUseCase
     return new Map(rows.map((r) => [r.clientId, new Date(r.last)]));
   }
 
-  private toDto(client: ClientEntity, lastMap: Map<string, Date>, coldBefore: Date): ClientDto {
+  private toDto(
+    client: ClientEntity,
+    lastMap: Map<string, Date>,
+    coldBefore: Date,
+  ): ClientDto {
     const last = lastMap.get(client.id) ?? null;
     const ref = last ?? client.createdAt;
     return {
-      ...(client as any),
+      ...client,
       lastActivityAt: last ? last.toISOString() : null,
       isCold: ref < coldBefore,
       dataQuality: this.calculateDataQuality(client),
-    } as ClientDto;
+    };
   }
 
   private calculateDataQuality(client: ClientEntity): number {

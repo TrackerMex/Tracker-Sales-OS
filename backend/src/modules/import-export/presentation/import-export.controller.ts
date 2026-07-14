@@ -23,7 +23,10 @@ export class ImportExportController {
   async exportAll(@Res() res: Response) {
     const data = await this.exportData.execute();
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', 'attachment; filename=tracker-export.json');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename=tracker-export.json',
+    );
     return res.json(data);
   }
 

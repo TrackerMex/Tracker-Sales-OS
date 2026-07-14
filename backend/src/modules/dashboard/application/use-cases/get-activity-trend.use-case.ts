@@ -10,7 +10,10 @@ export interface ActivityTrendItem {
 }
 
 @Injectable()
-export class GetActivityTrendUseCase implements IUseCase<void, ActivityTrendItem[]> {
+export class GetActivityTrendUseCase implements IUseCase<
+  void,
+  ActivityTrendItem[]
+> {
   constructor(
     @InjectRepository(ActivityTypeormEntity)
     private readonly activityRepo: Repository<ActivityTypeormEntity>,

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
-import { ClientEntity, ContactEntity } from '../../domain/entities/client.entity';
+import {
+  ClientEntity,
+  ContactEntity,
+} from '../../domain/entities/client.entity';
 import {
   ClientFilters,
   DuplicateCheckParams,
@@ -40,7 +43,9 @@ export class ClientRepositoryImpl implements IClientRepository {
     return data;
   }
 
-  async findWithFilters(filters: ClientFilters): Promise<{ data: ClientEntity[]; total: number }> {
+  async findWithFilters(
+    filters: ClientFilters,
+  ): Promise<{ data: ClientEntity[]; total: number }> {
     const page = filters.page ?? 1;
     const limit = filters.limit ?? 50;
     const skip = (page - 1) * limit;
@@ -62,7 +67,9 @@ export class ClientRepositoryImpl implements IClientRepository {
     }
 
     if (filters.sellerId) {
-      query.andWhere('client.sellerId = :sellerId', { sellerId: filters.sellerId });
+      query.andWhere('client.sellerId = :sellerId', {
+        sellerId: filters.sellerId,
+      });
     }
 
     if (filters.q?.trim()) {
@@ -83,7 +90,9 @@ export class ClientRepositoryImpl implements IClientRepository {
 
     if (filters.coldBefore) {
       query
-        .andWhere('client.createdAt < :coldBefore', { coldBefore: filters.coldBefore })
+        .andWhere('client.createdAt < :coldBefore', {
+          coldBefore: filters.coldBefore,
+        })
         .andWhere(
           'NOT EXISTS (SELECT 1 FROM activities act WHERE act.client_id = client.id AND act.deleted_at IS NULL AND act.executed_at >= :coldBefore)',
         );
@@ -111,7 +120,9 @@ export class ClientRepositoryImpl implements IClientRepository {
 
   async create(partial: Partial<ClientEntity>): Promise<ClientEntity> {
     const { contacts, ...client } = partial;
-    const entity = this.repo.create(this.cleanNullable(client) as Partial<ClientTypeormEntity>);
+    const entity = this.repo.create(
+      this.cleanNullable(client) as Partial<ClientTypeormEntity>,
+    );
     const saved = await this.repo.save(entity);
 
     if (contacts?.length) {
@@ -128,9 +139,13 @@ export class ClientRepositoryImpl implements IClientRepository {
     return (await this.findById(saved.id)) as ClientEntity;
   }
 
-  async update(id: string, partial: Partial<ClientEntity>): Promise<ClientEntity> {
-    const { contacts: _contacts, ...client } = partial;
-    await this.repo.update(id, this.cleanNullable(client) as Partial<ClientTypeormEntity>);
+  async update(
+    id: string,
+    partial: Partial<ClientEntity>,
+  ): Promise<ClientEntity> {
+    const { contacts, ...client } = partial;
+    void contacts;
+    await this.repo.update(id, this.cleanNullable(client));
     return (await this.findById(id)) as ClientEntity;
   }
 
@@ -138,13 +153,20 @@ export class ClientRepositoryImpl implements IClientRepository {
     await this.repo.softDelete(id);
   }
 
-  async checkDuplicates(params: DuplicateCheckParams): Promise<ClientEntity | null> {
+  async checkDuplicates(
+    params: DuplicateCheckParams,
+  ): Promise<ClientEntity | null> {
     const normalizedPhone = this.normalizePhone(params.phone);
     const normalizedEmail = params.email?.trim().toLowerCase();
     const normalizedDomain = params.domain?.trim().toLowerCase();
     const normalizedName = params.name?.trim().toLowerCase();
 
-    if (!normalizedName && !normalizedDomain && !normalizedPhone && !normalizedEmail) {
+    if (
+      !normalizedName &&
+      !normalizedDomain &&
+      !normalizedPhone &&
+      !normalizedEmail
+    ) {
       return null;
     }
 
@@ -153,7 +175,9 @@ export class ClientRepositoryImpl implements IClientRepository {
       .leftJoinAndSelect('client.contacts', 'contact');
 
     if (params.excludeId) {
-      query.andWhere('client.id != :excludeId', { excludeId: params.excludeId });
+      query.andWhere('client.id != :excludeId', {
+        excludeId: params.excludeId,
+      });
     }
 
     query.andWhere(
@@ -167,21 +191,28 @@ export class ClientRepositoryImpl implements IClientRepository {
 
         if (normalizedDomain) {
           const method = hasCondition ? 'orWhere' : 'where';
-          qb[method]('LOWER(client.domain) = :domain', { domain: normalizedDomain });
+          qb[method]('LOWER(client.domain) = :domain', {
+            domain: normalizedDomain,
+          });
           hasCondition = true;
         }
 
         if (normalizedPhone) {
           const method = hasCondition ? 'orWhere' : 'where';
-          qb[method]("REGEXP_REPLACE(contact.phone, '[^0-9]', '', 'g') = :phone", {
-            phone: normalizedPhone,
-          });
+          qb[method](
+            "REGEXP_REPLACE(contact.phone, '[^0-9]', '', 'g') = :phone",
+            {
+              phone: normalizedPhone,
+            },
+          );
           hasCondition = true;
         }
 
         if (normalizedEmail) {
           const method = hasCondition ? 'orWhere' : 'where';
-          qb[method]('LOWER(contact.email) = :email', { email: normalizedEmail });
+          qb[method]('LOWER(contact.email) = :email', {
+            email: normalizedEmail,
+          });
         }
       }),
     );
@@ -190,7 +221,10 @@ export class ClientRepositoryImpl implements IClientRepository {
     return duplicate ? this.toDomain(duplicate) : null;
   }
 
-  async addContact(clientId: string, contact: Partial<ContactEntity>): Promise<ClientEntity> {
+  async addContact(
+    clientId: string,
+    contact: Partial<ContactEntity>,
+  ): Promise<ClientEntity> {
     await this.contactRepo.save(
       this.contactRepo.create({
         ...this.cleanContact(contact),
@@ -200,7 +234,10 @@ export class ClientRepositoryImpl implements IClientRepository {
     return (await this.findById(clientId)) as ClientEntity;
   }
 
-  async syncContacts(clientId: string, contacts: Partial<ContactEntity>[]): Promise<ClientEntity> {
+  async syncContacts(
+    clientId: string,
+    contacts: Partial<ContactEntity>[],
+  ): Promise<ClientEntity> {
     await this.contactRepo.softDelete({ clientId });
     if (contacts.length) {
       await this.contactRepo.save(
@@ -235,7 +272,9 @@ export class ClientRepositoryImpl implements IClientRepository {
     };
   }
 
-  private cleanContact(contact: Partial<ContactEntity>): Partial<ContactEntity> {
+  private cleanContact(
+    contact: Partial<ContactEntity>,
+  ): Partial<ContactEntity> {
     return {
       ...contact,
       role: contact.role ?? '',
@@ -245,7 +284,9 @@ export class ClientRepositoryImpl implements IClientRepository {
     };
   }
 
-  private emptyToNull(value: string | null | undefined): string | null | undefined {
+  private emptyToNull(
+    value: string | null | undefined,
+  ): string | null | undefined {
     if (value === undefined) return undefined;
     if (value === null) return null;
     const trimmed = value.trim();

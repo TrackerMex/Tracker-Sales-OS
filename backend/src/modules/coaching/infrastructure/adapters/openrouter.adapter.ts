@@ -18,7 +18,7 @@ export class OpenRouterAdapter implements LlmProvider {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: this.config.get('OPENROUTER_MODEL'),
+        model: this.config.get<string>('OPENROUTER_MODEL'),
         max_tokens: req.maxTokens,
         messages: [
           { role: 'system', content: req.system },
@@ -29,9 +29,29 @@ export class OpenRouterAdapter implements LlmProvider {
     });
     if (!res.ok)
       throw new Error(`OpenRouter ${res.status}: ${await res.text()}`);
-    const data = (await res.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
+    const data: unknown = await res.json();
+    if (!this.isOpenRouterResponse(data)) return '';
     return data.choices?.[0]?.message?.content ?? '';
+  }
+
+  private isOpenRouterResponse(
+    value: unknown,
+  ): value is { choices?: Array<{ message?: { content?: string } }> } {
+    if (typeof value !== 'object' || value === null) return false;
+    const choices: unknown = 'choices' in value ? value.choices : undefined;
+    if (choices === undefined) return true;
+    return (
+      Array.isArray(choices) &&
+      choices.every((choice: unknown) => {
+        if (typeof choice !== 'object' || choice === null) return false;
+        const message: unknown =
+          'message' in choice ? choice.message : undefined;
+        if (message === undefined) return true;
+        if (typeof message !== 'object' || message === null) return false;
+        const content: unknown =
+          'content' in message ? message.content : undefined;
+        return content === undefined || typeof content === 'string';
+      })
+    );
   }
 }

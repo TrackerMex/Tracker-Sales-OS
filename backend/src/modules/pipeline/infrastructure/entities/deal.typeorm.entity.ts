@@ -25,15 +25,22 @@ export class DealTypeormEntity {
 
   @Column({ name: 'client_id', type: 'uuid' }) clientId: string;
 
-  @ManyToOne(() => ClientTypeormEntity, { onDelete: 'RESTRICT', nullable: false })
+  @ManyToOne(() => ClientTypeormEntity, {
+    onDelete: 'RESTRICT',
+    nullable: false,
+  })
   @JoinColumn({ name: 'client_id' })
   client?: ClientTypeormEntity;
 
-  @Column({ name: 'client_name', type: 'varchar', nullable: true }) clientName: string;
+  @Column({ name: 'client_name', type: 'varchar', nullable: true })
+  clientName: string;
 
   @Column({ name: 'seller_id', type: 'uuid' }) sellerId: string;
 
-  @ManyToOne(() => SellerTypeormEntity, { onDelete: 'RESTRICT', nullable: false })
+  @ManyToOne(() => SellerTypeormEntity, {
+    onDelete: 'RESTRICT',
+    nullable: false,
+  })
   @JoinColumn({ name: 'seller_id' })
   seller?: SellerTypeormEntity;
 
@@ -47,14 +54,22 @@ export class DealTypeormEntity {
   @Column({ name: 'stage_history', type: 'jsonb', default: [] })
   stageHistory: StageHistoryEntry[];
 
-  @Column({ name: 'opportunity_name', type: 'varchar', length: 200, nullable: true })
+  @Column({
+    name: 'opportunity_name',
+    type: 'varchar',
+    length: 200,
+    nullable: true,
+  })
   opportunityName: string | null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt: Date;
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' }) updatedAt: Date;
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  updatedAt: Date;
 
-  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' }) deletedAt: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
+  deletedAt: Date | null;
 
   @VersionColumn({ default: 1 }) version: number;
 }

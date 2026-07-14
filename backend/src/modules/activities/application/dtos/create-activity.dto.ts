@@ -1,17 +1,37 @@
-import { IsEnum, IsString, IsNotEmpty, IsOptional, IsDateString, IsUUID, ValidateIf } from 'class-validator';
+import {
+  IsEnum,
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsDateString,
+  IsUUID,
+  ValidateIf,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ActivityType, ActivityResult } from '../../domain/entities/activity.entity';
+import {
+  ActivityType,
+  ActivityResult,
+} from '../../domain/entities/activity.entity';
 import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 
 export class CreateActivityDto {
   @ApiProperty() @IsUUID() sellerId: string;
   @ApiPropertyOptional()
-  @ValidateIf((o) => !['Solicitud de factura/servicio', 'Junta interna', 'Prospección'].includes(o.type))
+  @ValidateIf(
+    (o: CreateActivityDto) =>
+      ![
+        'Solicitud de factura/servicio',
+        'Junta interna',
+        'Prospección',
+      ].includes(o.type),
+  )
   @IsUUID()
   clientId?: string;
   @ApiPropertyOptional() @IsOptional() @IsUUID() contactId?: string;
   @ApiProperty({ enum: ActivityType }) @IsEnum(ActivityType) type: ActivityType;
-  @ApiProperty({ enum: ActivityResult }) @IsEnum(ActivityResult) result: ActivityResult;
+  @ApiProperty({ enum: ActivityResult })
+  @IsEnum(ActivityResult)
+  result: ActivityResult;
   @ApiProperty() @IsString() @IsNotEmpty() summary: string;
   @ApiPropertyOptional() @IsOptional() @IsString() discovery?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() agreement?: string;
@@ -21,7 +41,10 @@ export class CreateActivityDto {
   @ApiPropertyOptional() @IsOptional() @IsString() nextTime?: string;
   @ApiProperty() @IsDateString() executedAt: string;
   @ApiPropertyOptional() @IsOptional() @IsDateString() programmedAt?: string;
-  @ApiPropertyOptional({ enum: PipelineStage }) @IsOptional() @IsEnum(PipelineStage) stage?: PipelineStage;
+  @ApiPropertyOptional({ enum: PipelineStage })
+  @IsOptional()
+  @IsEnum(PipelineStage)
+  stage?: PipelineStage;
   @ApiPropertyOptional() @IsOptional() @IsUUID() taskId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() opportunityName?: string;
 }

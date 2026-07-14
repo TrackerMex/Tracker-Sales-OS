@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class BackfillInitiatedClientDeals1783700000000
-  implements MigrationInterface
-{
+export class BackfillInitiatedClientDeals1783700000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       INSERT INTO "deals" (
@@ -44,8 +42,9 @@ export class BackfillInitiatedClientDeals1783700000000
     `);
   }
 
-  public async down(_queryRunner: QueryRunner): Promise<void> {
+  public down(): Promise<void> {
     // Conservative no-op: backfilled rows are indistinguishable from deals
     // created normally and deleting them could remove legitimate pipeline data.
+    return Promise.resolve();
   }
 }

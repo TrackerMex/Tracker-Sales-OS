@@ -14,9 +14,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * verificar su estado. Es seguro correr esta migracion sin importar si
  * las tablas/columnas ya existen.
  */
-export class BaselineSchemaReconcile1749000000000
-  implements MigrationInterface
-{
+export class BaselineSchemaReconcile1749000000000 implements MigrationInterface {
   name = 'BaselineSchemaReconcile1749000000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -265,14 +263,10 @@ export class BaselineSchemaReconcile1749000000000
     await queryRunner.query(`DROP TABLE IF EXISTS "settings"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "sales"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "public"."sales_type_enum"`);
-    await queryRunner.query(
-      `DROP TYPE IF EXISTS "public"."sales_source_enum"`,
-    );
+    await queryRunner.query(`DROP TYPE IF EXISTS "public"."sales_source_enum"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "public"."sales_pay_enum"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "tasks"`);
-    await queryRunner.query(
-      `DROP TYPE IF EXISTS "public"."tasks_status_enum"`,
-    );
+    await queryRunner.query(`DROP TYPE IF EXISTS "public"."tasks_status_enum"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "users"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "public"."users_role_enum"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "deals"`);
@@ -294,9 +288,7 @@ export class BaselineSchemaReconcile1749000000000
     await queryRunner.query(
       `DROP TYPE IF EXISTS "public"."clients_person_enum"`,
     );
-    await queryRunner.query(
-      `DROP TYPE IF EXISTS "public"."clients_type_enum"`,
-    );
+    await queryRunner.query(`DROP TYPE IF EXISTS "public"."clients_type_enum"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "contacts"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "sellers"`);
   }

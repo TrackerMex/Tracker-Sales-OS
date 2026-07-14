@@ -2,15 +2,38 @@ import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
 import { ActivityDto } from '../dtos/activity.dto';
 import { CreateActivityDto } from '../dtos/create-activity.dto';
-import { ACTIVITY_REPOSITORY, IActivityRepository } from '../../domain/repositories/activity.repository.interface';
-import { TASK_POINTS, REQUIRES_NEXT_STEP } from '../../domain/entities/activity.entity';
-import { DEAL_REPOSITORY, IDealsRepository } from '../../../pipeline/domain/repositories/deal.repository.interface';
-import { ALLOWED_TRANSITIONS, DealEntity, STAGE_PROBABILITY } from '../../../pipeline/domain/entities/deal.entity';
-import { ClientEntity, PipelineStage } from '../../../clients/domain/entities/client.entity';
-import { CLIENT_REPOSITORY, IClientRepository } from '../../../clients/domain/repositories/client.repository.interface';
+import {
+  ACTIVITY_REPOSITORY,
+  IActivityRepository,
+} from '../../domain/repositories/activity.repository.interface';
+import {
+  ActivityEntity,
+  TASK_POINTS,
+  REQUIRES_NEXT_STEP,
+} from '../../domain/entities/activity.entity';
+import {
+  DEAL_REPOSITORY,
+  IDealsRepository,
+} from '../../../pipeline/domain/repositories/deal.repository.interface';
+import {
+  ALLOWED_TRANSITIONS,
+  DealEntity,
+  STAGE_PROBABILITY,
+} from '../../../pipeline/domain/entities/deal.entity';
+import {
+  ClientEntity,
+  PipelineStage,
+} from '../../../clients/domain/entities/client.entity';
+import {
+  CLIENT_REPOSITORY,
+  IClientRepository,
+} from '../../../clients/domain/repositories/client.repository.interface';
 
 @Injectable()
-export class CreateActivityUseCase implements IUseCase<CreateActivityDto, ActivityDto> {
+export class CreateActivityUseCase implements IUseCase<
+  CreateActivityDto,
+  ActivityDto
+> {
   constructor(
     @Inject(ACTIVITY_REPOSITORY)
     private readonly activityRepo: IActivityRepository,
@@ -31,7 +54,9 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
 
     const capturedAt = new Date();
     const executedAt = new Date(input.executedAt);
-    const delayMinutes = Math.round((capturedAt.getTime() - executedAt.getTime()) / 60000);
+    const delayMinutes = Math.round(
+      (capturedAt.getTime() - executedAt.getTime()) / 60000,
+    );
     const points = TASK_POINTS[input.type];
     const quality = this.calculateQuality(input);
 
@@ -42,8 +67,15 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
 
     if (input.clientId) {
       existingDeal = input.opportunityName
-        ? await this.dealRepo.findByOpportunity(input.clientId, input.sellerId, input.opportunityName)
-        : await this.dealRepo.findByClientIdAndSellerId(input.clientId, input.sellerId);
+        ? await this.dealRepo.findByOpportunity(
+            input.clientId,
+            input.sellerId,
+            input.opportunityName,
+          )
+        : await this.dealRepo.findByClientIdAndSellerId(
+            input.clientId,
+            input.sellerId,
+          );
 
       if (existingDeal && !input.stage) {
         // Auto-snapshot: usar stage actual del deal sin avanzarlo
@@ -59,7 +91,11 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
       } else if (input.stage) {
         if (input.stage !== existingDeal.stage) {
           // Avanzar SOLO el deal de esta oportunidad
-          await this.syncPipelineForDeal(existingDeal.id, input.stage, input.sellerId);
+          await this.syncPipelineForDeal(
+            existingDeal.id,
+            input.stage,
+            input.sellerId,
+          );
         }
         // Si input.stage === existingDeal.stage → no avanzar, solo snapshot
       }
@@ -85,7 +121,7 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
       quality,
     };
 
-    let entity;
+    let entity: ActivityEntity | undefined;
     if (!existingDeal && clientForNewDeal) {
       const stage = input.stage ?? clientForNewDeal.stage;
       activity.stage = stage;
@@ -101,7 +137,10 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
     }
 
     if (!entity && existingDeal) {
-      entity = await this.activityRepo.createAndTouchDeal(activity, existingDeal.id);
+      entity = await this.activityRepo.createAndTouchDeal(
+        activity,
+        existingDeal.id,
+      );
     }
 
     entity ??= await this.activityRepo.create(activity);
@@ -109,7 +148,11 @@ export class CreateActivityUseCase implements IUseCase<CreateActivityDto, Activi
     return ActivityDto.fromEntity(entity);
   }
 
-  private async syncPipelineForDeal(dealId: string, stage: PipelineStage, sellerId: string): Promise<void> {
+  private async syncPipelineForDeal(
+    dealId: string,
+    stage: PipelineStage,
+    sellerId: string,
+  ): Promise<void> {
     const deal = await this.dealRepo.findById(dealId);
     if (!deal) return;
     const allowed = ALLOWED_TRANSITIONS[deal.stage] ?? [];

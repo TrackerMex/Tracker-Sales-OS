@@ -1,12 +1,21 @@
-import { Injectable, Inject, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  ForbiddenException,
+  ConflictException,
+} from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
 import { TaskDto } from '../dtos/task.dto';
-import { TASK_REPOSITORY, ITaskRepository } from '../../domain/repositories/task.repository.interface';
+import {
+  TASK_REPOSITORY,
+  ITaskRepository,
+} from '../../domain/repositories/task.repository.interface';
 import { UserRole } from '../../../auth/domain/entities/user.entity';
 
 export interface UpdateTaskInput {
   taskId: string;
-  callerRole: string;
+  callerRole: UserRole;
   callerSellerId: string | null;
   clientId?: string;
   type?: string;
@@ -27,27 +36,51 @@ export class UpdateTaskUseCase implements IUseCase<UpdateTaskInput, TaskDto> {
     const task = await this.taskRepo.findById(input.taskId);
 
     if (!task) throw new NotFoundException(`Task ${input.taskId} not found`);
-    if (input.callerRole === UserRole.Seller && task.sellerId !== input.callerSellerId) {
+    if (
+      input.callerRole === UserRole.Seller &&
+      task.sellerId !== input.callerSellerId
+    ) {
       throw new ForbiddenException('You can only edit your own tasks');
     }
 
     if (input.scheduledAt) {
       const newScheduledAt = new Date(input.scheduledAt);
-      const conflict = await this.taskRepo.findConflictingTask(task.sellerId, newScheduledAt, input.taskId);
+      const conflict = await this.taskRepo.findConflictingTask(
+        task.sellerId,
+        newScheduledAt,
+        input.taskId,
+      );
       if (conflict) {
-        const fecha = newScheduledAt.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        const hora = newScheduledAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const fecha = newScheduledAt.toLocaleDateString('es-MX', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        });
+        const hora = newScheduledAt.toLocaleTimeString('es-MX', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
         throw new ConflictException(
           `Ya tienes una tarea programada para el ${fecha} a las ${hora}: "${conflict.title}"`,
         );
       }
     }
 
-    const { taskId, callerRole, callerSellerId, ...fields } = input;
+    const fields = {
+      clientId: input.clientId,
+      type: input.type,
+      contactId: input.contactId,
+      title: input.title,
+      description: input.description,
+      scheduledAt: input.scheduledAt,
+    };
 
-    const updated = await this.taskRepo.update(taskId, {
+    const updated = await this.taskRepo.update(input.taskId, {
       ...fields,
-      scheduledAt: fields.scheduledAt ? new Date(fields.scheduledAt) : undefined,
+      scheduledAt: fields.scheduledAt
+        ? new Date(fields.scheduledAt)
+        : undefined,
     });
 
     return TaskDto.fromEntity(updated);

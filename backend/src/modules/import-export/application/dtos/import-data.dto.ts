@@ -1,5 +1,22 @@
-import { IsArray, IsOptional, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsArray, IsOptional } from 'class-validator';
+import { UserRole } from '../../../auth/domain/entities/user.entity';
+import {
+  ClientSource,
+  ClientType,
+  PersonType,
+  PipelineStage,
+} from '../../../clients/domain/entities/client.entity';
+import { StageHistoryEntry } from '../../../pipeline/domain/entities/deal.entity';
+import { TaskStatus } from '../../../tasks/domain/entities/task.entity';
+import {
+  ActivityResult,
+  ActivityType,
+} from '../../../activities/domain/entities/activity.entity';
+import {
+  PaymentMethod,
+  SaleSource,
+  SaleType,
+} from '../../../sales/domain/entities/sale.entity';
 
 class SellerDto {
   id?: string;
@@ -16,7 +33,7 @@ class UserDto {
   username: string;
   passwordHash: string;
   name: string;
-  role: string;
+  role: UserRole;
   sellerId?: string | null;
   active?: boolean;
   createdAt?: Date;
@@ -27,11 +44,11 @@ class ClientDto {
   id?: string;
   name: string;
   domain?: string | null;
-  type: string;
-  person: string;
+  type: ClientType;
+  person: PersonType;
   sellerId: string;
-  source: string;
-  stage?: string;
+  source: ClientSource;
+  stage?: PipelineStage;
   expectedAmount?: number;
   units?: number;
   pain?: string | null;
@@ -59,10 +76,10 @@ class DealDto {
   id?: string;
   clientId: string;
   sellerId: string;
-  stage: string;
+  stage: PipelineStage;
   amount?: number;
   probability?: number;
-  stageHistory?: any[];
+  stageHistory?: StageHistoryEntry[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -75,7 +92,7 @@ class TaskDto {
   description?: string | null;
   scheduledAt: Date;
   completedAt?: Date | null;
-  status?: string;
+  status?: TaskStatus;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -85,8 +102,8 @@ class ActivityDto {
   sellerId: string;
   clientId: string;
   contactId?: string | null;
-  type: string;
-  result: string;
+  type: ActivityType;
+  result: ActivityResult;
   summary: string;
   discovery?: string | null;
   agreement?: string | null;
@@ -108,13 +125,13 @@ class SaleDto {
   sellerId: string;
   clientId: string;
   clientName: string;
-  clientType: string;
+  clientType: 'Nuevo' | 'Existente';
   product: string;
   units: number;
   amount: number;
-  pay: string;
-  source: string;
-  type: string;
+  pay: PaymentMethod;
+  source: SaleSource;
+  type: SaleType;
   date: Date;
   notes?: string | null;
   createdAt?: Date;

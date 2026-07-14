@@ -6,10 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useApiFormErrors } from "@/shared/lib/api-errors"
 import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
-import {
-  FieldError,
-  fieldErrorProps,
-} from "@/shared/components/forms/FieldError"
+import { FieldError } from "@/shared/components/forms/FieldError"
+import { fieldErrorProps } from "@/shared/components/forms/field-error-props"
 
 const loginSchema = z.object({
   username: z.string().min(1, "Requerido"),

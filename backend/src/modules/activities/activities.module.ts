@@ -13,7 +13,12 @@ import { PipelineModule } from '../pipeline/pipeline.module';
 import { ClientsModule } from '../clients/clients.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ActivityTypeormEntity]), AuthModule, PipelineModule, ClientsModule],
+  imports: [
+    TypeOrmModule.forFeature([ActivityTypeormEntity]),
+    AuthModule,
+    PipelineModule,
+    ClientsModule,
+  ],
   controllers: [ActivitiesController],
   providers: [
     { provide: ACTIVITY_REPOSITORY, useClass: ActivityRepositoryImpl },

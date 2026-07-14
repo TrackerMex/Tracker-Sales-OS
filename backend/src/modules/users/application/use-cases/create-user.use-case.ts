@@ -1,7 +1,10 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
-import { USER_REPOSITORY, IUserRepository } from '../../../auth/domain/repositories/user.repository.interface';
+import {
+  USER_REPOSITORY,
+  IUserRepository,
+} from '../../../auth/domain/repositories/user.repository.interface';
 import { CreateUserDto, UserDto } from '../dtos/user.dto';
 import { UserEntity } from '../../../auth/domain/entities/user.entity';
 
@@ -15,7 +18,9 @@ export class CreateUserUseCase implements IUseCase<CreateUserDto, UserDto> {
   async execute(dto: CreateUserDto): Promise<UserDto> {
     const existing = await this.userRepo.findByUsername(dto.username);
     if (existing) {
-      throw new ConflictException(`Username '${dto.username}' is already taken`);
+      throw new ConflictException(
+        `Username '${dto.username}' is already taken`,
+      );
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -34,6 +39,7 @@ export class CreateUserUseCase implements IUseCase<CreateUserDto, UserDto> {
 
   private toDto(user: UserEntity): UserDto {
     const { passwordHash, ...rest } = user;
-    return rest as UserDto;
+    void passwordHash;
+    return rest;
   }
 }

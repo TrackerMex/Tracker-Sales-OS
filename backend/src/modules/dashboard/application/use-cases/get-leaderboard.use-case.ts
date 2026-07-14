@@ -11,7 +11,10 @@ import { SellerTypeormEntity } from '../../../sellers/infrastructure/entities/se
 import { GetSettingsUseCase } from '../../../settings/application/use-cases/get-settings.use-case';
 
 @Injectable()
-export class GetLeaderboardUseCase implements IUseCase<void, LeaderboardRowDto[]> {
+export class GetLeaderboardUseCase implements IUseCase<
+  void,
+  LeaderboardRowDto[]
+> {
   constructor(
     @Inject(ACTIVITY_REPOSITORY)
     private readonly activityRepo: IActivityRepository,
@@ -30,7 +33,11 @@ export class GetLeaderboardUseCase implements IUseCase<void, LeaderboardRowDto[]
 
     const now = new Date();
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const previousMonthStart = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      1,
+    );
     // Range covers the previous month start through the end of today (exclusive tomorrow).
     const from = previousMonthStart;
     const to = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
@@ -58,7 +65,8 @@ export class GetLeaderboardUseCase implements IUseCase<void, LeaderboardRowDto[]
       let previousMonthPoints = 0;
       for (const [day, points] of days) {
         if (day.startsWith(currentMonthPrefix)) monthlyPoints += points;
-        else if (day.startsWith(previousMonthPrefix)) previousMonthPoints += points;
+        else if (day.startsWith(previousMonthPrefix))
+          previousMonthPoints += points;
       }
 
       const streakDays = this.computeStreak(days, now, from, dailyMinPoints);
@@ -110,14 +118,22 @@ export class GetLeaderboardUseCase implements IUseCase<void, LeaderboardRowDto[]
     // Grace for the in-progress day: if today does not meet the goal yet but
     // yesterday did, start counting from yesterday.
     if (!meets(cursor)) {
-      cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+      cursor = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() - 1,
+      );
       if (!meets(cursor)) return 0;
     }
 
     let streak = 0;
     while (cursor >= lowerBound && meets(cursor)) {
       streak += 1;
-      cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() - 1);
+      cursor = new Date(
+        cursor.getFullYear(),
+        cursor.getMonth(),
+        cursor.getDate() - 1,
+      );
     }
     return streak;
   }

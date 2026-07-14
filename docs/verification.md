@@ -1,5 +1,32 @@
 # Verificación — Tracker Sales OS
 
+## Pipeline CI
+
+El workflow `.github/workflows/ci.yml` se ejecuta en cada pull request y en cada push a `main`. Usa Node.js 22, `npm ci` y cache npm independiente para los lockfiles de `backend/` y `frontend/`.
+
+Los jobs se publican como checks separados:
+
+- `Backend`: TypeScript, ESLint en modo read-only y tests unitarios Jest con ejecución serial. La configuración Jest del backend usa `rootDir: src`, por lo que no descubre los E2E de `backend/test/`.
+- `Frontend`: TypeScript, ESLint y build de producción.
+
+Para bloquear merges cuando un job falla, un administrador del repositorio debe configurar en GitHub una branch protection rule o ruleset para `main` y marcar `Backend` y `Frontend` como required status checks. Esta configuración vive en GitHub y no queda habilitada únicamente por agregar el workflow al repositorio.
+
+### Reproducir los checks localmente
+
+```bash
+cd backend
+npm ci
+npx tsc --noEmit
+npx eslint "{src,apps,libs,test}/**/*.ts"
+npm test -- --runInBand
+
+cd ../frontend
+npm ci
+npm run typecheck
+npm run lint
+npm run build
+```
+
 ## Comandos por entorno
 
 ### Backend
