@@ -6,7 +6,7 @@
 
 ## Estado
 
-Feature `61-ci-pipeline` completada. Review final independiente: PASSED 15/15.
+Feature `62-critical-use-case-tests` completada. Review independiente: PASSED 12/12; Jest 11 suites/60 tests y TypeScript PASS.
 
 ## Bloqueantes
 
@@ -17,4 +17,4 @@ _(ninguno)_
 - Subir los cambios y confirmar la primera corrida verde real en GitHub Actions.
 - Configurar branch protection/ruleset de `main` con `Backend` y `Frontend` como required checks.
 - Evaluar las vulnerabilidades reportadas por npm en una tarea separada, sin `npm audit fix` automático.
-- Continuar con feature `62-critical-use-case-tests`.
+- Continuar con feature `63-refresh-tokens`.

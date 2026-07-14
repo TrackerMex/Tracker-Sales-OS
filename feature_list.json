@@ -636,11 +636,11 @@
     "id": "62-critical-use-case-tests",
     "name": "Fase 1 SaaS: tests de use-cases críticos",
     "description": "Suite jest para la lógica de negocio que sostiene el producto: cálculo de score/semáforo, transiciones de pipeline (secuencial + Perdido + terminales), TASK_POINTS/calidad de actividad, authz (ownership Seller vs bypass Admin/Director), anti-solapamiento de tareas, anti-duplicados de clientes.",
-    "status": "pending",
+    "status": "done",
     "priority": 62,
     "backend_modules": ["dashboard", "pipeline", "activities", "tasks", "clients", "auth"],
     "frontend_modules": [],
-    "notes": "Origen: auditoría 2026-07-07, Fase 1 — riesgo #1: 3 archivos de test para ~25k LOC. Patrón existente: create-activity.use-case.spec.ts y login.use-case.spec.ts (mocks de repos por interfaz). Objetivo: ~15-20 specs de use-cases puros, sin DB. Meta de cobertura: use-cases de mutación y scoring, no controllers ni repos. Corre en CI (feature 61)."
+    "notes": "Completada 2026-07-13. Se agregaron 4 suites y 25 casos unitarios para scoring, tareas, authz y clientes; la cobertura existente de pipeline y actividades fue validada. Resultado final: ESLint PASS sin errores/warnings, 11 suites/60 tests PASS y tsc PASS, sin DB/red ni cambios de producción. Review independiente PASSED en progress/review_62-critical-use-case-tests.md."
   },
   {
     "id": "63-refresh-tokens",

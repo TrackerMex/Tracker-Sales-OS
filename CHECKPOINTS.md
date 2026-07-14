@@ -625,3 +625,28 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 **Reviewer 2026-07-13**: FAILED 14/15. Workflow y documentacion correctos. Bloqueante: backend lint (632 errores), frontend lint (76 errores) y frontend build local (binding nativo Tailwind + `spawn EPERM`) no terminan en cero; `npm ci` tampoco pudo verificarse localmente por restricciones de cache/red. Ver `progress/review_61-ci-pipeline.md`.
 
 **Re-review final 2026-07-13**: PASSED 15/15. Deuda eliminada sin desactivar reglas: backend y frontend lint 0 errores/0 warnings; ambos `npm ci` PASS; TypeScript PASS; backend Jest 7 suites/35 tests PASS; builds PASS. El P2 detectado en el primer review semantico (`useApiFormErrors` no enfocaba el primer campo invalido) fue corregido y re-revisado PASSED. Ver `progress/review_61-ci-pipeline.md`.
+
+---
+
+## 62-critical-use-case-tests
+
+**Cobertura crítica:**
+- [x] Score y semáforo cubren límites rojo/ámbar/verde, clamp 0/100, ausencia de actividad y penalización por vencidos
+- [x] Pipeline conserva pruebas de transiciones permitidas, rechazo de misma fase, reapertura desde terminales, probabilidad, historial y sincronización del cliente
+- [x] Actividades conservan pruebas de `TASK_POINTS`, calidad 0/40/100 y validación de siguiente paso
+- [x] Tareas cubren creación sin conflicto, rechazo por solapamiento y exclusión de la propia tarea al reprogramar
+- [x] Autorización de tareas cubre rechazo por ownership para Seller y bypass válido para Admin/Director
+- [x] Clientes cubren resolución de seller por rol y anti-duplicados por empresa/dominio, teléfono/email y duplicados normalizados dentro del payload
+
+**Aislamiento y verificación:**
+- [x] Los tests de use-case usan mocks de repositorios/puertos y no requieren DB, red ni servicios externos
+- [x] No se modifican archivos de producción ni se agregan dependencias
+- [x] `npx jest --runInBand` pasa de forma determinista
+- [x] `npx tsc --noEmit` pasa en backend
+- [x] `npx eslint "{src,apps,libs,test}/**/*.ts"` pasa sin errores ni warnings de ESLint
+- [x] Resumen guardado en `progress/impl_62-critical-use-case-tests.md`
+- [x] Review independiente guardado en `progress/review_62-critical-use-case-tests.md`
+
+**Reviewer 2026-07-13**: PASSED 12/12. Suite completa: 11 suites, 60 tests, 0 snapshots; `npx tsc --noEmit` exit 0. Sin cambios productivos, dependencias, DB, red ni servicios externos.
+
+**Revalidación lint 2026-07-13**: PASSED. Corregidos 21 errores en los tres specs afectados sin desactivar reglas. ESLint exit 0, Jest 11/11 suites y 60/60 tests, TypeScript exit 0. Review independiente confirmó que se preservaron las aserciones y no hubo cambios de producción, configuración o dependencias.
