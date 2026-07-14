@@ -44,7 +44,7 @@ interface Props {
 
 export function EditSaleModal({ sale, isOpen, onClose }: Props) {
   const updateSale = useUpdateSale();
-  const errors = useApiFormErrors(updateSale.error);
+  const { formRef, ...errors } = useApiFormErrors(updateSale.error);
 
   const [date, setDate] = useState(sale.date.substring(0, 10));
   const [clientName, setClientName] = useState(sale.clientName);
@@ -91,7 +91,7 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
           </DialogDescription>
         </DialogHeader>
 
-        <form ref={errors.formRef} onSubmit={handleSubmit} className="space-y-3">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
           <FormErrorSummary error={errors.summary} />
 
           <div>

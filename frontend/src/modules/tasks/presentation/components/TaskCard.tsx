@@ -10,7 +10,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Badge, type BadgeVariant } from '@/components/ui/badge'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -36,6 +36,7 @@ import {
   Delete02Icon,
   MoreHorizontalCircle01Icon,
 } from '@hugeicons/core-free-icons'
+import { TYPE_TAG } from './task-card.constants'
 
 interface TaskCardProps {
   task: Task
@@ -60,20 +61,6 @@ function getAiComment(task: Task, clientName: string | null): string | null {
   const name = clientName ?? 'el contacto'
   if (task.isOverdue) return `Tarea vencida. Reagenda con ${name} y define una nueva fecha concreta.`
   return `Revisa: ¿esta tarea tiene un resultado medible? Si solo es "seguimiento", redefine con ${name}.`
-}
-
-export const TYPE_TAG: Record<string, BadgeVariant> = {
-  'Llamada': 'navy',
-  'Videoconf': 'navy',
-  'Reunión virtual': 'navy',
-  'Visita': 'green',
-  'Reunión presencial': 'green',
-  'Propuesta': 'amber',
-  'Seguimiento': 'amber',
-  'Cierre': 'green',
-  'Chat': 'gray',
-  'WA': 'gray',
-  'Correo': 'gray',
 }
 
 export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, clientName, contactName }: TaskCardProps) {
@@ -229,3 +216,5 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
     </div>
   )
 }
+
+export { TYPE_TAG } from './task-card.constants'

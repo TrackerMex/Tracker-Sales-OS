@@ -29,6 +29,7 @@ export class BlockUserUseCase implements IUseCase<string, UserDto> {
 
   private toDto(user: UserEntity): UserDto {
     const { passwordHash, ...rest } = user;
-    return rest as UserDto;
+    void passwordHash;
+    return rest;
   }
 }

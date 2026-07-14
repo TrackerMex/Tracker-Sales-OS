@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
-import { DEAL_REPOSITORY, IDealsRepository } from '../../domain/repositories/deal.repository.interface';
+import {
+  DEAL_REPOSITORY,
+  IDealsRepository,
+} from '../../domain/repositories/deal.repository.interface';
 import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 import { DealDto } from '../dtos/deal.dto';
 

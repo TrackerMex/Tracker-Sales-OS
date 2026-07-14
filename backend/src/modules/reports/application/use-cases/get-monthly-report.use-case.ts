@@ -54,9 +54,10 @@ function emptyTypeReport(): TypeReport {
 }
 
 @Injectable()
-export class GetMonthlyReportUseCase
-  implements IUseCase<{ month: string }, MonthlyReportDto>
-{
+export class GetMonthlyReportUseCase implements IUseCase<
+  { month: string },
+  MonthlyReportDto
+> {
   constructor(
     @InjectRepository(SaleTypeormEntity)
     private saleRepo: Repository<SaleTypeormEntity>,

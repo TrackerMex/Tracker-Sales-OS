@@ -1,4 +1,11 @@
-import { Controller, Get, Param, UseGuards, Request, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  UseGuards,
+  Request,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/infrastructure/guards/roles.guard';
@@ -8,7 +15,10 @@ import { GetDashboardSummaryUseCase } from '../application/use-cases/get-dashboa
 import { GetSellersScoreUseCase } from '../application/use-cases/get-sellers-score.use-case';
 import { GetOverdueTasksUseCase } from '../application/use-cases/get-overdue-tasks.use-case';
 import { GetMiDiaUseCase } from '../application/use-cases/get-mi-dia.use-case';
-import { GetActivityTrendUseCase, ActivityTrendItem } from '../application/use-cases/get-activity-trend.use-case';
+import {
+  GetActivityTrendUseCase,
+  ActivityTrendItem,
+} from '../application/use-cases/get-activity-trend.use-case';
 import { GetStalledDealsUseCase } from '../application/use-cases/get-stalled-deals.use-case';
 import { GetLeaderboardUseCase } from '../application/use-cases/get-leaderboard.use-case';
 
@@ -58,7 +68,7 @@ export class DashboardController {
   @Get('mi-dia/seller/:id')
   getMiDia(
     @Param('id') sellerId: string,
-    @Request() req: { user: { role: string; sellerId: string | null } },
+    @Request() req: { user: { role: UserRole; sellerId: string | null } },
   ) {
     if (req.user.role === UserRole.Seller && req.user.sellerId !== sellerId) {
       throw new ForbiddenException();

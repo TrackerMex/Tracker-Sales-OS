@@ -12,9 +12,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * (valid uuid strings or NULL); NULLIF guards empty strings on the nullable
  * column.
  */
-export class NormalizeTasksFkColumnTypes1748999999998
-  implements MigrationInterface
-{
+export class NormalizeTasksFkColumnTypes1748999999998 implements MigrationInterface {
   name = 'NormalizeTasksFkColumnTypes1748999999998';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

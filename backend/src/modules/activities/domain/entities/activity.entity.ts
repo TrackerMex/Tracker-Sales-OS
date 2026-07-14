@@ -1,6 +1,10 @@
 import { BaseEntity } from '../../../../core/domain/base.entity';
 
-export type ActivityStatus = 'Pendiente' | 'En curso' | 'Completada' | 'Cancelada';
+export type ActivityStatus =
+  | 'Pendiente'
+  | 'En curso'
+  | 'Completada'
+  | 'Cancelada';
 
 export interface ActivityHistoryEntry {
   changedAt: string;

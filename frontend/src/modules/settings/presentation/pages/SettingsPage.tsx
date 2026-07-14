@@ -5,7 +5,8 @@ import { useSettings } from '../../application/hooks/useSettings'
 import { useUpdateSettings } from '../../application/hooks/useUpdateSettings'
 import { useApiFormErrors } from '@/shared/lib/api-errors'
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
-import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
+import { FieldError } from '@/shared/components/forms/FieldError'
+import { fieldErrorProps } from '@/shared/components/forms/field-error-props'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
@@ -59,7 +60,9 @@ export function SettingsPage() {
   })
 
   useEffect(() => {
-    if (data) setForm(data)
+    if (!data) return
+    const frame = requestAnimationFrame(() => setForm(data))
+    return () => cancelAnimationFrame(frame)
   }, [data])
 
   function handleChange(field: string, value: string) {

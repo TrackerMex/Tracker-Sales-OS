@@ -46,7 +46,7 @@ export class TasksController {
   @ApiOperation({ summary: 'Create a new task' })
   create(
     @Body() dto: CreateTaskDto,
-    @Request() req: { user: { role: string; sellerId: string | null } },
+    @Request() req: { user: { role: UserRole; sellerId: string | null } },
   ) {
     if (req.user.role === UserRole.Seller) {
       if (!req.user.sellerId) throw new ForbiddenException();
@@ -68,7 +68,7 @@ export class TasksController {
   getToday(
     @Param('id') sellerId: string,
     @Query('date') date: string | undefined,
-    @Request() req: { user: { role: string; sellerId: string | null } },
+    @Request() req: { user: { role: UserRole; sellerId: string | null } },
   ) {
     if (req.user.role === UserRole.Seller && req.user.sellerId !== sellerId) {
       throw new ForbiddenException();
@@ -81,7 +81,7 @@ export class TasksController {
   @ApiOperation({ summary: 'Mark a task as completed' })
   complete(
     @Param('id') taskId: string,
-    @Request() req: { user: { role: string; sellerId: string | null } },
+    @Request() req: { user: { role: UserRole; sellerId: string | null } },
   ) {
     return this.completeTask.execute({
       taskId,
@@ -96,7 +96,7 @@ export class TasksController {
   update(
     @Param('id') taskId: string,
     @Body() dto: UpdateTaskDto,
-    @Request() req: { user: { role: string; sellerId: string | null } },
+    @Request() req: { user: { role: UserRole; sellerId: string | null } },
   ) {
     return this.updateTask.execute({
       taskId,
@@ -111,7 +111,7 @@ export class TasksController {
   @ApiOperation({ summary: 'Reactivate a completed task' })
   reactivate(
     @Param('id') taskId: string,
-    @Request() req: { user: { role: string; sellerId: string | null } },
+    @Request() req: { user: { role: UserRole; sellerId: string | null } },
   ) {
     return this.reactivateTask.execute({
       taskId,
@@ -125,7 +125,7 @@ export class TasksController {
   @ApiOperation({ summary: 'Delete a task' })
   delete(
     @Param('id') taskId: string,
-    @Request() req: { user: { role: string; sellerId: string | null } },
+    @Request() req: { user: { role: UserRole; sellerId: string | null } },
   ) {
     return this.deleteTask.execute({
       taskId,

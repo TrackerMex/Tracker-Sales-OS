@@ -2,7 +2,10 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SettingTypeormEntity } from '../../infrastructure/entities/setting.typeorm.entity';
-import { AppSettings, DEFAULT_SETTINGS } from '../../domain/entities/setting.entity';
+import {
+  AppSettings,
+  DEFAULT_SETTINGS,
+} from '../../domain/entities/setting.entity';
 
 const SETTINGS_KEY = 'app_settings';
 
@@ -24,11 +27,17 @@ export class GetSettingsUseCase implements OnModuleInit {
 
     const row = await this.repo.findOne({ where: { key: SETTINGS_KEY } });
     if (!row) {
-      await this.repo.save({ key: SETTINGS_KEY, value: DEFAULT_SETTINGS as unknown as object });
+      await this.repo.save({
+        key: SETTINGS_KEY,
+        value: DEFAULT_SETTINGS,
+      });
       this.cache = { ...DEFAULT_SETTINGS };
     } else {
       // Merge defaults so rows persisted before new keys existed still expose them
-      this.cache = { ...DEFAULT_SETTINGS, ...(row.value as unknown as AppSettings) };
+      this.cache = {
+        ...DEFAULT_SETTINGS,
+        ...(row.value as unknown as AppSettings),
+      };
     }
     return this.cache;
   }

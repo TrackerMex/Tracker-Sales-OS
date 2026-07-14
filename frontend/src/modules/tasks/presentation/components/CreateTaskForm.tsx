@@ -6,7 +6,8 @@ import { coachingApi } from '../../../coaching/infrastructure/coaching.api'
 import { tasksApi } from '../../infrastructure/tasks.api'
 import { useApiFormErrors } from '@/shared/lib/api-errors'
 import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
-import { FieldError, fieldErrorProps } from '@/shared/components/forms/FieldError'
+import { FieldError } from '@/shared/components/forms/FieldError'
+import { fieldErrorProps } from '@/shared/components/forms/field-error-props'
 import { ClientCombobox } from '@/shared/components/forms/ClientCombobox'
 import { DatePickerField } from '@/shared/components/forms/DatePickerField'
 import { TimePickerField } from '@/shared/components/forms/TimePickerField'
@@ -110,7 +111,7 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, in
     .filter((t) => t.status !== 'Completado')
     .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))
 
-  const contacts = selectedClient?.contacts ?? []
+  const contacts = useMemo(() => selectedClient?.contacts ?? [], [selectedClient?.contacts])
   const selectedContact = useMemo(() => contacts.find((c) => c.id === contactId), [contacts, contactId])
 
   function formatScheduleTime(iso: string): string {

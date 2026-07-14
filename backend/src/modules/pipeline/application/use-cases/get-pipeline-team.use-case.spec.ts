@@ -4,12 +4,21 @@ import { IDealsRepository } from '../../domain/repositories/deal.repository.inte
 import { GetPipelineTeamUseCase } from './get-pipeline-team.use-case';
 
 const makeRepo = (): jest.Mocked<IDealsRepository> => ({
-  create: jest.fn(), findById: jest.fn(), findAll: jest.fn(), update: jest.fn(),
-  softDelete: jest.fn(), findBySellerId: jest.fn(), findByStage: jest.fn(),
-  findByClientIdAndSellerId: jest.fn(), findAllByClientAndSeller: jest.fn(),
-  findByOpportunity: jest.fn(), findDetailedBySellerId: jest.fn(),
-  findDetailedAllSellers: jest.fn(), getWeightedForecast: jest.fn(),
-  findStalledDeals: jest.fn(), findAllForAnalysis: jest.fn(),
+  create: jest.fn(),
+  findById: jest.fn(),
+  findAll: jest.fn(),
+  update: jest.fn(),
+  softDelete: jest.fn(),
+  findBySellerId: jest.fn(),
+  findByStage: jest.fn(),
+  findByClientIdAndSellerId: jest.fn(),
+  findAllByClientAndSeller: jest.fn(),
+  findByOpportunity: jest.fn(),
+  findDetailedBySellerId: jest.fn(),
+  findDetailedAllSellers: jest.fn(),
+  getWeightedForecast: jest.fn(),
+  findStalledDeals: jest.fn(),
+  findAllForAnalysis: jest.fn(),
 });
 
 describe('GetPipelineTeamUseCase', () => {
@@ -22,7 +31,8 @@ describe('GetPipelineTeamUseCase', () => {
           clientId: `client-${index}`,
           clientName: `Cliente ${index}`,
           sellerId: `seller-${index % 2}`,
-          stage: index < 30 ? PipelineStage.Prospecto : PipelineStage.Contactado,
+          stage:
+            index < 30 ? PipelineStage.Prospecto : PipelineStage.Contactado,
           amount: 0,
           probability: 5,
           stageHistory: [],
@@ -32,9 +42,15 @@ describe('GetPipelineTeamUseCase', () => {
           deletedAt: null,
         });
         return {
-          deal, clientName: deal.clientName, contactName: null,
-          contactRole: null, painPoint: null, sellerName: null,
-          clientNextStep: null, clientNextDate: null, clientNextTime: null,
+          deal,
+          clientName: deal.clientName,
+          contactName: null,
+          contactRole: null,
+          painPoint: null,
+          sellerName: null,
+          clientNextStep: null,
+          clientNextDate: null,
+          clientNextTime: null,
         };
       }),
     );

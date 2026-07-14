@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
 import { UserRole } from '../../../auth/domain/entities/user.entity';
-import { ClientEntity, ContactEntity, PipelineStage } from '../../domain/entities/client.entity';
+import {
+  ClientEntity,
+  ContactEntity,
+  PipelineStage,
+} from '../../domain/entities/client.entity';
 import {
   CLIENT_REPOSITORY,
   IClientRepository,
@@ -19,7 +23,10 @@ export interface CreateClientInput {
 }
 
 @Injectable()
-export class CreateClientUseCase implements IUseCase<CreateClientInput, ClientDto> {
+export class CreateClientUseCase implements IUseCase<
+  CreateClientInput,
+  ClientDto
+> {
   constructor(
     @Inject(CLIENT_REPOSITORY)
     private readonly clientRepo: IClientRepository,
@@ -36,7 +43,9 @@ export class CreateClientUseCase implements IUseCase<CreateClientInput, ClientDt
       domain: input.dto.domain,
     });
     if (duplicate) {
-      throw new ConflictException('Ya existe un cliente con ese nombre o dominio');
+      throw new ConflictException(
+        'Ya existe un cliente con ese nombre o dominio',
+      );
     }
 
     for (const contact of contacts) {
@@ -45,7 +54,9 @@ export class CreateClientUseCase implements IUseCase<CreateClientInput, ClientDt
         email: contact.email,
       });
       if (contactDuplicate) {
-        throw new ConflictException('Ya existe un contacto con ese teléfono o email');
+        throw new ConflictException(
+          'Ya existe un contacto con ese teléfono o email',
+        );
       }
     }
 
@@ -75,7 +86,10 @@ export class CreateClientUseCase implements IUseCase<CreateClientInput, ClientDt
     return this.toDto(created);
   }
 
-  private resolveSellerId(dtoSellerId: string | undefined, user: RequestUserDto): string {
+  private resolveSellerId(
+    dtoSellerId: string | undefined,
+    user: RequestUserDto,
+  ): string {
     if (user.role === UserRole.Seller) {
       if (!user.sellerId) {
         throw new BadRequestException('El usuario vendedor no tiene sellerId');
@@ -84,12 +98,16 @@ export class CreateClientUseCase implements IUseCase<CreateClientInput, ClientDt
     }
 
     if (!dtoSellerId) {
-      throw new BadRequestException('sellerId es requerido para Admin o Director');
+      throw new BadRequestException(
+        'sellerId es requerido para Admin o Director',
+      );
     }
     return dtoSellerId;
   }
 
-  private assertUniqueContactsInPayload(contacts: CreateClientDto['contacts'] = []): void {
+  private assertUniqueContactsInPayload(
+    contacts: CreateClientDto['contacts'] = [],
+  ): void {
     const phones = new Set<string>();
     const emails = new Set<string>();
 
@@ -99,7 +117,9 @@ export class CreateClientUseCase implements IUseCase<CreateClientInput, ClientDt
 
       if (phone) {
         if (phones.has(phone)) {
-          throw new ConflictException('Hay teléfonos duplicados en los contactos');
+          throw new ConflictException(
+            'Hay teléfonos duplicados en los contactos',
+          );
         }
         phones.add(phone);
       }

@@ -4,7 +4,8 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { MoreHorizontalCircle01Icon } from '@hugeicons/core-free-icons';
 import { useMonthlyReport } from '../../application/hooks/useMonthlyReport';
 import { useWinLoss } from '../../application/hooks/useWinLoss';
-import { ExecutiveSlide, buildAnalysis, money, LABEL_STYLE } from '../components/ExecutiveSlide';
+import { ExecutiveSlide } from '../components/ExecutiveSlide';
+import { buildAnalysis, money, LABEL_STYLE } from '../components/executive-slide.utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -39,7 +40,9 @@ function loadGoals() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw) as { amount: number; units: number; perSeller: number };
-  } catch {}
+  } catch {
+    // Ignore malformed or unavailable persisted preferences and use defaults.
+  }
   return null;
 }
 

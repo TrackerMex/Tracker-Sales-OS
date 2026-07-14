@@ -1,5 +1,8 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
-import { ISaleRepository, SALE_REPOSITORY } from '../../domain/repositories/sale.repository.interface';
+import {
+  ISaleRepository,
+  SALE_REPOSITORY,
+} from '../../domain/repositories/sale.repository.interface';
 
 @Injectable()
 export class DeleteSaleUseCase {

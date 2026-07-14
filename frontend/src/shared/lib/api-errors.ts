@@ -10,6 +10,13 @@ export interface ParsedApiError {
   details: string[]
 }
 
+interface DismissedFields {
+  error: unknown
+  names: ReadonlySet<string>
+}
+
+const NO_DISMISSED_FIELDS: ReadonlySet<string> = new Set()
+
 const NETWORK_MESSAGE = 'No se pudo conectar. Tus datos siguen aquí, reintenta.'
 
 const FIELD_LABELS: Record<string, string> = {
@@ -159,33 +166,47 @@ export function parseApiError(error: unknown): ParsedApiError {
 
 export function useApiFormErrors(error: unknown) {
   const summary = useMemo(() => (error ? parseApiError(error) : null), [error])
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const formRef = useRef<HTMLFormElement>(null)
+  const [dismissedFields, setDismissedFields] = useState<DismissedFields>({
+    error: null,
+    names: NO_DISMISSED_FIELDS,
+  })
+  const dismissedForCurrentError =
+    dismissedFields.error === error ? dismissedFields.names : NO_DISMISSED_FIELDS
+  const fieldErrors = useMemo(() => {
+    const current = summary?.fieldErrors ?? {}
+    if (dismissedForCurrentError.size === 0) return current
+    return Object.fromEntries(
+      Object.entries(current).filter(([name]) => !dismissedForCurrentError.has(name)),
+    )
+  }, [dismissedForCurrentError, summary])
+  const formElementRef = useRef<HTMLFormElement>(null)
+  const formRef = useCallback((element: HTMLFormElement | null) => {
+    formElementRef.current = element
+  }, [])
 
   useEffect(() => {
-    setFieldErrors(summary?.fieldErrors ?? {})
-    if (summary) {
-      requestAnimationFrame(() => {
-        const form = formRef.current
-        if (!form) return
-        const invalid = form.querySelector<HTMLElement>('[aria-invalid="true"]')
-        if (invalid) {
-          invalid.focus()
-        } else {
-          form.querySelector<HTMLElement>('[role="alert"]')?.scrollIntoView({ block: 'nearest' })
-        }
-      })
-    }
+    if (!summary) return
+    const frame = requestAnimationFrame(() => {
+      const form = formElementRef.current
+      if (!form) return
+      const invalid = form.querySelector<HTMLElement>('[aria-invalid="true"]')
+      if (invalid) {
+        invalid.focus()
+      } else {
+        form.querySelector<HTMLElement>('[role="alert"]')?.scrollIntoView({ block: 'nearest' })
+      }
+    })
+    return () => cancelAnimationFrame(frame)
   }, [summary])
 
   const clearField = useCallback((name: string) => {
-    setFieldErrors((current) => {
-      if (!(name in current)) return current
-      const next = { ...current }
-      delete next[name]
-      return next
+    if (!(name in fieldErrors)) return
+    setDismissedFields((current) => {
+      const names = current.error === error ? new Set(current.names) : new Set<string>()
+      names.add(name)
+      return { error, names }
     })
-  }, [])
+  }, [error, fieldErrors])
 
   return { summary, fieldErrors, clearField, formRef }
 }

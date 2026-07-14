@@ -41,17 +41,30 @@ export class ClientTypeormEntity {
   @Column({ name: 'seller_id', type: 'uuid' })
   sellerId: string;
 
-  @ManyToOne(() => SellerTypeormEntity, { onDelete: 'RESTRICT', nullable: false })
+  @ManyToOne(() => SellerTypeormEntity, {
+    onDelete: 'RESTRICT',
+    nullable: false,
+  })
   @JoinColumn({ name: 'seller_id' })
   seller?: SellerTypeormEntity;
 
   @Column({ type: 'enum', enum: ClientSource })
   source: ClientSource;
 
-  @Column({ type: 'enum', enum: PipelineStage, default: PipelineStage.Prospecto })
+  @Column({
+    type: 'enum',
+    enum: PipelineStage,
+    default: PipelineStage.Prospecto,
+  })
   stage: PipelineStage;
 
-  @Column({ name: 'expected_amount', type: 'numeric', precision: 14, scale: 2, default: 0 })
+  @Column({
+    name: 'expected_amount',
+    type: 'numeric',
+    precision: 14,
+    scale: 2,
+    default: 0,
+  })
   expectedAmount: number;
 
   @Column({ default: 0 })

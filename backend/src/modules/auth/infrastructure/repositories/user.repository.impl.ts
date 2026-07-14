@@ -41,7 +41,7 @@ export class UserRepositoryImpl implements IUserRepository {
   }
 
   async update(id: string, partial: Partial<UserEntity>): Promise<UserEntity> {
-    await this.repo.update(id, partial as Partial<UserTypeormEntity>);
+    await this.repo.update(id, partial);
     const updated = await this.repo.findOneOrFail({ where: { id } });
     return this.toDomain(updated);
   }

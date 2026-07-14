@@ -7,12 +7,19 @@ import {
 } from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
 import { UserRole } from '../../../auth/domain/entities/user.entity';
-import { ClientEntity, ContactEntity } from '../../domain/entities/client.entity';
+import {
+  ClientEntity,
+  ContactEntity,
+} from '../../domain/entities/client.entity';
 import {
   CLIENT_REPOSITORY,
   IClientRepository,
 } from '../../domain/repositories/client.repository.interface';
-import { ClientDto, CreateContactDto, RequestUserDto } from '../dtos/client.dto';
+import {
+  ClientDto,
+  CreateContactDto,
+  RequestUserDto,
+} from '../dtos/client.dto';
 
 export interface AddContactInput {
   clientId: string;
@@ -40,7 +47,9 @@ export class AddContactUseCase implements IUseCase<AddContactInput, ClientDto> {
       email: input.dto.email,
     });
     if (duplicate) {
-      throw new ConflictException('Ya existe un contacto con ese teléfono o email');
+      throw new ConflictException(
+        'Ya existe un contacto con ese teléfono o email',
+      );
     }
 
     const updated = await this.clientRepo.addContact(

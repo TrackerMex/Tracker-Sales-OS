@@ -19,6 +19,7 @@ import {
   CreateClientDto,
   CreateContactDto,
   GetClientsQueryDto,
+  RequestUserDto,
   UpdateClientDto,
 } from '../application/dtos/client.dto';
 import { AddContactUseCase } from '../application/use-cases/add-contact.use-case';
@@ -48,12 +49,15 @@ export class ClientsController {
   @ApiQuery({ name: 'q', required: false })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  findAll(@Query() query: GetClientsQueryDto, @Req() req: { user: any }) {
+  findAll(
+    @Query() query: GetClientsQueryDto,
+    @Req() req: { user: RequestUserDto },
+  ) {
     return this.getClientsUseCase.execute({ query, user: req.user });
   }
 
   @Post()
-  create(@Body() dto: CreateClientDto, @Req() req: { user: any }) {
+  create(@Body() dto: CreateClientDto, @Req() req: { user: RequestUserDto }) {
     return this.createClientUseCase.execute({ dto, user: req.user });
   }
 
@@ -61,7 +65,7 @@ export class ClientsController {
   update(
     @Param('id') id: string,
     @Body() dto: UpdateClientDto,
-    @Req() req: { user: any },
+    @Req() req: { user: RequestUserDto },
   ) {
     return this.updateClientUseCase.execute({ id, dto, user: req.user });
   }
@@ -70,7 +74,7 @@ export class ClientsController {
   addContact(
     @Param('id') id: string,
     @Body() dto: CreateContactDto,
-    @Req() req: { user: any },
+    @Req() req: { user: RequestUserDto },
   ) {
     return this.addContactUseCase.execute({
       clientId: id,
@@ -80,7 +84,7 @@ export class ClientsController {
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string, @Req() req: { user: any }) {
+  delete(@Param('id') id: string, @Req() req: { user: RequestUserDto }) {
     return this.deleteClientUseCase.execute({ id, user: req.user });
   }
 }

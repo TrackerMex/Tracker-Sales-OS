@@ -15,24 +15,40 @@ import { ImportDataDto } from '../dtos/import-data.dto';
 @Injectable()
 export class ImportDataUseCase {
   constructor(
-    @InjectRepository(SellerTypeormEntity) private readonly sellers: Repository<SellerTypeormEntity>,
-    @InjectRepository(UserTypeormEntity) private readonly users: Repository<UserTypeormEntity>,
-    @InjectRepository(ClientTypeormEntity) private readonly clients: Repository<ClientTypeormEntity>,
-    @InjectRepository(ContactTypeormEntity) private readonly contacts: Repository<ContactTypeormEntity>,
-    @InjectRepository(DealTypeormEntity) private readonly deals: Repository<DealTypeormEntity>,
-    @InjectRepository(TaskTypeormEntity) private readonly tasks: Repository<TaskTypeormEntity>,
-    @InjectRepository(ActivityTypeormEntity) private readonly activities: Repository<ActivityTypeormEntity>,
-    @InjectRepository(SaleTypeormEntity) private readonly sales: Repository<SaleTypeormEntity>,
-    @InjectRepository(SettingTypeormEntity) private readonly settings: Repository<SettingTypeormEntity>,
+    @InjectRepository(SellerTypeormEntity)
+    private readonly sellers: Repository<SellerTypeormEntity>,
+    @InjectRepository(UserTypeormEntity)
+    private readonly users: Repository<UserTypeormEntity>,
+    @InjectRepository(ClientTypeormEntity)
+    private readonly clients: Repository<ClientTypeormEntity>,
+    @InjectRepository(ContactTypeormEntity)
+    private readonly contacts: Repository<ContactTypeormEntity>,
+    @InjectRepository(DealTypeormEntity)
+    private readonly deals: Repository<DealTypeormEntity>,
+    @InjectRepository(TaskTypeormEntity)
+    private readonly tasks: Repository<TaskTypeormEntity>,
+    @InjectRepository(ActivityTypeormEntity)
+    private readonly activities: Repository<ActivityTypeormEntity>,
+    @InjectRepository(SaleTypeormEntity)
+    private readonly sales: Repository<SaleTypeormEntity>,
+    @InjectRepository(SettingTypeormEntity)
+    private readonly settings: Repository<SettingTypeormEntity>,
   ) {}
 
-  async execute(dto: ImportDataDto): Promise<{ success: boolean; counts: Record<string, number> }> {
+  async execute(
+    dto: ImportDataDto,
+  ): Promise<{ success: boolean; counts: Record<string, number> }> {
     const counts: Record<string, number> = {};
 
     if (dto.settings?.length) {
       for (const item of dto.settings) {
         await this.settings.upsert(
-          { id: item.id, key: item.key, value: item.value, updatedAt: item.updatedAt },
+          {
+            id: item.id,
+            key: item.key,
+            value: item.value,
+            updatedAt: item.updatedAt,
+          },
           ['id'],
         );
       }
@@ -65,7 +81,7 @@ export class ImportDataUseCase {
             username: item.username,
             passwordHash: item.passwordHash,
             name: item.name,
-            role: item.role as any,
+            role: item.role,
             sellerId: item.sellerId,
             active: item.active,
             createdAt: item.createdAt,
@@ -84,11 +100,11 @@ export class ImportDataUseCase {
             id: item.id,
             name: item.name,
             domain: item.domain,
-            type: item.type as any,
-            person: item.person as any,
+            type: item.type,
+            person: item.person,
             sellerId: item.sellerId,
-            source: item.source as any,
-            stage: item.stage as any,
+            source: item.source,
+            stage: item.stage,
             expectedAmount: item.expectedAmount,
             units: item.units,
             pain: item.pain,
@@ -132,7 +148,7 @@ export class ImportDataUseCase {
             id: item.id,
             clientId: item.clientId,
             sellerId: item.sellerId,
-            stage: item.stage as any,
+            stage: item.stage,
             amount: item.amount,
             probability: item.probability,
             stageHistory: item.stageHistory,
@@ -156,7 +172,7 @@ export class ImportDataUseCase {
             description: item.description,
             scheduledAt: item.scheduledAt,
             completedAt: item.completedAt,
-            status: item.status as any,
+            status: item.status,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt,
           },
@@ -174,8 +190,8 @@ export class ImportDataUseCase {
             sellerId: item.sellerId,
             clientId: item.clientId,
             contactId: item.contactId,
-            type: item.type as any,
-            result: item.result as any,
+            type: item.type,
+            result: item.result,
             summary: item.summary,
             discovery: item.discovery,
             agreement: item.agreement,
@@ -205,13 +221,13 @@ export class ImportDataUseCase {
             sellerId: item.sellerId,
             clientId: item.clientId,
             clientName: item.clientName,
-            clientType: item.clientType as 'Nuevo' | 'Existente',
+            clientType: item.clientType,
             product: item.product,
             units: item.units,
             amount: item.amount,
-            pay: item.pay as any,
-            source: item.source as any,
-            type: item.type as any,
+            pay: item.pay,
+            source: item.source,
+            type: item.type,
             date: item.date,
             notes: item.notes,
             createdAt: item.createdAt,

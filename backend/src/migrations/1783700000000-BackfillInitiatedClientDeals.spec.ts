@@ -3,12 +3,16 @@ import { BackfillInitiatedClientDeals1783700000000 } from './1783700000000-Backf
 
 describe('BackfillInitiatedClientDeals1783700000000', () => {
   it('backfills only active initiated clients and ignores only active deals', async () => {
-    const query = jest.fn().mockResolvedValue(undefined);
+    const queries: string[] = [];
+    const query = jest.fn((sql: string): Promise<unknown> => {
+      queries.push(sql);
+      return Promise.resolve(undefined);
+    });
     const queryRunner = { query } as unknown as QueryRunner;
 
     await new BackfillInitiatedClientDeals1783700000000().up(queryRunner);
 
-    const sql = String(query.mock.calls[0][0]).replace(/\s+/g, ' ');
+    const sql = (queries[0] ?? '').replace(/\s+/g, ' ');
     expect(sql).toContain('c."deleted_at" IS NULL');
     expect(sql).toContain('a."client_id" = c."id"');
     expect(sql).toContain('a."seller_id" = c."seller_id"');
@@ -20,16 +24,20 @@ describe('BackfillInitiatedClientDeals1783700000000', () => {
   });
 
   it('is structurally idempotent through NOT EXISTS on active deals', async () => {
-    const query = jest.fn().mockResolvedValue(undefined);
+    const queries: string[] = [];
+    const query = jest.fn((sql: string): Promise<unknown> => {
+      queries.push(sql);
+      return Promise.resolve(undefined);
+    });
     const queryRunner = { query } as unknown as QueryRunner;
     const migration = new BackfillInitiatedClientDeals1783700000000();
 
     await migration.up(queryRunner);
     await migration.up(queryRunner);
 
-    for (const [sql] of query.mock.calls) {
-      expect(String(sql)).toMatch(/NOT EXISTS\s*\([\s\S]*?FROM "deals"/);
-      expect(String(sql)).toMatch(/d\."deleted_at" IS NULL/);
+    for (const sql of queries) {
+      expect(sql).toMatch(/NOT EXISTS\s*\([\s\S]*?FROM "deals"/);
+      expect(sql).toMatch(/d\."deleted_at" IS NULL/);
     }
   });
 });

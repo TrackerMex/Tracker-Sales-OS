@@ -13,7 +13,7 @@ import { UserRole } from '../../../auth/domain/entities/user.entity';
 
 export interface DeleteTaskInput {
   taskId: string;
-  callerRole: string;
+  callerRole: UserRole;
   callerSellerId: string | null;
 }
 

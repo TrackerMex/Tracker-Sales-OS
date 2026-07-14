@@ -10,6 +10,8 @@ export class AddStageToActivities1749528600000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "activities" DROP COLUMN IF EXISTS "stage"`);
+    await queryRunner.query(
+      `ALTER TABLE "activities" DROP COLUMN IF EXISTS "stage"`,
+    );
   }
 }

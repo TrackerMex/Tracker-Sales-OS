@@ -16,7 +16,11 @@ import { ClientsController } from './presentation/clients.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ClientTypeormEntity, ContactTypeormEntity, ActivityTypeormEntity]),
+    TypeOrmModule.forFeature([
+      ClientTypeormEntity,
+      ContactTypeormEntity,
+      ActivityTypeormEntity,
+    ]),
     AuthModule,
     SettingsModule,
   ],

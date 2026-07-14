@@ -15,7 +15,7 @@ import { UserRole } from '../../../auth/domain/entities/user.entity';
 
 export interface CompleteTaskInput {
   taskId: string;
-  callerRole: string;
+  callerRole: UserRole;
   callerSellerId: string | null;
 }
 

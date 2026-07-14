@@ -1,11 +1,17 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
-import { DEAL_REPOSITORY, IDealsRepository } from '../../domain/repositories/deal.repository.interface';
+import {
+  DEAL_REPOSITORY,
+  IDealsRepository,
+} from '../../domain/repositories/deal.repository.interface';
 import { STAGE_PROBABILITY } from '../../domain/entities/deal.entity';
 import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 import { CreateDealDto } from '../dtos/create-deal.dto';
 import { DealDto } from '../dtos/deal.dto';
-import { CLIENT_REPOSITORY, IClientRepository } from '../../../clients/domain/repositories/client.repository.interface';
+import {
+  CLIENT_REPOSITORY,
+  IClientRepository,
+} from '../../../clients/domain/repositories/client.repository.interface';
 
 @Injectable()
 export class CreateDealUseCase implements IUseCase<CreateDealDto, DealDto> {

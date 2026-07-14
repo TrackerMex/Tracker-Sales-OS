@@ -23,7 +23,10 @@ export interface UpdateClientInput {
 }
 
 @Injectable()
-export class UpdateClientUseCase implements IUseCase<UpdateClientInput, ClientDto> {
+export class UpdateClientUseCase implements IUseCase<
+  UpdateClientInput,
+  ClientDto
+> {
   constructor(
     @Inject(CLIENT_REPOSITORY)
     private readonly clientRepo: IClientRepository,
@@ -53,7 +56,9 @@ export class UpdateClientUseCase implements IUseCase<UpdateClientInput, ClientDt
         excludeId: input.id,
       });
       if (duplicate) {
-        throw new ConflictException('Ya existe un cliente con ese nombre o dominio');
+        throw new ConflictException(
+          'Ya existe un cliente con ese nombre o dominio',
+        );
       }
     }
 

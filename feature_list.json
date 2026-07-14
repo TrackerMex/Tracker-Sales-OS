@@ -626,11 +626,11 @@
     "id": "61-ci-pipeline",
     "name": "Fase 1 SaaS: CI con GitHub Actions",
     "description": "Pipeline de CI en cada PR y push a main: tsc --noEmit backend+frontend, eslint, jest backend. Bloquea merge si falla. Base para crecer el suite de tests sin depender de verificación manual.",
-    "status": "pending",
+    "status": "done",
     "priority": 61,
     "backend_modules": [],
     "frontend_modules": [],
-    "notes": "Origen: auditoría de escalabilidad 2026-07-07 (progress/explore_auditoria_escalabilidad.md), Fase 1. Crear .github/workflows/ci.yml con jobs backend (npm ci, tsc, lint, jest) y frontend (npm ci, tsc, lint, build). Node 22. Cache npm. Sin e2e todavía (llega con feature 62). Cuidado: Dokploy auto-deploya main — CI no bloquea deploy, solo PRs; documentar en notes si se quiere branch protection."
+    "notes": "Completada 2026-07-13. Review final PASSED 15/15. Workflow `.github/workflows/ci.yml`: PRs + push a main, jobs Backend/Frontend, Node 22, cache npm separada, permisos read-only y concurrency. Backend: npm ci, tsc, ESLint read-only, Jest 7 suites/35 tests; frontend: npm ci, typecheck, ESLint y build. Deuda inicial eliminada: backend 632 errores -> 0/0 y frontend 76 errores -> 0/0, sin desactivar reglas ni agregar dependencias. `backend/package-lock.json` reconciliado con package.json para que npm ci funcione. Build frontend PASS fuera del sandbox (1587 módulos); el sandbox Windows bloquea Tailwind oxide/spawn con EPERM. P2 de foco en useApiFormErrors detectado por Reviewer, corregido y re-revisado PASSED. Branch protection/ruleset de GitHub con checks Backend/Frontend sigue siendo configuración externa. npm audit no bloqueante: backend 2 moderadas/3 altas, frontend 2 altas; no se ejecutó audit fix automático. Ver progress/impl_61-ci-pipeline.md y progress/review_61-ci-pipeline.md."
   },
   {
     "id": "62-critical-use-case-tests",

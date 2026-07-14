@@ -1,4 +1,11 @@
-import { IsOptional, IsString, Matches, IsEnum, IsInt, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  Matches,
+  IsEnum,
+  IsInt,
+  Min,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { SaleType } from '../../domain/entities/sale.entity';
 import { Type } from 'class-transformer';

@@ -1,13 +1,25 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
-import { ACTIVITY_REPOSITORY, IActivityRepository } from '../../domain/repositories/activity.repository.interface';
+import {
+  ACTIVITY_REPOSITORY,
+  IActivityRepository,
+} from '../../domain/repositories/activity.repository.interface';
 import { ActivityDto } from '../dtos/activity.dto';
 
-export interface GetDailyInput { sellerId: string; date?: string; }
-export interface GetDailyOutput { activities: ActivityDto[]; totalPoints: number; }
+export interface GetDailyInput {
+  sellerId: string;
+  date?: string;
+}
+export interface GetDailyOutput {
+  activities: ActivityDto[];
+  totalPoints: number;
+}
 
 @Injectable()
-export class GetDailyActivitiesUseCase implements IUseCase<GetDailyInput, GetDailyOutput> {
+export class GetDailyActivitiesUseCase implements IUseCase<
+  GetDailyInput,
+  GetDailyOutput
+> {
   constructor(
     @Inject(ACTIVITY_REPOSITORY)
     private readonly activityRepo: IActivityRepository,
@@ -20,7 +32,9 @@ export class GetDailyActivitiesUseCase implements IUseCase<GetDailyInput, GetDai
       this.activityRepo.sumDailyPoints(input.sellerId, date),
     ]);
     return {
-      activities: activities.map(ActivityDto.fromEntity),
+      activities: activities.map((activity) =>
+        ActivityDto.fromEntity(activity),
+      ),
       totalPoints,
     };
   }

@@ -54,7 +54,10 @@ export class ActivityRepositoryImpl implements IActivityRepository {
   ): Promise<ActivityEntity> {
     return this.repo.manager.transaction(async (manager) => {
       const lockKey = `${deal.clientId}:${deal.sellerId}:${deal.opportunityName ?? '*'}`;
-      await manager.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [lockKey]);
+      await manager.query(
+        'SELECT pg_advisory_xact_lock(hashtextextended($1, 0))',
+        [lockKey],
+      );
 
       const opportunityPredicate = deal.opportunityName
         ? 'AND "opportunity_name" = $3'
@@ -152,22 +155,38 @@ export class ActivityRepositoryImpl implements IActivityRepository {
       .addSelect('c.name', 'clientName')
       .addSelect('ct.name', 'contactName')
       .addSelect('t.title', 'taskTitle')
-      .leftJoin('clients', 'c', 'c.id = activity.client_id AND c.deleted_at IS NULL')
-      .leftJoin('contacts', 'ct', 'ct.id::text = activity.contact_id::text AND ct.deleted_at IS NULL')
-      .leftJoin('tasks', 't', 't.id::text = activity.task_id::text AND t.deleted_at IS NULL')
+      .leftJoin(
+        'clients',
+        'c',
+        'c.id = activity.client_id AND c.deleted_at IS NULL',
+      )
+      .leftJoin(
+        'contacts',
+        'ct',
+        'ct.id::text = activity.contact_id::text AND ct.deleted_at IS NULL',
+      )
+      .leftJoin(
+        'tasks',
+        't',
+        't.id::text = activity.task_id::text AND t.deleted_at IS NULL',
+      )
       .where('activity.sellerId = :sellerId', { sellerId })
       .andWhere(
         'activity.executedAt >= :start AND activity.executedAt <= :end',
         { start, end },
       )
       .orderBy('activity.executedAt', 'DESC')
-      .getRawAndEntities();
+      .getRawAndEntities<{
+        clientName: string | null;
+        contactName: string | null;
+        taskTitle: string | null;
+      }>();
 
     return entities.map((entity, i) =>
       Object.assign(this.toDomain(entity), {
-        clientName: (raw[i].clientName as string | null) ?? null,
-        contactName: (raw[i].contactName as string | null) ?? null,
-        taskTitle: (raw[i].taskTitle as string | null) ?? null,
+        clientName: raw[i]?.clientName ?? null,
+        contactName: raw[i]?.contactName ?? null,
+        taskTitle: raw[i]?.taskTitle ?? null,
       }),
     );
   }

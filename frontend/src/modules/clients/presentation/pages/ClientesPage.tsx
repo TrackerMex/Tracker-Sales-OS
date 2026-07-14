@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
 import type { FormEvent } from "react"
 import { toast } from "sonner"
 import { useQuery } from "@tanstack/react-query"
@@ -18,7 +18,8 @@ import { useChangeStage } from "@/modules/pipeline/application/hooks/useChangeSt
 import { ALLOWED_TRANSITIONS } from "@/modules/pipeline/domain/pipeline.types"
 import { useApiFormErrors } from "@/shared/lib/api-errors"
 import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
-import { FieldError, fieldErrorProps } from "@/shared/components/forms/FieldError"
+import { FieldError } from "@/shared/components/forms/FieldError"
+import { fieldErrorProps } from "@/shared/components/forms/field-error-props"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -161,7 +162,8 @@ export function ClientesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Client | null>(null)
 
   useEffect(() => {
-    setView({ mode: "list" })
+    const frame = requestAnimationFrame(() => setView({ mode: "list" }))
+    return () => cancelAnimationFrame(frame)
   }, [currentUser?.id])
 
   const filters = useMemo(

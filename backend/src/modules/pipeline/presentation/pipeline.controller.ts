@@ -36,7 +36,9 @@ export class PipelineController {
 
   @Get('team')
   @Roles(UserRole.Admin, UserRole.Director)
-  @ApiOperation({ summary: 'Get pipeline for all sellers (Admin/Director only)' })
+  @ApiOperation({
+    summary: 'Get pipeline for all sellers (Admin/Director only)',
+  })
   getTeam() {
     return this.getPipelineTeam.execute();
   }
@@ -58,7 +60,10 @@ export class PipelineController {
   @Get('client/:clientId/seller/:sellerId/deals')
   @Roles(UserRole.Admin, UserRole.Director, UserRole.Seller)
   @ApiOperation({ summary: 'Get all deals for a client-seller pair' })
-  getClientDeals(@Param('clientId') clientId: string, @Param('sellerId') sellerId: string) {
+  getClientDeals(
+    @Param('clientId') clientId: string,
+    @Param('sellerId') sellerId: string,
+  ) {
     return this.getClientDealsUC.execute({ clientId, sellerId });
   }
 }

@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { IUseCase } from '../../../../core/domain/use-case.interface';
-import { DEAL_REPOSITORY, IDealsRepository } from '../../domain/repositories/deal.repository.interface';
+import {
+  DEAL_REPOSITORY,
+  IDealsRepository,
+} from '../../domain/repositories/deal.repository.interface';
 import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 import { DealDto } from '../dtos/deal.dto';
 
@@ -11,16 +14,19 @@ interface GetPipelineBySellerInput {
 type PipelineGrouped = Record<PipelineStage, DealDto[]>;
 
 @Injectable()
-export class GetPipelineBySellerUseCase
-  implements IUseCase<GetPipelineBySellerInput, PipelineGrouped>
-{
+export class GetPipelineBySellerUseCase implements IUseCase<
+  GetPipelineBySellerInput,
+  PipelineGrouped
+> {
   constructor(
     @Inject(DEAL_REPOSITORY)
     private readonly dealRepo: IDealsRepository,
   ) {}
 
   async execute(input: GetPipelineBySellerInput): Promise<PipelineGrouped> {
-    const enrichedDeals = await this.dealRepo.findDetailedBySellerId(input.sellerId);
+    const enrichedDeals = await this.dealRepo.findDetailedBySellerId(
+      input.sellerId,
+    );
 
     const grouped: PipelineGrouped = {
       [PipelineStage.Prospecto]: [],

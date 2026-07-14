@@ -1,5 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { Transform, TransformFnParams, Type } from 'class-transformer';
+import { UserRole } from '../../../auth/domain/entities/user.entity';
 import {
   IsBoolean,
   IsEmail,
@@ -75,7 +76,10 @@ export class CreateContactDto {
   phone?: string;
 
   @IsOptional()
-  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value))
+  @Transform(({ value }: TransformFnParams): unknown => {
+    const input = value as unknown;
+    return typeof input === 'string' && input.trim() === '' ? undefined : input;
+  })
   @IsEmail()
   email?: string;
 
@@ -180,12 +184,16 @@ export class GetClientsQueryDto {
   limit?: number = 50;
 
   @IsOptional()
-  @Transform(({ value }) => value === true || value === 'true')
+  @Transform(
+    ({ value }: TransformFnParams) => value === true || value === 'true',
+  )
   @IsBoolean()
   cold?: boolean;
 
   @IsOptional()
-  @Transform(({ value }) => value === true || value === 'true')
+  @Transform(
+    ({ value }: TransformFnParams) => value === true || value === 'true',
+  )
   @IsBoolean()
   incomplete?: boolean;
 }
@@ -260,6 +268,6 @@ export class UpdateClientDto {
 
 export class RequestUserDto {
   id: string;
-  role: string;
+  role: UserRole;
   sellerId: string | null;
 }

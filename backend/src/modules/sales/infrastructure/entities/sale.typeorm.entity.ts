@@ -9,7 +9,11 @@ import {
   JoinColumn,
   ManyToOne,
 } from 'typeorm';
-import { PaymentMethod, SaleSource, SaleType } from '../../domain/entities/sale.entity';
+import {
+  PaymentMethod,
+  SaleSource,
+  SaleType,
+} from '../../domain/entities/sale.entity';
 import { SellerTypeormEntity } from '../../../sellers/infrastructure/entities/seller.typeorm.entity';
 import { ClientTypeormEntity } from '../../../clients/infrastructure/entities/client.typeorm.entity';
 
@@ -21,19 +25,29 @@ export class SaleTypeormEntity {
 
   @Column({ name: 'seller_id', type: 'uuid' }) sellerId: string;
 
-  @ManyToOne(() => SellerTypeormEntity, { onDelete: 'RESTRICT', nullable: false })
+  @ManyToOne(() => SellerTypeormEntity, {
+    onDelete: 'RESTRICT',
+    nullable: false,
+  })
   @JoinColumn({ name: 'seller_id' })
   seller?: SellerTypeormEntity;
 
-  @Column({ name: 'client_id', type: 'uuid', nullable: true }) clientId: string | null;
+  @Column({ name: 'client_id', type: 'uuid', nullable: true }) clientId:
+    | string
+    | null;
 
-  @ManyToOne(() => ClientTypeormEntity, { onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => ClientTypeormEntity, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'client_id' })
   client?: ClientTypeormEntity;
 
   @Column({ name: 'client_name', type: 'varchar' }) clientName: string;
 
-  @Column({ name: 'client_type', type: 'varchar' }) clientType: 'Nuevo' | 'Existente';
+  @Column({ name: 'client_type', type: 'varchar' }) clientType:
+    | 'Nuevo'
+    | 'Existente';
 
   @Column({ type: 'varchar' }) product: string;
 
@@ -51,9 +65,12 @@ export class SaleTypeormEntity {
 
   @Column({ type: 'text', nullable: true }) notes: string | null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt: Date;
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' }) updatedAt: Date;
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  updatedAt: Date;
 
-  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' }) deletedAt: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
+  deletedAt: Date | null;
 }
