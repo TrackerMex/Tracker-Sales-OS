@@ -5,8 +5,9 @@ import { persist } from "zustand/middleware"
 interface AppState {
   currentUser: AuthUser | null
   accessToken: string | null
+  refreshToken: string | null
   sidebarOpen: boolean
-  setAuth: (user: AuthUser, token: string) => void
+  setAuth: (user: AuthUser, accessToken: string, refreshToken: string) => void
   clearAuth: () => void
   toggleSidebar: () => void
 }
@@ -16,14 +17,17 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       currentUser: null,
       accessToken: null,
+      refreshToken: null,
       sidebarOpen: true,
-      setAuth: (user, token) => {
-        localStorage.setItem("accessToken", token)
-        set({ currentUser: user, accessToken: token })
+      setAuth: (user, accessToken, refreshToken) => {
+        localStorage.setItem("accessToken", accessToken)
+        localStorage.setItem("refreshToken", refreshToken)
+        set({ currentUser: user, accessToken, refreshToken })
       },
       clearAuth: () => {
         localStorage.removeItem("accessToken")
-        set({ currentUser: null, accessToken: null })
+        localStorage.removeItem("refreshToken")
+        set({ currentUser: null, accessToken: null, refreshToken: null })
       },
       toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
     }),

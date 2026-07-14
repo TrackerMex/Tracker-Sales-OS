@@ -808,3 +808,25 @@ Batch 2:
 - Backfill: migracion `1783700000000-BackfillInitiatedClientDeals` crea un deal activo para iniciados sin deal activo, sin modificar soft-deleted y preservando stage/expectedAmount/probabilidad.
 - Review independiente PASSED para codigo/pre-deploy. Backend+frontend tsc PASS; Jest 6 suites/27 tests PASS; seller/team prueban 49 distintos y mas de 20 en una etapa.
 - Pendiente operativo no bloqueante: tras deploy ejecutar migracion y confirmar en prod 19→49 con `COUNT(DISTINCT client_id)`.
+
+## 2026-07-10 — Feature 69: transiciones libres de pipeline (reemplaza el retroceso de un paso de la feature 67)
+
+- Pedido usuario: pasar de "retroceder solo una etapa" (feature 67, 2026-07-09) a transicion libre entre cualquiera de las 7 fases, incluyendo reabrir Cierre y Perdido. Nota de origen: "decision del usuario 2026-07-10", sin referencia a AskUserQuestion ni razon de negocio documentada en feature_list.json/CHECKPOINTS.md — mas debil que la justificacion dejada en la feature 67.
+- Backend: ALLOWED_TRANSITIONS (deal.entity.ts) ahora mapea cada una de las 7 fases a las otras 6 (excluye solo la fase propia). UpdateClientUseCase hereda la regla libre por compartir el mismo mapa. change-deal-stage.use-case.ts sin cambios: stageHistory, changedBy, probabilidad y lossReason opcional (solo al entrar a Perdido) intactos.
+- Frontend: mirror en pipeline.types.ts identico al backend. Modal de motivo de perdida solo dispara al entrar a Perdido, no al salir.
+- Tests: cobertura del mapa completo, salto no adyacente (Prospecto -> Negociacion), salida desde Cierre, salida desde Perdido, rechazo de la misma fase.
+- Review independiente (2026-07-14, retroactivo — no se genero al cerrar la feature): PASSED 13/13. tsc backend+frontend PASS. Sin rastros de la logica de "un paso atras" de la 67. Detalle: progress/review_69-pipeline-free-stage.md, progress/impl_69-pipeline-free-stage.md.
+
+## 2026-07-10 — Feature 70: deals.updated_at se actualiza al registrar actividad
+
+- Objetivo: que registrar una actividad sobre un cliente con deal existente reinicie el contador de "deal estancado" (feature 20) aunque la fase no cambie, sin tocar stageHistory/probabilidad/created_at.
+- Backend: nuevo metodo IActivityRepository.createAndTouchDeal — actividad + touch de deals.updated_at en una sola transaccion, usando el deal ya resuelto por clientId/sellerId (y opportunityName si aplica). Si el deal desaparece o esta eliminado antes del touch, la operacion revierte tambien la actividad. Flujo sin clientId conserva create; cliente sin deal conserva createWithPipelineSync (feature 68).
+- Frontend: Deal expone updatedAt opcional; DealCard muestra solo la fecha (sin label "Actualizado"), con fallback a createdAt. El badge ambar/rojo de dias estancados pasa a calcularse desde updatedAt ?? createdAt, sin duplicar la logica en otro componente.
+- Review independiente (2026-07-14, retroactivo): PASSED 10/10. tsc backend+frontend PASS; Jest create-activity.use-case.spec.ts 20/20. Sin riesgo de regresion sobre feature 20 (fuente unica del calculo). Detalle: progress/review_70-pipeline-activity-updated-at.md, progress/impl_70-pipeline-activity-updated-at.md.
+
+## 2026-07-14 — Reviews retroactivos de 68, 69 y 70
+
+- Al retomar el trabajo en rama multi-tenant se detecto que 68, 69 y 70 se habian implementado y cerrado directamente en main (no en multi-tenant), marcadas `done` con todos los checkboxes en CHECKPOINTS.md pero sin ningun progress/review_*.md independiente (a diferencia de 61 y 62, que si lo tienen) — violaba la regla Anti-Telephone-Game de AGENTS.md.
+- Se lanzo un Reviewer independiente sobre main para las 3 features, leyendo codigo real (no los resumenes del Implementer) y corriendo tsc + jest dirigidos + suite completa de backend.
+- Resultado: 68 PASSED 22/22, 69 PASSED 13/13, 70 PASSED 10/10. Suite completa backend: 11 suites/60 tests, sin regresion sobre la suite critica de la feature 62. Ningun hallazgo bloqueante.
+- Hallazgos de proceso (no bloqueantes): faltaban estas entradas de history.md para 69/70 (corregido en este mismo pase); la justificacion de negocio del giro 67->69 quedo documentada de forma mas debil que el resto del historial (ver nota de la feature 69 arriba).

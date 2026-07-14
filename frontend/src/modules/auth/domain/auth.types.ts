@@ -7,5 +7,19 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   accessToken: string
+  refreshToken: string
   user: AuthUser
+}
+
+export interface RefreshRequest {
+  refreshToken: string
+}
+
+export interface RefreshResponse {
+  accessToken: string
+  refreshToken: string
+}
+
+export interface LogoutRequest {
+  refreshToken: string
 }

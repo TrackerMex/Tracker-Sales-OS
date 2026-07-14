@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useAppStore } from '@/shared/store/app.store'
+import { useLogout } from '@/modules/auth/application/hooks/useLogout'
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -25,9 +26,10 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 export function NavUser() {
-  const { currentUser, clearAuth } = useAppStore()
+  const { currentUser } = useAppStore()
   const navigate = useNavigate()
   const { isMobile } = useSidebar()
+  const logout = useLogout()
 
   if (!currentUser) return null
 
@@ -39,8 +41,12 @@ export function NavUser() {
     .slice(0, 2)
     .toUpperCase()
 
-  const handleLogout = () => {
-    clearAuth()
+  const handleLogout = async () => {
+    try {
+      await logout.mutateAsync()
+    } catch {
+      // best-effort: el logout local debe completarse aunque falle la red
+    }
     void navigate({ to: '/login' })
   }
 
