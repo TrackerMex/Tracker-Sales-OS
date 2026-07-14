@@ -52,7 +52,12 @@ export interface IDealsRepository extends IRepository<DealEntity> {
     page: number,
     limit: number,
   ): Promise<{
-    data: { deal: DealEntity; daysStalled: number }[];
+    data: {
+      deal: DealEntity;
+      daysStalled: number;
+      clientName: string;
+      sellerName: string;
+    }[];
     total: number;
   }>;
   findAllForAnalysis(fromDate?: Date): Promise<DealEntity[]>;

@@ -735,6 +735,6 @@
     "frontend_modules": [
       "dashboard"
     ],
-    "notes": "Origen: pedido usuario 2026-07-14. Completada 2026-07-14; review independiente PASSED. GET /api/dashboard/stalled-deals?page=1&limit=10 retorna { data, total, page, limit, totalPages }, con validación 1..100 y paginación SQL real. COUNT y datos comparten filtros; orden daysStalled DESC + deal id ASC. Dashboard conserva Table/Button shadcn, query key por página y controles accesibles. Jest backend 15 suites/78 tests PASS; tsc backend+frontend PASS; lint focalizado PASS. Resumen: progress/impl_71-stalled-deals-pagination.md; review: progress/review_71-stalled-deals-pagination.md."
+    "notes": "Origen: pedido usuario 2026-07-14. Completada y re-revisada PASSED el 2026-07-14. GET /api/dashboard/stalled-deals usa paginación SQL y retorna metadata. Corrección runtime: nombres resueltos mediante LEFT JOIN a clients/sellers; cliente prioriza clients.name con fallback deals.client_name y vendedor usa sellers.name, ignorando vacíos/espacios. Se conservan COUNT, filtros, OFFSET/LIMIT y orden estable. Jest backend 15 suites/78 tests PASS; tsc backend+frontend PASS; lint focalizado PASS. Resumen: progress/impl_71-stalled-deals-pagination.md; review: progress/review_71-stalled-deals-pagination.md."
   }
 ]

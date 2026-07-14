@@ -30,3 +30,16 @@ El primer pase fue `FAILED` porque el spec del use-case mockeaba el repositorio 
 ## Pendiente no bloqueante
 
 Prueba visual/manual con backend y PostgreSQL en ejecución y más de 10 deals estancados.
+
+## Re-review de nombres de cliente y vendedor
+
+**PASSED** — corrección revisada independientemente el 2026-07-14.
+
+- Se eliminó el `sellerName: ''` hardcodeado.
+- La consulta usa `LEFT JOIN` con `clients` y `sellers` sin eliminar ni multiplicar deals.
+- Cliente: `clients.name` no vacío, fallback a `deals.client_name`, fallback `''`.
+- Vendedor: `sellers.name` no vacío, fallback `''`.
+- `NULLIF(TRIM(...), '')` evita que valores vacíos o con espacios ganen el fallback.
+- Ambos nombres se mapean en el repositorio y llegan al DTO.
+- Se conservan COUNT, filtros, paginación y orden determinista.
+- Specs focalizados: 2 suites/6 tests PASS; Jest completo: 15 suites/78 tests PASS; TypeScript y ESLint PASS.
