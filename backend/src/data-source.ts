@@ -4,6 +4,7 @@ import { DealTypeormEntity } from './modules/pipeline/infrastructure/entities/de
 import { ClientTypeormEntity } from './modules/clients/infrastructure/entities/client.typeorm.entity';
 import { ContactTypeormEntity } from './modules/clients/infrastructure/entities/contact.typeorm.entity';
 import { UserTypeormEntity } from './modules/auth/infrastructure/entities/user.typeorm.entity';
+import { RefreshTokenTypeormEntity } from './modules/auth/infrastructure/entities/refresh-token.typeorm.entity';
 import { SellerTypeormEntity } from './modules/sellers/infrastructure/entities/seller.typeorm.entity';
 import { TaskTypeormEntity } from './modules/tasks/infrastructure/entities/task.typeorm.entity';
 import { SaleTypeormEntity } from './modules/sales/infrastructure/entities/sale.typeorm.entity';
@@ -23,6 +24,7 @@ export default new DataSource({
     ClientTypeormEntity,
     ContactTypeormEntity,
     UserTypeormEntity,
+    RefreshTokenTypeormEntity,
     SellerTypeormEntity,
     TaskTypeormEntity,
     SaleTypeormEntity,

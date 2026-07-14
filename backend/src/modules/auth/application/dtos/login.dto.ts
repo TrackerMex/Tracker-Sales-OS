@@ -20,5 +20,6 @@ export class LoginUserDto {
 
 export class LoginResponseDto {
   accessToken: string;
+  refreshToken: string;
   user: LoginUserDto;
 }
