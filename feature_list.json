@@ -721,5 +721,20 @@
     "backend_modules": ["activities", "pipeline"],
     "frontend_modules": ["pipeline"],
     "notes": "Origen: caso de producción reportado 2026-07-10. Completada 2026-07-10; revisión backend PASSED 12/12 y ajuste visual PASSED 4/4. Para deals existentes, createAndTouchDeal persiste actividad y actualiza exclusivamente deals.updated_at en una transacción, con rollback si el deal no existe. Scoping por el deal resuelto para clientId+sellerId+opportunityName; sin clientId y creación inicial conservan sus flujos. DealCard muestra solo la fecha updatedAt (fallback createdAt) y el badge de días usa la misma fecha para reiniciarse con cada actividad. Sin migración ni dependencias. Jest 20/20 PASS; tsc backend+frontend PASS. Resumen: progress/impl_70-pipeline-activity-updated-at.md."
+  },
+  {
+    "id": "71-stalled-deals-pagination",
+    "name": "Deals en riesgo: tabla con paginado",
+    "description": "Agregar paginación del lado del servidor a la tabla 'Deals en riesgo' del Dashboard para Admin y Director. El endpoint acepta page y limit, devuelve filas y metadatos de paginación, y la UI permite navegar entre páginas sin cargar todos los deals estancados de una sola vez.",
+    "status": "done",
+    "priority": 71,
+    "backend_modules": [
+      "dashboard",
+      "pipeline"
+    ],
+    "frontend_modules": [
+      "dashboard"
+    ],
+    "notes": "Origen: pedido usuario 2026-07-14. Completada 2026-07-14; review independiente PASSED. GET /api/dashboard/stalled-deals?page=1&limit=10 retorna { data, total, page, limit, totalPages }, con validación 1..100 y paginación SQL real. COUNT y datos comparten filtros; orden daysStalled DESC + deal id ASC. Dashboard conserva Table/Button shadcn, query key por página y controles accesibles. Jest backend 15 suites/78 tests PASS; tsc backend+frontend PASS; lint focalizado PASS. Resumen: progress/impl_71-stalled-deals-pagination.md; review: progress/review_71-stalled-deals-pagination.md."
   }
 ]

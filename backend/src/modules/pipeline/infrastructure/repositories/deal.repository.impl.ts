@@ -259,29 +259,48 @@ export class DealRepositoryImpl implements IDealsRepository {
 
   async findStalledDeals(
     amberDays: number,
-  ): Promise<{ deal: DealEntity; daysStalled: number }[]> {
-    const raw: Array<Record<string, unknown>> = await this.repo.manager.query(
-      `SELECT * FROM (
-        SELECT
-          d.id, d.client_id, d.client_name, d.seller_id, d.stage,
-          d.amount, d.probability, d.stage_history, d.created_at, d.updated_at, d.deleted_at,
-          FLOOR(EXTRACT(EPOCH FROM (NOW() -
-            CASE
-              WHEN jsonb_array_length(d.stage_history) > 0
-              THEN (d.stage_history -> (jsonb_array_length(d.stage_history) - 1) ->> 'changedAt')::timestamptz
-              ELSE d.created_at
-            END
-          )) / 86400) as days_stalled
-        FROM deals d
-        WHERE d.deleted_at IS NULL
-          AND d.stage NOT IN ('Cierre', 'Perdido')
-      ) sub
-      WHERE sub.days_stalled >= $1
-      ORDER BY sub.days_stalled DESC`,
+    page: number,
+    limit: number,
+  ): Promise<{
+    data: { deal: DealEntity; daysStalled: number }[];
+    total: number;
+  }> {
+    const offset = (page - 1) * limit;
+    const stalledDealsCte = `WITH stalled AS (
+      SELECT
+        d.id, d.client_id, d.client_name, d.seller_id, d.stage,
+        d.amount, d.probability, d.stage_history, d.created_at, d.updated_at, d.deleted_at,
+        FLOOR(EXTRACT(EPOCH FROM (NOW() -
+          CASE
+            WHEN jsonb_array_length(d.stage_history) > 0
+            THEN (d.stage_history -> (jsonb_array_length(d.stage_history) - 1) ->> 'changedAt')::timestamptz
+            ELSE d.created_at
+          END
+        )) / 86400) AS days_stalled
+      FROM deals d
+      WHERE d.deleted_at IS NULL
+        AND d.stage NOT IN ('Cierre', 'Perdido')
+    )`;
+
+    const countRows = await this.repo.manager.query<Array<{ total: number }>>(
+      `${stalledDealsCte}
+      SELECT COUNT(*)::int AS total
+      FROM stalled
+      WHERE days_stalled >= $1`,
       [amberDays],
     );
 
-    return raw.map((row) => {
+    const raw: Array<Record<string, unknown>> = await this.repo.manager.query(
+      `${stalledDealsCte}
+      SELECT *
+      FROM stalled
+      WHERE days_stalled >= $1
+      ORDER BY days_stalled DESC, id ASC
+      OFFSET $2 LIMIT $3`,
+      [amberDays, offset, limit],
+    );
+
+    const data = raw.map((row) => {
       const entity = new DealTypeormEntity();
       entity.id = row.id as string;
       entity.clientId = row.client_id as string;
@@ -299,6 +318,11 @@ export class DealRepositoryImpl implements IDealsRepository {
         daysStalled: Number(row.days_stalled),
       };
     });
+
+    return {
+      data,
+      total: Number(countRows[0]?.total ?? 0),
+    };
   }
 
   async findAllForAnalysis(fromDate?: Date): Promise<DealEntity[]> {
