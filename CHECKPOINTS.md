@@ -616,6 +616,31 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ---
 
+## 71-stalled-deals-pagination
+
+**Backend:**
+- [x] `GET /api/dashboard/stalled-deals` acepta query params `page` y `limit`, validados como enteros positivos, con defaults `page=1` y `limit=10` y un límite máximo seguro
+- [x] La respuesta usa el contrato `{ data: StalledDealDto[], total, page, limit, totalPages }`; una página fuera de rango devuelve `data: []` y metadatos consistentes
+- [x] La consulta pagina en PostgreSQL mediante `skip/take` o `OFFSET/LIMIT`; no obtiene todos los deals para recortar el arreglo en memoria
+- [x] `total` cuenta exactamente los deals que cumplen el umbral `stalledAmberDays` y excluye `Cierre`, `Perdido` y registros eliminados
+- [x] El orden es determinista: `daysStalled` descendente y `deal.id` como desempate
+- [x] Se conserva el acceso exclusivo para Admin/Director y la severidad ámbar/roja calculada con Settings
+
+**Frontend:**
+- [x] La sección existente conserva la tabla shadcn y muestra únicamente las filas de la página actual
+- [x] Incluye controles accesibles para Anterior/Siguiente, indicador de página actual/total y estado deshabilitado en primera/última página
+- [x] Cambiar de página actualiza la query key de TanStack Query y solicita al backend la página correspondiente, sin recargar todo el Dashboard
+- [x] Los estados loading, error y vacío siguen funcionando; al cambiar de página no se muestra información de una página anterior como si fuera la actual
+- [x] Si cambia el total y la página actual deja de existir, la UI vuelve a la última página válida o a la primera de forma consistente
+
+**Verificación:**
+- [x] Tests backend cubren defaults, segunda página, total correcto, orden estable y página fuera de rango
+- [x] Test frontend o verificación equivalente cubre navegación y estados deshabilitados de los controles
+- [x] `tsc --noEmit` pasa en backend y frontend; tests relevantes pasan
+- [x] Resumen guardado en `progress/impl_71-stalled-deals-pagination.md`
+
+---
+
 ## 60-shadcn-card-accordion
 
 **Estado previo (trabajo sin commitear encontrado al iniciar la feature):** `ClientDetailPage.tsx`, `ActivityHistoryModal.tsx`, `ReportsPage.tsx` y `SettingsPage.tsx` ya tenian Card/Accordion aplicados de una sesion anterior no cerrada formalmente. `ClientesPage.tsx` tenia migracion parcial con un bug de tag JSX sin cerrar bien.

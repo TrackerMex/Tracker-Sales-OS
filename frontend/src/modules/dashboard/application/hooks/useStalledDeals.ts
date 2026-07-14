@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { dashboardApi } from '../../infrastructure/dashboard.api';
+import { useQuery } from "@tanstack/react-query"
+import { dashboardApi } from "../../infrastructure/dashboard.api"
 
-export const useStalledDeals = () => {
+export const useStalledDeals = (page: number, limit: number) => {
   return useQuery({
-    queryKey: ['dashboard', 'stalled-deals'],
-    queryFn: dashboardApi.getStalledDeals,
-  });
-};
+    queryKey: ["dashboard", "stalled-deals", page, limit],
+    queryFn: () => dashboardApi.getStalledDeals(page, limit),
+  })
+}

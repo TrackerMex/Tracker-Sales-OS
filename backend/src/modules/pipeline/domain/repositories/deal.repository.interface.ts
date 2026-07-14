@@ -49,6 +49,11 @@ export interface IDealsRepository extends IRepository<DealEntity> {
   getWeightedForecast(): Promise<number>;
   findStalledDeals(
     amberDays: number,
-  ): Promise<{ deal: DealEntity; daysStalled: number }[]>;
+    page: number,
+    limit: number,
+  ): Promise<{
+    data: { deal: DealEntity; daysStalled: number }[];
+    total: number;
+  }>;
   findAllForAnalysis(fromDate?: Date): Promise<DealEntity[]>;
 }

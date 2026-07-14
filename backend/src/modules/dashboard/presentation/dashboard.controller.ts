@@ -5,6 +5,7 @@ import {
   UseGuards,
   Request,
   ForbiddenException,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
@@ -21,6 +22,7 @@ import {
 } from '../application/use-cases/get-activity-trend.use-case';
 import { GetStalledDealsUseCase } from '../application/use-cases/get-stalled-deals.use-case';
 import { GetLeaderboardUseCase } from '../application/use-cases/get-leaderboard.use-case';
+import { StalledDealsQueryDto } from '../application/dtos/stalled-deals-query.dto';
 
 @ApiTags('dashboard')
 @ApiBearerAuth()
@@ -79,8 +81,8 @@ export class DashboardController {
   @Get('stalled-deals')
   @UseGuards(RolesGuard)
   @Roles(UserRole.Admin, UserRole.Director)
-  getStalledDeals() {
-    return this.getStalledDealsUseCase.execute();
+  getStalledDeals(@Query() query: StalledDealsQueryDto) {
+    return this.getStalledDealsUseCase.execute(query);
   }
 
   @Get('leaderboard')

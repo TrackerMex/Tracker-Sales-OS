@@ -33,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useEffect, useState } from "react"
 
 ChartJS.register(
   CategoryScale,
@@ -44,7 +45,7 @@ ChartJS.register(
 )
 
 interface ActivityChartProps {
-  data: ActivityTrendItem[];
+  data: ActivityTrendItem[]
 }
 
 function ActivityChart({ data }: ActivityChartProps) {
@@ -93,15 +94,33 @@ function ActivityChart({ data }: ActivityChartProps) {
 }
 
 export function DashboardPage() {
+  const stalledDealsLimit = 10
+  const [stalledDealsPage, setStalledDealsPage] = useState(1)
   const currentUser = useAppStore((s) => s.currentUser)
-  const isAdminOrDirector = currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Director
+  const isAdminOrDirector =
+    currentUser?.role === UserRole.Admin ||
+    currentUser?.role === UserRole.Director
   const summary = useDashboardSummary()
   const sellers = useSellersSemaphore()
   const overdue = useOverdueTasks()
   const trend = useActivityTrend()
   const settings = useSettings()
-  const stalledDeals = useStalledDeals()
+  const stalledDeals = useStalledDeals(stalledDealsPage, stalledDealsLimit)
   const leaderboard = useLeaderboard()
+
+  useEffect(() => {
+    if (!stalledDeals.data) return
+
+    const lastValidPage = Math.max(stalledDeals.data.totalPages, 1)
+    if (stalledDealsPage > lastValidPage) {
+      const correctionTimer = window.setTimeout(() => {
+        setStalledDealsPage((current) =>
+          current > lastValidPage ? lastValidPage : current
+        )
+      }, 0)
+      return () => window.clearTimeout(correctionTimer)
+    }
+  }, [stalledDeals.data, stalledDealsPage])
 
   const isLoading = summary.isLoading
   const data = summary.data
@@ -114,27 +133,41 @@ export function DashboardPage() {
 
   // Get current time for data freshness indicator
   const now = new Date()
-  const timeString = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+  const timeString = now.toLocaleTimeString("es-MX", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 
   return (
     <div>
       {/* Title */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="mb-5 flex items-center justify-between">
         <div>
           <h1 className="page-title">Dashboard de ventas</h1>
-          <p className="page-subtitle">Resumen del desempeño del equipo de hoy</p>
+          <p className="page-subtitle">
+            Resumen del desempeño del equipo de hoy
+          </p>
         </div>
         <p className="page-timestamp">
-          Actualizado<br />a las {timeString}
+          Actualizado
+          <br />a las {timeString}
         </p>
       </div>
 
       {summary.isError && (
-        <div className="mb-4 flex items-center justify-between rounded-lg p-3 border" style={{ background: '#FEF2F2', borderColor: '#FCA5A5' }}>
-          <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
-            No se pudo cargar el resumen. Verifica tu conexión e intenta de nuevo.
+        <div
+          className="mb-4 flex items-center justify-between rounded-lg border p-3"
+          style={{ background: "#FEF2F2", borderColor: "#FCA5A5" }}
+        >
+          <p className="text-[13px]" style={{ color: "var(--tracker-danger)" }}>
+            No se pudo cargar el resumen. Verifica tu conexión e intenta de
+            nuevo.
           </p>
-          <Button variant="ghost" onClick={() => summary.refetch?.()} className="ml-3">
+          <Button
+            variant="ghost"
+            onClick={() => summary.refetch?.()}
+            className="ml-3"
+          >
             Reintentar
           </Button>
         </div>
@@ -157,14 +190,16 @@ export function DashboardPage() {
       />
 
       {/* 2-column: Activity + Alerts */}
-      <div className="mt-4 page-grid">
+      <div className="page-grid mt-4">
         {/* Activity chart */}
         <div className="card">
           <div className="card-header">
             <h3 className="card-h3" id="activity-chart-title">
               Actividad — últimos 14 días
             </h3>
-            <p className="card-meta">Muestra llamadas, emails y reuniones registradas</p>
+            <p className="card-meta">
+              Muestra llamadas, emails y reuniones registradas
+            </p>
           </div>
           <div className="card-body" aria-labelledby="activity-chart-title">
             <ActivityChart data={trend.data ?? []} />
@@ -216,10 +251,17 @@ export function DashboardPage() {
         />
         {sellers.isError && (
           <div className="flex items-center justify-between px-5 pb-4">
-            <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
+            <p
+              className="text-[13px]"
+              style={{ color: "var(--tracker-danger)" }}
+            >
               No se pudo cargar el desempeño del equipo.
             </p>
-            <Button variant="ghost" onClick={() => sellers.refetch?.()} className="ml-3">
+            <Button
+              variant="ghost"
+              onClick={() => sellers.refetch?.()}
+              className="ml-3"
+            >
               Reintentar
             </Button>
           </div>
@@ -235,10 +277,17 @@ export function DashboardPage() {
           </div>
           {leaderboard.isError ? (
             <div className="flex items-center justify-between px-5 py-4">
-              <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
+              <p
+                className="text-[13px]"
+                style={{ color: "var(--tracker-danger)" }}
+              >
                 No se pudo cargar el leaderboard.
               </p>
-              <Button variant="ghost" onClick={() => leaderboard.refetch?.()} className="ml-3">
+              <Button
+                variant="ghost"
+                onClick={() => leaderboard.refetch?.()}
+                className="ml-3"
+              >
                 Reintentar
               </Button>
             </div>
@@ -260,55 +309,125 @@ export function DashboardPage() {
           </div>
           <div className="card-body">
             {stalledDeals.isLoading && (
-              <p className="text-[13px]" style={{ color: 'var(--tracker-text-secondary)' }}>
+              <p
+                className="text-[13px]"
+                style={{ color: "var(--tracker-text-secondary)" }}
+              >
                 Cargando...
               </p>
             )}
             {stalledDeals.isError && (
-              <p className="text-[13px]" style={{ color: 'var(--tracker-danger)' }}>
+              <p
+                className="text-[13px]"
+                style={{ color: "var(--tracker-danger)" }}
+              >
                 No se pudo cargar los deals estancados.
               </p>
             )}
-            {!stalledDeals.isLoading && !stalledDeals.isError && (
-              stalledDeals.data?.length === 0 ? (
+            {!stalledDeals.isLoading &&
+              !stalledDeals.isError &&
+              (stalledDeals.data?.data.length === 0 ? (
                 <div className="empty-state">No hay deals estancados</div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Stage</TableHead>
-                      <TableHead>Vendedor</TableHead>
-                      <TableHead className="text-right">Monto</TableHead>
-                      <TableHead className="text-right">Días estancado</TableHead>
-                      <TableHead className="text-center">Severidad</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {stalledDeals.data?.map((item) => (
-                      <TableRow key={item.dealId}>
-                        <TableCell className="font-medium" style={{ color: 'var(--tracker-blue)' }}>
-                          {item.clientName}
-                        </TableCell>
-                        <TableCell style={{ color: 'var(--tracker-text-dim)' }}>{item.stage}</TableCell>
-                        <TableCell style={{ color: 'var(--tracker-text-dim)' }}>{item.sellerName || '—'}</TableCell>
-                        <TableCell className="text-right" style={{ color: 'var(--tracker-text-dim)' }}>
-                          {formatCurrency(item.amount)}
-                        </TableCell>
-                        <TableCell className="text-right" style={{ color: 'var(--tracker-text-dim)' }}>
-                          {item.daysStalled}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={item.severity === 'red' ? 'red' : 'amber'}>
-                            {item.severity === 'red' ? 'Rojo' : 'Ámbar'}
-                          </Badge>
-                        </TableCell>
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Stage</TableHead>
+                        <TableHead>Vendedor</TableHead>
+                        <TableHead className="text-right">Monto</TableHead>
+                        <TableHead className="text-right">
+                          Días estancado
+                        </TableHead>
+                        <TableHead className="text-center">Severidad</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )
-            )}
+                    </TableHeader>
+                    <TableBody>
+                      {stalledDeals.data?.data.map((item) => (
+                        <TableRow key={item.dealId}>
+                          <TableCell
+                            className="font-medium"
+                            style={{ color: "var(--tracker-blue)" }}
+                          >
+                            {item.clientName}
+                          </TableCell>
+                          <TableCell
+                            style={{ color: "var(--tracker-text-dim)" }}
+                          >
+                            {item.stage}
+                          </TableCell>
+                          <TableCell
+                            style={{ color: "var(--tracker-text-dim)" }}
+                          >
+                            {item.sellerName || "—"}
+                          </TableCell>
+                          <TableCell
+                            className="text-right"
+                            style={{ color: "var(--tracker-text-dim)" }}
+                          >
+                            {formatCurrency(item.amount)}
+                          </TableCell>
+                          <TableCell
+                            className="text-right"
+                            style={{ color: "var(--tracker-text-dim)" }}
+                          >
+                            {item.daysStalled}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge
+                              variant={
+                                item.severity === "red" ? "red" : "amber"
+                              }
+                            >
+                              {item.severity === "red" ? "Rojo" : "Ámbar"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        setStalledDealsPage((current) =>
+                          Math.max(1, current - 1)
+                        )
+                      }
+                      disabled={
+                        stalledDealsPage <= 1 || stalledDeals.isFetching
+                      }
+                      aria-label="Ir a la página anterior de deals en riesgo"
+                    >
+                      Anterior
+                    </Button>
+                    <p
+                      className="text-[13px]"
+                      aria-live="polite"
+                      style={{ color: "var(--tracker-text-secondary)" }}
+                    >
+                      Página {stalledDealsPage} de{" "}
+                      {Math.max(stalledDeals.data?.totalPages ?? 0, 1)}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        setStalledDealsPage((current) => current + 1)
+                      }
+                      disabled={
+                        stalledDeals.isFetching ||
+                        stalledDealsPage >= (stalledDeals.data?.totalPages ?? 0)
+                      }
+                      aria-label="Ir a la página siguiente de deals en riesgo"
+                    >
+                      Siguiente
+                    </Button>
+                  </div>
+                </>
+              ))}
           </div>
         </div>
       )}
