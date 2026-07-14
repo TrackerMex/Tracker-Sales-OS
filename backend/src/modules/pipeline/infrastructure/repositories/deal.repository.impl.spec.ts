@@ -30,8 +30,9 @@ describe('DealRepositoryImpl.findStalledDeals', () => {
       {
         id: 'deal-11',
         client_id: 'client-11',
-        client_name: 'Cliente 11',
+        client_name: 'Cliente persistido',
         seller_id: 'seller-1',
+        seller_name: 'Vendedor persistido',
         stage: PipelineStage.Propuesta,
         amount: '1500.50',
         probability: '50',
@@ -53,6 +54,14 @@ describe('DealRepositoryImpl.findStalledDeals', () => {
       expect(sql).toContain('d.deleted_at IS NULL');
       expect(sql).toContain("d.stage NOT IN ('Cierre', 'Perdido')");
       expect(sql).toContain('WHERE days_stalled >= $1');
+      expect(sql).toContain('LEFT JOIN clients c ON c.id = d.client_id');
+      expect(sql).toContain('LEFT JOIN sellers s ON s.id = d.seller_id');
+      expect(sql).toContain(
+        "COALESCE(NULLIF(TRIM(c.name), ''), NULLIF(TRIM(d.client_name), ''), '') AS client_name",
+      );
+      expect(sql).toContain(
+        "COALESCE(NULLIF(TRIM(s.name), ''), '') AS seller_name",
+      );
     }
     expect(countParams).toEqual([7]);
     expect(dataParams).toEqual([7, 10, 10]);
@@ -62,6 +71,8 @@ describe('DealRepositoryImpl.findStalledDeals', () => {
     expect(result.data).toHaveLength(1);
     expect(result.data[0]).toMatchObject({
       daysStalled: 18,
+      clientName: 'Cliente persistido',
+      sellerName: 'Vendedor persistido',
       deal: {
         id: 'deal-11',
         clientId: 'client-11',

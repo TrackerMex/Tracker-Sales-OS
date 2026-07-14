@@ -58,7 +58,14 @@ describe('GetStalledDealsUseCase', () => {
 
   it('requests and reports the second page', async () => {
     const { useCase, findStalledDeals } = makeUseCase({
-      data: [{ deal: makeDeal('deal-3'), daysStalled: 10 }],
+      data: [
+        {
+          deal: makeDeal('deal-3'),
+          daysStalled: 10,
+          clientName: 'Cliente resuelto',
+          sellerName: 'Vendedor resuelto',
+        },
+      ],
       total: 3,
     });
 
@@ -72,14 +79,33 @@ describe('GetStalledDealsUseCase', () => {
       totalPages: 2,
     });
     expect(result.data).toHaveLength(1);
+    expect(result.data[0]).toMatchObject({
+      clientName: 'Cliente resuelto',
+      sellerName: 'Vendedor resuelto',
+    });
   });
 
   it('preserves repository order and calculates severity from settings', async () => {
     const { useCase } = makeUseCase({
       data: [
-        { deal: makeDeal('deal-b'), daysStalled: 20 },
-        { deal: makeDeal('deal-a'), daysStalled: 14 },
-        { deal: makeDeal('deal-c'), daysStalled: 8 },
+        {
+          deal: makeDeal('deal-b'),
+          daysStalled: 20,
+          clientName: 'Cliente B',
+          sellerName: 'Vendedor B',
+        },
+        {
+          deal: makeDeal('deal-a'),
+          daysStalled: 14,
+          clientName: 'Cliente A',
+          sellerName: 'Vendedor A',
+        },
+        {
+          deal: makeDeal('deal-c'),
+          daysStalled: 8,
+          clientName: 'Cliente C',
+          sellerName: 'Vendedor C',
+        },
       ],
       total: 23,
     });

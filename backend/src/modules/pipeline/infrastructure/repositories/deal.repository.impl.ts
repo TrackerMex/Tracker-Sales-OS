@@ -262,13 +262,22 @@ export class DealRepositoryImpl implements IDealsRepository {
     page: number,
     limit: number,
   ): Promise<{
-    data: { deal: DealEntity; daysStalled: number }[];
+    data: {
+      deal: DealEntity;
+      daysStalled: number;
+      clientName: string;
+      sellerName: string;
+    }[];
     total: number;
   }> {
     const offset = (page - 1) * limit;
     const stalledDealsCte = `WITH stalled AS (
       SELECT
-        d.id, d.client_id, d.client_name, d.seller_id, d.stage,
+        d.id, d.client_id,
+        COALESCE(NULLIF(TRIM(c.name), ''), NULLIF(TRIM(d.client_name), ''), '') AS client_name,
+        d.seller_id,
+        COALESCE(NULLIF(TRIM(s.name), ''), '') AS seller_name,
+        d.stage,
         d.amount, d.probability, d.stage_history, d.created_at, d.updated_at, d.deleted_at,
         FLOOR(EXTRACT(EPOCH FROM (NOW() -
           CASE
@@ -278,6 +287,8 @@ export class DealRepositoryImpl implements IDealsRepository {
           END
         )) / 86400) AS days_stalled
       FROM deals d
+      LEFT JOIN clients c ON c.id = d.client_id
+      LEFT JOIN sellers s ON s.id = d.seller_id
       WHERE d.deleted_at IS NULL
         AND d.stage NOT IN ('Cierre', 'Perdido')
     )`;
@@ -316,6 +327,8 @@ export class DealRepositoryImpl implements IDealsRepository {
       return {
         deal: this.toDomain(entity),
         daysStalled: Number(row.days_stalled),
+        clientName: row.client_name as string,
+        sellerName: row.seller_name as string,
       };
     });
 

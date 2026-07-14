@@ -27,15 +27,17 @@ export class GetStalledDealsUseCase implements IUseCase<
     );
 
     return {
-      data: stalled.data.map(({ deal, daysStalled }) => ({
-        dealId: deal.id,
-        clientName: deal.clientName ?? '',
-        sellerName: '',
-        stage: deal.stage,
-        amount: deal.amount,
-        daysStalled,
-        severity: daysStalled >= settings.stalledRedDays ? 'red' : 'amber',
-      })),
+      data: stalled.data.map(
+        ({ deal, daysStalled, clientName, sellerName }) => ({
+          dealId: deal.id,
+          clientName,
+          sellerName,
+          stage: deal.stage,
+          amount: deal.amount,
+          daysStalled,
+          severity: daysStalled >= settings.stalledRedDays ? 'red' : 'amber',
+        }),
+      ),
       total: stalled.total,
       page,
       limit,

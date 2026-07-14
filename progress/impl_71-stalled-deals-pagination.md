@@ -2,7 +2,37 @@
 
 ## Estado
 
-Implementación completada y verificada estáticamente.
+Implementación completada, corrección de nombres aplicada y verificada estáticamente.
+
+## Corrección: cliente y vendedor visibles
+
+### Causa raíz
+
+- `GetStalledDealsUseCase` asignaba `sellerName: ''` de forma fija.
+- `clientName` se tomaba únicamente de `deals.client_name`, por lo que quedaba vacío cuando ese valor histórico no estaba poblado aunque el cliente sí tuviera nombre en `clients`.
+
+### Fix
+
+- `IDealsRepository.findStalledDeals` ahora entrega explícitamente `clientName` y `sellerName` por cada fila paginada.
+- El CTE mantiene los filtros, conteo, umbral, orden y paginación existentes, y agrega `LEFT JOIN` a `clients` y `sellers`; al ser joins por sus IDs únicos, no elimina ni multiplica deals y el total conserva la misma semántica.
+- Cliente: prioriza `clients.name`, después `deals.client_name` y finalmente `''`. Vendedor: prioriza `sellers.name` y después `''`. En ambos casos `NULLIF(TRIM(...), '')` evita seleccionar nombres vacíos o solo con espacios.
+- El use-case transmite al DTO los nombres resueltos por el repositorio; no hubo cambios de frontend porque la tabla ya renderizaba ambos campos.
+
+### Archivos de la corrección
+
+- `backend/src/modules/pipeline/domain/repositories/deal.repository.interface.ts`
+- `backend/src/modules/pipeline/infrastructure/repositories/deal.repository.impl.ts`
+- `backend/src/modules/pipeline/infrastructure/repositories/deal.repository.impl.spec.ts`
+- `backend/src/modules/dashboard/application/use-cases/get-stalled-deals.use-case.ts`
+- `backend/src/modules/dashboard/application/use-cases/get-stalled-deals.use-case.spec.ts`
+- `progress/impl_71-stalled-deals-pagination.md`
+
+### Verificación de la corrección
+
+- `backend: npx tsc --noEmit` — PASS.
+- Specs focalizados — PASS, 2 suites / 6 tests.
+- `backend: npx jest --runInBand` — PASS, 15 suites / 78 tests.
+- ESLint focalizado sin `--fix` en los 5 archivos TypeScript modificados — PASS.
 
 ## Archivos
 
