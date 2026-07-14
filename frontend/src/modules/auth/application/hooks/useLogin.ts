@@ -12,7 +12,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (dto: LoginRequest) => authApi.login(dto),
     onSuccess: (data) => {
-      setAuth(data.user, data.accessToken)
+      setAuth(data.user, data.accessToken, data.refreshToken)
       if (search.redirect) {
         router.history.push(search.redirect)
       } else {

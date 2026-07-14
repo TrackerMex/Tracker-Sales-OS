@@ -808,3 +808,14 @@ Batch 2:
 - Backfill: migracion `1783700000000-BackfillInitiatedClientDeals` crea un deal activo para iniciados sin deal activo, sin modificar soft-deleted y preservando stage/expectedAmount/probabilidad.
 - Review independiente PASSED para codigo/pre-deploy. Backend+frontend tsc PASS; Jest 6 suites/27 tests PASS; seller/team prueban 49 distintos y mas de 20 en una etapa.
 - Pendiente operativo no bloqueante: tras deploy ejecutar migracion y confirmar en prod 19→49 con `COUNT(DISTINCT client_id)`.
+
+## 2026-07-14 — Feature 63: refresh tokens + expiración corta de access token
+
+- Pedido: cerrar la Fase 1 SaaS con rotacion de sesiones (prerequisito de seguridad para vender a terceros). Access token bajo de 7d a 15m; nuevo refresh token de 7d con rotacion y deteccion de reuso.
+- Diseno (Lider, antes de delegar): tabla refresh_tokens separada (no columna en users), refresh token = JWT firmado con JWT_REFRESH_SECRET via el mismo JwtService inyectado (override de secret/expiresIn por llamada, sin segundo JwtModule), payload {sub: id de fila, userId}. token_hash = bcrypt del token crudo, mismo salt rounds que passwords.
+- Backend: LoginUseCase ahora tambien crea la fila y devuelve refreshToken. RefreshTokenUseCase verifica firma antes de confiar en el sub, distingue reuso (revoked_at ya no nulo -> revoca TODAS las sesiones del usuario) de expiracion normal (401 simple, sin revocar de mas). LogoutUseCase revoca solo la sesion actual, best-effort. Migracion 1784032100000-CreateRefreshTokens.ts idempotente, escrita a mano (sin DB disponible en el entorno).
+- Frontend: axios.ts interceptor de response reescrito con cola de refresh concurrente (flag isRefreshing) para servir una sola llamada de refresh a N requests que fallan a la vez; excluye /auth/login y /auth/refresh del auto-retry. nav-user.tsx logout ahora llama al backend antes de limpiar el store local.
+- Review independiente (progress/review_63-refresh-tokens.md): PASSED. Backend tsc/eslint limpios, jest 13 suites/72 tests en verde (11/60 preexistentes + 12 nuevos). Frontend tsc/eslint limpios, build exitoso. Verificado linea por linea: sin cross-user leakage entre refresh tokens, reuso vs expiracion correctamente distinguidos (confirmado tambien por test dedicado), cola de refresh en axios sirve un unico refresh a requests concurrentes.
+- Hallazgos no bloqueantes: rotacion sin transaccion DB explicita, falta test de user.active===false en refresh, nombres de constraint distintos a los que generaria migration:generate.
+- Pendiente real antes de mergear a main: verificacion manual E2E (login->expiracion->refresh automatico, logout->token no canjeable, /lamina sigue funcionando) en un entorno con backend/DB corriendo — no se pudo ejecutar en este entorno (sin acceso a Docker/Postgres).
+- Detalle: progress/impl_63-refresh-tokens.md, progress/review_63-refresh-tokens.md.

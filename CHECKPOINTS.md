@@ -506,6 +506,43 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ---
 
+## 63-refresh-tokens
+
+**Backend — modelo y migración:**
+- [x] Tabla nueva `refresh_tokens` (migración idempotente `CREATE TABLE IF NOT EXISTS`, FK a `users(id)` con `ADD CONSTRAINT` envuelto en `DO $$ ... EXCEPTION WHEN duplicate_object THEN null; END $$;`, índice en `user_id`): columnas `id` (uuid PK), `user_id` (uuid, FK), `token_hash` (varchar), `expires_at` (timestamptz), `revoked_at` (timestamptz nullable), `created_at`/`updated_at` (timestamptz, patrón estándar del repo). Sin `deleted_at` — el ciclo de vida es revocación, no soft-delete.
+- [x] Migración generada/ajustada siguiendo el flujo de `docs/verification.md` (`pnpm migration:generate`), nombre `<timestamp>-CreateRefreshTokens.ts`, wireada en `data-source.ts` igual que las existentes
+- [x] `RefreshTokenEntity` (domain, sin TypeORM) + `IRefreshTokenRepository` + `RefreshTokenTypeormEntity`/impl siguiendo la estructura de capas del módulo `auth` existente (domain/application/infrastructure/presentation)
+
+**Backend — emisión y rotación:**
+- [x] `JWT_EXPIRES_IN` default baja de `7d` a `15m` (`.env.example`, `backend/.env.example`, `.env.prod.example` documentados)
+- [x] Nuevas env vars `JWT_REFRESH_SECRET` y `JWT_REFRESH_EXPIRES_IN` (default `7d`) documentadas en los 3 `.env.example`
+- [x] `LoginUseCase` emite además un refresh token: crea la fila en `refresh_tokens` (`token_hash` = `bcrypt.hash(rawToken, 10)`, mismo salt rounds que passwords), firma un JWT `{ sub: <id de la fila>, userId: user.id }` con `JWT_REFRESH_SECRET`/`JWT_REFRESH_EXPIRES_IN` usando el mismo `JwtService` inyectado (override de `secret`/`expiresIn` por llamada — no se registra un segundo `JwtModule`). `LoginResponseDto` incluye `refreshToken`
+- [x] `POST /api/auth/refresh` (sin guard, igual que `/login` — no hay guard global en este backend): valida firma/expiración del refresh JWT recibido, busca la fila por `sub` (PK), rechaza si `revoked_at` no es null o si `expires_at` ya pasó, compara `bcrypt.compare(rawToken, row.tokenHash)`. Si es válido: **rota** (marca la fila vieja `revoked_at = now()`, crea una fila nueva + emite refresh JWT nuevo) y emite un access token nuevo. Responde `{ accessToken, refreshToken }`
+- [x] **Detección de reuso**: si el refresh recibido corresponde a una fila ya con `revoked_at` distinto de null, se interpreta como posible robo — se revocan TODOS los refresh tokens activos de ese `user_id` (no solo el usado) y se responde 401
+- [x] `POST /api/auth/logout` (sin guard): recibe el refresh token de la sesión actual y marca su fila `revoked_at = now()`. No revoca otras sesiones/dispositivos del mismo usuario
+- [x] Ningún endpoint nuevo devuelve el `token_hash` ni el refresh token de otro usuario; el lookup es siempre por PK derivado del propio JWT, nunca por `user_id` abierto
+
+**Backend — tests:**
+- [x] `login.use-case.spec.ts` actualizado para el nuevo payload/response (refresh token emitido)
+- [x] Specs nuevos para el use-case de refresh (rotación exitosa, token revocado → 401 + revocación en cascada, token expirado → 401, token con firma inválida → 401) y para logout (revoca la fila correcta, no afecta otras), mockeando solo el repositorio (convención del repo)
+- [x] `tsc --noEmit` sin errores en backend
+
+**Frontend:**
+- [x] `auth.types.ts`: `LoginResponse` incluye `refreshToken`; tipos para request/response de refresh
+- [x] `auth.api.ts`: `refresh(refreshToken)` y `logout(refreshToken)`
+- [x] `app.store.ts`: nuevo estado `refreshToken`, persistido en `localStorage` bajo su propia key (mismo patrón manual que `accessToken` hoy), limpiado en `clearAuth()`
+- [x] `axios.ts`: interceptor de response reescrito — en 401 (excluyendo `/auth/login` Y `/auth/refresh` del auto-retry) intenta `POST /auth/refresh` una sola vez con cola de requests pendientes (flag `isRefreshing` + callbacks) para no disparar refreshes concurrentes; si el refresh falla, limpia auth y redirige a `/login` (comportamiento actual conservado como fallback)
+- [x] `nav-user.tsx` `handleLogout` pasa a ser async: llama `authApi.logout(refreshToken)` (try/catch, no bloquea el logout local si falla la red) antes de `clearAuth()` + navigate
+- [x] Nuevo hook `useLogout` en `modules/auth/application/hooks/` centralizando la llamada (patrón TanStack Query del resto del proyecto)
+- [x] `tsc --noEmit` sin errores en frontend
+
+**Verificación manual (no automatizable por tsc/jest):**
+- [ ] Login → esperar a que expire el access token (o bajar `JWT_EXPIRES_IN` temporalmente) → una request protegida dispara refresh automático sin desloguear al usuario
+- [ ] Logout → el refresh token usado ya no puede canjearse (401)
+- [ ] `/lamina` (auth propio, feature 40) no se rompe con el cambio de TTL
+
+---
+
 ## 68-pipeline-client-coverage
 
 **Diagnóstico y regla de negocio:**
