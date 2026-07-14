@@ -809,13 +809,24 @@ Batch 2:
 - Review independiente PASSED para codigo/pre-deploy. Backend+frontend tsc PASS; Jest 6 suites/27 tests PASS; seller/team prueban 49 distintos y mas de 20 en una etapa.
 - Pendiente operativo no bloqueante: tras deploy ejecutar migracion y confirmar en prod 19→49 con `COUNT(DISTINCT client_id)`.
 
-## 2026-07-14 — Feature 63: refresh tokens + expiración corta de access token
+## 2026-07-10 — Feature 69: transiciones libres de pipeline (reemplaza el retroceso de un paso de la feature 67)
 
-- Pedido: cerrar la Fase 1 SaaS con rotacion de sesiones (prerequisito de seguridad para vender a terceros). Access token bajo de 7d a 15m; nuevo refresh token de 7d con rotacion y deteccion de reuso.
-- Diseno (Lider, antes de delegar): tabla refresh_tokens separada (no columna en users), refresh token = JWT firmado con JWT_REFRESH_SECRET via el mismo JwtService inyectado (override de secret/expiresIn por llamada, sin segundo JwtModule), payload {sub: id de fila, userId}. token_hash = bcrypt del token crudo, mismo salt rounds que passwords.
-- Backend: LoginUseCase ahora tambien crea la fila y devuelve refreshToken. RefreshTokenUseCase verifica firma antes de confiar en el sub, distingue reuso (revoked_at ya no nulo -> revoca TODAS las sesiones del usuario) de expiracion normal (401 simple, sin revocar de mas). LogoutUseCase revoca solo la sesion actual, best-effort. Migracion 1784032100000-CreateRefreshTokens.ts idempotente, escrita a mano (sin DB disponible en el entorno).
-- Frontend: axios.ts interceptor de response reescrito con cola de refresh concurrente (flag isRefreshing) para servir una sola llamada de refresh a N requests que fallan a la vez; excluye /auth/login y /auth/refresh del auto-retry. nav-user.tsx logout ahora llama al backend antes de limpiar el store local.
-- Review independiente (progress/review_63-refresh-tokens.md): PASSED. Backend tsc/eslint limpios, jest 13 suites/72 tests en verde (11/60 preexistentes + 12 nuevos). Frontend tsc/eslint limpios, build exitoso. Verificado linea por linea: sin cross-user leakage entre refresh tokens, reuso vs expiracion correctamente distinguidos (confirmado tambien por test dedicado), cola de refresh en axios sirve un unico refresh a requests concurrentes.
-- Hallazgos no bloqueantes: rotacion sin transaccion DB explicita, falta test de user.active===false en refresh, nombres de constraint distintos a los que generaria migration:generate.
-- Pendiente real antes de mergear a main: verificacion manual E2E (login->expiracion->refresh automatico, logout->token no canjeable, /lamina sigue funcionando) en un entorno con backend/DB corriendo — no se pudo ejecutar en este entorno (sin acceso a Docker/Postgres).
-- Detalle: progress/impl_63-refresh-tokens.md, progress/review_63-refresh-tokens.md.
+- Pedido usuario: pasar de "retroceder solo una etapa" (feature 67, 2026-07-09) a transicion libre entre cualquiera de las 7 fases, incluyendo reabrir Cierre y Perdido. Nota de origen: "decision del usuario 2026-07-10", sin referencia a AskUserQuestion ni razon de negocio documentada en feature_list.json/CHECKPOINTS.md — mas debil que la justificacion dejada en la feature 67.
+- Backend: ALLOWED_TRANSITIONS (deal.entity.ts) ahora mapea cada una de las 7 fases a las otras 6 (excluye solo la fase propia). UpdateClientUseCase hereda la regla libre por compartir el mismo mapa. change-deal-stage.use-case.ts sin cambios: stageHistory, changedBy, probabilidad y lossReason opcional (solo al entrar a Perdido) intactos.
+- Frontend: mirror en pipeline.types.ts identico al backend. Modal de motivo de perdida solo dispara al entrar a Perdido, no al salir.
+- Tests: cobertura del mapa completo, salto no adyacente (Prospecto -> Negociacion), salida desde Cierre, salida desde Perdido, rechazo de la misma fase.
+- Review independiente (2026-07-14, retroactivo — no se genero al cerrar la feature): PASSED 13/13. tsc backend+frontend PASS. Sin rastros de la logica de "un paso atras" de la 67. Detalle: progress/review_69-pipeline-free-stage.md, progress/impl_69-pipeline-free-stage.md.
+
+## 2026-07-10 — Feature 70: deals.updated_at se actualiza al registrar actividad
+
+- Objetivo: que registrar una actividad sobre un cliente con deal existente reinicie el contador de "deal estancado" (feature 20) aunque la fase no cambie, sin tocar stageHistory/probabilidad/created_at.
+- Backend: nuevo metodo IActivityRepository.createAndTouchDeal — actividad + touch de deals.updated_at en una sola transaccion, usando el deal ya resuelto por clientId/sellerId (y opportunityName si aplica). Si el deal desaparece o esta eliminado antes del touch, la operacion revierte tambien la actividad. Flujo sin clientId conserva create; cliente sin deal conserva createWithPipelineSync (feature 68).
+- Frontend: Deal expone updatedAt opcional; DealCard muestra solo la fecha (sin label "Actualizado"), con fallback a createdAt. El badge ambar/rojo de dias estancados pasa a calcularse desde updatedAt ?? createdAt, sin duplicar la logica en otro componente.
+- Review independiente (2026-07-14, retroactivo): PASSED 10/10. tsc backend+frontend PASS; Jest create-activity.use-case.spec.ts 20/20. Sin riesgo de regresion sobre feature 20 (fuente unica del calculo). Detalle: progress/review_70-pipeline-activity-updated-at.md, progress/impl_70-pipeline-activity-updated-at.md.
+
+## 2026-07-14 — Reviews retroactivos de 68, 69 y 70
+
+- Al retomar el trabajo en rama multi-tenant se detecto que 68, 69 y 70 se habian implementado y cerrado directamente en main (no en multi-tenant), marcadas `done` con todos los checkboxes en CHECKPOINTS.md pero sin ningun progress/review_*.md independiente (a diferencia de 61 y 62, que si lo tienen) — violaba la regla Anti-Telephone-Game de AGENTS.md.
+- Se lanzo un Reviewer independiente sobre main para las 3 features, leyendo codigo real (no los resumenes del Implementer) y corriendo tsc + jest dirigidos + suite completa de backend.
+- Resultado: 68 PASSED 22/22, 69 PASSED 13/13, 70 PASSED 10/10. Suite completa backend: 11 suites/60 tests, sin regresion sobre la suite critica de la feature 62. Ningun hallazgo bloqueante.
+- Hallazgos de proceso (no bloqueantes): faltaban estas entradas de history.md para 69/70 (corregido en este mismo pase); la justificacion de negocio del giro 67->69 quedo documentada de forma mas debil que el resto del historial (ver nota de la feature 69 arriba).
