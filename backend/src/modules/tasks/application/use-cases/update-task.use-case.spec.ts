@@ -27,18 +27,17 @@ const makeTask = (overrides: Partial<TaskEntity> = {}): TaskEntity =>
     ...overrides,
   });
 
-const makeRepo = (): MockTaskRepository =>
-  ({
-    findById: jest.fn(),
-    findAll: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
-    findTodayBySeller: jest.fn(),
-    findMonthAllSellers: jest.fn(),
-    findOverdueBySeller: jest.fn(),
-    findConflictingTask: jest.fn(),
-  }) as MockTaskRepository;
+const makeRepo = (): MockTaskRepository => ({
+  findById: jest.fn(),
+  findAll: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  softDelete: jest.fn(),
+  findTodayBySeller: jest.fn(),
+  findMonthAllSellers: jest.fn(),
+  findOverdueBySeller: jest.fn(),
+  findConflictingTask: jest.fn(),
+});
 
 describe('UpdateTaskUseCase', () => {
   it('excludes the task itself when checking a rescheduled time', async () => {
@@ -55,15 +54,15 @@ describe('UpdateTaskUseCase', () => {
       scheduledAt: newDate,
     });
 
-    expect(repo.findConflictingTask).toHaveBeenCalledWith(
+    expect(repo.findConflictingTask.mock.calls).toContainEqual([
       task.sellerId,
       new Date(newDate),
       task.id,
-    );
-    expect(repo.update).toHaveBeenCalledWith(
+    ]);
+    expect(repo.update.mock.calls).toContainEqual([
       task.id,
       expect.objectContaining({ scheduledAt: new Date(newDate) }),
-    );
+    ]);
   });
 
   it('rejects a conflict found while rescheduling', async () => {
@@ -82,7 +81,7 @@ describe('UpdateTaskUseCase', () => {
         scheduledAt: newDate,
       }),
     ).rejects.toBeInstanceOf(ConflictException);
-    expect(repo.update).not.toHaveBeenCalled();
+    expect(repo.update.mock.calls).toHaveLength(0);
   });
 
   it('rejects a Seller editing another seller task', async () => {
@@ -97,7 +96,7 @@ describe('UpdateTaskUseCase', () => {
         title: 'Cambio no autorizado',
       }),
     ).rejects.toBeInstanceOf(ForbiddenException);
-    expect(repo.update).not.toHaveBeenCalled();
+    expect(repo.update.mock.calls).toHaveLength(0);
   });
 
   it.each([UserRole.Admin, UserRole.Director])(
@@ -114,10 +113,10 @@ describe('UpdateTaskUseCase', () => {
         title: 'Actualizada',
       });
 
-      expect(repo.update).toHaveBeenCalledWith(
+      expect(repo.update.mock.calls).toContainEqual([
         'task-1',
         expect.objectContaining({ title: 'Actualizada' }),
-      );
+      ]);
     },
   );
 });

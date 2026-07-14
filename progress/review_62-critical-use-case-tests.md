@@ -22,3 +22,15 @@ Revisión independiente realizada sin editar código.
 - PASSED — `progress/impl_62-critical-use-case-tests.md` coincide con los archivos y resultados observados.
 
 No se encontraron pruebas vacías ni aserciones desconectadas de las ramas críticas revisadas. npm emitió únicamente warnings no bloqueantes por `node-linker` y `shamefully-hoist`.
+
+## Revalidación de lint
+
+Tras detectar el fallo del comando usado por CI, se corrigieron los tres specs afectados y se realizó un segundo review independiente:
+
+- PASSED — ESLint: exit 0, sin errores ni warnings de ESLint.
+- PASSED — Jest: 11 suites, 60 tests, 0 snapshots.
+- PASSED — TypeScript: exit 0.
+- PASSED — Sin `eslint-disable`, `@ts-ignore`, cambios de configuración, producción o dependencias.
+- PASSED — Se preservaron las aserciones: 15 en clientes, 5 en creación de tareas y 7 en actualización de tareas.
+
+Los únicos mensajes restantes son warnings npm no bloqueantes por `node-linker` y `shamefully-hoist`.

@@ -58,3 +58,29 @@ Ejecutado desde `backend/`:
   - PASS: 11 suites, 60 tests, 0 snapshots; tiempo reportado 6.03 s.
 
 Los comandos npm sólo emitieron warnings no bloqueantes por las opciones heredadas `node-linker` y `shamefully-hoist`.
+
+## Corrección post-review — lint de backend
+
+### Causa
+
+- Las aserciones de Jest recibían métodos de los repositorios mock como valores separados de su objeto, lo que activaba `@typescript-eslint/unbound-method`.
+- Los factories de repositorios mock aplicaban conversiones de tipo redundantes, detectadas por `@typescript-eslint/no-unnecessary-type-assertion`.
+
+### Corrección
+
+- Se conservaron los mismos casos, cobertura y aserciones semánticas, consultando las llamadas mediante `mock.calls` para mantener los métodos ligados al repositorio.
+- Se eliminaron las tres conversiones de tipo innecesarias; los factories siguen validados por su tipo de retorno `jest.Mocked<IClientRepository>` o `jest.Mocked<ITaskRepository>`.
+- No se modificaron reglas ESLint, código de producción, dependencias ni otros tests.
+
+### Verificación completa
+
+Ejecutado desde `backend/`:
+
+- `npx eslint "{src,apps,libs,test}/**/*.ts"`
+  - PASS: exit code 0, sin errores ni warnings de ESLint; tiempo reportado 17.9 s.
+- `npx jest --runInBand`
+  - PASS: 11 suites, 60 tests, 0 snapshots; tiempo de Jest reportado 9.946 s.
+- `npx tsc --noEmit`
+  - PASS: exit code 0, sin errores TypeScript; tiempo reportado 8 s.
+
+`npm` mantuvo únicamente sus dos warnings no bloqueantes de configuración heredada por `node-linker` y `shamefully-hoist`.

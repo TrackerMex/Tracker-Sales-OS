@@ -25,18 +25,17 @@ const makeTask = (overrides: Partial<TaskEntity> = {}): TaskEntity =>
     ...overrides,
   });
 
-const makeRepo = (): MockTaskRepository =>
-  ({
-    findById: jest.fn(),
-    findAll: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
-    findTodayBySeller: jest.fn(),
-    findMonthAllSellers: jest.fn(),
-    findOverdueBySeller: jest.fn(),
-    findConflictingTask: jest.fn(),
-  }) as MockTaskRepository;
+const makeRepo = (): MockTaskRepository => ({
+  findById: jest.fn(),
+  findAll: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  softDelete: jest.fn(),
+  findTodayBySeller: jest.fn(),
+  findMonthAllSellers: jest.fn(),
+  findOverdueBySeller: jest.fn(),
+  findConflictingTask: jest.fn(),
+});
 
 describe('CreateTaskUseCase', () => {
   it('creates a pending task when the time slot is free', async () => {
@@ -50,17 +49,17 @@ describe('CreateTaskUseCase', () => {
       scheduledAt,
     });
 
-    expect(repo.findConflictingTask).toHaveBeenCalledWith(
+    expect(repo.findConflictingTask.mock.calls).toContainEqual([
       'seller-1',
       new Date(scheduledAt),
-    );
-    expect(repo.create).toHaveBeenCalledWith(
+    ]);
+    expect(repo.create.mock.calls).toContainEqual([
       expect.objectContaining({
         sellerId: 'seller-1',
         scheduledAt: new Date(scheduledAt),
         status: TaskStatus.Pending,
       }),
-    );
+    ]);
     expect(result).toMatchObject({ id: 'task-1', status: TaskStatus.Pending });
   });
 
@@ -77,6 +76,6 @@ describe('CreateTaskUseCase', () => {
         scheduledAt,
       }),
     ).rejects.toBeInstanceOf(ConflictException);
-    expect(repo.create).not.toHaveBeenCalled();
+    expect(repo.create.mock.calls).toHaveLength(0);
   });
 });

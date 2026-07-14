@@ -643,7 +643,10 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] No se modifican archivos de producción ni se agregan dependencias
 - [x] `npx jest --runInBand` pasa de forma determinista
 - [x] `npx tsc --noEmit` pasa en backend
+- [x] `npx eslint "{src,apps,libs,test}/**/*.ts"` pasa sin errores ni warnings de ESLint
 - [x] Resumen guardado en `progress/impl_62-critical-use-case-tests.md`
 - [x] Review independiente guardado en `progress/review_62-critical-use-case-tests.md`
 
 **Reviewer 2026-07-13**: PASSED 12/12. Suite completa: 11 suites, 60 tests, 0 snapshots; `npx tsc --noEmit` exit 0. Sin cambios productivos, dependencias, DB, red ni servicios externos.
+
+**Revalidación lint 2026-07-13**: PASSED. Corregidos 21 errores en los tres specs afectados sin desactivar reglas. ESLint exit 0, Jest 11/11 suites y 60/60 tests, TypeScript exit 0. Review independiente confirmó que se preservaron las aserciones y no hubo cambios de producción, configuración o dependencias.

@@ -640,7 +640,7 @@
     "priority": 62,
     "backend_modules": ["dashboard", "pipeline", "activities", "tasks", "clients", "auth"],
     "frontend_modules": [],
-    "notes": "Completada 2026-07-13. Se agregaron 4 suites y 25 casos unitarios para scoring, tareas, authz y clientes; la cobertura existente de pipeline y actividades fue validada. Resultado total: 11 suites/60 tests PASS, tsc PASS, sin DB/red ni cambios de producción. Review independiente PASSED en progress/review_62-critical-use-case-tests.md."
+    "notes": "Completada 2026-07-13. Se agregaron 4 suites y 25 casos unitarios para scoring, tareas, authz y clientes; la cobertura existente de pipeline y actividades fue validada. Resultado final: ESLint PASS sin errores/warnings, 11 suites/60 tests PASS y tsc PASS, sin DB/red ni cambios de producción. Review independiente PASSED en progress/review_62-critical-use-case-tests.md."
   },
   {
     "id": "63-refresh-tokens",

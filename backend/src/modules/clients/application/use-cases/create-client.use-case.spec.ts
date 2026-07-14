@@ -46,19 +46,18 @@ const makeClient = (overrides: Partial<ClientEntity> = {}): ClientEntity =>
     ...overrides,
   });
 
-const makeRepo = (): MockClientRepository =>
-  ({
-    findById: jest.fn(),
-    findAll: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
-    findBySellerId: jest.fn(),
-    findWithFilters: jest.fn(),
-    checkDuplicates: jest.fn(),
-    addContact: jest.fn(),
-    syncContacts: jest.fn(),
-  }) as MockClientRepository;
+const makeRepo = (): MockClientRepository => ({
+  findById: jest.fn(),
+  findAll: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  softDelete: jest.fn(),
+  findBySellerId: jest.fn(),
+  findWithFilters: jest.fn(),
+  checkDuplicates: jest.fn(),
+  addContact: jest.fn(),
+  syncContacts: jest.fn(),
+});
 
 const prepareRepo = (): MockClientRepository => {
   const repo = makeRepo();
@@ -78,9 +77,9 @@ describe('CreateClientUseCase', () => {
       user: makeUser(UserRole.Seller, 'seller-authenticated'),
     });
 
-    expect(repo.create).toHaveBeenCalledWith(
+    expect(repo.create.mock.calls).toContainEqual([
       expect.objectContaining({ sellerId: 'seller-authenticated' }),
-    );
+    ]);
   });
 
   it.each([UserRole.Admin, UserRole.Director])(
@@ -93,9 +92,9 @@ describe('CreateClientUseCase', () => {
         user: makeUser(role),
       });
 
-      expect(repo.create).toHaveBeenCalledWith(
+      expect(repo.create.mock.calls).toContainEqual([
         expect.objectContaining({ sellerId: 'seller-selected' }),
-      );
+      ]);
     },
   );
 
@@ -108,7 +107,7 @@ describe('CreateClientUseCase', () => {
         user: makeUser(UserRole.Seller),
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(repo.create).not.toHaveBeenCalled();
+    expect(repo.create.mock.calls).toHaveLength(0);
   });
 
   it.each([UserRole.Admin, UserRole.Director])(
@@ -122,7 +121,7 @@ describe('CreateClientUseCase', () => {
           user: makeUser(role),
         }),
       ).rejects.toBeInstanceOf(BadRequestException);
-      expect(repo.create).not.toHaveBeenCalled();
+      expect(repo.create.mock.calls).toHaveLength(0);
     },
   );
 
@@ -139,11 +138,10 @@ describe('CreateClientUseCase', () => {
         user: makeUser(UserRole.Admin),
       }),
     ).rejects.toBeInstanceOf(ConflictException);
-    expect(repo.checkDuplicates).toHaveBeenCalledWith({
-      name: baseDto.name,
-      domain: baseDto.domain,
-    });
-    expect(repo.create).not.toHaveBeenCalled();
+    expect(repo.checkDuplicates.mock.calls).toContainEqual([
+      { name: baseDto.name, domain: baseDto.domain },
+    ]);
+    expect(repo.create.mock.calls).toHaveLength(0);
   });
 
   it.each([
@@ -167,11 +165,8 @@ describe('CreateClientUseCase', () => {
         user: makeUser(UserRole.Director),
       }),
     ).rejects.toBeInstanceOf(ConflictException);
-    expect(repo.checkDuplicates).toHaveBeenLastCalledWith({
-      phone,
-      email,
-    });
-    expect(repo.create).not.toHaveBeenCalled();
+    expect(repo.checkDuplicates.mock.calls.at(-1)).toEqual([{ phone, email }]);
+    expect(repo.create.mock.calls).toHaveLength(0);
   });
 
   it.each([
@@ -200,8 +195,8 @@ describe('CreateClientUseCase', () => {
           user: makeUser(UserRole.Admin),
         }),
       ).rejects.toBeInstanceOf(ConflictException);
-      expect(repo.checkDuplicates).not.toHaveBeenCalled();
-      expect(repo.create).not.toHaveBeenCalled();
+      expect(repo.checkDuplicates.mock.calls).toHaveLength(0);
+      expect(repo.create.mock.calls).toHaveLength(0);
     },
   );
 });
