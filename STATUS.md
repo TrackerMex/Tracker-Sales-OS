@@ -1,6 +1,6 @@
 # Tracker Sales OS — Status
 
-**Última actualización**: 2026-07-02
+**Última actualización**: 2026-07-14
 **Features completadas**: 47/47 (hasta feature 47 inclusive)
 **Pendiente registrada (no implementada)**: feature 48 — combobox buscable de selección de cliente
 **En producción**: sí
@@ -8,6 +8,18 @@
 ---
 
 ## Features recientes (esta sesión)
+
+### Consolidación del sistema visual — planes en `plans/` (2026-07-14)
+
+Origen: crítica de UI (`.impeccable/critique/2026-07-15T03-30-46Z__frontend-src.md`): 461 estilos inline, 23 botones nativos, sistema visual desviado de shadcn/ui. Se generaron 5 planes ejecutables autocontenidos en `plans/` (skill improve, base `cc0b102`; índice y dependencias en `plans/README.md`):
+
+- **001** Registrar tokens `--tracker-*` en Tailwind `@theme` — **DONE**. Ejecutado por subagente en worktree aislado, revisado y aprobado (typecheck/lint/build + CSS generado verificados). Commit `73ab7ed` en branch `worktree-agent-a874e0049278422a7`; el usuario lo mergea a `review-ui`. Smoke visual del header pendiente post-merge.
+- **002** Migrar 23 botones nativos a shadcn `Button` (+ borrar CSS muerto `.btn-*`) — TODO, desbloqueado tras merge de 001.
+- **003** Eliminar ~197 estilos inline en pipeline/tasks/dashboard/activities — TODO (depende 001, 002).
+- **004** Eliminar ~258 restantes incl. ExecutiveSlide + fix transiciones `width`→`scaleX` — TODO (depende 001, 003).
+- **005** Paleta de comandos Ctrl+K + peek de deal (CommandDialog, NAV_SECTIONS compartido, Peek primitives) — TODO (depende 001, 003).
+
+Próximo paso: mergear `worktree-agent-a874e0049278422a7` a `review-ui`, limpiar worktree, y ejecutar plan 002 (`execute plans/002`).
 
 ### Auditoría de bugs 2026-07-01 → 3 fixes (features 45, 46, 47)
 
