@@ -725,10 +725,10 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] `rg -c 'btn-(primary|green|ghost|danger|sm)' frontend/src` no devuelve coincidencias
 
 **Comportamiento y verificación:**
-- [ ] El `TaskChip` conserva el mismo nodo button mediante `ref`, mantiene drag-and-drop, opacidad dinámica durante drag y apertura de edición al hacer click
+- [x] El `TaskChip` conserva el mismo nodo button mediante `ref`, mantiene drag-and-drop, opacidad dinámica durante drag y apertura de edición al hacer click
 - [x] Los controles conservan `onClick`, `disabled`, `type`, `title`, `aria-*` y estilos dinámicos necesarios; los botones icon-only nuevos tienen nombre accesible
 - [x] `npm run typecheck`, `npm run lint` y `npm run build` pasan en `frontend/`
 - [x] No hay cambios fuera del alcance indicado en `plans/002-native-buttons-to-shadcn.md`
 - [x] Resumen guardado en `progress/impl_72-visual-system-native-buttons.md` y estado del plan 002 actualizado en `plans/README.md`
 
-**Reviewer 2026-07-15**: PASSED (code/pre-smoke), 9/10 criterios verificados. `/login` carga y sus botones migrados son interactivos; las rutas autenticadas y el drag de `/agenda` siguen pendientes porque el backend local no estaba disponible. Ver `progress/impl_72-visual-system-native-buttons.md`.
+**Reviewer 2026-07-15**: PASSED 10/10. Gates técnicos y revisión estática aprobados; smoke autenticado posterior del Líder cubrió Login, Clientes, detalle de Pipeline, Actividad, creación de Tarea y Agenda sin errores de consola. `TaskChip` conserva nodo button, `draggable="true"`, cursor, opacidad y apertura de edición; el usuario confirmó manualmente el movimiento efectivo entre días. Ver `progress/impl_72-visual-system-native-buttons.md`.

@@ -68,6 +68,25 @@ pendientes, sin afirmarse como aprobadas:
   ni verificar las rutas protegidas o el drag-and-drop de `/agenda`. Ese único
   criterio permanece abierto y no se declara aprobado.
 
+## Cierre del smoke autenticado
+
+El 2026-07-15 se repitió el smoke con backend local disponible:
+
+- Login administrativo exitoso.
+- `/clientes`: filtros, nombres y acciones migradas renderizan correctamente.
+- `/pipeline`: se abrió un deal y se verificaron cierre, stepper y
+  `Registrar avance`.
+- `/actividades/nueva`: se abrió el formulario y se verificaron los toggles
+  migrados.
+- `/agenda`: se abrió `CreateTaskForm`, incluida la acción
+  `Obtener sugerencias`; en Calendario se verificaron navegación y chips.
+- `TaskChip` conserva `button`, `draggable="true"`, cursor `grab`, opacidad
+  dinámica y click que abre `Editar tarea`.
+- Consola del navegador: sin errores durante el recorrido autenticado.
+- El usuario confirmó manualmente que el drag-and-drop mueve la tarea entre
+  días. Con esa prueba física y la inspección independiente, el CHECKPOINT
+  queda **PASSED 10/10**.
+
 ## Confirmación de alcance
 
 No se modificaron `MiDiaPage.tsx`, tests, `button-variants.ts`, dependencias,

@@ -15,7 +15,7 @@ conditions y actualiza su fila al terminar.
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
 | 001 | Registrar tokens `--tracker-*` en Tailwind theme | P1 | S | — | DONE (commit `73ab7ed` en branch `worktree-agent-a874e0049278422a7`, pendiente de merge por el usuario; smoke visual del header pendiente post-merge) |
-| 002 | Migrar 23 botones nativos a shadcn Button | P1 | M | 001 | IN PROGRESS (implementación y gates técnicos completos; smoke autenticado y drag-and-drop pendientes porque el backend local no estaba disponible) |
+| 002 | Migrar 23 botones nativos a shadcn Button | P1 | M | 001 | DONE (implementación, gates, smoke autenticado y drag-and-drop verificados; CHECKPOINT 10/10) |
 | 003 | Eliminar estilos inline: módulos núcleo | P1 | L | 001, 002 | TODO |
 | 004 | Eliminar estilos inline: módulos restantes | P2 | L | 001, 003 | TODO |
 | 005 | Paleta de comandos + peek de deal | P2 | M | 001, 003 | TODO |

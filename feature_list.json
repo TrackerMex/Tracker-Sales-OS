@@ -741,7 +741,7 @@
     "id": "72-visual-system-native-buttons",
     "name": "Sistema visual: migrar botones nativos residuales a shadcn",
     "description": "Ejecutar el plan visual 002: migrar 22 botones HTML nativos residuales de módulos a Button de shadcn/ui, conservar la seller-pick-card como única excepción documentada y eliminar las reglas CSS legacy .btn-* sin uso.",
-    "status": "in_progress",
+    "status": "done",
     "priority": 72,
     "backend_modules": [],
     "frontend_modules": [
@@ -751,6 +751,6 @@
       "clients",
       "pipeline"
     ],
-    "notes": "Origen: plans/002-native-buttons-to-shadcn.md, solicitado por el usuario el 2026-07-15. Continúa la consolidación iniciada en feature 53 sin reabrir su historial. Dependencia plan 001 satisfecha. Implementación y gates técnicos PASSED (code/pre-smoke) 2026-07-15; /login verificado, pendiente smoke autenticado y drag-and-drop de /agenda porque el backend local no estaba disponible."
+    "notes": "Origen: plans/002-native-buttons-to-shadcn.md, solicitado por el usuario el 2026-07-15. Continúa la consolidación iniciada en feature 53 sin reabrir su historial. Dependencia plan 001 satisfecha. Completada 2026-07-15: implementación, typecheck, lint, build, conteos residuales y smoke autenticado PASSED; CHECKPOINT 10/10. El Líder verificó Login, Clientes, detalle de Pipeline, Actividad, creación de Tarea y Agenda sin errores de consola; TaskChip conserva draggable, cursor, opacidad y apertura de edición, y el usuario confirmó manualmente el movimiento entre días."
   }
 ]
