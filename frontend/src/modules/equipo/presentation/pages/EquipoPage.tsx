@@ -42,6 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { cn } from "@/lib/utils"
 
 type EquipoConfirmAction =
   | { kind: "user"; target: EquipoUser }
@@ -63,7 +64,8 @@ export function EquipoPage() {
   const [userName, setUserName] = useState("")
   const [userRole, setUserRole] = useState<string>("Seller")
   const [userSellerId, setUserSellerId] = useState<string>("")
-  const [confirmAction, setConfirmAction] = useState<EquipoConfirmAction | null>(null)
+  const [confirmAction, setConfirmAction] =
+    useState<EquipoConfirmAction | null>(null)
 
   const isConfirmPending = blockUser.isPending || deactivateSeller.isPending
   const confirmLabel = confirmAction
@@ -80,7 +82,9 @@ export function EquipoPage() {
       ? confirmAction.target.name || confirmAction.target.username
       : confirmAction.target.name
     : ""
-  const confirmVariant = confirmAction?.target.active ? "destructive" : "default"
+  const confirmVariant = confirmAction?.target.active
+    ? "destructive"
+    : "default"
 
   function handleConfirmAction() {
     if (!confirmAction || isConfirmPending) return
@@ -111,7 +115,8 @@ export function EquipoPage() {
       { name: sellerName, profile: sellerProfile || undefined },
       {
         onSuccess: () => {
-          setSellerName(""); setSellerProfile("")
+          setSellerName("")
+          setSellerProfile("")
           toast.success("Vendedor creado")
         },
         onError: () => toast.error("No se pudo crear el vendedor"),
@@ -131,8 +136,11 @@ export function EquipoPage() {
       },
       {
         onSuccess: () => {
-          setUserUsername(""); setUserPassword(""); setUserName("")
-          setUserRole("Seller"); setUserSellerId("")
+          setUserUsername("")
+          setUserPassword("")
+          setUserName("")
+          setUserRole("Seller")
+          setUserSellerId("")
           toast.success("Usuario creado")
         },
         onError: () => toast.error("No se pudo crear el usuario"),
@@ -141,11 +149,11 @@ export function EquipoPage() {
   }
 
   return (
-    <div className="p-6 space-y-8">
-      <h2 className="text-xl font-black" style={{ color: "#002B49" }}>Equipo Comercial</h2>
+    <div className="space-y-8 p-6">
+      <h2 className="text-xl font-black text-tracker-blue">Equipo Comercial</h2>
 
       {/* Forms grid */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+      <div className="grid grid-cols-3 gap-4">
         {/* Alta comercial */}
         <div className="card p-5">
           <div className="slabel mb-4">Alta comercial</div>
@@ -161,7 +169,11 @@ export function EquipoPage() {
               onChange={(e) => setSellerProfile(e.target.value)}
               placeholder="Perfil / foco comercial"
             />
-            <Button type="submit" disabled={createSeller.isPending} className="justify-center">
+            <Button
+              type="submit"
+              disabled={createSeller.isPending}
+              className="justify-center"
+            >
               {createSeller.isPending ? "Guardando..." : "Guardar comercial"}
             </Button>
           </form>
@@ -204,13 +216,22 @@ export function EquipoPage() {
                   <SelectValue placeholder="Seleccionar vendedor" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sellers?.filter(s => s.active).map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
+                  {sellers
+                    ?.filter((s) => s.active)
+                    .map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             )}
-            <Button type="submit" disabled={createUser.isPending} variant="success" className="justify-center">
+            <Button
+              type="submit"
+              disabled={createUser.isPending}
+              variant="success"
+              className="justify-center"
+            >
               {createUser.isPending ? "Creando..." : "Crear acceso"}
             </Button>
           </form>
@@ -219,19 +240,25 @@ export function EquipoPage() {
         {/* Usuarios del sistema */}
         <div className="card p-5">
           <div className="slabel mb-4">Usuarios del sistema</div>
-          <div className="flex flex-col gap-2 max-h-[320px] overflow-y-auto">
+          <div className="flex max-h-[320px] flex-col gap-2 overflow-y-auto">
             {loadingUsers ? (
-              <p className="text-xs" style={{ color: "#94A3B8" }}>Cargando...</p>
+              <p className="text-xs text-tracker-text-muted">Cargando...</p>
             ) : (
               usersData?.data.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between rounded-lg px-3 py-2"
-                  style={{ background: "#F8FAFC", opacity: user.active ? 1 : 0.5 }}
+                  className={cn(
+                    "flex items-center justify-between rounded-lg bg-tracker-surface-alt px-3 py-2",
+                    !user.active && "opacity-50"
+                  )}
                 >
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: "#0F172A" }}>{user.name || user.username}</p>
-                    <p className="text-xs" style={{ color: "#94A3B8" }}>{user.username} · {user.role}</p>
+                    <p className="text-sm font-semibold text-tracker-text">
+                      {user.name || user.username}
+                    </p>
+                    <p className="text-xs text-tracker-text-muted">
+                      {user.username} · {user.role}
+                    </p>
                   </div>
                   <DropdownMenu>
                     <Tooltip>
@@ -240,10 +267,15 @@ export function EquipoPage() {
                           <Button
                             variant="ghost"
                             size="icon-xs"
-                            disabled={blockUser.isPending || user.username === "admin"}
+                            disabled={
+                              blockUser.isPending || user.username === "admin"
+                            }
                             aria-label={`Acciones de usuario ${user.username}`}
                           >
-                            <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                            <HugeiconsIcon
+                              icon={MoreHorizontalCircle01Icon}
+                              strokeWidth={2}
+                            />
                           </Button>
                         </DropdownMenuTrigger>
                       </TooltipTrigger>
@@ -252,7 +284,9 @@ export function EquipoPage() {
                     <DropdownMenuContent align="end" className="min-w-44">
                       <DropdownMenuItem
                         variant={user.active ? "destructive" : "default"}
-                        onSelect={() => setConfirmAction({ kind: "user", target: user })}
+                        onSelect={() =>
+                          setConfirmAction({ kind: "user", target: user })
+                        }
                       >
                         {user.active ? "Bloquear usuario" : "Activar usuario"}
                       </DropdownMenuItem>
@@ -269,18 +303,24 @@ export function EquipoPage() {
       <div className="card p-5">
         <div className="slabel mb-4">Equipo comercial</div>
         {loadingSellers ? (
-          <p className="text-xs" style={{ color: "#94A3B8" }}>Cargando...</p>
+          <p className="text-xs text-tracker-text-muted">Cargando...</p>
         ) : (
-          <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-2">
             {sellers?.map((seller) => (
               <div
                 key={seller.id}
-                className="seller-row flex items-center justify-between"
-                style={{ opacity: seller.active ? 1 : 0.5 }}
+                className={cn(
+                  "seller-row flex items-center justify-between",
+                  !seller.active && "opacity-50"
+                )}
               >
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: "#0F172A" }}>{seller.name}</p>
-                  <p className="text-xs" style={{ color: "#94A3B8", marginTop: 2 }}>{seller.profile || "Sin perfil"}</p>
+                  <p className="text-sm font-semibold text-tracker-text">
+                    {seller.name}
+                  </p>
+                  <p className="mt-0.5 text-xs text-tracker-text-muted">
+                    {seller.profile || "Sin perfil"}
+                  </p>
                 </div>
                 <DropdownMenu>
                   <Tooltip>
@@ -292,7 +332,10 @@ export function EquipoPage() {
                           disabled={deactivateSeller.isPending}
                           aria-label={`Acciones de vendedor ${seller.name}`}
                         >
-                          <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                          <HugeiconsIcon
+                            icon={MoreHorizontalCircle01Icon}
+                            strokeWidth={2}
+                          />
                         </Button>
                       </DropdownMenuTrigger>
                     </TooltipTrigger>
@@ -301,9 +344,13 @@ export function EquipoPage() {
                   <DropdownMenuContent align="end" className="min-w-44">
                     <DropdownMenuItem
                       variant={seller.active ? "destructive" : "default"}
-                      onSelect={() => setConfirmAction({ kind: "seller", target: seller })}
+                      onSelect={() =>
+                        setConfirmAction({ kind: "seller", target: seller })
+                      }
                     >
-                      {seller.active ? "Dar baja vendedor" : "Reactivar vendedor"}
+                      {seller.active
+                        ? "Dar baja vendedor"
+                        : "Reactivar vendedor"}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -323,12 +370,15 @@ export function EquipoPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{confirmLabel}</AlertDialogTitle>
             <AlertDialogDescription>
-              Confirma que quieres {confirmLabel.toLowerCase()} a {confirmTargetName}.
-              Esta acción actualizará el estado en Equipo Comercial.
+              Confirma que quieres {confirmLabel.toLowerCase()} a{" "}
+              {confirmTargetName}. Esta acción actualizará el estado en Equipo
+              Comercial.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isConfirmPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isConfirmPending}>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               variant={confirmVariant}
               disabled={isConfirmPending}
