@@ -67,10 +67,11 @@ export function AgendaPage() {
 
   const currentUser = useAppStore((s) => s.currentUser)
   const isAdminOrDirector =
-    currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Director
+    currentUser?.role === UserRole.Admin ||
+    currentUser?.role === UserRole.Director
 
   const [selectedSeller, setSelectedSeller] = useState<string>(() => {
-    return localStorage.getItem('tasks_team_seller_filter') ?? 'all'
+    return localStorage.getItem("tasks_team_seller_filter") ?? "all"
   })
 
   const { data: sellers = [] } = useSellers()
@@ -97,7 +98,7 @@ export function AgendaPage() {
   const { data: teamMonthTasksRaw = [] } = useTeamMonthTasks(
     calYear,
     calMonth,
-    isAdminOrDirector,
+    isAdminOrDirector
   )
 
   const sellerMap = Object.fromEntries(sellers.map((s) => [s.id, s.name]))
@@ -108,7 +109,7 @@ export function AgendaPage() {
   }))
 
   const monthTasks = isAdminOrDirector
-    ? selectedSeller === 'all'
+    ? selectedSeller === "all"
       ? enrichedTeamTasks
       : enrichedTeamTasks.filter((t) => t.sellerId === selectedSeller)
     : monthTasksRaw
@@ -170,7 +171,9 @@ export function AgendaPage() {
             ...(completedTask.clientId
               ? { clientId: completedTask.clientId }
               : {}),
-            ...(completedTask.clientName ? { clientName: completedTask.clientName } : {}),
+            ...(completedTask.clientName
+              ? { clientName: completedTask.clientName }
+              : {}),
             ...(task?.title ? { taskTitle: task.title } : {}),
             taskId: taskId,
           },
@@ -221,16 +224,16 @@ export function AgendaPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>
+        <h1 className="text-sm font-bold text-tracker-text">
           Compromisos comerciales
         </h1>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="flex items-center gap-2">
           {viewMode === "calendar" && isAdminOrDirector && (
             <Select
               value={selectedSeller}
               onValueChange={(value) => {
                 setSelectedSeller(value)
-                localStorage.setItem('tasks_team_seller_filter', value)
+                localStorage.setItem("tasks_team_seller_filter", value)
               }}
             >
               <SelectTrigger className="h-8 w-[190px] rounded-md bg-white px-2 py-1 text-[13px]">
@@ -246,7 +249,12 @@ export function AgendaPage() {
               </SelectContent>
             </Select>
           )}
-          <Tabs value={viewMode} onValueChange={(value) => handleToggleView(value as "list" | "calendar")}>
+          <Tabs
+            value={viewMode}
+            onValueChange={(value) =>
+              handleToggleView(value as "list" | "calendar")
+            }
+          >
             <TabsList>
               <TabsTrigger value="list">Lista</TabsTrigger>
               <TabsTrigger value="calendar">Calendario</TabsTrigger>

@@ -1,49 +1,59 @@
-import { useState } from 'react'
-import type { Task, UpdateTaskInput } from '../../domain/tasks.types'
-import type { Client } from '../../../clients/domain/clients.types'
-import { useApiFormErrors } from '@/shared/lib/api-errors'
-import { FormErrorSummary } from '@/shared/components/forms/FormErrorSummary'
-import { FieldError } from '@/shared/components/forms/FieldError'
-import { fieldErrorProps } from '@/shared/components/forms/field-error-props'
-import { ClientCombobox } from '@/shared/components/forms/ClientCombobox'
-import { DatePickerField } from '@/shared/components/forms/DatePickerField'
-import { TimePickerField } from '@/shared/components/forms/TimePickerField'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { useState } from "react"
+import type { Task, UpdateTaskInput } from "../../domain/tasks.types"
+import type { Client } from "../../../clients/domain/clients.types"
+import { useApiFormErrors } from "@/shared/lib/api-errors"
+import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
+import { FieldError } from "@/shared/components/forms/FieldError"
+import { fieldErrorProps } from "@/shared/components/forms/field-error-props"
+import { ClientCombobox } from "@/shared/components/forms/ClientCombobox"
+import { DatePickerField } from "@/shared/components/forms/DatePickerField"
+import { TimePickerField } from "@/shared/components/forms/TimePickerField"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select"
 
 const TASK_TYPES = [
-  'Chat',
-  'WhatsApp',
-  'Correo',
-  'Llamada',
-  'Videoconferencia',
-  'Reunión virtual',
-  'Visita física',
-  'Reunión presencial',
-  'Propuesta',
-  'Seguimiento',
-  'Cierre',
-  'Solicitud de factura/servicio',
-  'Junta interna',
-  'Prospección',
+  "Chat",
+  "WhatsApp",
+  "Correo",
+  "Llamada",
+  "Videoconferencia",
+  "Reunión virtual",
+  "Visita física",
+  "Reunión presencial",
+  "Propuesta",
+  "Seguimiento",
+  "Cierre",
+  "Solicitud de factura/servicio",
+  "Junta interna",
+  "Prospección",
 ]
 
-const OUTLOOK_TYPES = new Set(['Videoconferencia', 'Reunión virtual', 'Visita física', 'Reunión presencial'])
+const OUTLOOK_TYPES = new Set([
+  "Videoconferencia",
+  "Reunión virtual",
+  "Visita física",
+  "Reunión presencial",
+])
 
 function toDateInput(iso: string): string {
   return iso.slice(0, 10)
@@ -51,7 +61,7 @@ function toDateInput(iso: string): string {
 
 function toTimeInput(iso: string): string {
   const d = new Date(iso)
-  const pad = (n: number) => String(n).padStart(2, '0')
+  const pad = (n: number) => String(n).padStart(2, "0")
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
@@ -63,17 +73,28 @@ interface EditTaskFormProps {
   error?: unknown
 }
 
-export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error }: EditTaskFormProps) {
-  const { summary: errorSummary, fieldErrors, clearField, formRef } = useApiFormErrors(error)
+export function EditTaskForm({
+  task,
+  onSubmit,
+  onClose,
+  isLoading = false,
+  error,
+}: EditTaskFormProps) {
+  const {
+    summary: errorSummary,
+    fieldErrors,
+    clearField,
+    formRef,
+  } = useApiFormErrors(error)
 
-  const [clientId, setClientId] = useState(task.clientId ?? '')
+  const [clientId, setClientId] = useState(task.clientId ?? "")
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const [type, setType] = useState(task.type ?? 'Llamada')
-  const [contactId, setContactId] = useState(task.contactId ?? '')
+  const [type, setType] = useState(task.type ?? "Llamada")
+  const [contactId, setContactId] = useState(task.contactId ?? "")
   const [objective, setObjective] = useState(task.title)
   const [date, setDate] = useState(toDateInput(task.scheduledAt))
   const [time, setTime] = useState(toTimeInput(task.scheduledAt))
-  const [description, setDescription] = useState(task.description ?? '')
+  const [description, setDescription] = useState(task.description ?? "")
 
   const contacts = selectedClient?.contacts ?? []
   const showOutlookReminder = OUTLOOK_TYPES.has(type)
@@ -93,27 +114,34 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
   }
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="w-[min(calc(100vw-2rem),780px)] max-w-none max-h-[92vh] overflow-y-auto sm:max-w-none">
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <DialogContent className="max-h-[92vh] w-[min(calc(100vw-2rem),780px)] max-w-none overflow-y-auto sm:max-w-none">
         <DialogHeader>
           <DialogTitle>Editar tarea</DialogTitle>
-          <DialogDescription>
-            Modifica los datos de la tarea.
-          </DialogDescription>
+          <DialogDescription>Modifica los datos de la tarea.</DialogDescription>
         </DialogHeader>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-[11px]">
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-[11px]"
+        >
           <FormErrorSummary error={errorSummary} />
 
           <div>
             <ClientCombobox
               value={clientId}
               onSelect={(client) => {
-                const changed = (client?.id ?? '') !== clientId
-                setClientId(client?.id ?? '')
+                const changed = (client?.id ?? "") !== clientId
+                setClientId(client?.id ?? "")
                 setSelectedClient(client)
-                if (changed) setContactId('')
-                clearField('clientId')
+                if (changed) setContactId("")
+                clearField("clientId")
               }}
               onResolve={(client) => setSelectedClient(client)}
               initialLabel={task.clientName}
@@ -127,13 +155,20 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
             <div>
               <Select
                 value={type}
-                onValueChange={(v) => { setType(v); clearField('type') }}
+                onValueChange={(v) => {
+                  setType(v)
+                  clearField("type")
+                }}
               >
-                <SelectTrigger {...fieldErrorProps('type', fieldErrors.type)}>
+                <SelectTrigger {...fieldErrorProps("type", fieldErrors.type)}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TASK_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  {TASK_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FieldError name="type" message={fieldErrors.type} />
@@ -141,19 +176,29 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
             <div>
               <Select
                 value={contactId}
-                onValueChange={(v) => { setContactId(v === '__none__' ? '' : v); clearField('contactId') }}
+                onValueChange={(v) => {
+                  setContactId(v === "__none__" ? "" : v)
+                  clearField("contactId")
+                }}
                 disabled={!selectedClient}
               >
-                <SelectTrigger {...fieldErrorProps('contactId', fieldErrors.contactId)}>
+                <SelectTrigger
+                  {...fieldErrorProps("contactId", fieldErrors.contactId)}
+                >
                   <SelectValue
-                    placeholder={selectedClient ? 'Selecciona un contacto' : 'Selecciona primero una empresa'}
+                    placeholder={
+                      selectedClient
+                        ? "Selecciona un contacto"
+                        : "Selecciona primero una empresa"
+                    }
                   />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">Sin contacto</SelectItem>
                   {contacts.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      {c.name}{c.role ? ` · ${c.role}` : ''}
+                      {c.name}
+                      {c.role ? ` · ${c.role}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -165,20 +210,29 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
           <div>
             <Textarea
               value={objective}
-              onChange={(e) => { setObjective(e.target.value); clearField('title') }}
+              onChange={(e) => {
+                setObjective(e.target.value)
+                clearField("title")
+              }}
               required
               placeholder="¿Qué vas a hacer y para qué?"
               className="h-[110px] resize-none"
-              {...fieldErrorProps('title', fieldErrors.title)}
+              {...fieldErrorProps("title", fieldErrors.title)}
             />
             <FieldError name="title" message={fieldErrors.title} />
           </div>
 
           <div>
-            {task.status === 'Completado' ? (
-              <div style={{ padding: '10px 12px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 12, color: '#64748B' }}>
-                <span style={{ fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Resultado esperado</span>
-                {description || <em style={{ color: '#94A3B8' }}>Sin resultado registrado</em>}
+            {task.status === "Completado" ? (
+              <div className="rounded-lg border border-tracker-border bg-tracker-surface-alt px-3 py-2.5 text-xs text-tracker-text-secondary">
+                <span className="mb-1 block font-semibold text-slate-700">
+                  Resultado esperado
+                </span>
+                {description || (
+                  <em className="text-tracker-text-muted">
+                    Sin resultado registrado
+                  </em>
+                )}
               </div>
             ) : (
               <Textarea
@@ -194,12 +248,18 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               <DatePickerField
                 value={date}
-                onChange={(v) => { setDate(v); clearField('scheduledAt') }}
-                {...fieldErrorProps('scheduledAt', fieldErrors.scheduledAt)}
+                onChange={(v) => {
+                  setDate(v)
+                  clearField("scheduledAt")
+                }}
+                {...fieldErrorProps("scheduledAt", fieldErrors.scheduledAt)}
               />
               <TimePickerField
                 value={time}
-                onChange={(v) => { setTime(v); clearField('scheduledAt') }}
+                onChange={(v) => {
+                  setTime(v)
+                  clearField("scheduledAt")
+                }}
                 aria-invalid={!!fieldErrors.scheduledAt}
               />
             </div>
@@ -211,8 +271,9 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
               <AccordionItem value="outlook">
                 <AccordionTrigger>Recordatorio Outlook</AccordionTrigger>
                 <AccordionContent>
-                  <div style={{ padding: '11px 13px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1D4ED8' }}>
-                    Recordatorio: si es videoconferencia o cita, actualízala también en Outlook.
+                  <div className="rounded-lg border border-[#BFDBFE] bg-blue-50 px-[13px] py-[11px] text-xs font-semibold text-[#1D4ED8]">
+                    Recordatorio: si es videoconferencia o cita, actualízala
+                    también en Outlook.
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -226,7 +287,7 @@ export function EditTaskForm({ task, onSubmit, onClose, isLoading = false, error
             size="lg"
             className="justify-center"
           >
-            {isLoading ? 'Guardando...' : 'Actualizar tarea'}
+            {isLoading ? "Guardando..." : "Actualizar tarea"}
           </Button>
         </form>
       </DialogContent>
