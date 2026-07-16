@@ -1,6 +1,6 @@
-import { useNavigate } from '@tanstack/react-router'
-import { useAppStore } from '@/shared/store/app.store'
-import { useLogout } from '@/modules/auth/application/hooks/useLogout'
+import { useNavigate } from "@tanstack/react-router"
+import { useAppStore } from "@/shared/store/app.store"
+import { useLogout } from "@/modules/auth/application/hooks/useLogout"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -20,9 +20,9 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { UnfoldMoreIcon, LogoutIcon } from "@hugeicons/core-free-icons"
 
 const ROLE_LABELS: Record<string, string> = {
-  Admin: 'Administrador',
-  Director: 'Director',
-  Seller: 'Vendedor',
+  Admin: "Administrador",
+  Director: "Director",
+  Seller: "Vendedor",
 }
 
 export function NavUser() {
@@ -35,9 +35,9 @@ export function NavUser() {
 
   const displayName = currentUser.name ?? currentUser.username
   const initials = displayName
-    .split(' ')
+    .split(" ")
     .map((n: string) => n[0])
-    .join('')
+    .join("")
     .slice(0, 2)
     .toUpperCase()
 
@@ -47,7 +47,7 @@ export function NavUser() {
     } catch {
       // best-effort: el logout local debe completarse aunque falle la red
     }
-    void navigate({ to: '/login' })
+    void navigate({ to: "/login" })
   }
 
   return (
@@ -60,17 +60,23 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback className="rounded-lg text-[11px] font-bold" style={{ background: 'rgba(130,188,0,0.2)', color: '#82bc00' }}>
+                <AvatarFallback className="rounded-lg bg-tracker-green/20 text-[11px] font-bold text-tracker-green">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{displayName}</span>
                 <span className="truncate text-xs opacity-60">
-                  {currentUser.role ? ROLE_LABELS[currentUser.role] ?? currentUser.role : ''}
+                  {currentUser.role
+                    ? (ROLE_LABELS[currentUser.role] ?? currentUser.role)
+                    : ""}
                 </span>
               </div>
-              <HugeiconsIcon icon={UnfoldMoreIcon} strokeWidth={2} className="ml-auto size-4" />
+              <HugeiconsIcon
+                icon={UnfoldMoreIcon}
+                strokeWidth={2}
+                className="ml-auto size-4"
+              />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -82,14 +88,16 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarFallback className="rounded-lg text-[11px] font-bold" style={{ background: 'rgba(130,188,0,0.15)', color: '#82bc00' }}>
+                  <AvatarFallback className="rounded-lg bg-tracker-green/15 text-[11px] font-bold text-tracker-green">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{displayName}</span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {currentUser.role ? ROLE_LABELS[currentUser.role] ?? currentUser.role : ''}
+                    {currentUser.role
+                      ? (ROLE_LABELS[currentUser.role] ?? currentUser.role)
+                      : ""}
                   </span>
                 </div>
               </div>

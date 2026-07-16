@@ -1,4 +1,4 @@
-import type { ParsedApiError } from '@/shared/lib/api-errors'
+import type { ParsedApiError } from "@/shared/lib/api-errors"
 
 interface Props {
   error: ParsedApiError | null
@@ -11,8 +11,7 @@ export function FormErrorSummary({ error, className }: Props) {
   return (
     <div
       role="alert"
-      className={`flex items-start gap-2.5 rounded-lg px-3.5 py-3${className ? ` ${className}` : ''}`}
-      style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#b91c1c' }}
+      className={`flex items-start gap-2.5 rounded-lg border border-red-300 bg-red-100 px-3.5 py-3 text-tracker-danger-dark${className ? ` ${className}` : ""}`}
     >
       <svg
         width="14"
@@ -24,13 +23,13 @@ export function FormErrorSummary({ error, className }: Props) {
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
-        style={{ flexShrink: 0, marginTop: 1 }}
+        className="mt-px shrink-0"
       >
         <circle cx="12" cy="12" r="10" />
         <line x1="12" y1="8" x2="12" y2="12" />
         <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
-      <div className="text-xs font-medium leading-relaxed">
+      <div className="text-xs leading-relaxed font-medium">
         <p>{single ? error.details[0] : error.message}</p>
         {error.details.length > 1 && (
           <ul className="mt-1 list-disc space-y-0.5 pl-4">
