@@ -291,14 +291,16 @@ export function CreateTaskForm({ onSubmit, onClose, isLoading = false, error, in
                 <div className="ai-box">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                     <span style={{ fontSize: 12, fontWeight: 600, color: '#7c3aed' }}>Sugerencias IA</span>
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="xs"
                       onClick={fetchAiSuggestions}
                       disabled={aiLoading}
-                      style={{ fontSize: 11, fontWeight: 600, color: '#7c3aed', background: 'none', border: '1px solid #c4b5fd', borderRadius: 6, padding: '2px 10px', cursor: 'pointer' }}
+                      className="border-[#c4b5fd] text-tracker-purple"
                     >
                       {aiLoading ? 'Cargando...' : 'Obtener sugerencias'}
-                    </button>
+                    </Button>
                   </div>
                   {aiTips.length > 0 ? (
                     <ul style={{ paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>

@@ -101,12 +101,15 @@ export function ClientDetailPage({ deal, onBack }: Props) {
             {deal.sellerName ?? ''}{deal.sellerName ? ' · ' : ''}Oportunidad principal
           </p>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={onBack}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#94A3B8', lineHeight: 1 }}
+          aria-label="Cerrar"
+          className="bg-transparent text-[22px] leading-none text-tracker-text-muted hover:bg-slate-100"
         >
           ×
-        </button>
+        </Button>
       </div>
 
       {/* Stage Stepper */}
@@ -122,21 +125,19 @@ export function ClientDetailPage({ deal, onBack }: Props) {
             const isCurrent = idx === currentIdx
             return (
               <Fragment key={s}>
-                <button
+                <Button
+                  size="icon-xs"
                   title={s}
                   onClick={() => handleStageChange(s)}
                   disabled={isCurrent}
+                  className="size-7 rounded-full border-none text-white"
                   style={{
-                    width: 28, height: 28, borderRadius: '50%', border: 'none',
-                    cursor: isCurrent ? 'default' : 'pointer',
                     background: isCurrent ? (STAGE_COLORS[s] ?? '#002B49') : isPast ? '#94A3B8' : '#E2E8F0',
                     color: (isCurrent || isPast) ? '#fff' : '#94A3B8',
-                    fontSize: 10, fontWeight: 700, flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >
                   {idx + 1}
-                </button>
+                </Button>
                 {idx < STAGE_ORDER.length - 1 && (
                   <div style={{ flex: 1, height: 2, background: isPast ? '#94A3B8' : '#E2E8F0', minWidth: 8 }} />
                 )}
@@ -145,21 +146,19 @@ export function ClientDetailPage({ deal, onBack }: Props) {
           })}
           <div style={{ width: 16 }} />
           {/* Perdido button */}
-          <button
+          <Button
+            size="icon-xs"
             title="Perdido"
             onClick={() => handleStageChange('Perdido')}
             disabled={deal.stage === 'Perdido'}
+            className="size-7 rounded-full border border-[#FCA5A5] text-white"
             style={{
-              width: 28, height: 28, borderRadius: '50%', border: '1px solid #FCA5A5',
-              cursor: deal.stage === 'Perdido' ? 'default' : 'pointer',
               background: deal.stage === 'Perdido' ? '#DC2626' : '#FEF2F2',
               color: deal.stage === 'Perdido' ? '#fff' : '#DC2626',
-              fontSize: 14, fontWeight: 700, flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
             ×
-          </button>
+          </Button>
         </div>
 
         {/* Labels */}
@@ -326,15 +325,14 @@ export function ClientDetailPage({ deal, onBack }: Props) {
         padding: '16px 20px', borderTop: '1px solid #E2E8F0',
         position: 'sticky', bottom: 0, background: '#fff',
       }}>
-        <button
+        <Button
+          variant="success"
+          size="lg"
+          className="w-full"
           onClick={() => navigate({ to: "/actividades/nueva", search: { clientId: deal.clientId, clientName: deal.clientName } })}
-          style={{
-            width: '100%', padding: '10px 0', background: '#82bc00', color: '#fff',
-            border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-          }}
         >
           Registrar avance
-        </button>
+        </Button>
       </div>
 
       <ActivityHistoryModal
