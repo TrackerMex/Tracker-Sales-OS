@@ -567,7 +567,7 @@ export function ActivityForm({
         <FieldError name="summary" message={fieldErrors.summary} />
         <div className="prog mt-1.5">
           <div
-            className="prog-fill origin-left transition-transform"
+            className="prog-fill origin-left transition-transform! duration-400!"
             style={{
               transform: `scaleX(${quality / 100})`,
               backgroundColor: qualityColor,

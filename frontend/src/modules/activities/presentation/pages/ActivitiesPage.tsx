@@ -110,7 +110,7 @@ export function ActivitiesPage() {
         </div>
         <div className="prog">
           <div
-            className="prog-fill origin-left transition-transform"
+            className="prog-fill origin-left transition-transform! duration-400!"
             style={{
               transform: `scaleX(${pct / 100})`,
               backgroundColor: getPointsBarColor(pct),
@@ -197,7 +197,7 @@ export function ActivitiesPage() {
                 </p>
                 <div className="prog mt-2 max-w-[120px]">
                   <div
-                    className="prog-fill origin-left transition-transform"
+                    className="prog-fill origin-left transition-transform! duration-400!"
                     style={{
                       transform: `scaleX(${Math.min(activity.quality, 100) / 100})`,
                       backgroundColor: getPointsBarColor(activity.quality),

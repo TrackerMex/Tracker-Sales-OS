@@ -80,7 +80,7 @@ export function SellerSemaphoreTable({
           </div>
           <div className="prog mt-2">
             <div
-              className="prog-fill origin-left transition-transform"
+              className="prog-fill origin-left transition-transform! duration-400!"
               style={{
                 transform: `scaleX(${Math.min(seller.score, 100) / 100})`,
                 backgroundColor: getBarColor(seller.score),
