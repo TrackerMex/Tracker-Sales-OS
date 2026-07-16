@@ -17,7 +17,7 @@ conditions y actualiza su fila al terminar.
 | 001 | Registrar tokens `--tracker-*` en Tailwind theme | P1 | S | — | DONE (commit `73ab7ed` en branch `worktree-agent-a874e0049278422a7`, pendiente de merge por el usuario; smoke visual del header pendiente post-merge) |
 | 002 | Migrar 23 botones nativos a shadcn Button | P1 | M | 001 | DONE (implementación, gates, smoke autenticado y drag-and-drop verificados; CHECKPOINT 10/10) |
 | 003 | Eliminar estilos inline: módulos núcleo | P1 | L | 001, 002 | DONE (branch `advisor/003-inline-styles-core-modules`, commits `1ca2db7`–`13587fc`; review PASSED; smoke autenticado pendiente) |
-| 004 | Eliminar estilos inline: módulos restantes | P2 | L | 001, 003 | TODO |
+| 004 | Eliminar estilos inline: módulos restantes | P2 | L | 001, 003 | DONE (branch `advisor/004-inline-styles-remaining` sobre `959ca47`, commits `e00b70d`–`14645ee`; review Líder PASS: typecheck/lint/build exit 0 verificados independientemente; smoke visual de la lámina ejecutiva con datos reales pendiente — sin backend/DB en el sandbox del executor; pendiente de merge por el usuario) |
 | 005 | Paleta de comandos + peek de deal | P2 | M | 001, 003 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (con razón de una línea) | REJECTED (con justificación)
@@ -51,6 +51,21 @@ Las cuatro barras usan `scaleX`, `origin-left` y utilidades importantes de
 transición transform-only para prevalecer sobre el `transition-all` legacy de
 `.prog-fill`. Typecheck, lint y build pasaron; el smoke visual autenticado queda
 pendiente después del merge.
+
+### Plan 004 — whitelist de estilos dinámicos
+
+`style={{` sobrevivientes (6, todos justificados):
+
+- `MiDiaPage.tsx:390` — `transform: scaleX(ptsPct/100)`, puntos del día.
+- `ExecutiveSlide.tsx:57` (Bar) — `transform: scaleX(clamped/100)`, patrón del ejemplar del plan.
+- `ExecutiveSlide.tsx:94` — `fontFamily: Montserrat Variable`, identidad de la lámina (conservada a propósito).
+- `ExecutiveSlide.tsx:596` — `color: healthColor(ai.health)`, color de salud comercial por dato real.
+- `LaminaPage.tsx:37` — `fontFamily: Montserrat/Inter`, misma identidad en ruta standalone.
+- `CoachingPage.tsx` (helper `ProgressBar` nuevo) — `transform: scaleX(clamped/100)`, mismo patrón consolidado para no exceder presupuesto.
+
+`transition.*width` en `frontend/src` solo aparece en `components/ui/sidebar.tsx` (shadcn, fuera de alcance, animación de colapso del sidebar — no una barra de progreso).
+
+Pendiente real antes de mergear a `review-ui`: smoke visual de `/reportes` (lámina ejecutiva con datos de ventas reales) — el executor no tuvo backend/DB disponibles en su sandbox.
 
 ## Contexto compartido
 
