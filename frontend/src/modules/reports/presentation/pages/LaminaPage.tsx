@@ -1,47 +1,49 @@
-import { useSearch } from '@tanstack/react-router';
-import { useMonthlyReport } from '../../application/hooks/useMonthlyReport';
-import { useWinLoss } from '../../application/hooks/useWinLoss';
-import { ExecutiveSlide } from '../components/ExecutiveSlide';
+import { useSearch } from "@tanstack/react-router"
+import { useMonthlyReport } from "../../application/hooks/useMonthlyReport"
+import { useWinLoss } from "../../application/hooks/useWinLoss"
+import { ExecutiveSlide } from "../components/ExecutiveSlide"
 
 function currentMonth(): string {
-  return new Date().toISOString().slice(0, 7);
+  return new Date().toISOString().slice(0, 7)
 }
 
 export function LaminaPage() {
   const search = useSearch({ strict: false }) as {
-    month?: string;
-    goalAmount?: number;
-    goalUnits?: number;
-    goalPerSeller?: number;
-  };
+    month?: string
+    goalAmount?: number
+    goalUnits?: number
+    goalPerSeller?: number
+  }
 
-  const month = search.month ?? currentMonth();
-  const goalAmount = search.goalAmount ?? 600000;
-  const goalUnits = search.goalUnits ?? 150;
-  const goalPerSeller = search.goalPerSeller ?? 150000;
+  const month = search.month ?? currentMonth()
+  const goalAmount = search.goalAmount ?? 600000
+  const goalUnits = search.goalUnits ?? 150
+  const goalPerSeller = search.goalPerSeller ?? 150000
 
-  const { data, isLoading, error, dataUpdatedAt } = useMonthlyReport(month);
-  const { data: winLoss, isLoading: winLossLoading } = useWinLoss();
+  const { data, isLoading, error, dataUpdatedAt } = useMonthlyReport(month)
+  const { data: winLoss, isLoading: winLossLoading } = useWinLoss()
 
-  const updatedAt = dataUpdatedAt > 0
-    ? new Date(dataUpdatedAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
-    : null;
+  const updatedAt =
+    dataUpdatedAt > 0
+      ? new Date(dataUpdatedAt).toLocaleTimeString("es-MX", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#EEF2F7',
-      padding: '32px',
-      fontFamily: "'Montserrat','Inter',sans-serif",
-    }}>
-      <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+    <div
+      className="min-h-screen bg-tracker-bg p-8"
+      style={{ fontFamily: "'Montserrat','Inter',sans-serif" }}
+    >
+      <div className="mx-auto max-w-[1080px]">
         {isLoading && (
-          <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', paddingTop: 60 }}>
+          <p className="pt-[60px] text-center text-[13px] text-tracker-text-muted">
             Cargando reporte...
           </p>
         )}
         {error && (
-          <p style={{ fontSize: 13, color: '#EF4444', textAlign: 'center', paddingTop: 60 }}>
+          <p className="pt-[60px] text-center text-[13px] text-red-500">
             Error al cargar el reporte. Verifica que tengas acceso.
           </p>
         )}
@@ -57,10 +59,10 @@ export function LaminaPage() {
             updatedAt={updatedAt}
           />
         )}
-        <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 16, textAlign: 'center' }}>
+        <p className="mt-4 text-center text-[11px] text-tracker-text-muted">
           Tracker Sales OS — Reporte Ejecutivo {month}
         </p>
       </div>
     </div>
-  );
+  )
 }
