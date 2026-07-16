@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from "react"
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { ViewIcon } from "@hugeicons/core-free-icons"
 import type { Deal } from "../../domain/pipeline.types"
 import { useSettings } from "@/modules/settings/application/hooks/useSettings"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
+import { DealPeek } from "./DealPeek"
 
 const STAGE_BADGE_COLORS: Record<string, string> = {
   Prospecto: "#002B49",
@@ -88,14 +97,36 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
             </p>
           )}
         </div>
-        <span
-          style={{
-            background: badgeColor,
-          }}
-          className="shrink-0 rounded-[10px] px-2 py-0.5 text-[10px] font-bold text-white uppercase"
-        >
-          {deal.stage}
-        </span>
+        <div className="flex shrink-0 items-center gap-1">
+          <span
+            style={{
+              background: badgeColor,
+            }}
+            className="rounded-[10px] px-2 py-0.5 text-[10px] font-bold text-white uppercase"
+          >
+            {deal.stage}
+          </span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label="Vista rápida"
+                className="bg-transparent text-tracker-text-muted hover:bg-slate-100"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <HugeiconsIcon icon={ViewIcon} strokeWidth={2} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              className="w-auto p-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <DealPeek deal={deal} onOpenDetail={onClick} />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
       {contactInfo && (
