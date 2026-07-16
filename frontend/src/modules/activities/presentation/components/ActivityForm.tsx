@@ -24,7 +24,12 @@ import { TimePickerField } from "@/shared/components/forms/TimePickerField"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import {
   Select,
   SelectContent,
@@ -280,7 +285,7 @@ export function ActivityForm({
       <FormErrorSummary error={errorSummary} />
 
       {/* Sección 1 — Contexto */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="grid grid-cols-2 gap-3">
         {/* Cliente */}
         <div>
           <label className="slabel">Cliente *</label>
@@ -305,9 +310,7 @@ export function ActivityForm({
             error={!!fieldErrors.clientId}
           />
           {clientError && (
-            <p style={{ fontSize: 12, color: "#EF4444", marginTop: 4 }}>
-              {clientError}
-            </p>
+            <p className="mt-1 text-xs text-red-500">{clientError}</p>
           )}
           <FieldError name="clientId" message={fieldErrors.clientId} />
         </div>
@@ -351,7 +354,7 @@ export function ActivityForm({
 
         {/* Oportunidad (span 2 cols, solo si hay cliente y no es no-comercial) */}
         {clientId && !isNonCommercial && (
-          <div style={{ gridColumn: "1 / -1" }}>
+          <div className="col-span-full">
             <label className="slabel">Oportunidad / Proyecto</label>
             <Select
               value={selectedOpportunityId}
@@ -442,9 +445,7 @@ export function ActivityForm({
 
         {/* Fecha + hora ejecución */}
         <div>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
-          >
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="slabel">Fecha de ejecución</label>
               <DatePickerField
@@ -469,9 +470,9 @@ export function ActivityForm({
         <div>
           <label className="slabel">Etapa del pipeline</label>
           {currentDeal && !isNonCommercial && (
-            <p style={{ fontSize: 11, color: "#64748B", marginBottom: 4 }}>
+            <p className="mb-1 text-[11px] text-tracker-text-secondary">
               Actual:{" "}
-              <strong style={{ color: "#002B49" }}>{currentDeal.stage}</strong>
+              <strong className="text-tracker-blue">{currentDeal.stage}</strong>
             </p>
           )}
           <Select
@@ -500,7 +501,7 @@ export function ActivityForm({
               type="text"
               value={programmedTask}
               readOnly
-              style={{ background: "#F8FAFC", color: "#94A3B8" }}
+              className="bg-tracker-surface-alt text-tracker-text-muted"
             />
           ) : (
             <Select
@@ -531,9 +532,7 @@ export function ActivityForm({
 
         {/* Fecha + hora de captura */}
         <div>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
-          >
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="slabel">Fecha de captura</label>
               <DatePickerField
@@ -556,7 +555,7 @@ export function ActivityForm({
       <div>
         <label className="slabel">¿Qué pasó? *</label>
         <Textarea
-          style={{ height: 100 }}
+          className="h-[100px]"
           value={summary}
           onChange={(e) => {
             setSummary(e.target.value)
@@ -566,22 +565,25 @@ export function ActivityForm({
           {...fieldErrorProps("summary", fieldErrors.summary)}
         />
         <FieldError name="summary" message={fieldErrors.summary} />
-        <div className="prog" style={{ marginTop: 6 }}>
+        <div className="prog mt-1.5">
           <div
-            className="prog-fill"
-            style={{ width: `${quality}%`, backgroundColor: qualityColor }}
+            className="prog-fill origin-left transition-transform"
+            style={{
+              transform: `scaleX(${quality / 100})`,
+              backgroundColor: qualityColor,
+            }}
           />
         </div>
-        <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>
+        <p className="mt-0.5 text-[11px] text-tracker-text-muted">
           Calidad estimada:{" "}
-          <span style={{ fontWeight: 600, color: qualityColor }}>
+          <span className="font-semibold" style={{ color: qualityColor }}>
             {quality}%
           </span>
         </p>
       </div>
 
       {/* Sección 3 — Campos expandibles */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="flex flex-col gap-2">
         {!showDiscovery ? (
           <Button
             type="button"
@@ -596,7 +598,7 @@ export function ActivityForm({
           <div>
             <label className="slabel">¿Qué descubrí?</label>
             <Textarea
-              style={{ height: 80 }}
+              className="h-20"
               value={discovery}
               onChange={(e) => {
                 setDiscovery(e.target.value)
@@ -632,7 +634,7 @@ export function ActivityForm({
           <div>
             <label className="slabel">¿Qué acordamos?</label>
             <Textarea
-              style={{ height: 80 }}
+              className="h-20"
               value={agreement}
               onChange={(e) => {
                 setAgreement(e.target.value)
@@ -656,27 +658,11 @@ export function ActivityForm({
 
       {/* Sección 4 — Siguiente paso (callout condicional) */}
       {needsNextStep && (
-        <div
-          style={{
-            background: "#EFF6FF",
-            border: "1px solid #BFDBFE",
-            borderRadius: 8,
-            padding: 16,
-          }}
-        >
-          <p
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: "#1D4ED8",
-              marginBottom: 12,
-            }}
-          >
+        <div className="rounded-lg border border-[#BFDBFE] bg-blue-50 p-4">
+          <p className="mb-3 text-xs font-bold text-[#1D4ED8]">
             Siguiente paso requerido para {type}
           </p>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="slabel">Siguiente paso concreto *</label>
               <Input
@@ -748,13 +734,7 @@ export function ActivityForm({
           <AccordionTrigger>Coach IA</AccordionTrigger>
           <AccordionContent>
             <div className="ai-box">
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
+              <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-purple-900">
                   Sugerencias IA
                 </p>
@@ -770,17 +750,9 @@ export function ActivityForm({
                 </Button>
               </div>
               {aiTips.length > 0 ? (
-                <ul
-                  style={{
-                    marginTop: 8,
-                    paddingLeft: 16,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 4,
-                  }}
-                >
+                <ul className="mt-2 flex flex-col gap-1 pl-4">
                   {aiTips.map((tip, i) => (
-                    <li key={i} style={{ fontSize: 12, color: "#6d28d9" }}>
+                    <li key={i} className="text-xs text-tracker-purple">
                       {tip}
                     </li>
                   ))}
@@ -796,7 +768,12 @@ export function ActivityForm({
       </Accordion>
 
       {/* Sección 6 — Submit */}
-      <Button type="submit" disabled={isLoading} variant="success" className="w-full">
+      <Button
+        type="submit"
+        disabled={isLoading}
+        variant="success"
+        className="w-full"
+      >
         {isLoading ? "Guardando..." : `Registrar · +${TASK_POINTS[type]}pts`}
       </Button>
     </form>
