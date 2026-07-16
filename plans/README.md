@@ -18,7 +18,7 @@ conditions y actualiza su fila al terminar.
 | 002 | Migrar 23 botones nativos a shadcn Button | P1 | M | 001 | DONE (implementación, gates, smoke autenticado y drag-and-drop verificados; CHECKPOINT 10/10) |
 | 003 | Eliminar estilos inline: módulos núcleo | P1 | L | 001, 002 | DONE (branch `advisor/003-inline-styles-core-modules`, commits `1ca2db7`–`13587fc`; review PASSED; smoke autenticado pendiente) |
 | 004 | Eliminar estilos inline: módulos restantes | P2 | L | 001, 003 | DONE (branch `advisor/004-inline-styles-remaining` sobre `959ca47`, commits `e00b70d`–`14645ee`; review Líder PASS: typecheck/lint/build exit 0 verificados independientemente; smoke visual de la lámina ejecutiva con datos reales pendiente — sin backend/DB en el sandbox del executor; pendiente de merge por el usuario) |
-| 005 | Paleta de comandos + peek de deal | P2 | M | 001, 003 | TODO |
+| 005 | Paleta de comandos + peek de deal | P2 | M | 001, 003 | DONE (branch `advisor/005-command-palette-and-deal-peek` sobre `review-ui`@`063cfc0`, commits `840f901`–`7902bf7`; typecheck/lint/build exit 0; checklist manual completa con Admin y Seller vía backend Docker real, incluido drag-and-drop del DealCard; pendiente de merge por el usuario) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (con razón de una línea) | REJECTED (con justificación)
 
