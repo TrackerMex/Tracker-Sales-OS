@@ -1,8 +1,7 @@
 import { useState, Fragment } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons"
+import { MoreHorizontalIcon } from "@/shared/components/Icon"
 import { clientsApi } from "@/modules/clients/infrastructure/clients.api"
 import { activitiesApi } from "@/modules/activities/infrastructure/activities.api"
 import { ActivityHistoryModal } from "@/modules/activities/presentation/components/ActivityHistoryModal"
@@ -352,10 +351,7 @@ export function ClientDetailPage({ deal, onBack }: Props) {
                                     size="icon-xs"
                                     aria-label="Acciones de actividad"
                                   >
-                                    <HugeiconsIcon
-                                      icon={MoreHorizontalCircle01Icon}
-                                      strokeWidth={2}
-                                    />
+                                    <MoreHorizontalIcon />
                                   </Button>
                                 </DropdownMenuTrigger>
                               </TooltipTrigger>

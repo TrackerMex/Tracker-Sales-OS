@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { toast } from "sonner"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons"
+import { MoreHorizontalIcon } from "@/shared/components/Icon"
 import { useAppStore } from "@/shared/store/app.store"
 import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
 import { useCreateSale } from "../../application/hooks/useCreateSale"
@@ -892,10 +891,7 @@ export function SalesPage() {
                                 size="icon-xs"
                                 aria-label={`Acciones de venta ${sale.clientName}`}
                               >
-                                <HugeiconsIcon
-                                  icon={MoreHorizontalCircle01Icon}
-                                  strokeWidth={2}
-                                />
+                                <MoreHorizontalIcon />
                               </Button>
                             </DropdownMenuTrigger>
                           </TooltipTrigger>

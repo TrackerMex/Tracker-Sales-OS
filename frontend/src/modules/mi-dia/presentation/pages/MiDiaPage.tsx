@@ -22,12 +22,11 @@ import { useTodayTasks } from "../../../tasks/application/hooks/useTodayTasks"
 import { useCompleteTask } from "../../../tasks/application/hooks/useCompleteTask"
 import { TYPE_TAG } from "../../../tasks/presentation/components/TaskCard"
 import type { Task } from "../../../tasks/domain/tasks.types"
-import { HugeiconsIcon } from "@hugeicons/react"
 import {
-  OfficeIcon,
-  User02Icon,
-  CheckListIcon,
-} from "@hugeicons/core-free-icons"
+  BuildingIcon,
+  UserIcon,
+  ChecklistIcon,
+} from "@/shared/components/Icon"
 import { cn } from "@/lib/utils"
 
 type Semaphore = "verde" | "ambar" | "rojo" | "morado"
@@ -535,23 +534,13 @@ export function MiDiaPage() {
                           <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
                             {clientName && (
                               <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-slate-700">
-                                <HugeiconsIcon
-                                  icon={OfficeIcon}
-                                  size={12}
-                                  color="#334155"
-                                  strokeWidth={1.8}
-                                />
+                                <BuildingIcon size={12} color="#334155" />
                                 {clientName}
                               </span>
                             )}
                             {contactName && (
                               <span className="inline-flex items-center gap-1 text-[11px] text-tracker-text-secondary">
-                                <HugeiconsIcon
-                                  icon={User02Icon}
-                                  size={11}
-                                  color="#64748B"
-                                  strokeWidth={1.8}
-                                />
+                                <UserIcon size={11} color="#64748B" />
                                 {contactName}
                               </span>
                             )}
@@ -560,12 +549,7 @@ export function MiDiaPage() {
                                 variant={typeTagVariant}
                                 className="inline-flex items-center gap-1"
                               >
-                                <HugeiconsIcon
-                                  icon={CheckListIcon}
-                                  size={11}
-                                  color="currentColor"
-                                  strokeWidth={1.8}
-                                />
+                                <ChecklistIcon size={11} />
                                 {task.type}
                               </Badge>
                             )}

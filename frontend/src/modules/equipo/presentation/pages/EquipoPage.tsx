@@ -1,8 +1,7 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
 import { toast } from "sonner"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons"
+import { MoreHorizontalIcon } from "@/shared/components/Icon"
 import { useAppStore } from "../../../../shared/store/app.store"
 import { UserRole } from "../../../../core/domain/types/common.types"
 import { useUsers } from "../../application/hooks/useUsers"
@@ -272,10 +271,7 @@ export function EquipoPage() {
                             }
                             aria-label={`Acciones de usuario ${user.username}`}
                           >
-                            <HugeiconsIcon
-                              icon={MoreHorizontalCircle01Icon}
-                              strokeWidth={2}
-                            />
+                            <MoreHorizontalIcon />
                           </Button>
                         </DropdownMenuTrigger>
                       </TooltipTrigger>
@@ -332,10 +328,7 @@ export function EquipoPage() {
                           disabled={deactivateSeller.isPending}
                           aria-label={`Acciones de vendedor ${seller.name}`}
                         >
-                          <HugeiconsIcon
-                            icon={MoreHorizontalCircle01Icon}
-                            strokeWidth={2}
-                          />
+                          <MoreHorizontalIcon />
                         </Button>
                       </DropdownMenuTrigger>
                     </TooltipTrigger>

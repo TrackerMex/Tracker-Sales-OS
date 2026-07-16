@@ -25,17 +25,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import type { Task } from "../../domain/tasks.types"
-import { HugeiconsIcon } from "@hugeicons/react"
 import {
-  OfficeIcon,
-  User02Icon,
-  CheckListIcon,
-  PencilEdit02Icon,
-  CheckmarkCircle02Icon,
-  ArrowReloadHorizontalIcon,
-  Delete02Icon,
-  MoreHorizontalCircle01Icon,
-} from "@hugeicons/core-free-icons"
+  BuildingIcon,
+  UserIcon,
+  ChecklistIcon,
+  EditIcon,
+  CheckCircleIcon,
+  ReloadIcon,
+  TrashIcon,
+  MoreHorizontalIcon,
+} from "@/shared/components/Icon"
 import { TYPE_TAG } from "./task-card.constants"
 import { cn } from "@/lib/utils"
 
@@ -104,12 +103,7 @@ export function TaskCard({
               variant={typeTagVariant}
               className="inline-flex items-center gap-1"
             >
-              <HugeiconsIcon
-                icon={CheckListIcon}
-                size={11}
-                color="currentColor"
-                strokeWidth={1.8}
-              />
+              <ChecklistIcon size={11} />
               {task.type}
             </Badge>
           )}
@@ -118,12 +112,7 @@ export function TaskCard({
         {/* Row 2: client name */}
         {clientName && (
           <p className="mb-0.5 flex items-center gap-1 text-[13px] font-semibold text-slate-700">
-            <HugeiconsIcon
-              icon={OfficeIcon}
-              size={12}
-              color="#334155"
-              strokeWidth={1.8}
-            />
+            <BuildingIcon size={12} color="#334155" />
             {clientName}
           </p>
         )}
@@ -143,12 +132,7 @@ export function TaskCard({
           </span>
           {contactName && (
             <span className="inline-flex items-center gap-1 text-[11px] text-tracker-text-muted">
-              <HugeiconsIcon
-                icon={User02Icon}
-                size={11}
-                color="#94A3B8"
-                strokeWidth={1.8}
-              />
+              <UserIcon size={11} color="#94A3B8" />
               {contactName}
             </span>
           )}
@@ -168,12 +152,7 @@ export function TaskCard({
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="success" size="sm">
-                <HugeiconsIcon
-                  icon={CheckmarkCircle02Icon}
-                  size={13}
-                  color="currentColor"
-                  strokeWidth={1.8}
-                />
+                <CheckCircleIcon size={13} />
                 Completar
               </Button>
             </AlertDialogTrigger>
@@ -206,10 +185,7 @@ export function TaskCard({
                   size="icon-sm"
                   aria-label="Acciones de tarea"
                 >
-                  <HugeiconsIcon
-                    icon={MoreHorizontalCircle01Icon}
-                    strokeWidth={2}
-                  />
+                  <MoreHorizontalIcon />
                 </Button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
@@ -218,22 +194,12 @@ export function TaskCard({
           <DropdownMenuContent align="end" className="min-w-44">
             {task.status === "Pendiente" ? (
               <DropdownMenuItem onSelect={() => onEdit(task)}>
-                <HugeiconsIcon
-                  icon={PencilEdit02Icon}
-                  size={13}
-                  color="currentColor"
-                  strokeWidth={1.8}
-                />
+                <EditIcon size={13} />
                 Editar tarea
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem onSelect={() => setReactivateOpen(true)}>
-                <HugeiconsIcon
-                  icon={ArrowReloadHorizontalIcon}
-                  size={13}
-                  color="currentColor"
-                  strokeWidth={1.8}
-                />
+                <ReloadIcon size={13} />
                 Reactivar tarea
               </DropdownMenuItem>
             )}
@@ -242,12 +208,7 @@ export function TaskCard({
               variant="destructive"
               onSelect={() => setDeleteOpen(true)}
             >
-              <HugeiconsIcon
-                icon={Delete02Icon}
-                size={13}
-                color="currentColor"
-                strokeWidth={1.8}
-              />
+              <TrashIcon size={13} />
               Eliminar tarea
             </DropdownMenuItem>
           </DropdownMenuContent>

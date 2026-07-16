@@ -2,8 +2,7 @@
 
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Search01Icon } from "@hugeicons/core-free-icons"
+import { SearchIcon } from "@/shared/components/Icon"
 
 import { cn } from "@/lib/utils"
 import {
@@ -39,11 +38,7 @@ function CommandInput({
       data-slot="command-input-wrapper"
       className="flex items-center gap-2 border-b border-border px-3"
     >
-      <HugeiconsIcon
-        icon={Search01Icon}
-        className="size-4 shrink-0 opacity-50"
-        strokeWidth={2}
-      />
+      <SearchIcon className="size-4 shrink-0 opacity-50" />
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(

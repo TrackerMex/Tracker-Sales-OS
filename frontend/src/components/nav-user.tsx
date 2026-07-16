@@ -16,8 +16,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { useSidebar } from "@/components/ui/sidebar-context"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { UnfoldMoreIcon, LogoutIcon } from "@hugeicons/core-free-icons"
+import { UnfoldMoreIcon, LogoutIcon } from "@/shared/components/Icon"
 
 const ROLE_LABELS: Record<string, string> = {
   Admin: "Administrador",
@@ -72,11 +71,7 @@ export function NavUser() {
                     : ""}
                 </span>
               </div>
-              <HugeiconsIcon
-                icon={UnfoldMoreIcon}
-                strokeWidth={2}
-                className="ml-auto size-4"
-              />
+              <UnfoldMoreIcon className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -104,7 +99,7 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
-              <HugeiconsIcon icon={LogoutIcon} strokeWidth={2} />
+              <LogoutIcon />
               Cerrar sesión
             </DropdownMenuItem>
           </DropdownMenuContent>

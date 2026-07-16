@@ -2,7 +2,9 @@
 
 ## Pipeline CI
 
-El workflow `.github/workflows/ci.yml` se ejecuta en cada pull request y en cada push a `main`. Usa Node.js 22, `npm ci` y cache npm independiente para los lockfiles de `backend/` y `frontend/`.
+El workflow `.github/workflows/ci.yml` se ejecuta en cada pull request y en cada push a `main`. Usa Node.js 22, `pnpm install --frozen-lockfile` y cache pnpm independiente para los lockfiles de `backend/` y `frontend/`.
+
+**pnpm es el único gestor del proyecto.** `pnpm-lock.yaml` es la fuente de verdad: es el lockfile que consumen los Dockerfiles de dev y de producción, y el que valida CI. La versión está fijada con el campo `packageManager` de cada `package.json` y con `corepack prepare` en los Dockerfiles. No usar `npm install` ni `bun install`: generan lockfiles paralelos que divergen del árbol que se despliega.
 
 Los jobs se publican como checks separados:
 
@@ -15,17 +17,19 @@ Para bloquear merges cuando un job falla, un administrador del repositorio debe 
 
 ```bash
 cd backend
-npm ci
-npx tsc --noEmit
-npx eslint "{src,apps,libs,test}/**/*.ts"
-npm test -- --runInBand
+pnpm install --frozen-lockfile
+pnpm exec tsc --noEmit
+pnpm exec eslint "{src,apps,libs,test}/**/*.ts"
+pnpm test --runInBand
 
 cd ../frontend
-npm ci
-npm run typecheck
-npm run lint
-npm run build
+pnpm install --frozen-lockfile
+pnpm run typecheck
+pnpm run lint
+pnpm run build
 ```
+
+Nota: en pnpm los flags se pasan sin `--` separador (`pnpm test --runInBand`); con `pnpm test -- --runInBand` Jest recibe `--runInBand` como pattern de archivos y no encuentra tests.
 
 ## Comandos por entorno
 

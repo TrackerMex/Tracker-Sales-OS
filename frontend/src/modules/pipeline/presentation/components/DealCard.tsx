@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { ViewIcon } from "@hugeicons/core-free-icons"
+import { EyeIcon } from "@/shared/components/Icon"
 import type { Deal } from "../../domain/pipeline.types"
 import { useSettings } from "@/modules/settings/application/hooks/useSettings"
 import { Badge } from "@/components/ui/badge"
@@ -115,7 +114,7 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
                 className="bg-transparent text-tracker-text-muted hover:bg-slate-100"
                 onClick={(e) => e.stopPropagation()}
               >
-                <HugeiconsIcon icon={ViewIcon} strokeWidth={2} />
+                <EyeIcon />
               </Button>
             </PopoverTrigger>
             <PopoverContent

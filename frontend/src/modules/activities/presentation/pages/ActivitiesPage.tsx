@@ -1,13 +1,12 @@
 import { useState } from "react"
 import { useSearch } from "@tanstack/react-router"
 import { toast } from "sonner"
-import { HugeiconsIcon } from "@hugeicons/react"
 import {
-  OfficeIcon,
-  User02Icon,
-  CheckListIcon,
-  MoreHorizontalCircle01Icon,
-} from "@hugeicons/core-free-icons"
+  BuildingIcon,
+  UserIcon,
+  ChecklistIcon,
+  MoreHorizontalIcon,
+} from "@/shared/components/Icon"
 import { useDailyActivities } from "../../application/hooks/useDailyActivities"
 import { useCreateActivity } from "../../application/hooks/useCreateActivity"
 import { ActivityForm } from "../components/ActivityForm"
@@ -155,34 +154,19 @@ export function ActivitiesPage() {
                   <div className="mb-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
                     {activity.clientName && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-tracker-blue">
-                        <HugeiconsIcon
-                          icon={OfficeIcon}
-                          size={12}
-                          color="#002B49"
-                          strokeWidth={1.8}
-                        />
+                        <BuildingIcon size={12} color="#002B49" />
                         {activity.clientName}
                       </span>
                     )}
                     {activity.contactName && (
                       <span className="inline-flex items-center gap-1 text-[11px] text-tracker-text-dim">
-                        <HugeiconsIcon
-                          icon={User02Icon}
-                          size={12}
-                          color="#64748B"
-                          strokeWidth={1.8}
-                        />
+                        <UserIcon size={12} color="#64748B" />
                         {activity.contactName}
                       </span>
                     )}
                     {activity.taskTitle && (
                       <span className="inline-flex items-center gap-1 rounded bg-[#EEF2FF] px-1.5 py-0.5 text-[10px] text-[#3730A3]">
-                        <HugeiconsIcon
-                          icon={CheckListIcon}
-                          size={11}
-                          color="#4338CA"
-                          strokeWidth={1.8}
-                        />
+                        <ChecklistIcon size={11} color="#4338CA" />
                         {activity.taskTitle.length > 40
                           ? activity.taskTitle.slice(0, 40) + "…"
                           : activity.taskTitle}
@@ -226,10 +210,7 @@ export function ActivitiesPage() {
                           size="icon-xs"
                           aria-label="Acciones de actividad"
                         >
-                          <HugeiconsIcon
-                            icon={MoreHorizontalCircle01Icon}
-                            strokeWidth={2}
-                          />
+                          <MoreHorizontalIcon />
                         </Button>
                       </DropdownMenuTrigger>
                     </TooltipTrigger>

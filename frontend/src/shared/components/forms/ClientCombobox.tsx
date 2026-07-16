@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Tick02Icon, UnfoldMoreIcon } from "@hugeicons/core-free-icons"
+import { CheckIcon, UnfoldMoreIcon } from "@/shared/components/Icon"
 
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -98,11 +97,7 @@ export function ClientCombobox({
           <span className={cn("truncate", !selectedLabel && "text-muted-foreground")}>
             {selectedLabel ?? placeholder}
           </span>
-          <HugeiconsIcon
-            icon={UnfoldMoreIcon}
-            strokeWidth={2}
-            className="pointer-events-none size-4 shrink-0 text-muted-foreground"
-          />
+          <UnfoldMoreIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
@@ -124,7 +119,7 @@ export function ClientCombobox({
             >
               Sin cliente
               {!value && (
-                <HugeiconsIcon icon={Tick02Icon} className="ml-auto size-4" strokeWidth={2} />
+                <CheckIcon className="ml-auto size-4" />
               )}
             </CommandItem>
             {isLoading ? (
@@ -147,7 +142,7 @@ export function ClientCombobox({
                 >
                   {c.name}
                   {c.id === value && (
-                    <HugeiconsIcon icon={Tick02Icon} className="ml-auto size-4" strokeWidth={2} />
+                    <CheckIcon className="ml-auto size-4" />
                   )}
                 </CommandItem>
               ))

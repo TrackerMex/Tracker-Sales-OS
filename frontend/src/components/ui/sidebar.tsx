@@ -20,8 +20,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { SidebarLeftIcon } from "@hugeicons/core-free-icons"
+import { SidebarToggleIcon } from "@/shared/components/Icon"
 import { SidebarContext, useSidebar, type SidebarContextProps } from "./sidebar-context"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
@@ -249,7 +248,7 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      <HugeiconsIcon icon={SidebarLeftIcon} strokeWidth={2} />
+      <SidebarToggleIcon />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )

@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useSearch } from "@tanstack/react-router"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons"
+import { MoreHorizontalIcon } from "@/shared/components/Icon"
 import { useMonthlyReport } from "../../application/hooks/useMonthlyReport"
 import { useWinLoss } from "../../application/hooks/useWinLoss"
 import { ExecutiveSlide } from "../components/ExecutiveSlide"
@@ -285,10 +284,7 @@ export function ReportsPage() {
                         size="icon-sm"
                         aria-label="Acciones del informe"
                       >
-                        <HugeiconsIcon
-                          icon={MoreHorizontalCircle01Icon}
-                          strokeWidth={2}
-                        />
+                        <MoreHorizontalIcon />
                       </Button>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>

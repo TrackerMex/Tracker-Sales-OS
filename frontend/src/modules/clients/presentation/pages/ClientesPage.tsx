@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import type { FormEvent } from "react"
 import { toast } from "sonner"
 import { useQuery } from "@tanstack/react-query"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons"
+import { MoreHorizontalIcon } from "@/shared/components/Icon"
 import { UserRole } from "@/core/domain/types/common.types"
 import { useAppStore } from "@/shared/store/app.store"
 import { activitiesApi } from "@/modules/activities/infrastructure/activities.api"
@@ -672,10 +671,7 @@ export function ClientesPage() {
                         size="icon-sm"
                         aria-label={`Acciones de ${client.name}`}
                       >
-                        <HugeiconsIcon
-                          icon={MoreHorizontalCircle01Icon}
-                          strokeWidth={2}
-                        />
+                        <MoreHorizontalIcon />
                       </Button>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>
