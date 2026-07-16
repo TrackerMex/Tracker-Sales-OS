@@ -29,6 +29,12 @@ export function CommandPalette() {
     return () => document.removeEventListener("keydown", down)
   }, [])
 
+  useEffect(() => {
+    const openPalette = () => setOpen(true)
+    window.addEventListener("open-command-palette", openPalette)
+    return () => window.removeEventListener("open-command-palette", openPalette)
+  }, [])
+
   const run = (to: string) => {
     setOpen(false)
     void navigate({ to })

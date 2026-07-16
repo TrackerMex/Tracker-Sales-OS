@@ -84,6 +84,17 @@ export function Header({ title, subtitle }: HeaderProps) {
         <div className="hidden items-center gap-2 md:flex">
           <Button
             variant="ghost"
+            onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+            aria-label="Abrir paleta de comandos"
+          >
+            Buscar
+            <kbd className="rounded border border-tracker-border bg-tracker-surface-alt px-1 text-[10px] text-tracker-text-muted">
+              Ctrl K
+            </kbd>
+          </Button>
+
+          <Button
+            variant="ghost"
             onClick={() => void navigate({ to: "/agenda" })}
           >
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">

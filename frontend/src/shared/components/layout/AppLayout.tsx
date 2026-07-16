@@ -2,6 +2,7 @@ import { Outlet } from "@tanstack/react-router"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { CommandPalette } from "@/shared/components/command/CommandPalette"
 import { Header } from "./Header"
 
 export function AppLayout() {
@@ -15,6 +16,7 @@ export function AppLayout() {
             <Outlet />
           </div>
         </SidebarInset>
+        <CommandPalette />
       </SidebarProvider>
     </TooltipProvider>
   )
