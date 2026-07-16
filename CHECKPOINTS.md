@@ -712,3 +712,23 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 **Reviewer 2026-07-13**: PASSED 12/12. Suite completa: 11 suites, 60 tests, 0 snapshots; `npx tsc --noEmit` exit 0. Sin cambios productivos, dependencias, DB, red ni servicios externos.
 
 **Revalidación lint 2026-07-13**: PASSED. Corregidos 21 errores en los tres specs afectados sin desactivar reglas. ESLint exit 0, Jest 11/11 suites y 60/60 tests, TypeScript exit 0. Review independiente confirmó que se preservaron las aserciones y no hubo cambios de producción, configuración o dependencias.
+
+---
+
+## 72-visual-system-native-buttons
+
+**Migración y alcance:**
+- [x] Los botones nativos inventariados en `ClientesPage.tsx`, `ClientDetailPage.tsx`, `ActivityForm.tsx`, `CreateTaskForm.tsx`, `CalendarView.tsx` y `LoginPage.tsx` usan `Button` de `@/components/ui/button`, preservando props y comportamiento
+- [x] `rg -c '<button' frontend/src/modules` devuelve únicamente `frontend/src/modules/mi-dia/presentation/pages/MiDiaPage.tsx:1`, excepción documentada `seller-pick-card`
+- [x] `button-variants.ts` no cambia y no se agregan dependencias
+- [x] Las reglas muertas `.btn-primary`, `.btn-green`, `.btn-ghost`, `.btn-danger` y `.btn-sm`, incluidas sus referencias responsive, se eliminan de `frontend/src/index.css`
+- [x] `rg -c 'btn-(primary|green|ghost|danger|sm)' frontend/src` no devuelve coincidencias
+
+**Comportamiento y verificación:**
+- [x] El `TaskChip` conserva el mismo nodo button mediante `ref`, mantiene drag-and-drop, opacidad dinámica durante drag y apertura de edición al hacer click
+- [x] Los controles conservan `onClick`, `disabled`, `type`, `title`, `aria-*` y estilos dinámicos necesarios; los botones icon-only nuevos tienen nombre accesible
+- [x] `npm run typecheck`, `npm run lint` y `npm run build` pasan en `frontend/`
+- [x] No hay cambios fuera del alcance indicado en `plans/002-native-buttons-to-shadcn.md`
+- [x] Resumen guardado en `progress/impl_72-visual-system-native-buttons.md` y estado del plan 002 actualizado en `plans/README.md`
+
+**Reviewer 2026-07-15**: PASSED 10/10. Gates técnicos y revisión estática aprobados; smoke autenticado posterior del Líder cubrió Login, Clientes, detalle de Pipeline, Actividad, creación de Tarea y Agenda sin errores de consola. `TaskChip` conserva nodo button, `draggable="true"`, cursor, opacidad y apertura de edición; el usuario confirmó manualmente el movimiento efectivo entre días. Ver `progress/impl_72-visual-system-native-buttons.md`.

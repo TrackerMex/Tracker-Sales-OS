@@ -405,18 +405,15 @@ export function ClientesPage() {
                     ? isActive || !ALLOWED_TRANSITIONS[activeDeal.stage].includes(s)
                     : false
                   return (
-                    <button
+                    <Button
                       key={s}
+                      size="sm"
+                      variant={isActive ? "default" : "secondary"}
                       disabled={disabled}
                       onClick={() => handleStageChange(s)}
-                      className={`rounded-lg px-3.5 py-2 text-xs font-semibold transition-all ${
-                        isActive
-                          ? "bg-[#002B49] text-white shadow-sm"
-                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                      } ${disabled && !isActive ? "opacity-40 cursor-not-allowed" : ""}`}
                     >
                       {s}
-                    </button>
+                    </Button>
                   )
                 })}
               </div>
@@ -500,12 +497,13 @@ export function ClientesPage() {
           <Card key={client.id} className="p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <button
+                <Button
+                  variant="link"
                   onClick={() => goToDetail(client.id)}
-                  className="text-sm font-bold text-[#002B49] hover:underline text-left"
+                  className="h-auto p-0 text-sm font-bold text-tracker-blue"
                 >
                   {client.name}
-                </button>
+                </Button>
               </div>
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="gray" className="text-[9px]">{client.type}</Badge>
@@ -771,15 +769,16 @@ export function ClientesPage() {
             <div className="md:col-span-2">
               <div className="flex items-center justify-between mb-2">
                 <p className="slabel">Contactos</p>
-                <button
+                <Button
                   type="button"
+                  variant="link"
                   onClick={() =>
                     updateForm("contacts", [...(form.contacts ?? []), { ...emptyContact }])
                   }
-                  className="text-[11px] font-semibold text-[#00A8E8] hover:underline"
+                  className="h-auto p-0 text-[11px] text-[#00A8E8]"
                 >
                   + Agregar contacto
-                </button>
+                </Button>
               </div>
               <div className="space-y-2">
                 {(form.contacts ?? []).map((contact, idx) => (
@@ -837,16 +836,17 @@ export function ClientesPage() {
                         Decisor
                       </label>
                       {(form.contacts?.length ?? 0) > 1 && (
-                        <button
+                        <Button
                           type="button"
+                          variant="link"
                           onClick={() => {
                             const updated = (form.contacts ?? []).filter((_, i) => i !== idx)
                             updateForm("contacts", updated)
                           }}
-                          className="text-[11px] font-semibold text-red-600 hover:text-red-800 bg-none border-none cursor-pointer"
+                          className="h-auto p-0 text-[11px] text-red-600 hover:text-red-800"
                         >
                           Quitar
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>

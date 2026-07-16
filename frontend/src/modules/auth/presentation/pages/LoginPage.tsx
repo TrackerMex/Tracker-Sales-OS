@@ -241,22 +241,14 @@ export function LoginPage() {
           </form>
 
           {/* Reset button */}
-          <button
+          <Button
             type="button"
+            variant="link"
             onClick={() => reset()}
-            style={{
-              marginTop: 12,
-              background: "transparent",
-              border: "none",
-              color: "#94A3B8",
-              fontSize: 12,
-              cursor: "pointer",
-              padding: "6px 0",
-              textDecoration: "underline",
-            }}
+            className="mt-3 h-auto p-0 text-xs font-normal text-tracker-text-muted"
           >
             Limpiar formulario
-          </button>
+          </Button>
         </div>
       </div>
     </div>

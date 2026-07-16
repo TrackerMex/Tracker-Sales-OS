@@ -5,6 +5,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
 import { Badge, type BadgeVariant } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Task } from "../../domain/tasks.types"
 
@@ -170,12 +171,13 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
     <HoverCard openDelay={200} closeDelay={100}>
       <HoverCardTrigger asChild>
         <Badge variant={tagVariant} asChild>
-          <button
+          <Button
             ref={taskRef}
+            variant="ghost"
+            size="xs"
             onClick={() => onEdit?.(task)}
-            className="w-full max-w-full justify-start truncate border-0 text-[11px]"
+            className="h-auto w-full max-w-full cursor-grab justify-start truncate border-0 bg-transparent px-1 py-0.5 text-[11px] hover:bg-slate-100"
             style={{
-              cursor: "grab",
               opacity:
                 internalDragging || isDragging
                   ? 0.5
@@ -185,7 +187,7 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
             }}
           >
             {chipLabel}
-          </button>
+          </Button>
         </Badge>
       </HoverCardTrigger>
       <HoverCardContent
@@ -528,21 +530,14 @@ function WeekView({
           marginBottom: 16,
         }}
       >
-        <button
+        <Button
+          variant="outline"
+          size="icon-sm"
           onClick={onPrevWeek}
-          style={{
-            background: "none",
-            border: "1px solid #E2E8F0",
-            borderRadius: 6,
-            cursor: "pointer",
-            padding: "5px 10px",
-            color: "#475569",
-            fontWeight: 600,
-            fontSize: 14,
-          }}
+          aria-label="Semana anterior"
         >
           ←
-        </button>
+        </Button>
         <span
           style={{
             fontSize: 14,
@@ -554,21 +549,14 @@ function WeekView({
         >
           {weekLabel}
         </span>
-        <button
+        <Button
+          variant="outline"
+          size="icon-sm"
           onClick={onNextWeek}
-          style={{
-            background: "none",
-            border: "1px solid #E2E8F0",
-            borderRadius: 6,
-            cursor: "pointer",
-            padding: "5px 10px",
-            color: "#475569",
-            fontWeight: 600,
-            fontSize: 14,
-          }}
+          aria-label="Semana siguiente"
         >
           →
-        </button>
+        </Button>
       </div>
 
       <div
@@ -736,21 +724,14 @@ function DayView({
           marginBottom: 16,
         }}
       >
-        <button
+        <Button
+          variant="outline"
+          size="icon-sm"
           onClick={onPrevDay}
-          style={{
-            background: "none",
-            border: "1px solid #E2E8F0",
-            borderRadius: 6,
-            cursor: "pointer",
-            padding: "5px 10px",
-            color: "#475569",
-            fontWeight: 600,
-            fontSize: 14,
-          }}
+          aria-label="Día anterior"
         >
           ←
-        </button>
+        </Button>
         <span
           style={{
             fontSize: 14,
@@ -763,21 +744,14 @@ function DayView({
         >
           {dayLabel}
         </span>
-        <button
+        <Button
+          variant="outline"
+          size="icon-sm"
           onClick={onNextDay}
-          style={{
-            background: "none",
-            border: "1px solid #E2E8F0",
-            borderRadius: 6,
-            cursor: "pointer",
-            padding: "5px 10px",
-            color: "#475569",
-            fontWeight: 600,
-            fontSize: 14,
-          }}
+          aria-label="Día siguiente"
         >
           →
-        </button>
+        </Button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "60px 1fr", gap: 2 }}>
@@ -971,21 +945,14 @@ export function CalendarView({
               marginBottom: 16,
             }}
           >
-            <button
+            <Button
+              variant="outline"
+              size="icon-sm"
               onClick={onPrevMonth}
-              style={{
-                background: "none",
-                border: "1px solid #E2E8F0",
-                borderRadius: 6,
-                cursor: "pointer",
-                padding: "5px 10px",
-                color: "#475569",
-                fontWeight: 600,
-                fontSize: 14,
-              }}
+              aria-label="Mes anterior"
             >
               ←
-            </button>
+            </Button>
             <span
               style={{
                 fontSize: 14,
@@ -998,21 +965,14 @@ export function CalendarView({
             >
               {monthLabel}
             </span>
-            <button
+            <Button
+              variant="outline"
+              size="icon-sm"
               onClick={onNextMonth}
-              style={{
-                background: "none",
-                border: "1px solid #E2E8F0",
-                borderRadius: 6,
-                cursor: "pointer",
-                padding: "5px 10px",
-                color: "#475569",
-                fontWeight: 600,
-                fontSize: 14,
-              }}
+              aria-label="Mes siguiente"
             >
               →
-            </button>
+            </Button>
           </div>
           <MonthView
             year={year}

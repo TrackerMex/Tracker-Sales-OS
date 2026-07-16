@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import type { CSSProperties } from "react"
 import {
   ACTIVITY_TYPES,
   TASK_POINTS,
@@ -73,16 +72,6 @@ interface Props {
   initialClientId?: string
   initialClientLabel?: string
   taskId?: string
-}
-
-const TOGGLE_STYLE: CSSProperties = {
-  background: "none",
-  border: "none",
-  color: "#002B49",
-  fontSize: 12,
-  cursor: "pointer",
-  padding: "4px 0",
-  fontWeight: 600,
 }
 
 export function ActivityForm({
@@ -594,13 +583,15 @@ export function ActivityForm({
       {/* Sección 3 — Campos expandibles */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {!showDiscovery ? (
-          <button
+          <Button
             type="button"
+            variant="link"
+            size="xs"
+            className="h-auto p-0 text-tracker-blue"
             onClick={() => setShowDiscovery(true)}
-            style={TOGGLE_STYLE}
           >
             + Agregar descubrimiento
-          </button>
+          </Button>
         ) : (
           <div>
             <label className="slabel">¿Qué descubrí?</label>
@@ -615,24 +606,28 @@ export function ActivityForm({
               {...fieldErrorProps("discovery", fieldErrors.discovery)}
             />
             <FieldError name="discovery" message={fieldErrors.discovery} />
-            <button
+            <Button
               type="button"
+              variant="link"
+              size="xs"
+              className="h-auto p-0 text-tracker-blue"
               onClick={() => setShowDiscovery(false)}
-              style={TOGGLE_STYLE}
             >
               - Ocultar
-            </button>
+            </Button>
           </div>
         )}
 
         {!showAgreement ? (
-          <button
+          <Button
             type="button"
+            variant="link"
+            size="xs"
+            className="h-auto p-0 text-tracker-blue"
             onClick={() => setShowAgreement(true)}
-            style={TOGGLE_STYLE}
           >
             + Agregar acuerdo
-          </button>
+          </Button>
         ) : (
           <div>
             <label className="slabel">¿Qué acordamos?</label>
@@ -646,13 +641,15 @@ export function ActivityForm({
               {...fieldErrorProps("agreement", fieldErrors.agreement)}
             />
             <FieldError name="agreement" message={fieldErrors.agreement} />
-            <button
+            <Button
               type="button"
+              variant="link"
+              size="xs"
+              className="h-auto p-0 text-tracker-blue"
               onClick={() => setShowAgreement(false)}
-              style={TOGGLE_STYLE}
             >
               - Ocultar
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -761,23 +758,16 @@ export function ActivityForm({
                 <p className="text-sm font-medium text-purple-900">
                   Sugerencias IA
                 </p>
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="xs"
                   onClick={fetchAiSuggestions}
                   disabled={aiLoading}
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "#7c3aed",
-                    background: "none",
-                    border: "1px solid #c4b5fd",
-                    borderRadius: 6,
-                    padding: "2px 10px",
-                    cursor: "pointer",
-                  }}
+                  className="border-[#c4b5fd] text-tracker-purple"
                 >
                   {aiLoading ? "Cargando..." : "Obtener sugerencias"}
-                </button>
+                </Button>
               </div>
               {aiTips.length > 0 ? (
                 <ul
