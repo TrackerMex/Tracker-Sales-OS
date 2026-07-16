@@ -16,7 +16,7 @@ conditions y actualiza su fila al terminar.
 |------|-------|----------|--------|------------|--------|
 | 001 | Registrar tokens `--tracker-*` en Tailwind theme | P1 | S | — | DONE (commit `73ab7ed` en branch `worktree-agent-a874e0049278422a7`, pendiente de merge por el usuario; smoke visual del header pendiente post-merge) |
 | 002 | Migrar 23 botones nativos a shadcn Button | P1 | M | 001 | DONE (implementación, gates, smoke autenticado y drag-and-drop verificados; CHECKPOINT 10/10) |
-| 003 | Eliminar estilos inline: módulos núcleo | P1 | L | 001, 002 | TODO |
+| 003 | Eliminar estilos inline: módulos núcleo | P1 | L | 001, 002 | DONE (branch `advisor/003-inline-styles-core-modules`, commits `1ca2db7`–`13587fc`; review PASSED; smoke autenticado pendiente) |
 | 004 | Eliminar estilos inline: módulos restantes | P2 | L | 001, 003 | TODO |
 | 005 | Paleta de comandos + peek de deal | P2 | M | 001, 003 | TODO |
 
@@ -34,6 +34,23 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (con razón de una línea) | 
   integrar el peek sobre un DealCard ya limpio.
 - 003 y 004 podrían ejecutarse en paralelo por executors distintos (archivos
   disjuntos), siempre después de 001/002.
+
+### Plan 003 — whitelist de estilos dinámicos
+
+La implementación deja 8 atributos `style=` dinámicos (6 coinciden con el
+patrón literal `style={{`):
+
+- `DealCard.tsx`: color de badge derivado de la etapa.
+- `ClientDetailPage.tsx`: color del step activo derivado de `STAGE_COLORS`.
+- `SellerSemaphoreTable.tsx`: escala y color derivados del score.
+- `KPICard.tsx`: color opcional proporcionado por el caller.
+- `ActivitiesPage.tsx`: escala/color del progreso diario y de calidad.
+- `ActivityForm.tsx`: escala/color de calidad y color de su etiqueta.
+
+Las cuatro barras usan `scaleX`, `origin-left` y utilidades importantes de
+transición transform-only para prevalecer sobre el `transition-all` legacy de
+`.prog-fill`. Typecheck, lint y build pasaron; el smoke visual autenticado queda
+pendiente después del merge.
 
 ## Contexto compartido
 
