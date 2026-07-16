@@ -14,11 +14,11 @@ conditions y actualiza su fila al terminar.
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 001 | Registrar tokens `--tracker-*` en Tailwind theme | P1 | S | — | DONE (commit `73ab7ed` en branch `worktree-agent-a874e0049278422a7`, pendiente de merge por el usuario; smoke visual del header pendiente post-merge) |
-| 002 | Migrar 23 botones nativos a shadcn Button | P1 | M | 001 | DONE (implementación, gates, smoke autenticado y drag-and-drop verificados; CHECKPOINT 10/10) |
-| 003 | Eliminar estilos inline: módulos núcleo | P1 | L | 001, 002 | DONE (branch `advisor/003-inline-styles-core-modules`, commits `1ca2db7`–`13587fc`; review PASSED; smoke autenticado pendiente) |
-| 004 | Eliminar estilos inline: módulos restantes | P2 | L | 001, 003 | DONE (branch `advisor/004-inline-styles-remaining` sobre `959ca47`, commits `e00b70d`–`14645ee`; review Líder PASS: typecheck/lint/build exit 0 verificados independientemente; smoke visual de la lámina ejecutiva con datos reales pendiente — sin backend/DB en el sandbox del executor; pendiente de merge por el usuario) |
-| 005 | Paleta de comandos + peek de deal | P2 | M | 001, 003 | DONE (branch `advisor/005-command-palette-and-deal-peek` sobre `review-ui`@`063cfc0`, commits `840f901`–`7902bf7`; typecheck/lint/build exit 0; checklist manual completa con Admin y Seller vía backend Docker real, incluido drag-and-drop del DealCard; pendiente de merge por el usuario) |
+| 001 | Registrar tokens `--tracker-*` en Tailwind theme | P1 | S | — | DONE y mergeado a `review-ui` (commit `73ab7ed`); smoke visual del header pendiente |
+| 002 | Migrar 23 botones nativos a shadcn Button | P1 | M | 001 | DONE y mergeado a `review-ui` (PR #22); implementación, gates, smoke autenticado y drag-and-drop verificados; CHECKPOINT 10/10 |
+| 003 | Eliminar estilos inline: módulos núcleo | P1 | L | 001, 002 | DONE y mergeado a `review-ui` (commits `1ca2db7`–`13587fc`); review PASSED; smoke autenticado pendiente |
+| 004 | Eliminar estilos inline: módulos restantes | P2 | L | 001, 003 | DONE y mergeado a `review-ui` (commits `e00b70d`–`14645ee`); review Líder PASS: typecheck/lint/build exit 0; smoke visual de la lámina ejecutiva con datos reales pendiente — sin backend/DB en el sandbox del executor |
+| 005 | Paleta de comandos + peek de deal | P2 | M | 001, 003 | DONE y mergeado a `review-ui` (fast-forward, commits `840f901`–`cf556fc`); typecheck/lint/build exit 0 verificados post-merge; checklist manual completa con Admin y Seller vía backend Docker real, incluido drag-and-drop del DealCard |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (con razón de una línea) | REJECTED (con justificación)
 
