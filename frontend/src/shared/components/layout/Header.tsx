@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "@tanstack/react-router"
 import { useAppStore } from "../../store/app.store"
 import { Button } from "@/components/ui/button"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { LogoutIcon, PlusIcon } from "@/shared/components/Icon"
 
 const ROUTE_TITLES: Record<string, { title: string; subtitle: string }> = {
   "/dashboard": {
@@ -97,14 +98,7 @@ export function Header({ title, subtitle }: HeaderProps) {
             variant="ghost"
             onClick={() => void navigate({ to: "/agenda" })}
           >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M6 1v10M1 6h10"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
+            <PlusIcon />
             Tarea
           </Button>
 
@@ -112,14 +106,7 @@ export function Header({ title, subtitle }: HeaderProps) {
             variant="ghost"
             onClick={() => void navigate({ to: "/clientes" })}
           >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M6 1v10M1 6h10"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
+            <PlusIcon />
             Prospecto
           </Button>
 
@@ -145,17 +132,7 @@ export function Header({ title, subtitle }: HeaderProps) {
           }}
           aria-label="Cerrar sesión"
         >
-          <svg
-            width="11"
-            height="11"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-          </svg>
+          <LogoutIcon />
           <span className="hidden md:inline">Salir</span>
         </Button>
       </div>

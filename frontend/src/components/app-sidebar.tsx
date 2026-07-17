@@ -13,6 +13,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { NAV_SECTIONS } from "@/shared/navigation/nav-items"
+import { PulseIcon } from "@/shared/components/Icon"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const currentUser = useAppStore((s) => s.currentUser)
@@ -34,17 +35,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <div className="flex cursor-default items-center gap-2 select-none">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-tracker-green/15">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#82bc00"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  >
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                  </svg>
+                  <PulseIcon className="text-tracker-green" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
                   <span className="truncate text-[13px] font-black tracking-wider text-tracker-green">

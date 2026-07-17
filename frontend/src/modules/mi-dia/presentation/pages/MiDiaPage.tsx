@@ -534,13 +534,13 @@ export function MiDiaPage() {
                           <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
                             {clientName && (
                               <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-slate-700">
-                                <BuildingIcon size={12} color="#334155" />
+                                <BuildingIcon color="#334155" />
                                 {clientName}
                               </span>
                             )}
                             {contactName && (
                               <span className="inline-flex items-center gap-1 text-[11px] text-tracker-text-secondary">
-                                <UserIcon size={11} color="#64748B" />
+                                <UserIcon color="#64748B" />
                                 {contactName}
                               </span>
                             )}
@@ -549,7 +549,7 @@ export function MiDiaPage() {
                                 variant={typeTagVariant}
                                 className="inline-flex items-center gap-1"
                               >
-                                <ChecklistIcon size={11} />
+                                <ChecklistIcon />
                                 {task.type}
                               </Badge>
                             )}

@@ -103,7 +103,7 @@ export function TaskCard({
               variant={typeTagVariant}
               className="inline-flex items-center gap-1"
             >
-              <ChecklistIcon size={11} />
+              <ChecklistIcon />
               {task.type}
             </Badge>
           )}
@@ -112,7 +112,7 @@ export function TaskCard({
         {/* Row 2: client name */}
         {clientName && (
           <p className="mb-0.5 flex items-center gap-1 text-[13px] font-semibold text-slate-700">
-            <BuildingIcon size={12} color="#334155" />
+            <BuildingIcon color="#334155" />
             {clientName}
           </p>
         )}
@@ -132,7 +132,7 @@ export function TaskCard({
           </span>
           {contactName && (
             <span className="inline-flex items-center gap-1 text-[11px] text-tracker-text-muted">
-              <UserIcon size={11} color="#94A3B8" />
+              <UserIcon color="#94A3B8" />
               {contactName}
             </span>
           )}
@@ -152,7 +152,7 @@ export function TaskCard({
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="success" size="sm">
-                <CheckCircleIcon size={13} />
+                <CheckCircleIcon />
                 Completar
               </Button>
             </AlertDialogTrigger>
@@ -194,12 +194,12 @@ export function TaskCard({
           <DropdownMenuContent align="end" className="min-w-44">
             {task.status === "Pendiente" ? (
               <DropdownMenuItem onSelect={() => onEdit(task)}>
-                <EditIcon size={13} />
+                <EditIcon />
                 Editar tarea
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem onSelect={() => setReactivateOpen(true)}>
-                <ReloadIcon size={13} />
+                <ReloadIcon />
                 Reactivar tarea
               </DropdownMenuItem>
             )}
@@ -208,7 +208,7 @@ export function TaskCard({
               variant="destructive"
               onSelect={() => setDeleteOpen(true)}
             >
-              <TrashIcon size={13} />
+              <TrashIcon />
               Eliminar tarea
             </DropdownMenuItem>
           </DropdownMenuContent>

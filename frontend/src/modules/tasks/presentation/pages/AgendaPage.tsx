@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PlusIcon } from "@/shared/components/Icon"
 import { TaskCard } from "../components/TaskCard"
 import { CalendarView } from "../components/CalendarView"
 import { CreateTaskForm } from "../components/CreateTaskForm"
@@ -266,14 +267,7 @@ export function AgendaPage() {
               setShowCreateModal(true)
             }}
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M6 1v10M1 6h10"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-            </svg>
+            <PlusIcon />
             Crear tarea
           </Button>
         </div>

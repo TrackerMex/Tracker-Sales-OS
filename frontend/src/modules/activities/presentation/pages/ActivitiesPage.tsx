@@ -154,19 +154,19 @@ export function ActivitiesPage() {
                   <div className="mb-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
                     {activity.clientName && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-tracker-blue">
-                        <BuildingIcon size={12} color="#002B49" />
+                        <BuildingIcon color="#002B49" />
                         {activity.clientName}
                       </span>
                     )}
                     {activity.contactName && (
                       <span className="inline-flex items-center gap-1 text-[11px] text-tracker-text-dim">
-                        <UserIcon size={12} color="#64748B" />
+                        <UserIcon color="#64748B" />
                         {activity.contactName}
                       </span>
                     )}
                     {activity.taskTitle && (
                       <span className="inline-flex items-center gap-1 rounded bg-[#EEF2FF] px-1.5 py-0.5 text-[10px] text-[#3730A3]">
-                        <ChecklistIcon size={11} color="#4338CA" />
+                        <ChecklistIcon color="#4338CA" />
                         {activity.taskTitle.length > 40
                           ? activity.taskTitle.slice(0, 40) + "…"
                           : activity.taskTitle}

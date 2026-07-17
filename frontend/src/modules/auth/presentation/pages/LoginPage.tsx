@@ -8,6 +8,7 @@ import { useApiFormErrors } from "@/shared/lib/api-errors"
 import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
 import { FieldError } from "@/shared/components/forms/FieldError"
 import { fieldErrorProps } from "@/shared/components/forms/field-error-props"
+import { CheckIcon } from "@/shared/components/Icon"
 
 const loginSchema = z.object({
   username: z.string().min(1, "Requerido"),
@@ -22,23 +23,6 @@ const benefits = [
   "Coaching con IA integrada",
   "Reportes ejecutivos mensuales",
 ]
-
-function CheckIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#82bc00"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  )
-}
 
 export function LoginPage() {
   const { mutate: login, isPending, error } = useLogin()
@@ -77,7 +61,7 @@ export function LoginPage() {
               {benefits.map((b) => (
                 <div key={b} className="flex items-center gap-3">
                   <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-tracker-green/12">
-                    <CheckIcon />
+                    <CheckIcon className="text-tracker-green" />
                   </div>
                   <span className="text-[13px] font-medium text-white/85">
                     {b}

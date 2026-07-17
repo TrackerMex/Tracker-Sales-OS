@@ -1,4 +1,5 @@
 import type { ParsedApiError } from "@/shared/lib/api-errors"
+import { AlertCircleIcon } from "@/shared/components/Icon"
 
 interface Props {
   error: ParsedApiError | null
@@ -13,22 +14,7 @@ export function FormErrorSummary({ error, className }: Props) {
       role="alert"
       className={`flex items-start gap-2.5 rounded-lg border border-red-300 bg-red-100 px-3.5 py-3 text-tracker-danger-dark${className ? ` ${className}` : ""}`}
     >
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        className="mt-px shrink-0"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-      </svg>
+      <AlertCircleIcon aria-hidden="true" className="mt-px shrink-0" />
       <div className="text-xs leading-relaxed font-medium">
         <p>{single ? error.details[0] : error.message}</p>
         {error.details.length > 1 && (
