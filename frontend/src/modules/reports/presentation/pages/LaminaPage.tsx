@@ -34,7 +34,7 @@ export function LaminaPage() {
   return (
     <div
       className="min-h-screen bg-tracker-bg p-8"
-      style={{ fontFamily: "'Montserrat','Inter',sans-serif" }}
+      style={{ fontFamily: "'Montserrat Variable','Montserrat','Inter',sans-serif" }}
     >
       <div className="mx-auto max-w-[1080px]">
         {isLoading && (
