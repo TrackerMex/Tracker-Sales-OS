@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PlusIcon } from "@/shared/components/Icon"
 import { TaskCard } from "../components/TaskCard"
 import { CalendarView } from "../components/CalendarView"
 import { CreateTaskForm } from "../components/CreateTaskForm"
@@ -67,10 +68,11 @@ export function AgendaPage() {
 
   const currentUser = useAppStore((s) => s.currentUser)
   const isAdminOrDirector =
-    currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Director
+    currentUser?.role === UserRole.Admin ||
+    currentUser?.role === UserRole.Director
 
   const [selectedSeller, setSelectedSeller] = useState<string>(() => {
-    return localStorage.getItem('tasks_team_seller_filter') ?? 'all'
+    return localStorage.getItem("tasks_team_seller_filter") ?? "all"
   })
 
   const { data: sellers = [] } = useSellers()
@@ -97,7 +99,7 @@ export function AgendaPage() {
   const { data: teamMonthTasksRaw = [] } = useTeamMonthTasks(
     calYear,
     calMonth,
-    isAdminOrDirector,
+    isAdminOrDirector
   )
 
   const sellerMap = Object.fromEntries(sellers.map((s) => [s.id, s.name]))
@@ -108,7 +110,7 @@ export function AgendaPage() {
   }))
 
   const monthTasks = isAdminOrDirector
-    ? selectedSeller === 'all'
+    ? selectedSeller === "all"
       ? enrichedTeamTasks
       : enrichedTeamTasks.filter((t) => t.sellerId === selectedSeller)
     : monthTasksRaw
@@ -170,7 +172,9 @@ export function AgendaPage() {
             ...(completedTask.clientId
               ? { clientId: completedTask.clientId }
               : {}),
-            ...(completedTask.clientName ? { clientName: completedTask.clientName } : {}),
+            ...(completedTask.clientName
+              ? { clientName: completedTask.clientName }
+              : {}),
             ...(task?.title ? { taskTitle: task.title } : {}),
             taskId: taskId,
           },
@@ -221,16 +225,16 @@ export function AgendaPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>
+        <h1 className="text-sm font-bold text-tracker-text">
           Compromisos comerciales
         </h1>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="flex items-center gap-2">
           {viewMode === "calendar" && isAdminOrDirector && (
             <Select
               value={selectedSeller}
               onValueChange={(value) => {
                 setSelectedSeller(value)
-                localStorage.setItem('tasks_team_seller_filter', value)
+                localStorage.setItem("tasks_team_seller_filter", value)
               }}
             >
               <SelectTrigger className="h-8 w-[190px] rounded-md bg-white px-2 py-1 text-[13px]">
@@ -246,7 +250,12 @@ export function AgendaPage() {
               </SelectContent>
             </Select>
           )}
-          <Tabs value={viewMode} onValueChange={(value) => handleToggleView(value as "list" | "calendar")}>
+          <Tabs
+            value={viewMode}
+            onValueChange={(value) =>
+              handleToggleView(value as "list" | "calendar")
+            }
+          >
             <TabsList>
               <TabsTrigger value="list">Lista</TabsTrigger>
               <TabsTrigger value="calendar">Calendario</TabsTrigger>
@@ -258,14 +267,7 @@ export function AgendaPage() {
               setShowCreateModal(true)
             }}
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M6 1v10M1 6h10"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-            </svg>
+            <PlusIcon />
             Crear tarea
           </Button>
         </div>

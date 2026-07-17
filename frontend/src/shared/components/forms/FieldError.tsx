@@ -6,7 +6,10 @@ interface Props {
 export function FieldError({ name, message }: Props) {
   if (!message) return null
   return (
-    <p id={`${name}-error`} className="mt-1 font-medium" style={{ fontSize: 11, color: '#b91c1c' }}>
+    <p
+      id={`${name}-error`}
+      className="mt-1 text-[11px] font-medium text-tracker-danger-dark"
+    >
       {message}
     </p>
   )

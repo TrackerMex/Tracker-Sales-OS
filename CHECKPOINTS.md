@@ -712,3 +712,78 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 **Reviewer 2026-07-13**: PASSED 12/12. Suite completa: 11 suites, 60 tests, 0 snapshots; `npx tsc --noEmit` exit 0. Sin cambios productivos, dependencias, DB, red ni servicios externos.
 
 **Revalidación lint 2026-07-13**: PASSED. Corregidos 21 errores en los tres specs afectados sin desactivar reglas. ESLint exit 0, Jest 11/11 suites y 60/60 tests, TypeScript exit 0. Review independiente confirmó que se preservaron las aserciones y no hubo cambios de producción, configuración o dependencias.
+
+---
+
+## 72-visual-system-native-buttons
+
+**Migración y alcance:**
+- [x] Los botones nativos inventariados en `ClientesPage.tsx`, `ClientDetailPage.tsx`, `ActivityForm.tsx`, `CreateTaskForm.tsx`, `CalendarView.tsx` y `LoginPage.tsx` usan `Button` de `@/components/ui/button`, preservando props y comportamiento
+- [x] `rg -c '<button' frontend/src/modules` devuelve únicamente `frontend/src/modules/mi-dia/presentation/pages/MiDiaPage.tsx:1`, excepción documentada `seller-pick-card`
+- [x] `button-variants.ts` no cambia y no se agregan dependencias
+- [x] Las reglas muertas `.btn-primary`, `.btn-green`, `.btn-ghost`, `.btn-danger` y `.btn-sm`, incluidas sus referencias responsive, se eliminan de `frontend/src/index.css`
+- [x] `rg -c 'btn-(primary|green|ghost|danger|sm)' frontend/src` no devuelve coincidencias
+
+**Comportamiento y verificación:**
+- [x] El `TaskChip` conserva el mismo nodo button mediante `ref`, mantiene drag-and-drop, opacidad dinámica durante drag y apertura de edición al hacer click
+- [x] Los controles conservan `onClick`, `disabled`, `type`, `title`, `aria-*` y estilos dinámicos necesarios; los botones icon-only nuevos tienen nombre accesible
+- [x] `npm run typecheck`, `npm run lint` y `npm run build` pasan en `frontend/`
+- [x] No hay cambios fuera del alcance indicado en `plans/002-native-buttons-to-shadcn.md`
+- [x] Resumen guardado en `progress/impl_72-visual-system-native-buttons.md` y estado del plan 002 actualizado en `plans/README.md`
+
+**Reviewer 2026-07-15**: PASSED 10/10. Gates técnicos y revisión estática aprobados; smoke autenticado posterior del Líder cubrió Login, Clientes, detalle de Pipeline, Actividad, creación de Tarea y Agenda sin errores de consola. `TaskChip` conserva nodo button, `draggable="true"`, cursor, opacidad y apertura de edición; el usuario confirmó manualmente el movimiento efectivo entre días. Ver `progress/impl_72-visual-system-native-buttons.md`.
+
+---
+
+## 73-reicon-icon-migration
+
+**Prerequisito de dependencia (unificación pnpm, hecho 2026-07-16):**
+- [x] CI instala con `pnpm install --frozen-lockfile` y cachea pnpm en ambos jobs; `pnpm-lock.yaml` queda como fuente de verdad, alineado con los Dockerfiles de dev y prod
+- [x] `packageManager: pnpm@10.33.4` fijado en `backend/package.json` y `frontend/package.json`, consistente con `corepack prepare` de los Dockerfiles
+- [x] Lockfiles muertos eliminados: `frontend/bun.lock`, `frontend/package-lock.json`, `backend/package-lock.json`
+- [x] `pnpm install --frozen-lockfile` pasa en backend y frontend sin drift
+- [x] `docs/verification.md` documenta pnpm como gestor único y la trampa de `pnpm test -- --runInBand`
+
+**Decisión de estrategia (usuario, 2026-07-16):** migrar **con wrapper** `frontend/src/shared/components/Icon.tsx`. Base: `progress/explore_hugeicons_inventory.md` (52 instancias, 24 archivos, 23 iconos) y `progress/explore_reicon_api_mapping.md` (API real + mapeo verificado).
+
+**Migración y alcance:**
+- [x] Existe `frontend/src/shared/components/Icon.tsx` como **único** punto de import de `reicon-react`; exporta un componente por icono con nombre semántico
+- [x] Los 24 archivos que importaban `@hugeicons/*` consumen el wrapper; ninguno importa `reicon-react` directamente
+- [x] Los 23 iconos en uso tienen equivalente documentado en `progress/impl_73-reicon-icon-migration.md`
+- [x] `rg '@hugeicons' frontend/src` no devuelve coincidencias
+- [x] `@hugeicons/react` y `@hugeicons/core-free-icons` eliminados de `frontend/package.json` y de `pnpm-lock.yaml` (vía `pnpm remove`)
+- [x] No se agregan otras dependencias
+
+**Correcciones obligatorias de la librería (verificadas en `createIcon.js`):**
+- [x] El wrapper neutraliza el `style="color:currentColor"` inline de reicon, que si no anula las clases `text-*` en `select.tsx:49` y `nav-projects.tsx:79` **fallando en silencio**. *Criterio original: `style={{ color: undefined }}` incondicional. Implementado mejor:* `Icon.tsx:74` hace `style={{ color, ...style }}`, que emite el atributo sólo si se pide un color explícito y preserva los 7 hex de los módulos, que el literal habría matado. Desviación revisada y aprobada
+- [x] El wrapper hace `forwardRef` al `<svg>` (requerido por `<SelectPrimitive.Icon asChild>` en `select.tsx:48-50`)
+- [x] `strokeWidth` se define **por icono**, nunca global: nada en los 154 escalados (`scale(1.33333)`, su default ya da 2.0), `2` en los stroke sin escalar, nada en los fill (es no-op)
+- [x] El wrapper no inyecta ninguna clase que contenga la subcadena `size-` (rompería el `:not([class*='size-'])` del que dependen 33 de los 52 usos)
+- [x] `data-slot`, `aria-*` y `className` siguen llegando al `<svg>` (`accordion.tsx:56-57` depende de ello)
+
+**Fuera de alcance (verificado, no tocar):**
+- [x] `shared/navigation/nav-items.tsx` intacto — sus iconos son SVG inline, no HugeIcons
+- [x] `LoginPage.tsx:26-41` intacto — `CheckIcon` es un SVG local con marca `#82bc00` hardcodeada
+
+**Comportamiento y verificación:**
+- [x] Las primitivas de `components/ui` conservan `data-slot`, clases de estado, tamaño y alineación
+- [x] Los iconos icon-only conservan su nombre accesible (21 → 21, verificado por el Reviewer)
+- [x] `pnpm run typecheck`, `pnpm run lint` y `pnpm run build` pasan en `frontend/` sin desactivar reglas (reconfirmados por el Líder aparte del Implementer)
+- [x] Smoke autenticado sin errores de consola: Login, Dashboard, sidebar, Clientes, Pipeline, Mi Día, Agenda, Actividades, Reportes, Equipo, Ventas, Coaching. 0 errores post-login
+- [x] Verificación visual de los sitios de riesgo en navegador real (admin, 2026-07-16): dialog + X, selects con doble chevron, select abierto con tick, checkbox marcado, kebab de 3 puntos
+- [x] Resumen guardado en `progress/impl_73-reicon-icon-migration.md`
+- [x] Review independiente guardado en `progress/review_73-reicon-icon-migration.md` — PASSED 18/18 verificables, sin bloqueantes
+
+**Verificación en navegador de los 2 fallos silenciosos (medida con `getComputedStyle`, no a ojo):**
+- [x] **0 svgs con `style` inline de color** en toda la app → el `style={{ color, ...style }}` del wrapper neutraliza el `currentColor` de reicon y las clases `text-*` mandan
+- [x] **0 iconos con tamaño 0** → la clase `reicon` que la librería prefija no contiene la subcadena `size-`, así que el selector `:not([class*='size-'])` sigue aplicando y los 33 usos sin tamaño propio heredan sus 16px
+
+**Hallazgo lateral (preexistente, fuera de esta feature):** `dropdown-menu.tsx:46` lleva `**:data-[variant=destructive]:text-accent-foreground!` a nivel de `DropdownMenuContent`, que anula con `!important` el `text-destructive` del item. Por eso "Eliminar cliente" no se ve rojo. No lo introdujo esta migración y el diff no toca esa línea.
+
+**Riesgos visuales aceptados por adelantado (no son fallos del Implementer):**
+- Grosores mezclados 2.0 (stroke) / ~1.5 (fill): geometría horneada en el path, sin arreglo posible
+- Tick del checkbox de 3 → ~1.5: no existe checkmark stroke sin contenedor en reicon. Verificado en navegador: renderiza y se lee bien a 16px
+- 13 call-sites que pasaban `strokeWidth={1.8}` ahora rinden 2.0 (detectado por el Reviewer). Consecuencia obligada del criterio "strokeWidth por icono"; diferencia imperceptible
+- 4 mapeos dudosos a juicio del usuario en la app (`Checklist` con caja, `Office` con 2 edificios, `SidebarLeft` con chevron, `Check` fill). Cambiarlos es **una línea en `Icon.tsx`**
+
+**Reviewer 2026-07-16**: PASSED 18/18 verificables, sin bloqueantes. Las 3 desviaciones del Implementer juzgadas correctas; corrigió dos imprecisiones de su reporte (eran 6 instancias de `color="currentColor"`, no 7; y el rojo del item destructivo nunca estuvo en riesgo). Smoke autenticado y verificación en navegador ejecutados después por el Líder: 0 errores de consola, 0 svgs con color inline, 0 iconos con tamaño 0. Ver `progress/review_73-reicon-icon-migration.md`.

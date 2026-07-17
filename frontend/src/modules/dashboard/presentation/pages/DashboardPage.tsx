@@ -53,7 +53,7 @@ function ActivityChart({ data }: ActivityChartProps) {
   const counts = data.map((d) => d.count)
 
   return (
-    <div style={{ height: 180, position: "relative" }}>
+    <div className="relative h-[180px]">
       <Line
         data={{
           labels,
@@ -155,11 +155,8 @@ export function DashboardPage() {
       </div>
 
       {summary.isError && (
-        <div
-          className="mb-4 flex items-center justify-between rounded-lg border p-3"
-          style={{ background: "#FEF2F2", borderColor: "#FCA5A5" }}
-        >
-          <p className="text-[13px]" style={{ color: "var(--tracker-danger)" }}>
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-[#FCA5A5] bg-red-50 p-3">
+          <p className="text-[13px] text-tracker-danger">
             No se pudo cargar el resumen. Verifica tu conexión e intenta de
             nuevo.
           </p>
@@ -251,10 +248,7 @@ export function DashboardPage() {
         />
         {sellers.isError && (
           <div className="flex items-center justify-between px-5 pb-4">
-            <p
-              className="text-[13px]"
-              style={{ color: "var(--tracker-danger)" }}
-            >
+            <p className="text-[13px] text-tracker-danger">
               No se pudo cargar el desempeño del equipo.
             </p>
             <Button
@@ -277,10 +271,7 @@ export function DashboardPage() {
           </div>
           {leaderboard.isError ? (
             <div className="flex items-center justify-between px-5 py-4">
-              <p
-                className="text-[13px]"
-                style={{ color: "var(--tracker-danger)" }}
-              >
+              <p className="text-[13px] text-tracker-danger">
                 No se pudo cargar el leaderboard.
               </p>
               <Button
@@ -309,18 +300,12 @@ export function DashboardPage() {
           </div>
           <div className="card-body">
             {stalledDeals.isLoading && (
-              <p
-                className="text-[13px]"
-                style={{ color: "var(--tracker-text-secondary)" }}
-              >
+              <p className="text-[13px] text-tracker-text-secondary">
                 Cargando...
               </p>
             )}
             {stalledDeals.isError && (
-              <p
-                className="text-[13px]"
-                style={{ color: "var(--tracker-danger)" }}
-              >
+              <p className="text-[13px] text-tracker-danger">
                 No se pudo cargar los deals estancados.
               </p>
             )}
@@ -346,32 +331,19 @@ export function DashboardPage() {
                     <TableBody>
                       {stalledDeals.data?.data.map((item) => (
                         <TableRow key={item.dealId}>
-                          <TableCell
-                            className="font-medium"
-                            style={{ color: "var(--tracker-blue)" }}
-                          >
+                          <TableCell className="font-medium text-tracker-blue">
                             {item.clientName}
                           </TableCell>
-                          <TableCell
-                            style={{ color: "var(--tracker-text-dim)" }}
-                          >
+                          <TableCell className="text-tracker-text-dim">
                             {item.stage}
                           </TableCell>
-                          <TableCell
-                            style={{ color: "var(--tracker-text-dim)" }}
-                          >
+                          <TableCell className="text-tracker-text-dim">
                             {item.sellerName || "—"}
                           </TableCell>
-                          <TableCell
-                            className="text-right"
-                            style={{ color: "var(--tracker-text-dim)" }}
-                          >
+                          <TableCell className="text-right text-tracker-text-dim">
                             {formatCurrency(item.amount)}
                           </TableCell>
-                          <TableCell
-                            className="text-right"
-                            style={{ color: "var(--tracker-text-dim)" }}
-                          >
+                          <TableCell className="text-right text-tracker-text-dim">
                             {item.daysStalled}
                           </TableCell>
                           <TableCell className="text-center">
@@ -404,9 +376,8 @@ export function DashboardPage() {
                       Anterior
                     </Button>
                     <p
-                      className="text-[13px]"
+                      className="text-[13px] text-tracker-text-secondary"
                       aria-live="polite"
-                      style={{ color: "var(--tracker-text-secondary)" }}
                     >
                       Página {stalledDealsPage} de{" "}
                       {Math.max(stalledDeals.data?.totalPages ?? 0, 1)}

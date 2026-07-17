@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import '@fontsource-variable/noto-sans-arabic';
+import '@fontsource-variable/montserrat';
 import './index.css';
 import App from './App.tsx';
 

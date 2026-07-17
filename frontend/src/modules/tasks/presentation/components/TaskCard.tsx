@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from "react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,34 +9,34 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+} from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from "@/components/ui/dropdown-menu"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
-import type { Task } from '../../domain/tasks.types'
-import { HugeiconsIcon } from '@hugeicons/react'
+} from "@/components/ui/tooltip"
+import type { Task } from "../../domain/tasks.types"
 import {
-  OfficeIcon,
-  User02Icon,
-  CheckListIcon,
-  PencilEdit02Icon,
-  CheckmarkCircle02Icon,
-  ArrowReloadHorizontalIcon,
-  Delete02Icon,
-  MoreHorizontalCircle01Icon,
-} from '@hugeicons/core-free-icons'
-import { TYPE_TAG } from './task-card.constants'
+  BuildingIcon,
+  UserIcon,
+  ChecklistIcon,
+  EditIcon,
+  CheckCircleIcon,
+  ReloadIcon,
+  TrashIcon,
+  MoreHorizontalIcon,
+} from "@/shared/components/Icon"
+import { TYPE_TAG } from "./task-card.constants"
+import { cn } from "@/lib/utils"
 
 interface TaskCardProps {
   task: Task
@@ -49,41 +49,61 @@ interface TaskCardProps {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
+  return new Date(iso).toLocaleDateString("es-MX", {
+    day: "numeric",
+    month: "short",
+  })
 }
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString("es-MX", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 }
 
 function getAiComment(task: Task, clientName: string | null): string | null {
-  if (task.status === 'Completado') return null
-  const name = clientName ?? 'el contacto'
-  if (task.isOverdue) return `Tarea vencida. Reagenda con ${name} y define una nueva fecha concreta.`
+  if (task.status === "Completado") return null
+  const name = clientName ?? "el contacto"
+  if (task.isOverdue)
+    return `Tarea vencida. Reagenda con ${name} y define una nueva fecha concreta.`
   return `Revisa: ¿esta tarea tiene un resultado medible? Si solo es "seguimiento", redefine con ${name}.`
 }
 
-export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, clientName, contactName }: TaskCardProps) {
+export function TaskCard({
+  task,
+  onComplete,
+  onEdit,
+  onReactivate,
+  onDelete,
+  clientName,
+  contactName,
+}: TaskCardProps) {
   const [reactivateOpen, setReactivateOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const isOverdue = task.isOverdue && task.status === 'Pendiente'
+  const isOverdue = task.isOverdue && task.status === "Pendiente"
   const aiComment = getAiComment(task, clientName ?? null)
-  const typeTagVariant = task.type ? (TYPE_TAG[task.type] ?? 'gray') : null
+  const typeTagVariant = task.type ? (TYPE_TAG[task.type] ?? "gray") : null
 
   return (
     <div
-      className="card"
-      style={{ padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, opacity: task.status === 'Completado' ? 0.5 : 1 }}
+      className={cn(
+        "card flex items-start justify-between gap-3 p-3.5",
+        task.status === "Completado" && "opacity-50"
+      )}
     >
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="min-w-0 flex-1">
         {/* Row 1: time + type badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-          <span style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', lineHeight: 1 }}>
+        <div className="mb-0.5 flex items-center gap-2">
+          <span className="text-xl leading-none font-bold text-tracker-text">
             {formatTime(task.scheduledAt)}
           </span>
           {typeTagVariant && (
-            <Badge variant={typeTagVariant} className="inline-flex items-center gap-1">
-              <HugeiconsIcon icon={CheckListIcon} size={11} color="currentColor" strokeWidth={1.8} />
+            <Badge
+              variant={typeTagVariant}
+              className="inline-flex items-center gap-1"
+            >
+              <ChecklistIcon />
               {task.type}
             </Badge>
           )}
@@ -91,41 +111,48 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
 
         {/* Row 2: client name */}
         {clientName && (
-          <p style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 2 }}>
-            <HugeiconsIcon icon={OfficeIcon} size={12} color="#334155" strokeWidth={1.8} />
+          <p className="mb-0.5 flex items-center gap-1 text-[13px] font-semibold text-slate-700">
+            <BuildingIcon color="#334155" />
             {clientName}
           </p>
         )}
 
         {/* Row 3: task title */}
-        <p style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>{task.title}</p>
+        <p className="mb-1 text-xs text-tracker-text-secondary">{task.title}</p>
 
         {/* Row 4: date + contact + overdue badge */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: aiComment ? 4 : 0 }}>
-          <span style={{ fontSize: 11, color: '#94A3B8' }}>{formatDate(task.scheduledAt)}</span>
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-2.5",
+            aiComment && "mb-1"
+          )}
+        >
+          <span className="text-[11px] text-tracker-text-muted">
+            {formatDate(task.scheduledAt)}
+          </span>
           {contactName && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#94A3B8' }}>
-              <HugeiconsIcon icon={User02Icon} size={11} color="#94A3B8" strokeWidth={1.8} />
+            <span className="inline-flex items-center gap-1 text-[11px] text-tracker-text-muted">
+              <UserIcon color="#94A3B8" />
               {contactName}
             </span>
           )}
-          {isOverdue && (
-            <Badge variant="red">Vencida</Badge>
-          )}
+          {isOverdue && <Badge variant="red">Vencida</Badge>}
         </div>
 
         {/* AI comment */}
         {aiComment && (
-          <p style={{ fontSize: 11.5, color: '#6D28D9', fontWeight: 500 }}>IA: {aiComment}</p>
+          <p className="text-[11.5px] font-medium text-tracker-purple">
+            IA: {aiComment}
+          </p>
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-        {task.status === 'Pendiente' ? (
+      <div className="flex shrink-0 items-center gap-1.5">
+        {task.status === "Pendiente" ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="success" size="sm">
-                <HugeiconsIcon icon={CheckmarkCircle02Icon} size={13} color="currentColor" strokeWidth={1.8} />
+                <CheckCircleIcon />
                 Completar
               </Button>
             </AlertDialogTrigger>
@@ -133,7 +160,8 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
               <AlertDialogHeader>
                 <AlertDialogTitle>¿Completar esta tarea?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Se marcará como completada y se abrirá el registro de actividad. Esta acción no se puede deshacer.
+                  Se marcará como completada y se abrirá el registro de
+                  actividad. Esta acción no se puede deshacer.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -152,28 +180,35 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" aria-label="Acciones de tarea">
-                  <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Acciones de tarea"
+                >
+                  <MoreHorizontalIcon />
                 </Button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent>Acciones de tarea</TooltipContent>
           </Tooltip>
           <DropdownMenuContent align="end" className="min-w-44">
-            {task.status === 'Pendiente' ? (
+            {task.status === "Pendiente" ? (
               <DropdownMenuItem onSelect={() => onEdit(task)}>
-                <HugeiconsIcon icon={PencilEdit02Icon} size={13} color="currentColor" strokeWidth={1.8} />
+                <EditIcon />
                 Editar tarea
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem onSelect={() => setReactivateOpen(true)}>
-                <HugeiconsIcon icon={ArrowReloadHorizontalIcon} size={13} color="currentColor" strokeWidth={1.8} />
+                <ReloadIcon />
                 Reactivar tarea
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onSelect={() => setDeleteOpen(true)}>
-              <HugeiconsIcon icon={Delete02Icon} size={13} color="currentColor" strokeWidth={1.8} />
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={() => setDeleteOpen(true)}
+            >
+              <TrashIcon />
               Eliminar tarea
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -201,7 +236,8 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
             <AlertDialogHeader>
               <AlertDialogTitle>¿Eliminar esta tarea?</AlertDialogTitle>
               <AlertDialogDescription>
-                Esta acción es irreversible y la tarea se eliminará permanentemente.
+                Esta acción es irreversible y la tarea se eliminará
+                permanentemente.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -217,4 +253,4 @@ export function TaskCard({ task, onComplete, onEdit, onReactivate, onDelete, cli
   )
 }
 
-export { TYPE_TAG } from './task-card.constants'
+export { TYPE_TAG } from "./task-card.constants"

@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { Calendar01Icon } from '@hugeicons/core-free-icons'
+import { CalendarIcon } from '@/shared/components/Icon'
 import { Calendar } from '@/components/ui/calendar'
 import {
   Popover,
@@ -54,11 +53,7 @@ export function DatePickerField({
           <span className={cn('truncate', !selected && 'text-muted-foreground')}>
             {selected ? format(selected, 'dd/MM/yyyy') : placeholder}
           </span>
-          <HugeiconsIcon
-            icon={Calendar01Icon}
-            strokeWidth={2}
-            className="pointer-events-none size-4 shrink-0 text-muted-foreground"
-          />
+          <CalendarIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">

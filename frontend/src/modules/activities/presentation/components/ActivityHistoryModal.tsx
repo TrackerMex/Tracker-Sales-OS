@@ -12,7 +12,12 @@ import {
 import { toast } from "sonner"
 import { Badge, type BadgeVariant } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import { Card, CardContent } from "@/components/ui/card"
 
 interface Props {
@@ -63,7 +68,7 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
         if (!open) onClose()
       }}
     >
-      <DialogContent className="w-[min(calc(100vw-2rem),760px)] max-w-none max-h-[90vh] overflow-y-auto sm:max-w-none">
+      <DialogContent className="max-h-[90vh] w-[min(calc(100vw-2rem),760px)] max-w-none overflow-y-auto sm:max-w-none">
         <DialogHeader>
           <DialogTitle>
             {isLoading ? "Cargando..." : `${activity?.type ?? ""} — Historial`}
@@ -74,7 +79,7 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
         </DialogHeader>
 
         {isLoading && (
-          <p style={{ fontSize: 13, color: "#94A3B8" }}>
+          <p className="text-[13px] text-tracker-text-muted">
             Cargando actividad...
           </p>
         )}
@@ -110,7 +115,9 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
             <Accordion
               type="single"
               collapsible
-              defaultValue={activity.activityHistory?.length ? "history" : undefined}
+              defaultValue={
+                activity.activityHistory?.length ? "history" : undefined
+              }
             >
               <AccordionItem value="history">
                 <AccordionTrigger>
@@ -119,31 +126,35 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
                 <AccordionContent>
                   {!activity.activityHistory ||
                   activity.activityHistory.length === 0 ? (
-                    <p style={{ fontSize: 13, color: "#94A3B8" }}>
+                    <p className="text-[13px] text-tracker-text-muted">
                       Sin actualizaciones aún
                     </p>
                   ) : (
                     <ul className="space-y-2">
                       {activity.activityHistory.map((entry, i) => (
-                        <li key={i} style={{ fontSize: 12, color: "#0F172A" }}>
-                          <span style={{ color: "#94A3B8" }}>
+                        <li key={i} className="text-xs text-tracker-text">
+                          <span className="text-tracker-text-muted">
                             {new Date(entry.changedAt).toLocaleString("es-MX", {
                               dateStyle: "short",
                               timeStyle: "short",
                             })}
                           </span>{" "}
-                          <Badge variant={STATUS_VARIANTS[entry.oldStatus] ?? "gray"}>
+                          <Badge
+                            variant={STATUS_VARIANTS[entry.oldStatus] ?? "gray"}
+                          >
                             {entry.oldStatus}
                           </Badge>
                           {" → "}
-                          <Badge variant={STATUS_VARIANTS[entry.newStatus] ?? "gray"}>
+                          <Badge
+                            variant={STATUS_VARIANTS[entry.newStatus] ?? "gray"}
+                          >
                             {entry.newStatus}
                           </Badge>{" "}
-                          <span style={{ color: "#64748B" }}>
+                          <span className="text-tracker-text-secondary">
                             por: {entry.changedBy}
                           </span>
                           {entry.comment && (
-                            <span style={{ color: "#64748B" }}>
+                            <span className="text-tracker-text-secondary">
                               {" "}
                               — {entry.comment}
                             </span>

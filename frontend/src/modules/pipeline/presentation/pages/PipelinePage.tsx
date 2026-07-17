@@ -9,7 +9,12 @@ import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
 import { KanbanColumn } from "../components/KanbanColumn"
 import { ClientDetailPage } from "./ClientDetailPage"
 import { UserRole } from "@/core/domain/types/common.types"
-import type { PipelineStage, Deal, PipelineGrouped, LossReason } from "../../domain/pipeline.types"
+import type {
+  PipelineStage,
+  Deal,
+  PipelineGrouped,
+  LossReason,
+} from "../../domain/pipeline.types"
 import { formatCurrency } from "@/shared/lib/format"
 import {
   Select,
@@ -48,7 +53,10 @@ function SkeletonColumns() {
   return (
     <div className="flex gap-3">
       {ALL_STAGES.map((stage) => (
-        <div key={stage} className="h-48 w-64 shrink-0 animate-pulse rounded-lg bg-slate-200" />
+        <div
+          key={stage}
+          className="h-48 w-64 shrink-0 animate-pulse rounded-lg bg-slate-200"
+        />
       ))}
     </div>
   )
@@ -61,7 +69,12 @@ interface KanbanBoardProps {
   teamMode?: boolean
 }
 
-function KanbanBoard({ grouped, onChangeStage, onDealClick, teamMode }: KanbanBoardProps) {
+function KanbanBoard({
+  grouped,
+  onChangeStage,
+  onDealClick,
+  teamMode,
+}: KanbanBoardProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -71,8 +84,8 @@ function KanbanBoard({ grouped, onChangeStage, onDealClick, teamMode }: KanbanBo
   }, [])
 
   return (
-    <div ref={scrollRef} className="pipeline-scroll" style={{ overflowX: 'auto', paddingBottom: '16px' }}>
-      <div style={{ display: 'flex', gap: '12px', minWidth: 'max-content' }}>
+    <div ref={scrollRef} className="pipeline-scroll overflow-x-auto pb-4">
+      <div className="flex min-w-max gap-3">
         {ALL_STAGES.map((stage) => (
           <KanbanColumn
             key={stage}
@@ -101,25 +114,36 @@ export function PipelinePage() {
   const username = currentUser?.username ?? ""
 
   const role = currentUser?.role
-  const isAdminOrDirector = role === UserRole.Admin || role === UserRole.Director
+  const isAdminOrDirector =
+    role === UserRole.Admin || role === UserRole.Director
 
   const [selectedSeller, setSelectedSeller] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('pipeline_seller_filter') ?? 'all'
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("pipeline_seller_filter") ?? "all"
     }
-    return 'all'
+    return "all"
   })
 
   const { data: sellers = [] } = useSellers()
 
-  const isTeamMode = isAdminOrDirector && selectedSeller === 'all'
+  const isTeamMode = isAdminOrDirector && selectedSeller === "all"
 
   const sellerIdForQuery = isTeamMode
     ? null
-    : (selectedSeller !== 'all' ? selectedSeller : (currentUser?.sellerId ?? currentUser?.id ?? ''))
+    : selectedSeller !== "all"
+      ? selectedSeller
+      : (currentUser?.sellerId ?? currentUser?.id ?? "")
 
-  const { data: grouped, isLoading, isError } = usePipeline(isTeamMode ? null : sellerIdForQuery)
-  const { data: teamGrouped, isLoading: isTeamLoading, isError: isTeamError } = useTeamPipeline(isTeamMode)
+  const {
+    data: grouped,
+    isLoading,
+    isError,
+  } = usePipeline(isTeamMode ? null : sellerIdForQuery)
+  const {
+    data: teamGrouped,
+    isLoading: isTeamLoading,
+    isError: isTeamError,
+  } = useTeamPipeline(isTeamMode)
 
   const activeGrouped = isTeamMode ? teamGrouped : grouped
   const activeLoading = isTeamMode ? isTeamLoading : isLoading
@@ -133,7 +157,7 @@ export function PipelinePage() {
 
   function handleSellerChange(value: string) {
     setSelectedSeller(value)
-    localStorage.setItem('pipeline_seller_filter', value)
+    localStorage.setItem("pipeline_seller_filter", value)
   }
 
   function handleChangeStage(dealId: string, newStage: PipelineStage) {
@@ -142,25 +166,31 @@ export function PipelinePage() {
       setLossModal({ dealId })
       return
     }
-    changeStage.mutate({ dealId, input: { newStage, changedBy: username } }, {
-      onSuccess: () => toast.success(`Movido a ${newStage}`),
-      onError: () => toast.error("No se pudo cambiar la etapa"),
-    })
+    changeStage.mutate(
+      { dealId, input: { newStage, changedBy: username } },
+      {
+        onSuccess: () => toast.success(`Movido a ${newStage}`),
+        onError: () => toast.error("No se pudo cambiar la etapa"),
+      }
+    )
   }
 
   function handleConfirmLoss() {
     if (!lossModal) return
-    changeStage.mutate({
-      dealId: lossModal.dealId,
-      input: {
-        newStage: "Perdido",
-        changedBy: username,
-        ...(lossReason ? { lossReason } : {}),
+    changeStage.mutate(
+      {
+        dealId: lossModal.dealId,
+        input: {
+          newStage: "Perdido",
+          changedBy: username,
+          ...(lossReason ? { lossReason } : {}),
+        },
       },
-    }, {
-      onSuccess: () => toast.success("Deal marcado como perdido"),
-      onError: () => toast.error("No se pudo cambiar la etapa"),
-    })
+      {
+        onSuccess: () => toast.success("Deal marcado como perdido"),
+        onError: () => toast.error("No se pudo cambiar la etapa"),
+      }
+    )
     setLossModal(null)
     setLossReason("")
   }
@@ -172,14 +202,19 @@ export function PipelinePage() {
   const allDeals = activeGrouped ? Object.values(activeGrouped).flat() : []
   const openDeals = allDeals.filter((d) => d.stage !== "Perdido")
   const totalGross = openDeals.reduce((s, d) => s + (d.amount ?? 0), 0)
-  const forecast = openDeals.reduce((s, d) => s + (d.amount ?? 0) * (d.probability ?? 0) / 100, 0)
+  const forecast = openDeals.reduce(
+    (s, d) => s + ((d.amount ?? 0) * (d.probability ?? 0)) / 100,
+    0
+  )
 
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between">
         <div>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#002B49' }}>Pipeline</h1>
-          <p style={{ marginTop: 2, fontSize: 12, color: '#94A3B8' }}>Fases comerciales por oportunidad</p>
+          <h1 className="text-lg font-bold text-tracker-blue">Pipeline</h1>
+          <p className="mt-0.5 text-xs text-tracker-text-muted">
+            Fases comerciales por oportunidad
+          </p>
         </div>
         <div className="flex items-center gap-4">
           {isAdminOrDirector && (
@@ -190,7 +225,9 @@ export function PipelinePage() {
               <SelectContent>
                 <SelectItem value="all">Todos los vendedores</SelectItem>
                 {sellers.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -198,12 +235,20 @@ export function PipelinePage() {
           {activeGrouped && (
             <div className="flex gap-6 text-right">
               <div>
-                <div style={{ fontSize: 11, color: '#94A3B8' }}>Total bruto</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#002B49' }}>{formatCurrency(totalGross)}</div>
+                <div className="text-[11px] text-tracker-text-muted">
+                  Total bruto
+                </div>
+                <div className="text-base font-bold text-tracker-blue">
+                  {formatCurrency(totalGross)}
+                </div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: '#94A3B8' }}>Forecast ponderado</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#002B49' }}>{formatCurrency(forecast)}</div>
+                <div className="text-[11px] text-tracker-text-muted">
+                  Forecast ponderado
+                </div>
+                <div className="text-base font-bold text-tracker-blue">
+                  {formatCurrency(forecast)}
+                </div>
               </div>
             </div>
           )}
@@ -212,7 +257,9 @@ export function PipelinePage() {
 
       {activeLoading && <SkeletonColumns />}
       {activeError && (
-        <p style={{ fontSize: 13, color: '#EF4444' }}>No se pudo cargar el pipeline.</p>
+        <p className="text-[13px] text-red-500">
+          No se pudo cargar el pipeline.
+        </p>
       )}
 
       {!activeLoading && !activeError && activeGrouped && (
@@ -240,45 +287,50 @@ export function PipelinePage() {
               Registra un motivo opcional antes de marcar el deal como perdido.
             </DialogDescription>
           </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <label className="slabel mb-1 block">Motivo (opcional)</label>
-                <Select
-                  value={lossReason}
-                  onValueChange={(v) =>
-                    setLossReason(v === "__none__" ? "" : (v as LossReason))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un motivo..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Sin motivo</SelectItem>
-                    {LOSS_REASONS.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <Button
-                  type="button"
-                  onClick={() => { setLossModal(null); setLossReason("") }}
-                  variant="ghost"
-                  className="flex-1 justify-center"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleConfirmLoss}
-                  disabled={changeStage.isPending}
-                  className="flex-1 justify-center"
-                >
-                  {changeStage.isPending ? "Guardando..." : "Confirmar"}
-                </Button>
-              </div>
+          <div className="space-y-3">
+            <div>
+              <label className="slabel mb-1 block">Motivo (opcional)</label>
+              <Select
+                value={lossReason}
+                onValueChange={(v) =>
+                  setLossReason(v === "__none__" ? "" : (v as LossReason))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un motivo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin motivo</SelectItem>
+                  {LOSS_REASONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                type="button"
+                onClick={() => {
+                  setLossModal(null)
+                  setLossReason("")
+                }}
+                variant="ghost"
+                className="flex-1 justify-center"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirmLoss}
+                disabled={changeStage.isPending}
+                className="flex-1 justify-center"
+              >
+                {changeStage.isPending ? "Guardando..." : "Confirmar"}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -289,13 +341,22 @@ export function PipelinePage() {
           if (!open) setSelectedDeal(null)
         }}
       >
-        <SheetContent side="right" showCloseButton={false} className="overflow-y-auto p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[640px] data-[side=right]:lg:max-w-[720px]">
+        <SheetContent
+          side="right"
+          showCloseButton={false}
+          className="overflow-y-auto p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[640px] data-[side=right]:lg:max-w-[720px]"
+        >
           <SheetHeader className="sr-only">
             <SheetTitle>Detalle de oportunidad</SheetTitle>
-            <SheetDescription>Panel lateral con detalle del cliente y su historial comercial.</SheetDescription>
+            <SheetDescription>
+              Panel lateral con detalle del cliente y su historial comercial.
+            </SheetDescription>
           </SheetHeader>
           {selectedDeal && (
-            <ClientDetailPage deal={selectedDeal} onBack={() => setSelectedDeal(null)} />
+            <ClientDetailPage
+              deal={selectedDeal}
+              onBack={() => setSelectedDeal(null)}
+            />
           )}
         </SheetContent>
       </Sheet>

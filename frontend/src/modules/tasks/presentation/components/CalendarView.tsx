@@ -5,8 +5,10 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
 import { Badge, type BadgeVariant } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Task } from "../../domain/tasks.types"
+import { cn } from "@/lib/utils"
 
 interface CalendarViewProps {
   year: number
@@ -170,22 +172,21 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
     <HoverCard openDelay={200} closeDelay={100}>
       <HoverCardTrigger asChild>
         <Badge variant={tagVariant} asChild>
-          <button
+          <Button
             ref={taskRef}
+            variant="ghost"
+            size="xs"
             onClick={() => onEdit?.(task)}
-            className="w-full max-w-full justify-start truncate border-0 text-[11px]"
-            style={{
-              cursor: "grab",
-              opacity:
-                internalDragging || isDragging
-                  ? 0.5
-                  : task.status === "Completado"
-                    ? 0.5
-                    : 1,
-            }}
+            className={cn(
+              "h-auto w-full max-w-full cursor-grab justify-start truncate border-0 bg-transparent px-1 py-0.5 text-[11px] hover:bg-slate-100",
+              (internalDragging ||
+                isDragging ||
+                task.status === "Completado") &&
+                "opacity-50"
+            )}
           >
             {chipLabel}
-          </button>
+          </Button>
         </Badge>
       </HoverCardTrigger>
       <HoverCardContent
@@ -193,22 +194,8 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
         align="start"
         className="w-64 overflow-hidden p-0"
       >
-        <div
-          style={{
-            padding: "12px 14px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
-            }}
-          >
+        <div className="flex flex-col gap-2 px-3.5 py-3">
+          <div className="flex items-center justify-between gap-2">
             {task.type && (
               <Badge variant={tagVariant} className="text-[11px]">
                 {task.type}
@@ -220,7 +207,13 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
               </Badge>
             )}
             <Badge
-              variant={task.status === "Completado" ? "gray" : task.isOverdue ? "red" : "green"}
+              variant={
+                task.status === "Completado"
+                  ? "gray"
+                  : task.isOverdue
+                    ? "red"
+                    : "green"
+              }
               className="ml-auto text-[11px]"
             >
               {task.status === "Completado"
@@ -230,35 +223,18 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
                   : "Pendiente"}
             </Badge>
           </div>
-          <p
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#0F172A",
-              lineHeight: 1.3,
-              margin: 0,
-            }}
-          >
+          <p className="m-0 text-[13px] leading-[1.3] font-semibold text-tracker-text">
             {task.title}
           </p>
           {task.clientName && (
-            <p style={{ fontSize: 12, color: "#334155", margin: 0 }}>
-              {task.clientName}
-            </p>
+            <p className="m-0 text-xs text-slate-700">{task.clientName}</p>
           )}
           {task.description && (
-            <p
-              style={{
-                fontSize: 11.5,
-                color: "#64748B",
-                margin: 0,
-                lineHeight: 1.4,
-              }}
-            >
+            <p className="m-0 text-[11.5px] leading-[1.4] text-tracker-text-secondary">
               {task.description}
             </p>
           )}
-          <p style={{ fontSize: 11, color: "#94A3B8", margin: 0 }}>
+          <p className="m-0 text-[11px] text-tracker-text-muted">
             {formatDateTime(task.scheduledAt)}
           </p>
         </div>
@@ -305,39 +281,18 @@ function MonthView({
 
   return (
     <>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
-          gap: 2,
-          marginBottom: 2,
-        }}
-      >
+      <div className="mb-0.5 grid grid-cols-7 gap-0.5">
         {DAY_NAMES.map((name) => (
           <div
             key={name}
-            style={{
-              textAlign: "center",
-              fontSize: 11,
-              fontWeight: 700,
-              color: "#94A3B8",
-              padding: "4px 0",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
+            className="py-1 text-center text-[11px] font-bold tracking-[0.05em] text-tracker-text-muted uppercase"
           >
             {name}
           </div>
         ))}
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
-          gap: 2,
-        }}
-      >
+      <div className="grid grid-cols-7 gap-0.5">
         {Array.from({ length: totalCells }, (_, i) => {
           const dayNum = i - leadingEmpty + 1
           const isValidDay = dayNum >= 1 && dayNum <= daysInMonth
@@ -445,41 +400,37 @@ function MonthDayCell({
     <div
       ref={cellRef}
       onClick={onDayClick}
-      style={{
-        minHeight: 90,
-        border: isToday ? "2px solid #3B82F6" : "1px solid #E2E8F0",
-        borderRadius: 6,
-        backgroundColor: isDragOver
-          ? "#F0F9FF"
+      className={cn(
+        "min-h-[90px] overflow-hidden rounded-md p-1",
+        isToday ? "border-2 border-blue-500" : "border border-tracker-border",
+        isDragOver
+          ? "bg-[#F0F9FF]"
           : isToday
-            ? "#EFF6FF"
+            ? "bg-blue-50"
             : isValidDay
-              ? "#FFFFFF"
-              : "#F8FAFC",
-        padding: 4,
-        overflow: "hidden",
-        cursor: onDayClick ? "pointer" : "default",
-      }}
+              ? "bg-white"
+              : "bg-tracker-surface-alt",
+        onDayClick ? "cursor-pointer" : "cursor-default"
+      )}
     >
       {isValidDay && (
         <>
           <div
-            style={{
-              fontSize: 12,
-              fontWeight: isToday ? 700 : 500,
-              color: isToday ? "#2563EB" : "#475569",
-              marginBottom: 3,
-              lineHeight: 1,
-            }}
+            className={cn(
+              "mb-[3px] text-xs leading-none",
+              isToday
+                ? "font-bold text-blue-600"
+                : "font-medium text-tracker-text-dim"
+            )}
           >
             {dayNum}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div className="flex flex-col gap-0.5">
             {visibleTasks.map((task) => (
               <TaskChip key={task.id} task={task} onEdit={onEdit} />
             ))}
             {overflow > 0 && (
-              <span style={{ fontSize: 10, color: "#94A3B8", paddingLeft: 2 }}>
+              <span className="pl-0.5 text-[10px] text-tracker-text-muted">
                 +{overflow} más
               </span>
             )}
@@ -520,80 +471,36 @@ function WeekView({
 
   return (
     <>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 16,
-        }}
-      >
-        <button
+      <div className="mb-4 flex items-center gap-3">
+        <Button
+          variant="outline"
+          size="icon-sm"
           onClick={onPrevWeek}
-          style={{
-            background: "none",
-            border: "1px solid #E2E8F0",
-            borderRadius: 6,
-            cursor: "pointer",
-            padding: "5px 10px",
-            color: "#475569",
-            fontWeight: 600,
-            fontSize: 14,
-          }}
+          aria-label="Semana anterior"
         >
           ←
-        </button>
-        <span
-          style={{
-            fontSize: 14,
-            fontWeight: 700,
-            color: "#0F172A",
-            minWidth: 200,
-            textAlign: "center",
-          }}
-        >
+        </Button>
+        <span className="min-w-[200px] text-center text-sm font-bold text-tracker-text">
           {weekLabel}
         </span>
-        <button
+        <Button
+          variant="outline"
+          size="icon-sm"
           onClick={onNextWeek}
-          style={{
-            background: "none",
-            border: "1px solid #E2E8F0",
-            borderRadius: 6,
-            cursor: "pointer",
-            padding: "5px 10px",
-            color: "#475569",
-            fontWeight: 600,
-            fontSize: 14,
-          }}
+          aria-label="Semana siguiente"
         >
           →
-        </button>
+        </Button>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
-          gap: 2,
-          marginBottom: 2,
-        }}
-      >
+      <div className="mb-0.5 grid grid-cols-7 gap-0.5">
         {weekDates.map((date) => {
           const dayName = date.toLocaleDateString("es-MX", { weekday: "short" })
           const dayNum = date.getDate()
           return (
             <div
               key={date.toISOString()}
-              style={{
-                textAlign: "center",
-                fontSize: 11,
-                fontWeight: 700,
-                color: "#94A3B8",
-                padding: "4px 0",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
+              className="py-1 text-center text-[11px] font-bold tracking-[0.05em] text-tracker-text-muted uppercase"
             >
               {dayName} {dayNum}
             </div>
@@ -601,13 +508,7 @@ function WeekView({
         })}
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
-          gap: 2,
-        }}
-      >
+      <div className="grid grid-cols-7 gap-0.5">
         {weekDates.map((date) => (
           <WeekDayColumn
             key={date.toISOString()}
@@ -684,16 +585,12 @@ function WeekDayColumn({
   return (
     <div
       ref={colRef}
-      style={{
-        minHeight: 150,
-        border: "1px solid #E2E8F0",
-        borderRadius: 6,
-        backgroundColor: isDragOver ? "#F0F9FF" : "#FFFFFF",
-        padding: 4,
-        overflow: "hidden",
-      }}
+      className={cn(
+        "min-h-[150px] overflow-hidden rounded-md border border-tracker-border p-1",
+        isDragOver ? "bg-[#F0F9FF]" : "bg-white"
+      )}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <div className="flex flex-col gap-0.5">
         {tasks.map((task) => (
           <TaskChip key={task.id} task={task} onEdit={onEdit} />
         ))}
@@ -728,59 +625,29 @@ function DayView({
 
   return (
     <>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 16,
-        }}
-      >
-        <button
+      <div className="mb-4 flex items-center gap-3">
+        <Button
+          variant="outline"
+          size="icon-sm"
           onClick={onPrevDay}
-          style={{
-            background: "none",
-            border: "1px solid #E2E8F0",
-            borderRadius: 6,
-            cursor: "pointer",
-            padding: "5px 10px",
-            color: "#475569",
-            fontWeight: 600,
-            fontSize: 14,
-          }}
+          aria-label="Día anterior"
         >
           ←
-        </button>
-        <span
-          style={{
-            fontSize: 14,
-            fontWeight: 700,
-            color: "#0F172A",
-            minWidth: 300,
-            textAlign: "center",
-            textTransform: "capitalize",
-          }}
-        >
+        </Button>
+        <span className="min-w-[300px] text-center text-sm font-bold text-tracker-text capitalize">
           {dayLabel}
         </span>
-        <button
+        <Button
+          variant="outline"
+          size="icon-sm"
           onClick={onNextDay}
-          style={{
-            background: "none",
-            border: "1px solid #E2E8F0",
-            borderRadius: 6,
-            cursor: "pointer",
-            padding: "5px 10px",
-            color: "#475569",
-            fontWeight: 600,
-            fontSize: 14,
-          }}
+          aria-label="Día siguiente"
         >
           →
-        </button>
+        </Button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "60px 1fr", gap: 2 }}>
+      <div className="grid grid-cols-[60px_1fr] gap-0.5">
         {getHourSlots().map((hour) => {
           const hourTasks = getTasksForHour(hour, tasks)
           const timeLabel = `${String(hour).padStart(2, "0")}:00`
@@ -861,30 +728,15 @@ function DayHourRow({
 
   return (
     <>
-      <div
-        style={{
-          textAlign: "right",
-          fontSize: 11,
-          color: "#94A3B8",
-          fontWeight: 600,
-          padding: "4px 8px",
-          borderRight: "1px solid #E2E8F0",
-        }}
-      >
+      <div className="border-r border-tracker-border px-2 py-1 text-right text-[11px] font-semibold text-tracker-text-muted">
         {timeLabel}
       </div>
       <div
         ref={rowRef}
-        style={{
-          minHeight: 50,
-          border: "1px solid #E2E8F0",
-          borderRadius: 4,
-          backgroundColor: isDragOver ? "#F0F9FF" : "#FFFFFF",
-          padding: 4,
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-        }}
+        className={cn(
+          "flex min-h-[50px] flex-col gap-0.5 rounded border border-tracker-border p-1",
+          isDragOver ? "bg-[#F0F9FF]" : "bg-white"
+        )}
       >
         {tasks.map((task) => (
           <TaskChip key={task.id} task={task} onEdit={onEdit} />
@@ -963,56 +815,26 @@ export function CalendarView({
 
       {currentViewMode === "month" && (
         <>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              marginBottom: 16,
-            }}
-          >
-            <button
+          <div className="mb-4 flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon-sm"
               onClick={onPrevMonth}
-              style={{
-                background: "none",
-                border: "1px solid #E2E8F0",
-                borderRadius: 6,
-                cursor: "pointer",
-                padding: "5px 10px",
-                color: "#475569",
-                fontWeight: 600,
-                fontSize: 14,
-              }}
+              aria-label="Mes anterior"
             >
               ←
-            </button>
-            <span
-              style={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: "#0F172A",
-                textTransform: "capitalize",
-                minWidth: 160,
-                textAlign: "center",
-              }}
-            >
+            </Button>
+            <span className="min-w-40 text-center text-sm font-bold text-tracker-text capitalize">
               {monthLabel}
             </span>
-            <button
+            <Button
+              variant="outline"
+              size="icon-sm"
               onClick={onNextMonth}
-              style={{
-                background: "none",
-                border: "1px solid #E2E8F0",
-                borderRadius: 6,
-                cursor: "pointer",
-                padding: "5px 10px",
-                color: "#475569",
-                fontWeight: 600,
-                fontSize: 14,
-              }}
+              aria-label="Mes siguiente"
             >
               →
-            </button>
+            </Button>
           </div>
           <MonthView
             year={year}

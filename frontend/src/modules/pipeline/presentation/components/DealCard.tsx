@@ -1,26 +1,35 @@
 import { useEffect, useRef, useState } from "react"
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+import { EyeIcon } from "@/shared/components/Icon"
 import type { Deal } from "../../domain/pipeline.types"
 import { useSettings } from "@/modules/settings/application/hooks/useSettings"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { DealPeek } from "./DealPeek"
 
 const STAGE_BADGE_COLORS: Record<string, string> = {
-  Prospecto: '#002B49',
-  Contactado: '#1E40AF',
-  Interesado: '#82bc00',
-  Propuesta: '#D97706',
-  'Negociación': '#7C3AED',
-  Cierre: '#059669',
-  Perdido: '#DC2626',
+  Prospecto: "#002B49",
+  Contactado: "#1E40AF",
+  Interesado: "#82bc00",
+  Propuesta: "#D97706",
+  Negociación: "#7C3AED",
+  Cierre: "#059669",
+  Perdido: "#DC2626",
 }
 
 const PAGE_LOADED_AT = Date.now()
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('es-MX', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+  return new Date(dateStr).toLocaleDateString("es-MX", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   })
 }
 
@@ -34,8 +43,10 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [currentTime, setCurrentTime] = useState(PAGE_LOADED_AT)
   const ref = useRef<HTMLDivElement>(null)
-  const contactInfo = [deal.contactName, deal.contactRole].filter(Boolean).join(' · ')
-  const badgeColor = STAGE_BADGE_COLORS[deal.stage] || '#002B49'
+  const contactInfo = [deal.contactName, deal.contactRole]
+    .filter(Boolean)
+    .join(" · ")
+  const badgeColor = STAGE_BADGE_COLORS[deal.stage] || "#002B49"
   const { data: settings } = useSettings()
   const activityDate = deal.updatedAt ?? deal.createdAt
 
@@ -57,7 +68,7 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
     if (!el) return
     return draggable({
       element: el,
-      getInitialData: () => ({ dealId: deal.id as string, type: 'deal' }),
+      getInitialData: () => ({ dealId: deal.id as string, type: "deal" }),
       onDragStart: () => setIsDragging(true),
       onDrop: () => setIsDragging(false),
     })
@@ -67,88 +78,90 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
     <div
       ref={ref}
       onClick={() => onClick(deal)}
-      className="card"
-      style={{
-        padding: '14px',
-        marginBottom: '8px',
-        cursor: isDragging ? 'grabbing' : 'grab',
-        transition: 'box-shadow 0.2s, opacity 0.15s',
-        opacity: isDragging ? 0.5 : 1,
-      }}
-      onMouseEnter={(e) => { if (!isDragging) e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '' }}
+      className={cn(
+        "card mb-2 p-3.5 transition-[box-shadow,opacity]",
+        isDragging
+          ? "cursor-grabbing opacity-50"
+          : "cursor-grab hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
+      )}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: '13px', lineHeight: '1.3', fontWeight: 700, color: '#002B49', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <div className="mb-1 flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] leading-[1.3] font-bold text-tracker-blue">
             {deal.clientName}
           </p>
           {deal.opportunityName && (
-            <p style={{ fontSize: '11px', color: '#7C3AED', fontWeight: 600, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p className="mt-px truncate text-[11px] font-semibold text-tracker-purple">
               {deal.opportunityName}
             </p>
           )}
         </div>
-        <span
-          style={{
-            flexShrink: 0,
-            fontSize: '10px',
-            fontWeight: 700,
-            color: '#fff',
-            background: badgeColor,
-            borderRadius: '10px',
-            padding: '2px 8px',
-            textTransform: 'uppercase',
-          }}
-        >
-          {deal.stage}
-        </span>
+        <div className="flex shrink-0 items-center gap-1">
+          <span
+            style={{
+              background: badgeColor,
+            }}
+            className="rounded-[10px] px-2 py-0.5 text-[10px] font-bold text-white uppercase"
+          >
+            {deal.stage}
+          </span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label="Vista rápida"
+                className="bg-transparent text-tracker-text-muted hover:bg-slate-100"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <EyeIcon />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              className="w-auto p-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <DealPeek deal={deal} onOpenDetail={onClick} />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
       {contactInfo && (
-        <p style={{ fontSize: '11px', color: '#64748B', marginBottom: '2px' }}>
+        <p className="mb-0.5 text-[11px] text-tracker-text-secondary">
           {contactInfo}
         </p>
       )}
 
       {deal.painPoint && (
-        <p style={{
-          fontSize: '11px',
-          color: '#475569',
-          marginBottom: '6px',
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-          lineHeight: '1.4',
-        }}>
+        <p className="mb-1.5 line-clamp-2 text-[11px] leading-[1.4] text-tracker-text-dim">
           {deal.painPoint}
         </p>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-        {deal.sellerName && (
-          teamMode ? (
+      <div className="mt-2 flex items-center justify-between">
+        {deal.sellerName &&
+          (teamMode ? (
             <Badge variant="navy">{deal.sellerName}</Badge>
           ) : (
-            <span style={{ fontSize: '11px', color: '#94A3B8' }}>{deal.sellerName}</span>
-          )
-        )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="text-[11px] text-tracker-text-muted">
+              {deal.sellerName}
+            </span>
+          ))}
+        <div className="flex items-center gap-1.5">
           {(showRed || showAmber) && (
-            <span style={{
-              fontSize: '10px',
-              fontWeight: 700,
-              color: '#fff',
-              background: showRed ? '#ef4444' : '#f59e0b',
-              borderRadius: '10px',
-              padding: '2px 6px',
-            }}>
+            <span
+              className={cn(
+                "rounded-[10px] px-1.5 py-0.5 text-[10px] font-bold text-white",
+                showRed ? "bg-red-500" : "bg-amber-500"
+              )}
+            >
               {daysStalled}d
             </span>
           )}
-          <span style={{ fontSize: '11px', color: '#94A3B8' }}>
-            {activityDate ? formatDate(activityDate) : ''}
+          <span className="text-[11px] text-tracker-text-muted">
+            {activityDate ? formatDate(activityDate) : ""}
           </span>
         </div>
       </div>

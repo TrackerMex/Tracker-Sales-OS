@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import type { EquipoSeller } from "@/modules/equipo/domain/equipo.types"
 import type { ActivityMixItem } from "../../domain/coaching.types"
+import { cn } from "@/lib/utils"
 
 function getActivityCount(mix: ActivityMixItem[], types: string[]): number {
   return mix
@@ -35,21 +36,25 @@ interface StatCellProps {
   value: string | number
   label: string
   valueClassName?: string
-  valueColor?: string
-  background?: string
+  backgroundClassName?: string
   children?: React.ReactNode
 }
 
-function StatCell({ value, label, valueClassName, valueColor, background, children }: StatCellProps) {
+function StatCell({
+  value,
+  label,
+  valueClassName,
+  backgroundClassName,
+  children,
+}: StatCellProps) {
   return (
     <div
-      className="rounded-[7px] px-2 py-[6px] text-center"
-      style={{ background: background ?? "#F8FAFC" }}
+      className={cn(
+        "rounded-[7px] bg-tracker-surface-alt px-2 py-[6px] text-center",
+        backgroundClassName
+      )}
     >
-      <p
-        className={valueClassName ?? "text-[22px] font-bold text-[#0F172A]"}
-        style={valueColor ? { color: valueColor } : undefined}
-      >
+      <p className={valueClassName ?? "text-[22px] font-bold text-[#0F172A]"}>
         {value}
       </p>
       {children}
@@ -58,29 +63,47 @@ function StatCell({ value, label, valueClassName, valueColor, background, childr
   )
 }
 
+interface ProgressBarProps {
+  pct: number
+  colorClassName: string
+  className?: string
+}
+
+function ProgressBar({ pct, colorClassName, className }: ProgressBarProps) {
+  const clamped = Math.min(100, Math.max(0, pct))
+  return (
+    <div className={cn("prog", className)}>
+      <div
+        className={cn("prog-fill w-full origin-left", colorClassName)}
+        style={{ transform: `scaleX(${clamped / 100})` }}
+      />
+    </div>
+  )
+}
+
 function SkeletonCard() {
   return (
-    <div className="card p-5 animate-pulse motion-reduce:animate-none">
-      <div className="flex justify-between items-start mb-4">
+    <div className="card animate-pulse p-5 motion-reduce:animate-none">
+      <div className="mb-4 flex items-start justify-between">
         <div className="space-y-2">
-          <div className="h-4 w-32 bg-slate-200 rounded" />
-          <div className="h-3 w-24 bg-slate-100 rounded" />
+          <div className="h-4 w-32 rounded bg-slate-200" />
+          <div className="h-3 w-24 rounded bg-slate-100" />
         </div>
-        <div className="h-5 w-16 bg-slate-100 rounded" />
+        <div className="h-5 w-16 rounded bg-slate-100" />
       </div>
-      <div className="grid grid-cols-4 gap-2 mb-3">
+      <div className="mb-3 grid grid-cols-4 gap-2">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="bg-slate-100 rounded-[7px] h-14" />
+          <div key={i} className="h-14 rounded-[7px] bg-slate-100" />
         ))}
       </div>
-      <div className="grid grid-cols-3 gap-2 mb-3 border-t border-slate-100 pt-2.5">
+      <div className="mb-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-2.5">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="bg-slate-100 rounded-[7px] h-12" />
+          <div key={i} className="h-12 rounded-[7px] bg-slate-100" />
         ))}
       </div>
-      <div className="border-t border-slate-100 pt-2.5 space-y-2">
-        <div className="h-3 w-28 bg-slate-100 rounded" />
-        <div className="h-10 bg-slate-100 rounded-lg" />
+      <div className="space-y-2 border-t border-slate-100 pt-2.5">
+        <div className="h-3 w-28 rounded bg-slate-100" />
+        <div className="h-10 rounded-lg bg-slate-100" />
       </div>
     </div>
   )
@@ -112,27 +135,37 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
   const totalActivities = data?.totalActivitiesToday ?? 0
   const mixInsights = data?.mixInsights ?? []
 
-  const qualityColor =
-    quality >= 80 ? "#16a34a" : quality >= 50 ? "#d97706" : "#dc2626"
-  const qualityBarColor =
-    quality >= 75 ? "#82bc00" : quality >= 45 ? "#F59E0B" : "#EF4444"
+  const qualityTextColorClass =
+    quality >= 80
+      ? "text-tracker-success"
+      : quality >= 50
+        ? "text-tracker-warning"
+        : "text-tracker-danger"
+  const qualityBarColorClass =
+    quality >= 75
+      ? "bg-tracker-green"
+      : quality >= 45
+        ? "bg-amber-500"
+        : "bg-red-500"
   const recommendedAction = getRecommendedAction(points, minDaily, overdue)
   const meetsMinimum = points >= minDaily
   const progressPct =
     data?.progressPct ??
     (minDaily > 0 ? Math.min(100, Math.round((points / minDaily) * 100)) : 100)
-  const progressBarColor = meetsMinimum
-    ? "var(--tracker-green)"
+  const progressBarColorClass = meetsMinimum
+    ? "bg-tracker-green"
     : progressPct >= 50
-      ? "#F59E0B"
-      : "#EF4444"
+      ? "bg-amber-500"
+      : "bg-red-500"
 
   return (
     <div className="card p-5">
       <div className="mb-4">
-        <div className="flex justify-between items-start">
+        <div className="flex items-start justify-between">
           <div>
-            <p className="font-bold text-[#0F172A] text-[15px]">{seller.name}</p>
+            <p className="text-[15px] font-bold text-[#0F172A]">
+              {seller.name}
+            </p>
             <p className="text-[12px] text-[#94A3B8]">
               {seller.profile ?? "Ejecutivo comercial"}
             </p>
@@ -141,45 +174,42 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
             <Badge variant={meetsMinimum ? "green" : "red"}>
               {points}/{minDaily} pts
             </Badge>
-            <p className="text-[10px] text-[#94A3B8] mt-1">
+            <p className="mt-1 text-[10px] text-[#94A3B8]">
               {totalActivities} actividades hoy
             </p>
           </div>
         </div>
-        <div className="prog mt-2">
-          <div
-            className="prog-fill"
-            style={{ width: `${progressPct}%`, background: progressBarColor }}
-          />
-        </div>
+        <ProgressBar
+          pct={progressPct}
+          colorClassName={progressBarColorClass}
+          className="mt-2"
+        />
       </div>
 
-      <div className="grid grid-cols-4 gap-2 mb-3">
+      <div className="mb-3 grid grid-cols-4 gap-2">
         <StatCell value={calls} label="Llamadas" />
         <StatCell value={meetings} label="Reuniones" />
         <StatCell value={proposals} label="Propuestas" />
         <StatCell value={closes} label="Cierres" />
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mb-3 border-t border-slate-100 pt-2.5">
+      <div className="mb-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-2.5">
         <StatCell
           value={`${quality}%`}
           label="Calidad"
-          valueClassName="text-[18px] font-bold"
-          valueColor={qualityColor}
+          valueClassName={cn("text-[18px] font-bold", qualityTextColorClass)}
         >
-          <div className="prog mt-1">
-            <div
-              className="prog-fill"
-              style={{ width: `${quality}%`, background: qualityBarColor }}
-            />
-          </div>
+          <ProgressBar
+            pct={quality}
+            colorClassName={qualityBarColorClass}
+            className="mt-1"
+          />
         </StatCell>
         <StatCell
           value={overdue}
           label="Vencidos"
           valueClassName={`text-[18px] font-bold ${overdue > 0 ? "text-red-600" : "text-[#0F172A]"}`}
-          background={overdue > 0 ? "#FEF2F2" : undefined}
+          backgroundClassName={overdue > 0 ? "bg-red-50" : undefined}
         />
         <StatCell
           value={tomorrow}
@@ -191,15 +221,15 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
       <div className="border-t border-slate-100 pt-2.5">
         {mixInsights.length > 0 ? (
           <div className="ai-box">
-            <p className="slabel mb-2" style={{ color: "var(--tracker-purple)" }}>
-              Coach IA
-            </p>
+            <p className="slabel mb-2 text-tracker-purple">Coach IA</p>
             <ul className="m-0 pl-4">
               {mixInsights.map((tip, i) => (
                 <li
                   key={i}
-                  className="text-[12.5px]"
-                  style={{ marginBottom: i < mixInsights.length - 1 ? 5 : 0 }}
+                  className={cn(
+                    "text-[12.5px]",
+                    i < mixInsights.length - 1 && "mb-[5px]"
+                  )}
                 >
                   {tip}
                 </li>
@@ -225,7 +255,8 @@ export function CoachingPage() {
   // Settings endpoint is gated to Admin/Director; Sellers get the goal from their own report
   const { data: settingsData } = useSettings()
   const { data: ownDaily } = useCoachingDaily(!isAdmin ? currentSellerId : null)
-  const minDaily = settingsData?.dailyMinPoints ?? ownDaily?.dailyPointsGoal ?? 30
+  const minDaily =
+    settingsData?.dailyMinPoints ?? ownDaily?.dailyPointsGoal ?? 30
 
   const { data: sellers } = useSellers()
   const currentSeller = sellers?.find((s) => s.id === currentSellerId)
@@ -248,8 +279,8 @@ export function CoachingPage() {
     : activeSellers
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto">
-      <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+    <div className="mx-auto max-w-[1200px] p-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="page-title">Reporte diario de coaching</h1>
           <p className="page-subtitle">
@@ -267,7 +298,7 @@ export function CoachingPage() {
       {isAdmin ? (
         activeSellers.length > 0 ? (
           <>
-            <div className="flex items-center gap-2.5 mb-4">
+            <div className="mb-4 flex items-center gap-2.5">
               <span className="text-[12px] font-semibold text-[#64748B]">
                 Vendedor:
               </span>
@@ -294,8 +325,8 @@ export function CoachingPage() {
             <div
               className={
                 displayedSellers.length === 1
-                  ? "grid grid-cols-1 max-w-[480px]"
-                  : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                  ? "grid max-w-[480px] grid-cols-1"
+                  : "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
               }
             >
               {displayedSellers.map((seller) => (
@@ -309,7 +340,7 @@ export function CoachingPage() {
           </>
         ) : (
           <div className="card p-8 text-center">
-            <p className="text-[14px] font-semibold text-[#0F172A] mb-1">
+            <p className="mb-1 text-[14px] font-semibold text-[#0F172A]">
               Sin vendedores activos
             </p>
             <p className="text-[12px] text-[#94A3B8]">
@@ -317,7 +348,8 @@ export function CoachingPage() {
             </p>
           </div>
         )
-      ) : (() => {
+      ) : (
+        (() => {
           const seller = currentSeller ?? sellerFallback
           if (!seller) return null
           return (
@@ -325,7 +357,8 @@ export function CoachingPage() {
               <SellerCoachingCard seller={seller} minDaily={minDaily} />
             </div>
           )
-        })()}
+        })()
+      )}
     </div>
   )
 }

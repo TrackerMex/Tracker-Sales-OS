@@ -736,5 +736,40 @@
       "dashboard"
     ],
     "notes": "Origen: pedido usuario 2026-07-14. Completada y re-revisada PASSED el 2026-07-14. GET /api/dashboard/stalled-deals usa paginación SQL y retorna metadata. Corrección runtime: nombres resueltos mediante LEFT JOIN a clients/sellers; cliente prioriza clients.name con fallback deals.client_name y vendedor usa sellers.name, ignorando vacíos/espacios. Se conservan COUNT, filtros, OFFSET/LIMIT y orden estable. Jest backend 15 suites/78 tests PASS; tsc backend+frontend PASS; lint focalizado PASS. Resumen: progress/impl_71-stalled-deals-pagination.md; review: progress/review_71-stalled-deals-pagination.md."
+  },
+  {
+    "id": "72-visual-system-native-buttons",
+    "name": "Sistema visual: migrar botones nativos residuales a shadcn",
+    "description": "Ejecutar el plan visual 002: migrar 22 botones HTML nativos residuales de módulos a Button de shadcn/ui, conservar la seller-pick-card como única excepción documentada y eliminar las reglas CSS legacy .btn-* sin uso.",
+    "status": "done",
+    "priority": 72,
+    "backend_modules": [],
+    "frontend_modules": [
+      "auth",
+      "activities",
+      "tasks",
+      "clients",
+      "pipeline"
+    ],
+    "notes": "Origen: plans/002-native-buttons-to-shadcn.md, solicitado por el usuario el 2026-07-15. Continúa la consolidación iniciada en feature 53 sin reabrir su historial. Dependencia plan 001 satisfecha. Completada 2026-07-15: implementación, typecheck, lint, build, conteos residuales y smoke autenticado PASSED; CHECKPOINT 10/10. El Líder verificó Login, Clientes, detalle de Pipeline, Actividad, creación de Tarea y Agenda sin errores de consola; TaskChip conserva draggable, cursor, opacidad y apertura de edición, y el usuario confirmó manualmente el movimiento entre días."
+  },
+  {
+    "id": "73-reicon-icon-migration",
+    "name": "Migrar iconografía de HugeIcons a reicon-react",
+    "description": "Reemplazar la librería de iconos actual (@hugeicons/react + @hugeicons/core-free-icons) por reicon-react en los 24 archivos que la consumen: 12 primitivas de components/ui, 3 componentes de navegación del sidebar, 2 forms compartidos y 7 páginas/componentes de módulos. Mapear los 24 iconos distintos en uso a su equivalente reicon, preservando tamaño, grosor y alineación visual, y desinstalar los paquetes de HugeIcons al terminar.",
+    "status": "done",
+    "priority": 73,
+    "backend_modules": [],
+    "frontend_modules": [
+      "activities",
+      "clients",
+      "equipo",
+      "mi-dia",
+      "pipeline",
+      "reports",
+      "sales",
+      "tasks"
+    ],
+    "notes": "Solicitada por el usuario el 2026-07-16; reicon-react@^1.1.301 ya está en frontend/package.json. Prerequisito RESUELTO 2026-07-16: el proyecto se instala con pnpm y los Dockerfiles de dev/prod ya usaban pnpm-lock.yaml, pero CI corría 'npm ci' contra package-lock.json, validando un árbol distinto al desplegado. Se unificó CI a 'pnpm install --frozen-lockfile' con cache pnpm, se fijó packageManager pnpm@10.33.4 y se eliminaron los lockfiles muertos (frontend/bun.lock, frontend/package-lock.json, backend/package-lock.json). Ambos locks pnpm verificados en sync; gates completos PASSED (backend 15 suites/78 tests). Cambio de API, no un rename: HugeIcons usa un wrapper con data ('<HugeiconsIcon icon={ViewIcon} strokeWidth={2} />') y reicon exporta componentes directos ('<View size={24} weight=\"Outline\" />'), con props color/secondaryColor/size/weight/strokeWidth. Iconos a mapear: ArrowDown01, ArrowLeft01, ArrowRight01, ArrowRight, ArrowUp01, ArrowReloadHorizontal, Calendar01, Cancel01, Check, CheckList, CheckmarkCircle02, Delete02, Folder, Logout, MoreHorizontalCircle01, Office, PencilEdit02, PlusSign, Search01, SidebarLeft, Tick02, UnfoldMore, User02, View. Riesgo alto en components/ui: los iconos de accordion/select/checkbox/dropdown/dialog/command/sidebar/calendar dependen de data-slot y clases de estado; verificar que reicon reenvía className y ref. Catálogo: reicon.dev. COMPLETADA 2026-07-16 con wrapper (decisión del usuario tras comparación visual lado a lado): `frontend/src/shared/components/Icon.tsx` es el único import de reicon-react y expone 23 componentes con nombre semántico; 52 instancias migradas en 24 archivos; HugeIcons desinstalado. La exploración corrigió el alcance: eran 23 iconos y 52 instancias, no 24/48; `showIcon` era falso positivo y los iconos del sidebar (`nav-items.tsx`) son SVG inline, fuera de alcance. Tres bugs de reicon encapsulados en el wrapper: `color` inline que anula clases `text-*`, `strokeWidth` no-op en 59% de los iconos, y 154 iconos con `scale(1.33333)` que multiplican el grosor (por eso strokeWidth va por icono, nunca global). Reviewer PASSED 18/18; smoke autenticado y verificación con getComputedStyle sin hallazgos. Riesgos aceptados: grosores mezclados 2.0/1.5 sin arreglo posible (geometría del path) y tick del checkbox de 3 a ~1.5. Los 4 mapeos dudosos (Checklist con caja, Office con 2 edificios, SidebarLeft con chevron, Check fill) se cambian con una línea en Icon.tsx."
   }
 ]

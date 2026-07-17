@@ -8,6 +8,7 @@ import { useApiFormErrors } from "@/shared/lib/api-errors"
 import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
 import { FieldError } from "@/shared/components/forms/FieldError"
 import { fieldErrorProps } from "@/shared/components/forms/field-error-props"
+import { CheckIcon } from "@/shared/components/Icon"
 
 const loginSchema = z.object({
   username: z.string().min(1, "Requerido"),
@@ -22,23 +23,6 @@ const benefits = [
   "Coaching con IA integrada",
   "Reportes ejecutivos mensuales",
 ]
-
-function CheckIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#82bc00"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  )
-}
 
 export function LoginPage() {
   const { mutate: login, isPending, error } = useLogin()
@@ -61,87 +45,25 @@ export function LoginPage() {
   const passwordError = errors.password?.message ?? fieldErrors.password
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#EEF2F7",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          width: "100%",
-          maxWidth: 800,
-          borderRadius: 16,
-          overflow: "hidden",
-          boxShadow: "0 8px 40px rgba(0,21,36,0.14)",
-        }}
-      >
+    <div className="flex min-h-screen items-center justify-center bg-tracker-bg">
+      <div className="flex w-full max-w-[800px] overflow-hidden rounded-2xl shadow-[0_8px_40px_rgba(0,21,36,0.14)]">
         {/* Left panel */}
-        <div
-          style={{
-            width: 300,
-            flexShrink: 0,
-            background: "#001524",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            padding: "48px 32px 32px",
-          }}
-        >
+        <div className="flex w-[300px] shrink-0 flex-col justify-between bg-tracker-dark px-8 pt-12 pb-8">
           <div>
-            <h1
-              style={{
-                fontSize: 18,
-                fontWeight: 800,
-                color: "#82bc00",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                marginBottom: 4,
-              }}
-            >
+            <h1 className="mb-1 text-lg font-extrabold tracking-wider text-tracker-green uppercase">
               Tracker Sales OS
             </h1>
-            <p
-              style={{
-                fontSize: 12.5,
-                color: "rgba(255,255,255,0.42)",
-                marginBottom: 36,
-              }}
-            >
+            <p className="mb-9 text-[12.5px] text-white/42">
               Sistema de gestion comercial
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="flex flex-col gap-4">
               {benefits.map((b) => (
-                <div
-                  key={b}
-                  style={{ display: "flex", alignItems: "center", gap: 12 }}
-                >
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      background: "rgba(130,188,0,0.12)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <CheckIcon />
+                <div key={b} className="flex items-center gap-3">
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-tracker-green/12">
+                    <CheckIcon className="text-tracker-green" />
                   </div>
-                  <span
-                    style={{
-                      fontSize: 13,
-                      color: "rgba(255,255,255,0.85)",
-                      fontWeight: 500,
-                    }}
-                  >
+                  <span className="text-[13px] font-medium text-white/85">
                     {b}
                   </span>
                 </div>
@@ -149,50 +71,23 @@ export function LoginPage() {
             </div>
           </div>
 
-          <p
-            style={{
-              fontSize: 11,
-              color: "rgba(255,255,255,0.3)",
-              marginTop: 48,
-            }}
-          >
+          <p className="mt-12 text-[11px] text-white/30">
             Tracker GPS Mexico - Sales OS
           </p>
         </div>
 
         {/* Right panel */}
-        <div
-          style={{
-            flex: 1,
-            background: "#FFFFFF",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            padding: "48px 40px",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: 22,
-              fontWeight: 800,
-              color: "#0F172A",
-              marginBottom: 4,
-            }}
-          >
+        <div className="flex flex-1 flex-col justify-center bg-white px-10 py-12">
+          <h2 className="mb-1 text-[22px] font-extrabold text-tracker-text">
             Bienvenido
           </h2>
-          <p style={{ fontSize: 13, color: "#64748B", marginBottom: 32 }}>
+          <p className="mb-8 text-[13px] text-tracker-text-secondary">
             Ingresa tus credenciales para acceder
           </p>
 
           <form ref={formRef} onSubmit={handleSubmit((data) => login(data))}>
-            <div style={{ marginBottom: 20 }}>
-              <label
-                className="slabel"
-                style={{ display: "block", marginBottom: 6 }}
-              >
-                Usuario
-              </label>
+            <div className="mb-5">
+              <label className="slabel mb-1.5 block">Usuario</label>
               <Input
                 {...register("username", {
                   onChange: () => clearField("username"),
@@ -205,13 +100,8 @@ export function LoginPage() {
               <FieldError name="username" message={usernameError} />
             </div>
 
-            <div style={{ marginBottom: 20 }}>
-              <label
-                className="slabel"
-                style={{ display: "block", marginBottom: 6 }}
-              >
-                Contrasena
-              </label>
+            <div className="mb-5">
+              <label className="slabel mb-1.5 block">Contrasena</label>
               <Input
                 {...register("password", {
                   onChange: () => clearField("password"),
@@ -224,7 +114,7 @@ export function LoginPage() {
             </div>
 
             {serverError && (
-              <div style={{ marginBottom: 16 }}>
+              <div className="mb-4">
                 <FormErrorSummary error={serverError} />
               </div>
             )}
@@ -234,29 +124,20 @@ export function LoginPage() {
               disabled={isPending}
               variant="success"
               className="w-full"
-              style={{ width: "100%" }}
             >
               {isPending ? "Entrando..." : "Entrar"}
             </Button>
           </form>
 
           {/* Reset button */}
-          <button
+          <Button
             type="button"
+            variant="link"
             onClick={() => reset()}
-            style={{
-              marginTop: 12,
-              background: "transparent",
-              border: "none",
-              color: "#94A3B8",
-              fontSize: 12,
-              cursor: "pointer",
-              padding: "6px 0",
-              textDecoration: "underline",
-            }}
+            className="mt-3 h-auto p-0 text-xs font-normal text-tracker-text-muted"
           >
             Limpiar formulario
-          </button>
+          </Button>
         </div>
       </div>
     </div>

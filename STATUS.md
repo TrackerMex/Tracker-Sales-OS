@@ -1,13 +1,32 @@
 # Tracker Sales OS — Status
 
-**Última actualización**: 2026-07-02
-**Features completadas**: 47/47 (hasta feature 47 inclusive)
-**Pendiente registrada (no implementada)**: feature 48 — combobox buscable de selección de cliente
+**Última actualización**: 2026-07-16
+**Features completadas**: 69/72 (`feature_list.json`)
+**Pendientes**: features 64 (logging estructurado), 65 (backups de DB en prod), 66 (multi-tenancy)
 **En producción**: sí
 
 ---
 
 ## Features recientes (esta sesión)
+
+### Cierre de la migración de iconos + consolidación visual mergeada a `main` (2026-07-16)
+
+**Iconos unificados a 18px** (commit `4da041f`, 12 archivos, +79/-334):
+- Se completó la migración a `reicon-react`: los últimos SVG inline hardcoded (`Header`, `AppSidebar`, `AgendaPage`) ahora usan componentes del wrapper.
+- `createIcon` en `shared/components/Icon.tsx` aplica `size = 18` por defecto — el wrapper es dueño del tamaño, no cada call site. Se borraron los 15 `size={11..14}` explícitos.
+- `components/ui/sidebar.tsx`: la regla base pasó de `size-5` a `size-[18px]` para que el CSS no gane sobre el default.
+- Excepción deliberada: los iconos dentro de shadcn `Button` quedan en 16px por su propia regla `[&_svg]:size-4`.
+- `.codex/` añadido a `.gitignore` (config local de agentes).
+
+**Consolidación visual (planes 001–005): 5/5 DONE y mergeados a `main`** por fast-forward desde `review-ui`. Smoke visual de cierre ejecutado con Docker real — cierra los pendientes de los planes 001/003/004 (detalle en `plans/README.md`): 0 errores de consola en `/login`, `/dashboard`, `/reportes`, `/mi-dia` y `/coaching`; barras `scaleX` verificadas al 0% y al 100%; lámina ejecutiva con datos reales; tamaños de icono medidos en el DOM.
+
+**Limpieza de worktrees**: se eliminaron los 8 worktrees de agente y sus 10 branches. Los 6 que tenían cambios sin commitear estaban basados en commits de hace 40+ días y su contenido **ya estaba en `main`** por otra vía (verificado: `CoachingPage` ya tiene `SellerCoachingCard`, `SalesPage` ya usa `dirProject` y no importa `SaleFormBase`; los 6 parches dan conflicto contra `main` porque el código evolucionó más allá). Los diffs quedaron respaldados sin trackear en `progress/stale-worktrees/` — borrables cuando se confirme que no hacen falta.
+
+**Estado de git**: `main` está `ahead 31` de `origin/main`, con typecheck y build exit 0. **Sin pushear** — el push a `origin/main` dispara auto-deploy a producción vía Dokploy.
+
+Nota: durante el merge se reconcilió una divergencia con `origin/main` (el merge commit de PR #21 `71-new-labals`, que no aportaba contenido nuevo); el árbol quedó idéntico.
+
+Hallazgo anotado, fuera de alcance: en `/reportes` la Salud Comercial marca 100/100 mientras Focos Rojos reporta "volumen de actividad comercial muy bajo" — incoherencia preexistente del scoring.
 
 ### Auditoría de bugs 2026-07-01 → 3 fixes (features 45, 46, 47)
 
