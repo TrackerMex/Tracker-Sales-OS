@@ -166,12 +166,19 @@ export function ReportsPage() {
       window.print()
       return
     }
+    // The slide is styled with Tailwind classes, so the popup needs the app
+    // stylesheets to resolve them (<style> tags in dev, <link> assets in prod).
+    const appStyles = Array.from(
+      document.querySelectorAll('link[rel="stylesheet"], style')
+    )
+      .map((el) => el.outerHTML)
+      .join("")
     win.document.write(
       `<html><head><title>Reporte Ejecutivo — Tracker Sales OS</title>` +
         `<link rel="preconnect" href="https://fonts.googleapis.com">` +
         `<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">` +
+        appStyles +
         `<style>
-        *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'Montserrat','Inter',sans-serif;background:#EEF2F7;padding:32px;color:#0F172A;-webkit-print-color-adjust:exact;print-color-adjust:exact}
         #executive-slide{max-width:1080px;margin:0 auto}
         @media print{body{background:#fff;padding:0}#executive-slide{border-radius:0!important;border:none!important;box-shadow:none!important}}
