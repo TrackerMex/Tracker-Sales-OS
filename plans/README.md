@@ -14,11 +14,35 @@ conditions y actualiza su fila al terminar.
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 001 | Registrar tokens `--tracker-*` en Tailwind theme | P1 | S | — | DONE y mergeado a `review-ui` (commit `73ab7ed`); smoke visual del header pendiente |
-| 002 | Migrar 23 botones nativos a shadcn Button | P1 | M | 001 | DONE y mergeado a `review-ui` (PR #22); implementación, gates, smoke autenticado y drag-and-drop verificados; CHECKPOINT 10/10 |
-| 003 | Eliminar estilos inline: módulos núcleo | P1 | L | 001, 002 | DONE y mergeado a `review-ui` (commits `1ca2db7`–`13587fc`); review PASSED; smoke autenticado pendiente |
-| 004 | Eliminar estilos inline: módulos restantes | P2 | L | 001, 003 | DONE y mergeado a `review-ui` (commits `e00b70d`–`14645ee`); review Líder PASS: typecheck/lint/build exit 0; smoke visual de la lámina ejecutiva con datos reales pendiente — sin backend/DB en el sandbox del executor |
-| 005 | Paleta de comandos + peek de deal | P2 | M | 001, 003 | DONE y mergeado a `review-ui` (fast-forward, commits `840f901`–`cf556fc`); typecheck/lint/build exit 0 verificados post-merge; checklist manual completa con Admin y Seller vía backend Docker real, incluido drag-and-drop del DealCard |
+| 001 | Registrar tokens `--tracker-*` en Tailwind theme | P1 | S | — | DONE y mergeado a `main` (commit `73ab7ed`); smoke visual del header verificado 2026-07-16 |
+| 002 | Migrar 23 botones nativos a shadcn Button | P1 | M | 001 | DONE y mergeado a `main` (PR #22); implementación, gates, smoke autenticado y drag-and-drop verificados; CHECKPOINT 10/10 |
+| 003 | Eliminar estilos inline: módulos núcleo | P1 | L | 001, 002 | DONE y mergeado a `main` (commits `1ca2db7`–`13587fc`); review PASSED; smoke autenticado verificado 2026-07-16 |
+| 004 | Eliminar estilos inline: módulos restantes | P2 | L | 001, 003 | DONE y mergeado a `main` (commits `e00b70d`–`14645ee`); review Líder PASS: typecheck/lint/build exit 0; smoke de la lámina ejecutiva con datos reales verificado 2026-07-16 |
+| 005 | Paleta de comandos + peek de deal | P2 | M | 001, 003 | DONE y mergeado a `main` (fast-forward, commits `840f901`–`cf556fc`); typecheck/lint/build exit 0 verificados post-merge; checklist manual completa con Admin y Seller vía backend Docker real, incluido drag-and-drop del DealCard |
+
+Los 5 planes están mergeados a `main` (fast-forward desde `review-ui`, 2026-07-16). Sin
+pendientes de smoke: ver "Smoke visual de cierre" abajo.
+
+## Smoke visual de cierre (2026-07-16)
+
+Ejecutado con Docker real (api + db + ui + nginx) y `admin/Admin123!` en Chrome 1440x900.
+Cierra los pendientes de smoke de los planes 001, 003 y 004.
+
+- `/login`, `/dashboard`, `/reportes`, `/mi-dia`, `/coaching`: renderizan con datos reales,
+  **0 errores de consola** en las 4 rutas.
+- **Barras `scaleX` verificadas en ambos extremos**: lámina ejecutiva `/reportes` con
+  Unidades al 222% (clamped a 100, barra llena) y Ventas al 0.1% (barra casi vacía);
+  semáforo del dashboard con score 2.4 en rojo y score 0 sin fill. Confirma el fix
+  `width`→`scaleX` del plan 003/004.
+- Lámina ejecutiva completa con datos reales ($444, 333 unidades, funnel win/loss,
+  motivos de pérdida, análisis IA); Montserrat conservada según lo decidido.
+- Tamaños de icono medidos con `getBoundingClientRect` sobre el DOM: 18px en todo
+  el sistema; los únicos SVG fuera de 18px son los devtools de TanStack y los
+  `reicon` dentro de `Button` (16px por su propia regla `[&_svg]:size-4`).
+
+Hallazgo anotado, fuera de alcance (lógica de negocio, no del sistema visual): en
+`/reportes` la Salud Comercial marca 100/100 mientras Focos Rojos reporta "volumen de
+actividad comercial muy bajo" — incoherencia del scoring, preexistente.
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (con razón de una línea) | REJECTED (con justificación)
 
