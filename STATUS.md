@@ -1,6 +1,6 @@
 # Tracker Sales OS — Status
 
-**Última actualización**: 2026-07-16
+**Última actualización**: 2026-07-17
 **Features completadas**: 69/72 (`feature_list.json`)
 **Pendientes**: features 64 (logging estructurado), 65 (backups de DB en prod), 66 (multi-tenancy)
 **En producción**: sí
@@ -8,6 +8,20 @@
 ---
 
 ## Features recientes (esta sesión)
+
+### Fix: la lámina ejecutiva no cargaba estilos en el popup (2026-07-17)
+
+**Síntoma**: el botón "Abrir lámina" en `/reportes` abría la ventana con el slide como HTML crudo, sin estilos. La ruta `/lamina` nunca estuvo afectada.
+
+**Causa raíz**: `openLamina()` (`ReportsPage.tsx`) clona `#executive-slide` a una ventana nueva vía `document.write`, y solo inyectaba un `<style>` inline pequeño. Funcionó mientras el slide llevaba props `style` inline — que viajan dentro del `outerHTML` — pero el commit `14645ee` (plan 004) migró sus 120 estilos inline a clases Tailwind, y el popup no tenía hoja de estilos para resolverlas.
+
+**Fix** (commit `30b4bb7`, rama `fix/lamina-popup-styles`, 8 líneas en un archivo):
+- Clona los `<link rel="stylesheet">` y `<style>` del documento padre al `<head>` del popup. Cubre dev (Vite inyecta `<style>`) y prod (`/assets/index-*.css`, mismo origen).
+- Elimina el reset inline `*{margin:0;padding:0}`: **las reglas CSS sin capa ganan a las que están en capa sin importar especificidad**, así que ese reset pisaba todas las utilidades de espaciado de Tailwind (`@layer utilities`) y habría colapsado el padding del slide a cero — un bug más sutil que el original. El preflight de Tailwind, ya incluido en los estilos clonados, hace el mismo reset desde `@layer base`, donde las utilidades sí ganan. Las reglas de `body` y print se quedan sin capa a propósito: deben ganar sobre `index.css`.
+
+**Verificado en navegador** (Docker dev, `/reportes` → "Abrir lámina"): 7 hojas clonadas; header navy `rgb(0,21,36)` con padding `22px 28px` idéntico a la fuente; verde `rgb(130,188,0)`; Montserrat cargada; body `#EEF2F7` padding `32px`; print (`emulateMedia`) deja body blanco, padding 0, sin radius ni sombra, navy conservado. `pnpm typecheck` y `pnpm lint` limpios. Detalle en `progress/impl_fix_lamina_popup_styles.md` (untracked, no entró al commit).
+
+**Git**: push directo a `origin/main` rechazado — `main` tiene protección de rama y exige PR. La rama `fix/lamina-popup-styles` está pusheada; **PR pendiente de abrir** (`gh` no autenticado en la sesión): https://github.com/TrackerMex/Tracker-Sales-OS/pull/new/fix/lamina-popup-styles
 
 ### Cierre de la migración de iconos + consolidación visual mergeada a `main` (2026-07-16)
 
