@@ -795,5 +795,15 @@
       "pipeline"
     ],
     "notes": "Solicitada por el usuario 2026-07-19. Completada 2026-07-19: Información del cliente > Contactos muestra el teléfono normalizado de cada contacto o 'Sin teléfono' si está vacío. Se conservaron nombre, rol y Principal; sin cambios de backend, API ni dependencias. Review independiente PASSED; npx tsc --noEmit frontend exit 0. Resumen: progress/impl_75-pipeline-client-phone-in-drawer.md; review: progress/review_75-pipeline-client-phone-in-drawer.md."
+  },
+  {
+    "id": "76-brand-logos-login-navbar",
+    "name": "Branding: logos oficiales en Login y navegación",
+    "description": "Incorporar los logos oficiales de Tracker México en la pantalla de Login y en la cabecera de la navegación principal, preservando legibilidad, proporción, responsive y el estado colapsado del sidebar.",
+    "status": "done",
+    "priority": 76,
+    "backend_modules": [],
+    "frontend_modules": ["auth"],
+    "notes": "Solicitada y completada 2026-07-20. Los PNG se guardaron localmente en frontend/public/brand. Ajuste final solicitado por el usuario: trackermexico.png fue reemplazado byte por byte con el wordmark blanco/verde adjunto (1681x280, ARGB, SHA-256 6F6A527898C54A019E0677514D9584DF61838A4CFEB053C019DF6A8704B1BAF3). Login y sidebar expandido lo muestran directamente sobre navy, sin soporte blanco; el estado colapsado conserva el isotipo tracker.png. El encabezado no interactivo del logo quedó compacto (48px, padding 4px), dejó de usar SidebarMenuButton para eliminar el hover estructuralmente y el wordmark se alineó en x=20 con los iconos del menú. Sin hotlink, dependencias ni cambios de lógica. Typecheck, lint y build PASS. Reviewer independiente PASSED 7/7. Smoke local PASS en Login y sidebar expandido/colapsado; sin overflow, deformación ni recortes. Resumen: progress/impl_76-brand-logos-login-navbar.md."
   }
 ]

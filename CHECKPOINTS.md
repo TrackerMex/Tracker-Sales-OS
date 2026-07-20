@@ -833,3 +833,20 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] Resumen en `progress/impl_75-pipeline-client-phone-in-drawer.md` y review independiente en `progress/review_75-pipeline-client-phone-in-drawer.md`
 
 **Reviewer 2026-07-19**: PASSED. El drawer muestra el teléfono por contacto, normaliza espacios y usa “Sin teléfono” cuando no hay valor; conserva nombre, rol y Principal. Alcance solo frontend y TypeScript PASS. Ver `progress/review_75-pipeline-client-phone-in-drawer.md`.
+
+---
+
+## 76-brand-logos-login-navbar
+
+- [x] Los dos logos oficiales se almacenan localmente en `frontend/public/brand/` y la UI no depende de hotlinking
+- [x] Login muestra el logo oficial de Tracker México con proporción intacta, texto alternativo útil y tamaño responsive
+- [x] La cabecera del sidebar/navbar muestra la marca oficial sin duplicar el wordmark anterior
+- [x] El sidebar colapsado conserva una marca reconocible, centrada y sin recortes
+- [x] Los logos tienen contraste suficiente sobre sus fondos y no deforman el layout en mobile o desktop
+- [x] No se agregan dependencias ni se modifica lógica de autenticación o navegación
+- [x] `pnpm run typecheck`, `pnpm run lint` y `pnpm run build` pasan en `frontend/`
+- [x] Resumen guardado en `progress/impl_76-brand-logos-login-navbar.md`
+
+**Reviewer 2026-07-20, ajuste final**: PASSED 7/7. El wordmark instalado es byte-identical al adjunto (1681×280 ARGB; SHA-256 `6F6A527898C54A019E0677514D9584DF61838A4CFEB053C019DF6A8704B1BAF3`). Login y sidebar expandido lo muestran sin soporte blanco directamente sobre navy; sidebar colapsado conserva el isotipo original. Typecheck, lint y build PASS. Smoke del Líder en localhost: Login y sidebar expandido/colapsado sin overflow, deformación ni recortes.
+
+**Ajuste de hover y alineación 2026-07-20**: encabezado de marca reducido de 56 a 48 px y de padding 8×12 a 4 px. Al ser no interactivo, dejó de usar `SidebarMenuButton`, eliminando el hover desde la estructura. El wordmark quedó anclado en `x=20`, la misma guía del primer icono de navegación. Typecheck y lint PASS; smoke expandido/colapsado PASS y el isotipo conserva 30×22 px centrado.
