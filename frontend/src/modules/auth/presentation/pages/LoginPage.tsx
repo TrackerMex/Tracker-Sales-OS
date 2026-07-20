@@ -45,19 +45,25 @@ export function LoginPage() {
   const passwordError = errors.password?.message ?? fieldErrors.password
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-tracker-bg">
-      <div className="flex w-full max-w-[800px] overflow-hidden rounded-2xl shadow-[0_8px_40px_rgba(0,21,36,0.14)]">
+    <div className="flex min-h-screen items-center justify-center bg-tracker-bg px-4 py-6">
+      <div className="flex w-full max-w-[800px] flex-col overflow-hidden rounded-2xl shadow-[0_8px_40px_rgba(0,21,36,0.14)] md:flex-row">
         {/* Left panel */}
-        <div className="flex w-[300px] shrink-0 flex-col justify-between bg-tracker-dark px-8 pt-12 pb-8">
+        <div className="flex w-full shrink-0 flex-col justify-between bg-tracker-dark px-6 py-6 md:w-[300px] md:px-8 md:pt-12 md:pb-8">
           <div>
-            <h1 className="mb-1 text-lg font-extrabold tracking-wider text-tracker-green uppercase">
-              Tracker Sales OS
+            <h1 className="mb-3 flex min-h-12 w-full items-center">
+              <img
+                src="/brand/trackermexico.png"
+                alt="Tracker México GPS"
+                width={1681}
+                height={280}
+                className="h-auto max-h-8 w-full object-contain"
+              />
             </h1>
-            <p className="mb-9 text-[12.5px] text-white/42">
+            <p className="mb-9 text-[12.5px] text-white/60">
               Sistema de gestion comercial
             </p>
 
-            <div className="flex flex-col gap-4">
+            <div className="hidden flex-col gap-4 md:flex">
               {benefits.map((b) => (
                 <div key={b} className="flex items-center gap-3">
                   <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-tracker-green/12">
@@ -71,13 +77,13 @@ export function LoginPage() {
             </div>
           </div>
 
-          <p className="mt-12 text-[11px] text-white/30">
+          <p className="mt-12 hidden text-[11px] text-white/30 md:block">
             Tracker GPS Mexico - Sales OS
           </p>
         </div>
 
         {/* Right panel */}
-        <div className="flex flex-1 flex-col justify-center bg-white px-10 py-12">
+        <div className="flex flex-1 flex-col justify-center bg-white px-6 py-8 sm:px-10 sm:py-12">
           <h2 className="mb-1 text-[22px] font-extrabold text-tracker-text">
             Bienvenido
           </h2>

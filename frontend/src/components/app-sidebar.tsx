@@ -8,12 +8,10 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { NAV_SECTIONS } from "@/shared/navigation/nav-items"
-import { PulseIcon } from "@/shared/components/Icon"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const currentUser = useAppStore((s) => s.currentUser)
@@ -32,21 +30,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <div className="flex cursor-default items-center gap-2 select-none">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-tracker-green/15">
-                  <PulseIcon className="text-tracker-green" />
-                </div>
-                <div className="grid flex-1 text-left leading-tight">
-                  <span className="truncate text-[13px] font-black tracking-wider text-tracker-green">
-                    TRACKER
-                  </span>
-                  <span className="truncate text-[9px] font-semibold tracking-[0.12em] text-white/40">
-                    SALES OS
-                  </span>
-                </div>
+            <div className="flex h-12 w-full cursor-default items-center px-1 py-1 select-none group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-0!">
+              <div className="flex h-10 w-full items-center justify-start pl-2 group-data-[collapsible=icon]:hidden">
+                <img
+                  src="/brand/trackermexico.png"
+                  alt="Tracker México GPS"
+                  width={1681}
+                  height={280}
+                  className="h-auto max-h-7 w-full object-contain object-left"
+                />
               </div>
-            </SidebarMenuButton>
+              <div className="hidden size-8 items-center justify-center group-data-[collapsible=icon]:flex">
+                <img
+                  src="/brand/tracker.png"
+                  alt="Tracker"
+                  width={162}
+                  height={94}
+                  className="h-[22px] w-[30px] object-contain"
+                />
+              </div>
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
