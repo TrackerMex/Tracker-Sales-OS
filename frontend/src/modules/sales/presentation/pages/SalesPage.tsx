@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react"
+import { useState, type FormEvent } from "react"
 import { toast } from "sonner"
 import { MoreHorizontalIcon } from "@/shared/components/Icon"
 import { useAppStore } from "@/shared/store/app.store"
@@ -62,6 +62,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
   "50% anticipo",
   "Pendiente",
 ]
+const DIRECTION_SELLER_NAME: SaleSource = "Dirección Comercial"
 const SALE_SOURCES: SaleSource[] = [
   "Prospección propia",
   "Cliente existente",
@@ -70,7 +71,7 @@ const SALE_SOURCES: SaleSource[] = [
   "Marketing",
   "LinkedIn",
   "Web",
-  "Dirección Comercial",
+  DIRECTION_SELLER_NAME,
 ]
 
 function today() {
@@ -91,9 +92,12 @@ export function SalesPage() {
     currentUser?.role === UserRole.Admin ||
     currentUser?.role === UserRole.Director
 
-  // Sellers list for Admin/Director forms (hook is self-gated to Admin/Director)
+  // Seller lookup for Admin/Director forms (hook is self-gated to Admin/Director)
   const { data: sellersData } = useSellers()
-  const activeSellers = (sellersData ?? []).filter((s) => s.active)
+  const directionSellerId =
+    sellersData?.find(
+      (seller) => seller.active && seller.name === DIRECTION_SELLER_NAME
+    )?.id ?? ""
 
   // Seller form state
   const [sellerClientId, setSellerClientId] = useState("")
@@ -111,7 +115,6 @@ export function SalesPage() {
   const [sellerNotes, setSellerNotes] = useState("")
 
   // Direction form state
-  const [dirSellerId, setDirSellerId] = useState("")
   const [dirProject, setDirProject] = useState("")
   const [dirUnits, setDirUnits] = useState<number | "">("")
   const [dirAmount, setDirAmount] = useState<number | "">("")
@@ -119,24 +122,10 @@ export function SalesPage() {
   const [dirNotes, setDirNotes] = useState("")
 
   // ATC form state
-  const [atcSellerId, setAtcSellerId] = useState("")
   const [atcUnits, setAtcUnits] = useState<number | "">("")
   const [atcAmount, setAtcAmount] = useState<number | "">("")
   const [atcDate, setAtcDate] = useState(today())
   const [atcNotes, setAtcNotes] = useState("")
-
-  // Default both dropdowns to the "Dirección Comercial" seller when the list loads
-  useEffect(() => {
-    const direccion = sellersData?.find(
-      (s) => s.active && s.name === "Dirección Comercial"
-    )
-    if (!direccion) return
-    const frame = requestAnimationFrame(() => {
-      setDirSellerId((prev) => prev || direccion.id)
-      setAtcSellerId((prev) => prev || direccion.id)
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [sellersData])
 
   const [editingSale, setEditingSale] = useState<Sale | null>(null)
   const [deletingSale, setDeletingSale] = useState<Sale | null>(null)
@@ -196,8 +185,14 @@ export function SalesPage() {
 
   function handleDirSubmit(e: FormEvent) {
     e.preventDefault()
+    if (!directionSellerId) {
+      toast.error(
+        `${DIRECTION_SELLER_NAME} aún no está disponible. Espera un momento e inténtalo de nuevo.`
+      )
+      return
+    }
     const input: CreateSaleInput = {
-      sellerId: dirSellerId,
+      sellerId: directionSellerId,
       clientId: undefined,
       clientName: dirProject,
       clientType: "Existente",
@@ -205,7 +200,7 @@ export function SalesPage() {
       units: Number(dirUnits),
       amount: Number(dirAmount),
       pay: "Pagado",
-      source: "Dirección Comercial",
+      source: DIRECTION_SELLER_NAME,
       date: dirDate,
       notes: dirNotes || undefined,
       type: "direction",
@@ -225,8 +220,14 @@ export function SalesPage() {
 
   function handleAtcSubmit(e: FormEvent) {
     e.preventDefault()
+    if (!directionSellerId) {
+      toast.error(
+        `${DIRECTION_SELLER_NAME} aún no está disponible. Espera un momento e inténtalo de nuevo.`
+      )
+      return
+    }
     const input: CreateSaleInput = {
-      sellerId: atcSellerId,
+      sellerId: directionSellerId,
       clientId: undefined,
       clientName: "ATC",
       clientType: "Existente",
@@ -501,39 +502,6 @@ export function SalesPage() {
 
               <div>
                 <label className="slabel mb-1 text-tracker-text-muted">
-                  Vendedor
-                </label>
-                <Select
-                  value={dirSellerId}
-                  onValueChange={(v) => {
-                    setDirSellerId(v)
-                    dirErrors.clearField("sellerId")
-                  }}
-                >
-                  <SelectTrigger
-                    {...fieldErrorProps(
-                      "sellerId",
-                      dirErrors.fieldErrors.sellerId
-                    )}
-                  >
-                    <SelectValue placeholder="Seleccionar vendedor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeSellers.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError
-                  name="sellerId"
-                  message={dirErrors.fieldErrors.sellerId}
-                />
-              </div>
-
-              <div>
-                <label className="slabel mb-1 text-tracker-text-muted">
                   Fecha
                 </label>
                 <DatePickerField
@@ -672,37 +640,6 @@ export function SalesPage() {
               className="space-y-3"
             >
               <FormErrorSummary error={atcErrors.summary} />
-
-              <div>
-                <label className="slabel mb-1">Vendedor</label>
-                <Select
-                  value={atcSellerId}
-                  onValueChange={(v) => {
-                    setAtcSellerId(v)
-                    atcErrors.clearField("sellerId")
-                  }}
-                >
-                  <SelectTrigger
-                    {...fieldErrorProps(
-                      "sellerId",
-                      atcErrors.fieldErrors.sellerId
-                    )}
-                  >
-                    <SelectValue placeholder="Seleccionar vendedor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeSellers.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError
-                  name="sellerId"
-                  message={atcErrors.fieldErrors.sellerId}
-                />
-              </div>
 
               <div>
                 <label className="slabel mb-1">Fecha</label>

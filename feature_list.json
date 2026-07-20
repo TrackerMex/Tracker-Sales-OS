@@ -771,5 +771,29 @@
       "tasks"
     ],
     "notes": "Solicitada por el usuario el 2026-07-16; reicon-react@^1.1.301 ya está en frontend/package.json. Prerequisito RESUELTO 2026-07-16: el proyecto se instala con pnpm y los Dockerfiles de dev/prod ya usaban pnpm-lock.yaml, pero CI corría 'npm ci' contra package-lock.json, validando un árbol distinto al desplegado. Se unificó CI a 'pnpm install --frozen-lockfile' con cache pnpm, se fijó packageManager pnpm@10.33.4 y se eliminaron los lockfiles muertos (frontend/bun.lock, frontend/package-lock.json, backend/package-lock.json). Ambos locks pnpm verificados en sync; gates completos PASSED (backend 15 suites/78 tests). Cambio de API, no un rename: HugeIcons usa un wrapper con data ('<HugeiconsIcon icon={ViewIcon} strokeWidth={2} />') y reicon exporta componentes directos ('<View size={24} weight=\"Outline\" />'), con props color/secondaryColor/size/weight/strokeWidth. Iconos a mapear: ArrowDown01, ArrowLeft01, ArrowRight01, ArrowRight, ArrowUp01, ArrowReloadHorizontal, Calendar01, Cancel01, Check, CheckList, CheckmarkCircle02, Delete02, Folder, Logout, MoreHorizontalCircle01, Office, PencilEdit02, PlusSign, Search01, SidebarLeft, Tick02, UnfoldMore, User02, View. Riesgo alto en components/ui: los iconos de accordion/select/checkbox/dropdown/dialog/command/sidebar/calendar dependen de data-slot y clases de estado; verificar que reicon reenvía className y ref. Catálogo: reicon.dev. COMPLETADA 2026-07-16 con wrapper (decisión del usuario tras comparación visual lado a lado): `frontend/src/shared/components/Icon.tsx` es el único import de reicon-react y expone 23 componentes con nombre semántico; 52 instancias migradas en 24 archivos; HugeIcons desinstalado. La exploración corrigió el alcance: eran 23 iconos y 52 instancias, no 24/48; `showIcon` era falso positivo y los iconos del sidebar (`nav-items.tsx`) son SVG inline, fuera de alcance. Tres bugs de reicon encapsulados en el wrapper: `color` inline que anula clases `text-*`, `strokeWidth` no-op en 59% de los iconos, y 154 iconos con `scale(1.33333)` que multiplican el grosor (por eso strokeWidth va por icono, nunca global). Reviewer PASSED 18/18; smoke autenticado y verificación con getComputedStyle sin hallazgos. Riesgos aceptados: grosores mezclados 2.0/1.5 sin arreglo posible (geometría del path) y tick del checkbox de 3 a ~1.5. Los 4 mapeos dudosos (Checklist con caja, Office con 2 edificios, SidebarLeft con chevron, Check fill) se cambian con una línea en Icon.tsx."
+  },
+  {
+    "id": "74-sales-remove-house-seller-inputs",
+    "name": "Ventas: quitar vendedor de formularios Dirección y ATC",
+    "description": "Eliminar los inputs visibles de vendedor en los formularios Ventas Dirección y Registrar ATC. Ambos registros deben seguir asignándose internamente al seller activo 'Dirección Comercial' para preservar la FK sales.seller_id y evitar volver al fallback incorrecto del user id.",
+    "status": "done",
+    "priority": 74,
+    "backend_modules": [],
+    "frontend_modules": [
+      "sales"
+    ],
+    "notes": "Solicitada por el usuario 2026-07-19. Completada 2026-07-19: se eliminaron los controles visibles de Vendedor en Ventas Dirección y Registrar ATC; ambos formularios resuelven internamente el seller activo 'Dirección Comercial', bloquean con toast si no está disponible y nunca usan currentUser.id. El formulario Seller conserva su sellerId de sesión. Review independiente PASSED; npx tsc --noEmit frontend exit 0. Resumen: progress/impl_74-sales-remove-house-seller-inputs.md; review: progress/review_74-sales-remove-house-seller-inputs.md."
+  },
+  {
+    "id": "75-pipeline-client-phone-in-drawer",
+    "name": "Pipeline: mostrar teléfono en expediente del cliente",
+    "description": "En el drawer que abre desde Pipeline mediante 'Abrir expediente', mostrar el número telefónico de cada contacto dentro de Información del cliente > Contactos.",
+    "status": "done",
+    "priority": 75,
+    "backend_modules": [],
+    "frontend_modules": [
+      "pipeline"
+    ],
+    "notes": "Solicitada por el usuario 2026-07-19. Completada 2026-07-19: Información del cliente > Contactos muestra el teléfono normalizado de cada contacto o 'Sin teléfono' si está vacío. Se conservaron nombre, rol y Principal; sin cambios de backend, API ni dependencias. Review independiente PASSED; npx tsc --noEmit frontend exit 0. Resumen: progress/impl_75-pipeline-client-phone-in-drawer.md; review: progress/review_75-pipeline-client-phone-in-drawer.md."
   }
 ]

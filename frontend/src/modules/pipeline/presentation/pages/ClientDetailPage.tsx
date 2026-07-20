@@ -239,6 +239,9 @@ export function ClientDetailPage({ deal, onBack }: Props) {
                           {c.role}
                           {c.isDecisionMaker ? " · Principal" : ""}
                         </p>
+                        <p className="text-[11px] text-tracker-text-secondary">
+                          {c.phone?.trim() || "Sin teléfono"}
+                        </p>
                       </div>
                     ))
                   ) : (
