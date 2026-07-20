@@ -715,6 +715,25 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ---
 
+## 65-prod-db-backups
+
+**Automatización y seguridad:**
+- [x] Existe un script versionado que ejecuta `pg_dump` en formato custom contra el contenedor PostgreSQL 18 de producción, escribe primero a un archivo temporal, rechaza dumps vacíos y valida el catálogo con `pg_restore --list` antes de publicar el archivo
+- [x] Cada backup publicado tiene checksum SHA-256, permisos `0600` y nombre con timestamp UTC; el checksum se publica antes que el dump, nunca se sobrescribe un nombre existente y el directorio se crea con permisos `0700`
+- [x] La configuración operativa (contenedor, overrides de DB/usuario, directorio, retención y espacio mínimo) vive en un archivo de entorno sin secretos versionados; DB y usuario se autodetectan del contenedor si no hay override
+- [x] La ejecución usa lock no bloqueante, falla si el contenedor no está activo o queda poco espacio y deja resultado consultable en `journalctl`/estado de systemd
+- [x] La retención elimina únicamente `*.dump` y su checksum del directorio dedicado después de 30 días
+- [x] Un timer systemd ejecuta diariamente a las 03:15 UTC, con `Persistent=true` para recuperar una corrida perdida y demora aleatoria de hasta 15 minutos
+
+**Restauración y operación:**
+- [x] `docs/verification.md` documenta instalación, ejecución manual, estado del timer, logs, validación de checksums, restauración y rollback operativo
+- [x] Existe un script de prueba que restaura un dump en un contenedor PostgreSQL 18 efímero, aislado con `--network none`, valida tablas públicas y `public.users`, y elimina el contenedor al terminar
+- [ ] La automatización está instalada y habilitada en el VPS de producción
+- [ ] Una ejecución real generó un dump válido y `restore-test.sh` lo restauró exitosamente contra PostgreSQL temporal; la evidencia (fecha UTC, archivo, tamaño, checksum abreviado, conteo de tablas y próxima corrida) está en `progress/impl_65-prod-db-backups.md`
+- [ ] Se confirmó una segunda corrida programada o manual sin sobrescritura y con estado `systemctl is-failed` limpio
+
+---
+
 ## 72-visual-system-native-buttons
 
 **Migración y alcance:**
@@ -787,3 +806,30 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - 4 mapeos dudosos a juicio del usuario en la app (`Checklist` con caja, `Office` con 2 edificios, `SidebarLeft` con chevron, `Check` fill). Cambiarlos es **una línea en `Icon.tsx`**
 
 **Reviewer 2026-07-16**: PASSED 18/18 verificables, sin bloqueantes. Las 3 desviaciones del Implementer juzgadas correctas; corrigió dos imprecisiones de su reporte (eran 6 instancias de `color="currentColor"`, no 7; y el rojo del item destructivo nunca estuvo en riesgo). Smoke autenticado y verificación en navegador ejecutados después por el Líder: 0 errores de consola, 0 svgs con color inline, 0 iconos con tamaño 0. Ver `progress/review_73-reicon-icon-migration.md`.
+
+---
+
+## 74-sales-remove-house-seller-inputs
+
+- [x] El formulario “Ventas Dirección” no muestra label, select ni error de Vendedor
+- [x] El formulario “Registrar ATC” no muestra label, select ni error de Vendedor
+- [x] Ambos formularios asignan internamente el seller activo cuyo nombre exacto es “Dirección Comercial” y nunca usan el id del usuario como fallback
+- [x] Si ese seller interno no está disponible, el submit se bloquea antes de la mutación y muestra feedback amigable
+- [x] El formulario de venta del vendedor conserva su sellerId de sesión y su comportamiento
+- [x] `npx tsc --noEmit` pasa en `frontend/`
+- [x] Resumen en `progress/impl_74-sales-remove-house-seller-inputs.md` y review independiente en `progress/review_74-sales-remove-house-seller-inputs.md`
+
+**Reviewer 2026-07-19**: PASSED. Los dos selects fueron retirados sin reintroducir el fallback al user id; Dirección y ATC usan el seller interno “Dirección Comercial” y bloquean el submit con feedback si no está disponible. TypeScript PASS. Ver `progress/review_74-sales-remove-house-seller-inputs.md`.
+
+---
+
+## 75-pipeline-client-phone-in-drawer
+
+- [x] Al abrir un expediente desde Pipeline, cada contacto muestra su número telefónico dentro de “Información del cliente” > “Contactos”
+- [x] Los contactos sin teléfono muestran un fallback claro y no renderizan `undefined`, separadores huérfanos ni enlaces inválidos
+- [x] Se conserva la jerarquía visual y el contenido existente de nombre, rol y contacto principal
+- [x] No se modifican backend, contratos API ni dependencias
+- [x] `npx tsc --noEmit` pasa en `frontend/`
+- [x] Resumen en `progress/impl_75-pipeline-client-phone-in-drawer.md` y review independiente en `progress/review_75-pipeline-client-phone-in-drawer.md`
+
+**Reviewer 2026-07-19**: PASSED. El drawer muestra el teléfono por contacto, normaliza espacios y usa “Sin teléfono” cuando no hay valor; conserva nombre, rol y Principal. Alcance solo frontend y TypeScript PASS. Ver `progress/review_75-pipeline-client-phone-in-drawer.md`.
