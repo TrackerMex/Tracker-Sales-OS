@@ -656,3 +656,26 @@ describe('R8 (77-jev-quality-backtest #77): el informe distingue no llamada de l
     expect(md).not.toContain('HTTP 429');
   });
 });
+
+describe('R11 (77-jev-quality-backtest #77): un informe incompleto se declara incompleto', () => {
+  const cabeceraDe = (md: string) => md.slice(0, md.indexOf('## Veredicto'));
+
+  it('lo dice arriba, no solo en el detalle, cuando falta alguna respuesta', async () => {
+    const md = await informeDe([respuestas[0], nuncaLlamada('a2')]);
+
+    expect(cabeceraDe(md)).toMatch(/parcial/i);
+    expect(cabeceraDe(md)).toContain('1 de 2');
+  });
+
+  it('distingue arriba las que nunca se consultaron', async () => {
+    const md = await informeDe([respuestas[0], nuncaLlamada('a2')]);
+
+    expect(cabeceraDe(md)).toMatch(/1 (de ellas )?(nunca|sin consultar)/i);
+  });
+
+  it('con el lote entero respondido no se declara parcial', async () => {
+    const md = await informeDe(respuestas);
+
+    expect(md).not.toMatch(/parcial/i);
+  });
+});
