@@ -3,6 +3,7 @@ import { Metrics } from './metrics';
 import {
   LoteGuardado,
   RUTA_ETIQUETADO,
+  RUTA_INFORME,
   RUTA_LOTE,
   RUTA_RESPUESTAS,
   evaluarLote,
@@ -287,7 +288,9 @@ const etiquetadoDe = (niveles: number[]) =>
     ]),
   ].join('\n');
 
-const crudoDe = (nivel: number) => ({ questions: { nivel: { answer: nivel } } });
+const crudoDe = (nivel: number) => ({
+  questions: { nivel: { answer: nivel } },
+});
 
 describe('R10 (77-jev-quality-backtest #77): un ensayo en seco no destruye la corrida real', () => {
   it('el fichero de respuestas no es el mismo en seco que en real', () => {
@@ -351,5 +354,41 @@ describe('R10 (77-jev-quality-backtest #77): un ensayo en seco no destruye la co
         { fs },
       ),
     ).rejects.toThrow(/no hay respuestas guardadas/);
+  });
+});
+
+describe('R6 (77-jev-quality-backtest #77): la validacion del etiquetado esta enchufada', () => {
+  const evaluarCon = (etiquetado: string) => {
+    const { fs, escrituras } = fsFalso({
+      [RUTA_LOTE]: loteGuardadoJson,
+      [RUTA_ETIQUETADO]: etiquetado,
+    });
+    return {
+      escrituras,
+      correr: () =>
+        faseEvaluar(parseArgs(['--fase', 'evaluar', '--dry-run']), {}, { fs }),
+    };
+  };
+
+  it('con un bloque de menos para antes de medir y no escribe nada', async () => {
+    const { correr, escrituras } = evaluarCon(etiquetadoDe([1]));
+
+    await expect(correr()).rejects.toThrow(/no cuadra con el lote/);
+    expect(Object.keys(escrituras)).toEqual([]);
+  });
+
+  it('con una posicion repetida tampoco sigue', async () => {
+    const repetido = etiquetadoDe([1, 4]).replace('## 2', '## 1');
+    const { correr, escrituras } = evaluarCon(repetido);
+
+    await expect(correr()).rejects.toThrow(/no cuadra con el lote/);
+    expect(Object.keys(escrituras)).toEqual([]);
+  });
+
+  it('con el etiquetado completo sigue adelante y deja el informe', async () => {
+    const { correr, escrituras } = evaluarCon(etiquetadoDe([1, 4]));
+
+    await expect(correr()).resolves.toBe(0);
+    expect(Object.keys(escrituras)).toContain(RUTA_INFORME);
   });
 });
