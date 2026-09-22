@@ -805,5 +805,25 @@
     "backend_modules": [],
     "frontend_modules": ["auth"],
     "notes": "Solicitada y completada 2026-07-20. Los PNG se guardaron localmente en frontend/public/brand. Ajuste final solicitado por el usuario: trackermexico.png fue reemplazado byte por byte con el wordmark blanco/verde adjunto (1681x280, ARGB, SHA-256 6F6A527898C54A019E0677514D9584DF61838A4CFEB053C019DF6A8704B1BAF3). Login y sidebar expandido lo muestran directamente sobre navy, sin soporte blanco; el estado colapsado conserva el isotipo tracker.png. El encabezado no interactivo del logo quedó compacto (48px, padding 4px), dejó de usar SidebarMenuButton para eliminar el hover estructuralmente y el wordmark se alineó en x=20 con los iconos del menú. Sin hotlink, dependencias ni cambios de lógica. Typecheck, lint y build PASS. Reviewer independiente PASSED 7/7. Smoke local PASS en Login y sidebar expandido/colapsado; sin overflow, deformación ni recortes. Resumen: progress/impl_76-brand-logos-login-navbar.md."
+  },
+  {
+    "id": "77-jev-quality-backtest",
+    "name": "Backtest offline: calidad por sustancia (Jev)",
+    "description": "Medir, fuera de produccion, si el modelo Jev de TypeSafe juzga la calidad de una actividad mejor que la formula de longitud actual. Script de lectura en backend/scripts/ sobre 50 actividades reales estratificadas, etiquetado a ciegas por el director comercial, y comparacion de tres columnas: etiqueta humana, quality actual y score de Jev. No escribe en la base ni toca backend/src/modules/.",
+    "status": "pending",
+    "priority": 77,
+    "backend_modules": [],
+    "frontend_modules": [],
+    "notes": "Origen: plan progress/plan_jev-quality-substance.md (2026-09-21). Motivo: calculateQuality en activities/application/use-cases/create-activity.use-case.ts son cinco comprobaciones de longitud de cadena, asi que relleno de 25 caracteres por campo puntua 100; ese numero pesa 35% del semaforo en dashboard/get-sellers-score y entra en el AVG(a.quality) de dashboard/get-dashboard-summary. GATE DE VIABILIDAD: si Jev no identifica los falsos 100 que el director marque como vacios, el plan completo se archiva y no se escribe codigo de produccion. Riesgo principal a medir: Jev entrena sobre todo en ingles y las actividades estan en espanol mexicano con jerga comercial. Sin migracion, sin dependencias, sin cambios de UI. Costo estimado de la prueba: menos de un centavo (~25k tokens). Salida esperada: progress/explore_jev-backtest.md con matriz de confusion y veredicto."
+  },
+  {
+    "id": "80-dashboard-quality-substance",
+    "name": "Dashboard: el semaforo consume la calidad por sustancia",
+    "description": "El componente de calidad del score de vendedores (35%) y el promedio de calidad del resumen mensual pasan a leer quality_substance con COALESCE a quality cuando sea null (historico sin procesar o proveedor caido). Corte de la metrica de longitud a la metrica de sustancia en los dos consumidores de dashboard.",
+    "status": "pending",
+    "priority": 80,
+    "backend_modules": ["dashboard", "activities"],
+    "frontend_modules": [],
+    "notes": "Origen: plan progress/plan_jev-quality-substance.md (2026-09-21). BLOQUEADA: depende de F78 (puerto JUDGMENT_PROVIDER, adaptador Jev, columnas quality_substance y quality_source, escritura en sombra) y F79 (backfill historico), que por decision del usuario del 2026-09-21 NO estan registradas todavia en este fichero. No arrancar hasta registrarlas y cerrarlas. GATE HUMANO OBLIGATORIO antes de implementar: esto mueve el semaforo que el director ya usa a diario y sobre el que ya tiene opinion formada, y solo debe cortarse con el informe de contraste de F79 en la mano (que vendedores suben y cuales caen al medir sustancia). Avisar al equipo de ventas antes del corte: un semaforo que cambia de color sin aviso se lee como un fallo del sistema. Sin cambios de UI planificados en esta feature; si el director pide explicar el nuevo criterio en pantalla, se registra aparte."
   }
 ]
