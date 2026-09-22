@@ -50,23 +50,39 @@ Se pasan al script como banderas (design §D10) y se reimprimen en el informe.
 
 ## 3b. Si la corrida se interrumpe
 
+> **AVISO (2026-09-22).** La versión anterior de esta sección decía que
+> repetir `--fase evaluar` no repite las llamadas ya hechas. **Es falso.**
+> `runBatch` recorre el lote entero y vuelve a llamar por las 50, así que
+> repetir reexporta hasta 50 textos de clientes que ya habían salido. Lo
+> escribí yo y lo destapó la revisión independiente (ALTA-7). El reanudar
+> selectivo está en curso; hasta que esté, **no repitas `--fase evaluar`
+> sobre una corrida interrumpida** sin leer lo de abajo.
+
 Las respuestas se persisten **según llegan**, una línea JSON por actividad, en
 `progress/jev-backtest-respuestas.jsonl` (`-seco.jsonl` para los ensayos). Una
-corrida interrumpida a media llamada no pierde lo ya pagado.
+corrida interrumpida no pierde lo ya pagado: se pierde como mucho la llamada
+que estaba en vuelo.
 
-Por tanto, si el proceso muere, se cuelga la red o se corta la sesión:
+Qué hacer hoy, si el proceso muere o se corta la red:
 
 - **No hay que reextraer el lote** ni volver a pedir el etiquetado al director.
-- **No hay que repetir las llamadas ya hechas.** Repetir `--fase evaluar`
-  añade líneas y, de cada actividad, gana la última.
-- Si solo falta el informe, `--fase evaluar --reusar-respuestas` lo rehace con
-  lo que ya hay en disco, sin red y sin `JEV_API_KEY`.
+  Eso sigue siendo cierto.
+- **Si solo falta el informe**, usa `--fase evaluar --reusar-respuestas`: rehace
+  el informe con lo que ya hay en disco, sin red y sin `JEV_API_KEY`. Esta es
+  la vía segura.
+- **Si faltan respuestas**, hoy la única forma de obtenerlas es repetir
+  `--fase evaluar`, que vuelve a llamar por **todas** y reexpone las que ya
+  habían salido. Decisión del humano: asumir esa reexposición, o aceptar un
+  informe parcial. El informe cuenta las que faltan como «sin respuesta» y el
+  recuento cuadra, así que un informe parcial es honesto, no engañoso.
 - Una línea truncada por una escritura a medias se salta con aviso; las demás
-  se recuperan y el informe cuenta esa actividad como `sin respuesta`.
+  se recuperan.
 
-Esto importa porque cada repetición de una llamada vuelve a sacar el texto de
-esa actividad fuera de la empresa. El coste de repetir no son los centavos de
-la API, es la exposición.
+Cuando el reanudar selectivo esté cerrado, la tercera viñeta desaparece: se
+llamará solo por las que falten y esta sección se reescribirá.
+
+El coste de repetir una llamada no son los centavos de la API. Es que el texto
+de esa actividad vuelve a cruzar la frontera de confianza.
 
 ## 4. Parámetros de la corrida
 
