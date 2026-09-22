@@ -161,6 +161,9 @@ const REINTENTABLES = new Set([429, 529]);
 const esperaReal = (ms: number): Promise<void> =>
   new Promise((r) => setTimeout(r, ms));
 
+/** Motivo de una actividad que nunca llego a consultarse (BAJA-14). */
+export const MOTIVO_NUNCA_LLAMADA = 'sin llamada: la actividad no se consulto';
+
 const sinRespuesta = (id: string, motivo: string): JevResult => ({
   id,
   estado: 'sin_respuesta',
@@ -233,6 +236,39 @@ function aDistribucion(valor: unknown): number[] | null {
     : null;
 }
 
+/** Una actividad que nunca se consulto, para distinguirla de una que fallo. */
+export const nuncaLlamada = (id: string): JevResult =>
+  sinRespuesta(id, MOTIVO_NUNCA_LLAMADA);
+
+/** Un 4xx que no es 429: el servidor rechazo la peticion de forma definitiva. */
+function esRechazoDefinitivo(motivo = ''): boolean {
+  const codigo = /^HTTP (\d{3})$/.exec(motivo);
+  if (!codigo) return false;
+  const n = Number(codigo[1]);
+  return n >= 400 && n < 500 && n !== 429;
+}
+
+/**
+ * ALTA-7 — que actividades hay que consultar al reanudar. Cada llamada vuelve
+ * a sacar el texto de un cliente de la empresa, asi que solo se repite la que
+ * no llego a producir nada:
+ *
+ * - una respuesta buena no se toca nunca;
+ * - si el servidor contesto y guardamos su cuerpo, aunque no supieramos
+ *   leerlo, el arreglo es releerlo con --reusar-respuestas;
+ * - un 4xx que no sea 429 es un rechazo definitivo: repetirlo exportaria otra
+ *   vez para obtener el mismo no;
+ * - todo lo demas —429 agotado, timeout, fallo de red, 5xx, cuerpo ilegible—
+ *   es un intercambio fallido sin resultado, y la unica via a un dato es
+ *   volver a preguntar.
+ */
+export function necesitaLlamada(previa: JevResult | undefined): boolean {
+  if (!previa) return true;
+  if (previa.estado === 'ok') return false;
+  if (previa.crudo !== undefined) return false;
+  return !esRechazoDefinitivo(previa.motivo);
+}
+
 /** R8 + R9 — una actividad, con reintento exponencial sobre 429 y 529. */
 export async function askJev(
   actividad: TextFields & { id: string },
@@ -303,8 +339,9 @@ export async function runBatch(
   const resultados: JevResult[] = [];
 
   const entregar = (resultado: JevResult): void => {
-    // Primero fuera de memoria, despues al array: si esto lanza, no se sigue
-    // gastando llamadas cuyo resultado no se puede guardar.
+    // Precaucion, no invariante: entregar antes de acumular evita seguir
+    // gastando llamadas si la escritura falla. Invertir las dos lineas no
+    // cambia nada observable.
     opciones.onRespuesta?.(resultado);
     resultados.push(resultado);
   };

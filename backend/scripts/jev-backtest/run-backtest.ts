@@ -38,6 +38,8 @@ import {
 import {
   JevResult,
   RespuestaGuardada,
+  necesitaLlamada,
+  nuncaLlamada,
   reparse,
   requireApproval,
   runBatch,
@@ -299,22 +301,7 @@ export async function faseEvaluar(
   const etiquetas = joinLabels(lote.orden, marcadas);
 
   const metricas = await evaluarLote(lote.orden, etiquetas, opciones, {
-    consultar: () =>
-      opciones.reusarRespuestas
-        ? Promise.resolve(leerRespuestasGuardadas(fs, opciones.dryRun))
-        : runBatch(lote.orden, {
-            fetchImpl: deps.fetchImpl ?? fetch,
-            apiKey: env.JEV_API_KEY,
-            dryRun: opciones.dryRun,
-            respuestasEjemplo: opciones.dryRun ? leerEjemplos() : undefined,
-            // MEDIA-10: una linea por actividad, en cuanto vuelve. El lote
-            // deja de ser durable solo cuando esta completo.
-            onRespuesta: (r) =>
-              fs.anadir(
-                rutaRespuestas(opciones.dryRun),
-                `${JSON.stringify(r)}\n`,
-              ),
-          }),
+    consultar: () => obtenerRespuestas(lote.orden, opciones, env, deps, fs),
     guardarInforme: (m, filas, respuestas) => {
       const ruta = rutaInforme(opciones.dryRun);
       const informe = renderReport(m, filas, respuestas, lote, opciones);
@@ -374,32 +361,38 @@ export async function evaluarLote(
 }
 
 /**
- * R10 + MEDIA-10 — rehace el lote desde lo ya guardado, sin tocar la red.
+ * R10 + MEDIA-10 — lo ya guardado, indexado por actividad. El fichero es una
+ * linea por respuesta, en orden de llegada, y se lee asi:
  *
- * El fichero es una linea por respuesta, en orden de llegada. Se lee asi:
  * - una linea ilegible se salta y se avisa, en vez de tumbar la lectura
  *   entera: eso es justo lo que deja un proceso muerto a mitad de escritura;
- * - de cada actividad se conserva la ultima linea, de modo que una segunda
- *   pasada corrige a la primera sin borrar nada.
+ * - de cada actividad se conserva la ultima linea, **salvo que degrade una
+ *   respuesta buena**: un fallo posterior no borra un dato que ya teniamos
+ *   (MEDIA-11). El fichero guarda las dos lineas; lo que no puede es perder
+ *   la buena al leerlas.
  */
-function leerRespuestasGuardadas(fs: FicheroIO, dryRun: boolean): JevResult[] {
+function leerRespuestasGuardadas(
+  fs: FicheroIO,
+  dryRun: boolean,
+): Map<string, JevResult> {
   const ruta = rutaRespuestas(dryRun);
-  if (!fs.existe(ruta)) {
-    throw new Error(
-      `falta ${ruta}: no hay respuestas guardadas que reutilizar`,
-    );
-  }
+  const porId = new Map<string, JevResult>();
+  if (!fs.existe(ruta)) return porId;
 
-  const porId = new Map<string, RespuestaGuardada>();
   let ilegibles = 0;
   for (const linea of fs.leer(ruta).split('\n')) {
     if (!linea.trim()) continue;
+    let guardada: RespuestaGuardada;
     try {
-      const guardada = JSON.parse(linea) as RespuestaGuardada;
-      porId.set(guardada.id, guardada);
+      guardada = JSON.parse(linea) as RespuestaGuardada;
     } catch {
       ilegibles += 1;
+      continue;
     }
+    const [rehecha] = reparse([guardada]);
+    const previa = porId.get(rehecha.id);
+    if (previa?.estado === 'ok' && rehecha.estado !== 'ok') continue;
+    porId.set(rehecha.id, rehecha);
   }
   if (ilegibles) {
     console.log(
@@ -407,7 +400,61 @@ function leerRespuestasGuardadas(fs: FicheroIO, dryRun: boolean): JevResult[] {
     );
   }
 
-  return reparse([...porId.values()]);
+  return porId;
+}
+
+/**
+ * ALTA-7 — reanudar sin reexportar. Cada llamada saca de la empresa el texto
+ * de un cliente, asi que solo se consulta lo que falta: lo que ya tiene
+ * respuesta se toma del fichero y no se vuelve a pedir nunca.
+ */
+async function obtenerRespuestas(
+  lote: BatchActivity[],
+  opciones: Options,
+  env: NodeJS.ProcessEnv,
+  deps: Partial<RunDeps>,
+  fs: FicheroIO,
+): Promise<JevResult[]> {
+  const ruta = rutaRespuestas(opciones.dryRun);
+  const previas = leerRespuestasGuardadas(fs, opciones.dryRun);
+
+  if (opciones.reusarRespuestas) {
+    if (!previas.size) {
+      throw new Error(
+        `falta ${ruta}: no hay respuestas guardadas que reutilizar`,
+      );
+    }
+    console.log(
+      `[jev-backtest] ${previas.size} respuestas cargadas de ${ruta}`,
+    );
+    return lote.map((a) => previas.get(a.id) ?? nuncaLlamada(a.id));
+  }
+
+  const pendientes = lote.filter((a) => necesitaLlamada(previas.get(a.id)));
+  const reutilizadas = lote.length - pendientes.length;
+  if (reutilizadas) {
+    console.log(
+      `[jev-backtest] ${reutilizadas} actividades ya respondidas en ${ruta}: no se vuelven a consultar`,
+    );
+  }
+
+  const nuevas = new Map(
+    (
+      await runBatch(pendientes, {
+        fetchImpl: deps.fetchImpl ?? fetch,
+        apiKey: env.JEV_API_KEY,
+        dryRun: opciones.dryRun,
+        respuestasEjemplo: opciones.dryRun ? leerEjemplos() : undefined,
+        // MEDIA-10: una linea por actividad, en cuanto vuelve. El lote deja
+        // de ser durable solo cuando esta completo.
+        onRespuesta: (r) => fs.anadir(ruta, `${JSON.stringify(r)}\n`),
+      })
+    ).map((r) => [r.id, r]),
+  );
+
+  return lote.map(
+    (a) => nuevas.get(a.id) ?? previas.get(a.id) ?? nuncaLlamada(a.id),
+  );
 }
 
 function leerEjemplos(): unknown[] {
