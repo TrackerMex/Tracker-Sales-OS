@@ -70,6 +70,22 @@ export const RUTA_RESPUESTAS = resolve(
   'progress',
   'jev-backtest-respuestas.json',
 );
+
+/**
+ * El ensayo escribe en su propio fichero (ALTA-6). Un `--dry-run` es el modo
+ * con el que se ejercita el flujo, y antes bastaba uno para dejar el fichero
+ * real lleno de respuestas de ejemplo: las llamadas ya pagadas se perdian y
+ * --reusar-respuestas no recuperaba nada. Separar la ruta por modo lo hace
+ * imposible por construccion, sin pedirle a nadie que se acuerde.
+ */
+export const RUTA_RESPUESTAS_SECO = resolve(
+  RAIZ,
+  'progress',
+  'jev-backtest-respuestas-seco.json',
+);
+
+export const rutaRespuestas = (dryRun: boolean): string =>
+  dryRun ? RUTA_RESPUESTAS_SECO : RUTA_RESPUESTAS;
 export const RUTA_INFORME = resolve(
   RAIZ,
   'progress',
@@ -93,8 +109,27 @@ export interface Options extends Thresholds {
   limite: number;
 }
 
+/**
+ * Los ficheros entran por aqui para que las pruebas puedan afirmar que se
+ * escribe y donde sin tocar el disco. `sample-responses.json` no pasa por
+ * esta superficie: es una fixture que viaja con el script, no un artefacto
+ * que el script produzca.
+ */
+export interface FicheroIO {
+  existe: (ruta: string) => boolean;
+  leer: (ruta: string) => string;
+  escribir: (ruta: string, contenido: string) => void;
+}
+
+const FICHERO_REAL: FicheroIO = {
+  existe: (ruta) => existsSync(ruta),
+  leer: (ruta) => readFileSync(ruta, 'utf8'),
+  escribir: (ruta, contenido) => writeFileSync(ruta, contenido, 'utf8'),
+};
+
 export interface RunDeps {
   fetchImpl: typeof fetch;
+  fs: FicheroIO;
 }
 
 export interface LoteGuardado {
@@ -177,16 +212,14 @@ async function leerCandidatos(
 async function faseExtraer(
   opciones: Options,
   env: NodeJS.ProcessEnv,
+  deps: Partial<RunDeps>,
 ): Promise<number> {
+  const fs = deps.fs ?? FICHERO_REAL;
   const candidatas = await leerCandidatos(env, opciones.limite);
   const { batch, deviations, excluded } = stratify(candidatas);
   const ordenado = shuffleWithSeed(batch, opciones.semilla);
 
-  writeFileSync(
-    RUTA_ETIQUETADO,
-    buildLabelingFile(ordenado, opciones.semilla),
-    'utf8',
-  );
+  fs.escribir(RUTA_ETIQUETADO, buildLabelingFile(ordenado, opciones.semilla));
   // El lote queda en local (R5): es la clave para volver a unir las respuestas
   // con la fila, y nunca se le ensena al director.
   const guardado: LoteGuardado = {
@@ -197,7 +230,7 @@ async function faseExtraer(
     desviaciones: deviations,
     orden: ordenado,
   };
-  writeFileSync(RUTA_LOTE, JSON.stringify(guardado, null, 2), 'utf8');
+  fs.escribir(RUTA_LOTE, JSON.stringify(guardado, null, 2));
 
   console.log(`[jev-backtest] lote de ${batch.length} actividades`);
   console.log(`[jev-backtest] etiquetado en ${RUTA_ETIQUETADO}`);
@@ -205,22 +238,23 @@ async function faseExtraer(
   return 0;
 }
 
-async function faseEvaluar(
+export async function faseEvaluar(
   opciones: Options,
   env: NodeJS.ProcessEnv,
   deps: Partial<RunDeps>,
 ): Promise<number> {
-  if (!existsSync(RUTA_LOTE)) {
+  const fs = deps.fs ?? FICHERO_REAL;
+  if (!fs.existe(RUTA_LOTE)) {
     throw new Error(`falta ${RUTA_LOTE}: corre antes --fase extraer`);
   }
-  if (!existsSync(RUTA_ETIQUETADO)) {
+  if (!fs.existe(RUTA_ETIQUETADO)) {
     throw new Error(
       `falta ${RUTA_ETIQUETADO}: hace falta el etiquetado del director (R6)`,
     );
   }
 
-  const lote = JSON.parse(readFileSync(RUTA_LOTE, 'utf8')) as LoteGuardado;
-  const marcadas = parseLabelingFile(readFileSync(RUTA_ETIQUETADO, 'utf8'));
+  const lote = JSON.parse(fs.leer(RUTA_LOTE)) as LoteGuardado;
+  const marcadas = parseLabelingFile(fs.leer(RUTA_ETIQUETADO));
 
   // MEDIA-5: antes de medir nada, que el fichero devuelto sea el lote que se
   // entrego. Si no cuadra se para: el veredicto saldria de un etiquetado leido
@@ -241,7 +275,7 @@ async function faseEvaluar(
   const metricas = await evaluarLote(lote.orden, etiquetas, opciones, {
     consultar: () =>
       opciones.reusarRespuestas
-        ? Promise.resolve(leerRespuestasGuardadas())
+        ? Promise.resolve(leerRespuestasGuardadas(fs, opciones.dryRun))
         : runBatch(lote.orden, {
             fetchImpl: deps.fetchImpl ?? fetch,
             apiKey: env.JEV_API_KEY,
@@ -249,8 +283,9 @@ async function faseEvaluar(
             respuestasEjemplo: opciones.dryRun ? leerEjemplos() : undefined,
           }),
     guardarRespuestas: (respuestas) => {
-      writeFileSync(
-        RUTA_RESPUESTAS,
+      const ruta = rutaRespuestas(opciones.dryRun);
+      fs.escribir(
+        ruta,
         JSON.stringify(
           {
             generado: new Date().toISOString(),
@@ -260,18 +295,15 @@ async function faseEvaluar(
           null,
           2,
         ),
-        'utf8',
       );
       console.log(
-        `[jev-backtest] ${respuestas.length} respuestas guardadas en ${RUTA_RESPUESTAS}`,
+        `[jev-backtest] ${respuestas.length} respuestas guardadas en ${ruta}`,
       );
     },
     guardarInforme: (m, filas, respuestas) => {
       const informe = renderReport(m, filas, respuestas, lote, opciones);
-      const previo = existsSync(RUTA_INFORME)
-        ? readFileSync(RUTA_INFORME, 'utf8')
-        : '';
-      writeFileSync(RUTA_INFORME, mergeReport(previo, informe), 'utf8');
+      const previo = fs.existe(RUTA_INFORME) ? fs.leer(RUTA_INFORME) : '';
+      fs.escribir(RUTA_INFORME, mergeReport(previo, informe));
     },
   });
 
@@ -325,13 +357,14 @@ export async function evaluarLote(
 }
 
 /** R10 + ALTA-1 — rehace el lote desde lo ya guardado, sin tocar la red. */
-function leerRespuestasGuardadas(): JevResult[] {
-  if (!existsSync(RUTA_RESPUESTAS)) {
+function leerRespuestasGuardadas(fs: FicheroIO, dryRun: boolean): JevResult[] {
+  const ruta = rutaRespuestas(dryRun);
+  if (!fs.existe(ruta)) {
     throw new Error(
-      `falta ${RUTA_RESPUESTAS}: no hay respuestas guardadas que reutilizar`,
+      `falta ${ruta}: no hay respuestas guardadas que reutilizar`,
     );
   }
-  const fichero = JSON.parse(readFileSync(RUTA_RESPUESTAS, 'utf8')) as {
+  const fichero = JSON.parse(fs.leer(ruta)) as {
     respuestas: RespuestaGuardada[];
   };
   return reparse(fichero.respuestas);
@@ -521,7 +554,7 @@ export async function main(
 
     switch (opciones.fase) {
       case 'extraer':
-        return await faseExtraer(opciones, env);
+        return await faseExtraer(opciones, env, deps);
       case 'evaluar':
         return await faseEvaluar(opciones, env, deps);
       default:
