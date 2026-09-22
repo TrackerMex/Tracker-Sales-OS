@@ -42,3 +42,15 @@ export const LEVELS = [
 
 /** Nivel de la escala de R7: 1 a 4. */
 export type Level = 1 | 2 | 3 | 4;
+
+/**
+ * Fila lista para medir: el `quality` que tiene hoy, el nivel que le puso el
+ * director a ciegas (R6) y el que devolvio Jev (R8). Cualquiera de los dos
+ * puede faltar: sin etiquetar o `sin_respuesta`.
+ */
+export interface EvaluatedActivity {
+  id: string;
+  quality: number;
+  humano: Level | null;
+  jev: Level | null;
+}
