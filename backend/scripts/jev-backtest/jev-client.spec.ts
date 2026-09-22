@@ -189,3 +189,50 @@ describe('R10 (77-jev-quality-backtest #77): modo seco', () => {
     expect(res[0].nivel).toBe(2);
   });
 });
+
+describe('R8 (77-jev-quality-backtest #77): un nivel que no es 1, 2, 3 o 4 no se inventa', () => {
+  it('rechaza un answer fraccionario, que corromperia la matriz de R11', () => {
+    expect(
+      parseJevResponse({ questions: { nivel: { answer: 2.5 } } }),
+    ).toBeNull();
+    expect(
+      parseJevResponse({ questions: { nivel: { answer: '2.5' } } }),
+    ).toBeNull();
+  });
+
+  it('rechaza un answer fuera de la escala', () => {
+    for (const answer of [0, 5, -1, '0', '5']) {
+      expect(parseJevResponse({ questions: { nivel: { answer } } })).toBeNull();
+    }
+  });
+
+  it('sigue aceptando los cuatro niveles enteros, en numero y en cadena', () => {
+    for (const [answer, esperado] of [
+      [1, 1],
+      [2, 2],
+      [3, 3],
+      [4, 4],
+      ['1', 1],
+      ['4', 4],
+    ] as [number | string, number][]) {
+      expect(parseJevResponse({ questions: { nivel: { answer } } })?.nivel).toBe(
+        esperado,
+      );
+    }
+  });
+
+  it('la actividad queda sin_respuesta, no con un nivel fraccionario', async () => {
+    const { sleep } = conEsperas();
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValue(
+        respuesta(200, { questions: { nivel: { answer: 2.5 } } }),
+      );
+
+    const res = await askJev(actividad('a1'), opciones(fetchImpl, sleep));
+
+    expect(res.estado).toBe('sin_respuesta');
+    expect(res.nivel).toBeNull();
+    expect(res.motivo).toContain('forma esperada');
+  });
+});
