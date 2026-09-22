@@ -40,5 +40,4 @@ impeccable/
 
 # Artefactos del backtest de Jev (feature 77): contienen texto comercial
 # real sobre clientes. progress/ esta versionado, estos dos ficheros no.
-progress/jev-backtest-etiquetado.md
-progress/jev-backtest-lote.json
+progress/jev-backtest-*
