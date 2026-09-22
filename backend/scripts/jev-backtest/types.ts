@@ -26,3 +26,19 @@ export interface SourceActivity extends TextFields {
 export interface BatchActivity extends SourceActivity {
   franja: Franja;
 }
+
+/**
+ * R7 — los cuatro niveles de la escala, literales y en orden. Son los mismos
+ * textos que lee el director en el fichero de etiquetado (R6) y los mismos
+ * `criteria` que recibe el modelo (R8). Un solo sitio, a proposito: si se
+ * reformulan por un lado, la comparacion deja de medir lo mismo.
+ */
+export const LEVELS = [
+  'vacío, relleno o genérico sin información del cliente',
+  'describe lo ocurrido pero sin compromiso del cliente',
+  'hay compromiso del cliente pero sin fecha ni responsable',
+  'compromiso concreto con fecha y responsable identificados',
+] as const;
+
+/** Nivel de la escala de R7: 1 a 4. */
+export type Level = 1 | 2 | 3 | 4;
