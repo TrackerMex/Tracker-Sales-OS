@@ -570,3 +570,127 @@ BAJA-9, que ha entrado con MEDIA-1. Dos apuntes por si se reabren:
   `buildRequestBody` y hay tres tests que lo vigilan, pero la frontera sigue
   descansando en una convención dentro de una función y no en el tipo que
   cruza la llamada.
+
+---
+
+# Cuarta vuelta — BAJA-7: la frontera de R5 pasa a ser del compilador
+
+Encargo del Líder tras aceptar los tres MEDIA. BAJA-9 y el orden descendente
+del reparto se quedan como estaban, por decisión suya. T6 sigue sin
+ejecutarse.
+
+## 16. Qué cambió
+
+El recorte de R5 vivía en `buildRequestBody`, que elegía sus cuatro campos a
+mano sobre un parámetro `TextFields`. Como TypeScript es estructural, la fila
+entera de la base —con `id`, `quality` y, desde la vuelta anterior,
+`seller_id`— encajaba sin protestar. Protegía de la regresión de hoy, no de la
+de dentro de seis meses.
+
+Ahora:
+
+- **`recortarCampos(fila: TextFields): TextoRecortado`** es el único recorte y
+  tiene nombre. Ahí, y solo ahí, la fila de la base se convierte en lo que
+  puede salir de la empresa.
+- **`TextoRecortado`** son exactamente los cuatro campos de texto, sin nulos.
+- **`SoloTexto<T>`** tipa como `never` toda clave que sobre, así que
+  `buildRequestBody(fila)` **no compila**. Es la única forma de que un tipo
+  más ancho no encaje donde se pide uno más estrecho.
+- `askJev` llama `buildRequestBody(recortarCampos(actividad))`.
+
+La asignación explícita de las cuatro claves dentro de `buildRequestBody` se
+queda: el compilador cubre a quien escribe, esa línea cubre la ejecución, y
+los tests de ALTA-4 cubren lo que sale por el cable. Tres capas, no tres
+alternativas.
+
+**El recorte ocurre en un solo sitio.** El único punto de producción que
+construye la petición es `askJev`; el resto de llamadas a `buildRequestBody`
+estaban en los tests. No hizo falta generalizar nada, así que no había nada
+que consultar.
+
+## 17. Cómo se comprueba, y dónde
+
+Las dos comprobaciones de tipo son directivas `@ts-expect-error` sobre
+`buildRequestBody(fila)`. Las verifica **`npx tsc --noEmit`, no jest**: ts-jest
+corre en modo transpilación y no mira tipos. Si algún día la fila completa
+vuelve a encajar, la directiva se queda sin usar y `tsc` falla con
+`TS2578: Unused '@ts-expect-error' directive`. En el commit rojo fallaba
+exactamente así, que es la prueba de que el agujero existía.
+
+Dos mutantes sobre HEAD, los dos muertos en compilación:
+
+| Mutante | Resultado |
+|---|---|
+| `askJev` se salta el recorte y pasa la fila entera | **tsc rojo**: `TS2345`, `id` no es `never` |
+| alguien añade `seller_id` dentro de `recortarCampos` | **tsc rojo**: `TS2353`, más 3 tests |
+
+## 18. Commits de la cuarta vuelta
+
+```
+203ab2d test: el compilador tiene que parar la fila completa (BAJA-7)
+0737cb4 fix:  el tipo impide que la fila entera llegue a la peticion (BAJA-7)
+```
+
+Modificados: `jev-client.ts` y `request-gate.spec.ts`. Nada más, nada fuera de
+`backend/scripts/`.
+
+Tests: **99 → 103**.
+
+## 19. Salida literal de los cuatro comandos (cuarta vuelta)
+
+```
+=== $ cd backend && pnpm test ===
+
+> backend@0.0.1 test /home/claude/sites/Tracker-Sales-OS/backend
+> jest
+
+
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+Snapshots:   0 total
+Time:        3.588 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+
+> backend@0.0.1 test:scripts /home/claude/sites/Tracker-Sales-OS/backend
+> jest --config ./scripts/jest.config.js
+
+
+Test Suites: 6 passed, 6 total
+Tests:       103 passed, 103 total
+Snapshots:   0 total
+Time:        0.981 s, estimated 1 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+
+> backend@0.0.1 lint /home/claude/sites/Tracker-Sales-OS/backend
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+
+exit=0
+```
+
+`pnpm test` sigue en 15 suites / 78 tests: D9 intacto.
+
+Verificación de flujo sobre un lote sintético de 50 filas repartido 22/18/10
+entre tres vendedores, sin base de datos y sin red: `--fase evaluar --dry-run`
+produce el informe completo (212 líneas) con veredicto NEGATIVO, y `grep` de
+los tres `seller_id` y de la cadena `seller_id` da **0 coincidencias**. Los
+ficheros de prueba se borraron y `progress/explore_jev-backtest.md` se
+restauró a su versión commiteada.
+
+## 20. Estado al cerrar
+
+Cerrados: los 4 ALTA, MEDIA-1, MEDIA-4 (de hecho), MEDIA-5, MEDIA-7, BAJA-7 y
+BAJA-9. Siguen abiertos por decisión del Líder: MEDIA-2, MEDIA-3, MEDIA-6 y
+los BAJA 1 a 6 y 8.
+
+Para T6 siguen haciendo falta, y no son míos: la credencial de solo lectura de
+D7 y la confirmación de la forma real de la respuesta de la API con la primera
+llamada.
