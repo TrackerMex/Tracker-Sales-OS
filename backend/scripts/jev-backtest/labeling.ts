@@ -100,6 +100,62 @@ export function parseLabelingFile(contenido: string): LabelRow[] {
   });
 }
 
+/**
+ * R6 + MEDIA-5 — comprueba que lo que devuelve el director es el mismo lote
+ * que se le dio. El fichero se trocea por `## `, y el texto libre lo escriben
+ * vendedores: una linea que empiece asi crea un bloque fantasma y, si su
+ * numero choca con una posicion real, la etiqueta buena se pierde sin ruido.
+ *
+ * Devuelve la lista de problemas, vacia si todo cuadra. Quien llama aborta:
+ * una hora de etiquetado mal leida en silencio es peor que una corrida que
+ * se para.
+ */
+export function validarEtiquetado(
+  etiquetas: LabelRow[],
+  totalLote: number,
+): string[] {
+  const problemas: string[] = [];
+
+  if (etiquetas.length !== totalLote) {
+    problemas.push(
+      `el fichero trae ${etiquetas.length} bloques y el lote tiene ${totalLote} actividades`,
+    );
+  }
+
+  const vistas = new Map<number, number>();
+  for (const e of etiquetas) {
+    vistas.set(e.orden, (vistas.get(e.orden) ?? 0) + 1);
+  }
+
+  const repetidas = [...vistas.entries()]
+    .filter(([, n]) => n > 1)
+    .map(([orden]) => orden);
+  if (repetidas.length) {
+    problemas.push(`posiciones repetidas: ${repetidas.join(', ')}`);
+  }
+
+  const faltan: number[] = [];
+  for (let i = 1; i <= totalLote; i++) {
+    if (!vistas.has(i)) faltan.push(i);
+  }
+  if (faltan.length) {
+    problemas.push(`faltan las posiciones: ${faltan.join(', ')}`);
+  }
+
+  const sobran = [...vistas.keys()].filter(
+    (orden) => !Number.isInteger(orden) || orden < 1 || orden > totalLote,
+  );
+  if (sobran.length) {
+    problemas.push(
+      `posiciones que el lote no tiene: ${sobran
+        .map((o) => (Number.isNaN(o) ? 'un bloque sin numero' : String(o)))
+        .join(', ')}`,
+    );
+  }
+
+  return problemas;
+}
+
 /** Une el orden aleatorizado del lote con los niveles que marco el director. */
 export function joinLabels(
   ordenado: BatchActivity[],

@@ -28,6 +28,7 @@ import {
   joinLabels,
   parseLabelingFile,
   shuffleWithSeed,
+  validarEtiquetado,
 } from './labeling';
 import {
   JevResult,
@@ -214,10 +215,23 @@ async function faseEvaluar(
   }
 
   const lote = JSON.parse(readFileSync(RUTA_LOTE, 'utf8')) as LoteGuardado;
-  const etiquetas = joinLabels(
-    lote.orden,
-    parseLabelingFile(readFileSync(RUTA_ETIQUETADO, 'utf8')),
-  );
+  const marcadas = parseLabelingFile(readFileSync(RUTA_ETIQUETADO, 'utf8'));
+
+  // MEDIA-5: antes de medir nada, que el fichero devuelto sea el lote que se
+  // entrego. Si no cuadra se para: el veredicto saldria de un etiquetado leido
+  // a medias y nadie lo notaria.
+  const problemas = validarEtiquetado(marcadas, lote.orden.length);
+  if (problemas.length) {
+    throw new Error(
+      [
+        `${RUTA_ETIQUETADO} no cuadra con el lote:`,
+        ...problemas.map((p) => `  - ${p}`),
+        '  Revisalo con el director antes de seguir; no se toca a mano.',
+      ].join('\n'),
+    );
+  }
+
+  const etiquetas = joinLabels(lote.orden, marcadas);
 
   const metricas = await evaluarLote(lote.orden, etiquetas, opciones, {
     consultar: () =>
