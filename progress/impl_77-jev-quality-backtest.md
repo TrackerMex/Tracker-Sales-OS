@@ -836,3 +836,139 @@ exit=0
 `pnpm test` sigue en 15 suites / 78 tests: D9 intacto. Los ficheros de prueba
 del flujo se borraron y `progress/explore_jev-backtest.md` se restauró a su
 versión commiteada.
+
+---
+
+# Sexta vuelta — MEDIA-9 y MEDIA-10, antes de T6
+
+La tercera revisión pasó. Estos dos son criterio del Líder, no exigencia de la
+revisión: T6 es una corrida única e irrepetible barata, porque cada repetición
+vuelve a sacar 50 textos de clientes fuera de la empresa. MEDIA-2, MEDIA-3,
+MEDIA-6 y los BAJA que quedan siguen sin tocarse. T6 sigue sin ejecutarse.
+
+## 27. MEDIA-10 — la clase entera: el lote ya es durable según llega
+
+El diagnóstico del Líder: ALTA-1, ALTA-5 y ALTA-6 no eran tres bichos, eran
+tres síntomas de que **el lote solo era durable cuando estaba completo**.
+`consultar()` era todo o nada y no había un solo timeout en el script.
+
+**El freno.** `runBatch` entrega cada respuesta por `onRespuesta` en cuanto
+vuelve y **antes de pedir la siguiente**; `faseEvaluar` la escribe como una
+línea en `progress/jev-backtest-respuestas.jsonl`. Si el proceso muere en la
+27.ª, las 26 pagadas están fuera de memoria. La entrega va antes de meter el
+resultado en el array: si escribir falla, no se siguen gastando llamadas cuyo
+resultado no se puede guardar.
+
+El test lo fija donde importa: **antes de la n-ésima llamada ya hay n-1
+respuestas entregadas**, no al final.
+
+Leer es simétrico y resuelve el caso que genera este mismo fallo:
+
+- una línea ilegible se salta avisando, en vez de tumbar la lectura entera —
+  eso es exactamente lo que deja un proceso muerto a mitad de escritura;
+- de cada actividad se conserva la **última** línea, así que una segunda pasada
+  corrige a la primera sin borrar nada. Por eso no hace falta truncar antes de
+  empezar, y por eso un reintento nunca destruye lo anterior.
+
+**El cinturón.** Cada petición lleva `AbortSignal.timeout`, 60 s por defecto.
+Una que no contesta cae en el `catch` de red, queda `sin_respuesta` y el lote
+sigue, en lugar de dejar la corrida colgada para siempre.
+
+`evaluarLote` pierde `guardarRespuestas`: la durabilidad ya no está al final,
+y mantener ese paso sería afirmar una garantía en el sitio donde ya no vive.
+Lo que queda es el orden consultar → calcular → informar, que sigue probado.
+
+| Mutante | Resultado |
+|---|---|
+| entregar todas al final en vez de según llegan | **1 test rojo** |
+| quitar el `AbortSignal` de la petición | **4 tests rojos** |
+| `faseEvaluar` no engancha `onRespuesta` | **2 tests rojos** |
+
+## 28. MEDIA-9 — el ensayo tampoco pisa el informe firmado
+
+`rutaInforme(dryRun)`, simétrico con `rutaRespuestas`: el ensayo escribe en
+`progress/jev-backtest-informe-seco.md`, que además no se versiona por caer
+bajo el glob del `.gitignore`. El documento donde firma el director deja de
+poder quedar sustituido por el de una corrida de prueba.
+
+## 29. Commits de la sexta vuelta, en orden
+
+```
+d8f3a4e test:  el ensayo no puede pisar el informe firmado (MEDIA-9)
+1ec2365 fix:   el ensayo escribe su informe aparte (MEDIA-9)
+f3b0433 test:  el lote tiene que ser durable segun llega (MEDIA-10)
+d03c102 fix:   el lote se persiste segun llega, no al final (MEDIA-10)
+9a1c7f2 style: formato prettier en los tests de MEDIA-10
+```
+
+Modificados: `jev-client.ts`, `run-backtest.ts` y sus dos `.spec.ts`. Nada
+fuera de `backend/scripts/`.
+
+Tests: **114 → 124**.
+
+## 30. Salida literal de los cuatro comandos (sexta vuelta)
+
+```
+=== $ cd backend && pnpm test ===
+
+> backend@0.0.1 test /home/claude/sites/Tracker-Sales-OS/backend
+> jest
+
+
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+Snapshots:   0 total
+Time:        3.981 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+
+> backend@0.0.1 test:scripts /home/claude/sites/Tracker-Sales-OS/backend
+> jest --config ./scripts/jest.config.js
+
+
+Test Suites: 6 passed, 6 total
+Tests:       124 passed, 124 total
+Snapshots:   0 total
+Time:        1.08 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+
+> backend@0.0.1 lint /home/claude/sites/Tracker-Sales-OS/backend
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+
+exit=0
+```
+
+`pnpm test` sigue en 15 suites / 78 tests: D9 intacto.
+
+Verificación de flujo sobre un lote sintético de 50 filas, sin base de datos y
+sin red:
+
+- `--fase evaluar --dry-run` deja **50 líneas** en
+  `jev-backtest-respuestas-seco.jsonl`, una por actividad, y el informe
+  versionado queda **sin tocar** (`git diff` vacío).
+- Truncando la última línea del `.jsonl`, como haría un proceso muerto a mitad
+  de escritura, `--reusar-respuestas` avisa de `1 linea(s) ilegibles ...,
+  saltadas`, recupera las otras 49 y el informe publica
+  `Sin respuesta de Jev (R9): 1`.
+- Ninguno de los artefactos generados aparece en `git status`: el glob
+  `progress/jev-backtest-*` los cubre todos, incluidos los dos nuevos.
+
+Los ficheros de prueba se borraron y `progress/explore_jev-backtest.md` se
+restauró a su versión commiteada.
+
+## 31. Nota para quien corra T6
+
+El fichero de respuestas es ahora `progress/jev-backtest-respuestas.jsonl`
+(`-seco.jsonl` para los ensayos), una línea JSON por actividad. Si una corrida
+se interrumpe, **no hay que reextraer ni volver a llamar**: basta repetir
+`--fase evaluar` para las que falten, porque las líneas nuevas se añaden y la
+última de cada actividad gana; o `--fase evaluar --reusar-respuestas` para
+rehacer solo el informe con lo que ya hay.
