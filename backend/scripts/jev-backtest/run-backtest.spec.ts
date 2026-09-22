@@ -12,6 +12,7 @@ import {
   necesitaAprobacion,
   parseArgs,
   renderReport,
+  rutaInforme,
   rutaRespuestas,
 } from './run-backtest';
 import { BatchActivity, EvaluatedActivity, Level } from './types';
@@ -438,5 +439,32 @@ describe('R11 (77-jev-quality-backtest #77): cada n/d del informe dice por que',
     const md = await informeCon(etiquetas);
 
     expect(md).not.toMatch(/constante/i);
+  });
+});
+
+describe('R11 (77-jev-quality-backtest #77): el ensayo tampoco pisa el informe que firma el director', () => {
+  it('el informe no es el mismo fichero en seco que en real', () => {
+    expect(rutaInforme(false)).toBe(RUTA_INFORME);
+    expect(rutaInforme(true)).not.toBe(RUTA_INFORME);
+  });
+
+  it('un --dry-run escribe su informe aparte y no toca el versionado', async () => {
+    const previo = '# Informe firmado\n\nlo que escribio el director\n';
+    const { fs, escrituras } = fsFalso({
+      [RUTA_LOTE]: loteGuardadoJson,
+      [RUTA_ETIQUETADO]: etiquetadoDe([1, 4]),
+      [RUTA_INFORME]: previo,
+    });
+
+    const codigo = await faseEvaluar(
+      parseArgs(['--fase', 'evaluar', '--dry-run']),
+      {},
+      { fs },
+    );
+
+    expect(codigo).toBe(0);
+    expect(Object.keys(escrituras)).toContain(rutaInforme(true));
+    expect(escrituras[RUTA_INFORME]).toBeUndefined();
+    expect(fs.leer(RUTA_INFORME)).toBe(previo);
   });
 });
