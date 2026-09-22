@@ -479,6 +479,34 @@ const pct = (v: number | null): string =>
 const num = (v: number | null): string => (v === null ? 'n/d' : v.toFixed(3));
 
 /**
+ * BAJA-15 — si falta alguna respuesta, el informe lo dice arriba y no solo en
+ * el detalle. Las cifras siguen siendo correctas, pero se leen mejor de lo que
+ * son: un lote incompleto no mide lo mismo que uno completo, y esto lo firma
+ * una persona.
+ */
+function avisoParcial(m: Metrics, respuestas: JevResult[]): string[] {
+  if (m.sinRespuesta === 0) return [];
+
+  const nunca = respuestas.filter(
+    (r) => r.motivo === MOTIVO_NUNCA_LLAMADA,
+  ).length;
+  const conRespuesta = m.total - m.sinRespuesta;
+
+  return [
+    '> **INFORME PARCIAL.** Solo hay respuesta de Jev para',
+    `> **${conRespuesta} de ${m.total}** actividades del lote` +
+      (nunca ? `, y ${nunca} nunca se llegaron a consultar.` : '.'),
+    '>',
+    '> Las tres cifras de acuerdo se calculan solo sobre las comparables, y la',
+    '> condicion B de R13 solo puede contar como degradadas las que si',
+    '> contestaron: con el lote incompleto ambas se leen mejor de lo que son.',
+    '> Antes de firmar, completa el lote con `--fase evaluar`, que solo',
+    '> consulta lo que falta.',
+    '',
+  ];
+}
+
+/**
  * MEDIA-7 — concentracion del lote, anonimizada. El informe se versiona en
  * progress/, asi que aqui no entra ningun `seller_id`: solo recuentos y un
  * indice arbitrario que se asigna al imprimir.
@@ -534,6 +562,7 @@ export function renderReport(
     `- Sin etiqueta del director: ${m.sinEtiqueta}`,
     `- Sin respuesta de Jev (R9): ${m.sinRespuesta}`,
     '',
+    ...avisoParcial(m, respuestas),
     ...(lote.desviaciones.length
       ? [
           '## Desviaciones de la estratificacion de R2',
