@@ -1,4 +1,10 @@
-import { JEV_ENDPOINT, askJev, parseJevResponse, runBatch } from './jev-client';
+import {
+  JEV_ENDPOINT,
+  askJev,
+  parseJevResponse,
+  reparse,
+  runBatch,
+} from './jev-client';
 import { SourceActivity } from './types';
 
 const actividad = (id: string): SourceActivity => ({
@@ -215,9 +221,9 @@ describe('R8 (77-jev-quality-backtest #77): un nivel que no es 1, 2, 3 o 4 no se
       ['1', 1],
       ['4', 4],
     ] as [number | string, number][]) {
-      expect(parseJevResponse({ questions: { nivel: { answer } } })?.nivel).toBe(
-        esperado,
-      );
+      expect(
+        parseJevResponse({ questions: { nivel: { answer } } })?.nivel,
+      ).toBe(esperado);
     }
   });
 
