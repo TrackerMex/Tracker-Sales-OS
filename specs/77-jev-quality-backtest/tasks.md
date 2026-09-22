@@ -20,6 +20,14 @@ tags: [harness, spec]
 > silencioso falsearía el veredicto del gate. Las llamadas a red y a base de
 > datos no se testean: se ejercitan con `--dry-run` (R10).
 
+## T0 — Arnés de test aislado (D9)
+
+1. `backend/scripts/jest.config.js` con `rootDir: __dirname` y transform
+   `ts-jest`.
+2. Entrada `"test:scripts"` en `backend/package.json`.
+3. Verificar que `pnpm test` sigue dando el mismo resultado que antes del
+   cambio, y que `pnpm test:scripts` recoge los tests de T1 en adelante.
+
 ## T1 — Estratificación del lote (R1, R2, R3)
 
 1. Test rojo: dado un conjunto de actividades con `quality` repartido, la

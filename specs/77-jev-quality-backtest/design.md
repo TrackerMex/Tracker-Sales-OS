@@ -147,3 +147,41 @@ no sugerir que forma parte de la configuración normal de la aplicación.
 Costo estimado de la ejecución completa: 50 actividades × ~500 tokens ≈ 25 000
 tokens de entrada, a $0.042 por millón, con salida sin cargo. Menos de un
 centavo. El costo real de esta feature es la hora del director.
+
+## D9 — Cómo corren los tests, dado que `rootDir` de jest es `src`
+
+La configuración de jest en `backend/package.json` fija `"rootDir": "src"` y
+`"testRegex": ".*\\.spec\\.ts$"`. Un test colocado en `backend/scripts/` **no
+lo recoge `pnpm test`**. Esto entra en conflicto directo con D1, que exige que
+el script viva fuera de `src/` para que no pueda acabar en el bundle.
+
+Se resuelve con una configuración de jest propia y aislada:
+
+- `backend/scripts/jest.config.js` con `rootDir: __dirname` y el mismo
+  transform `ts-jest` que usa la configuración principal.
+- Una entrada nueva en `backend/package.json`: `"test:scripts": "jest --config
+  ./scripts/jest.config.js"`.
+
+Se descartaron las dos alternativas:
+
+1. **Cambiar `rootDir` a `.` en la configuración principal.** Tocaría cómo
+   corren los 70 tests existentes para beneficio de un script de un solo uso.
+   Riesgo desproporcionado.
+2. **Mover la lógica pura a `src/`.** Entraría en el build y en la imagen de
+   producción, que es exactamente lo que D1 evita.
+
+`pnpm test` sigue devolviendo lo mismo que hoy. El Reviewer verifica ambos por
+separado.
+
+## D10 — Los umbrales del veredicto son parámetros, no constantes
+
+R13 fija 70% y 15%. El gate humano aprobó la spec con esos números, así que
+son los valores por defecto.
+
+Pero se implementan como banderas de línea de comandos
+(`--min-falsos-100-detectados`, `--max-buenos-degradados`) y no como constantes
+en el código, porque R13 exige que se confirmen antes de cada corrida. Si el
+director los cambia, cambiarlos no debe costar un commit.
+
+El informe de R11 SHALL imprimir los dos valores efectivamente usados, para
+que el veredicto quede interpretable sin consultar el historial de comandos.
