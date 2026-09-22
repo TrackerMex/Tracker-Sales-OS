@@ -1,4 +1,4 @@
-import { JevResult } from './jev-client';
+import { JevResult, MOTIVO_NUNCA_LLAMADA, nuncaLlamada } from './jev-client';
 import { Metrics } from './metrics';
 import {
   LoteGuardado,
@@ -603,5 +603,56 @@ describe('R10 (77-jev-quality-backtest #77): reanudar sin volver a exportar lo y
 
     const informe = escrituras[rutaInforme(true)];
     expect(informe).toContain('Sin respuesta de Jev (R9): 0');
+  });
+});
+
+const informeDe = async (
+  resp: JevResult[],
+  etq: Map<string, Level | null> = etiquetas,
+): Promise<string> => {
+  const capturas: [Metrics, EvaluatedActivity[], JevResult[]][] = [];
+
+  await evaluarLote(lote, etq, UMBRALES, {
+    consultar: () => Promise.resolve(resp),
+    guardarInforme: (m, filas, r) => {
+      capturas.push([m, filas, r]);
+    },
+  });
+
+  const guardado: LoteGuardado = {
+    semilla: 77,
+    generado: '2026-09-22T00:00:00.000Z',
+    candidatas: 120,
+    excluidas: 3,
+    desviaciones: [],
+    orden: lote,
+  };
+  const [m, filas, r] = capturas[0];
+  return renderReport(m, filas, r, guardado, parseArgs([]));
+};
+
+describe('R8 (77-jev-quality-backtest #77): el informe distingue no llamada de llamada fallida', () => {
+  it('imprime el motivo de cada actividad sin respuesta', async () => {
+    const md = await informeDe([
+      {
+        id: 'a1',
+        estado: 'sin_respuesta',
+        nivel: null,
+        distribucion: null,
+        confianza: null,
+        motivo: 'HTTP 429',
+      },
+      nuncaLlamada('a2'),
+    ]);
+
+    expect(md).toContain('HTTP 429');
+    expect(md).toContain(MOTIVO_NUNCA_LLAMADA);
+  });
+
+  it('una respuesta buena no arrastra motivo', async () => {
+    const md = await informeDe(respuestas);
+
+    expect(md).not.toContain(MOTIVO_NUNCA_LLAMADA);
+    expect(md).not.toContain('HTTP 429');
   });
 });
