@@ -10,6 +10,7 @@ import { SourceActivity } from './types';
 const actividad = (id: string): SourceActivity => ({
   id,
   quality: 100,
+  seller_id: 'VENDEDOR-UUID-7f3a',
   summary: `resumen ${id}`,
   discovery: `descubrimiento ${id}`,
   agreement: `acuerdo ${id}`,
@@ -399,8 +400,10 @@ describe('R5 (77-jev-quality-backtest #77): lo que sale de verdad por el cable',
 
     for (const fuera of [
       'ID-UNICO-7f3a',
+      'VENDEDOR-UUID-7f3a',
       'VENDEDOR-123',
       'CLIENTE-456',
+      'seller_id',
       'quality',
       '2026-03-04',
     ]) {

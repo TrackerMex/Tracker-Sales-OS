@@ -3,6 +3,7 @@ import {
   BATCH_TARGETS,
   classify,
   isEmptyActivity,
+  sellerSpread,
   stratify,
 } from './stratify';
 import { SourceActivity } from './types';
@@ -14,6 +15,7 @@ const act = (
 ): SourceActivity => ({
   id,
   quality,
+  seller_id: `vendedor-de-${id}`,
   summary: 'resumen de la visita con el cliente',
   discovery: 'necesita facturacion mensual',
   agreement: 'acepta cotizacion el viernes',
@@ -38,7 +40,7 @@ describe('R1 (77-jev-quality-backtest #77): consulta de solo lectura', () => {
     }
   });
 
-  it('solo lee la tabla activities y sus seis columnas necesarias', () => {
+  it('solo lee la tabla activities y las columnas que necesita', () => {
     expect(BATCH_QUERY).toContain('FROM activities');
     for (const col of [
       'id',
@@ -47,6 +49,7 @@ describe('R1 (77-jev-quality-backtest #77): consulta de solo lectura', () => {
       'discovery',
       'agreement',
       'next_step',
+      'seller_id',
     ]) {
       expect(BATCH_QUERY).toContain(col);
     }
@@ -159,5 +162,53 @@ describe('R3 (77-jev-quality-backtest #77): excluye actividades sin texto', () =
     expect(batch.map((a) => a.id)).not.toContain('vacia-1');
     expect(batch.map((a) => a.id)).not.toContain('vacia-2');
     expect(batch).toHaveLength(50);
+  });
+});
+
+describe('R11 (77-jev-quality-backtest #77): concentracion por vendedor en el lote', () => {
+  const de = (seller: string): SourceActivity => ({
+    ...act(`${seller}-x`, 100),
+    seller_id: seller,
+  });
+
+  it('cuenta vendedores distintos y que fraccion se lleva el mayor', () => {
+    const spread = sellerSpread([
+      de('A'),
+      de('A'),
+      de('A'),
+      de('B'),
+      de('C'),
+    ]);
+
+    expect(spread.vendedores).toBe(3);
+    expect(spread.reparto).toEqual([3, 1, 1]);
+    expect(spread.mayor).toBe(3);
+    expect(spread.fraccionMayor).toBeCloseTo(0.6, 10);
+  });
+
+  it('un lote de un solo vendedor se ve de un vistazo', () => {
+    const spread = sellerSpread([de('A'), de('A'), de('A')]);
+
+    expect(spread.vendedores).toBe(1);
+    expect(spread.fraccionMayor).toBe(1);
+  });
+
+  it('no devuelve ningun identificador de vendedor, solo recuentos', () => {
+    const spread = sellerSpread([
+      de('9f1c3b7e-0000-4000-8000-VENDEDORUNO'),
+      de('9f1c3b7e-0000-4000-8000-VENDEDORDOS'),
+    ]);
+
+    expect(JSON.stringify(spread)).not.toContain('VENDEDOR');
+    expect(JSON.stringify(spread)).not.toContain('9f1c3b7e');
+  });
+
+  it('un lote vacio no tiene fraccion que publicar', () => {
+    expect(sellerSpread([])).toEqual({
+      vendedores: 0,
+      reparto: [],
+      mayor: 0,
+      fraccionMayor: null,
+    });
   });
 });

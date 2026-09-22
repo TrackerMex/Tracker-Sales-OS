@@ -14,6 +14,7 @@ const batchActivity = (
   id,
   quality,
   franja,
+  seller_id: 'VENDEDOR-UUID-7f3a',
   summary: `resumen ${id} de la visita`,
   discovery: `descubrimiento ${id}`,
   agreement: `acuerdo ${id}`,
@@ -65,6 +66,7 @@ describe('R6 (77-jev-quality-backtest #77): fichero de etiquetado a ciegas', () 
     for (const prohibido of [
       'quality',
       'seller_id',
+      'VENDEDOR-UUID-7f3a',
       'client_id',
       'franja',
       'alta',
@@ -207,7 +209,10 @@ describe('R6 (77-jev-quality-backtest #77): el etiquetado tiene que cuadrar con 
       bloque(1, 3),
       bloque(2, 1),
       bloque(3, 4),
-    ]).replace('- Resumen: texto', '- Resumen: el cliente pidio\n## 2 unidades');
+    ]).replace(
+      '- Resumen: texto',
+      '- Resumen: el cliente pidio\n## 2 unidades',
+    );
 
     const problemas = validarEtiquetado(parseLabelingFile(conFantasma), 3);
 

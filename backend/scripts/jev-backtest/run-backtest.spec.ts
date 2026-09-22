@@ -1,11 +1,14 @@
 import { JevResult } from './jev-client';
+import { Metrics } from './metrics';
 import {
+  LoteGuardado,
   evaluarLote,
   main,
   necesitaAprobacion,
   parseArgs,
+  renderReport,
 } from './run-backtest';
-import { BatchActivity, Level } from './types';
+import { BatchActivity, EvaluatedActivity, Level } from './types';
 
 const UMBRALES = { minFalsos100Detectados: 0.7, maxBuenosDegradados: 0.15 };
 
@@ -14,6 +17,7 @@ const lote: BatchActivity[] = [
     id: 'a1',
     quality: 100,
     franja: 'alta',
+    seller_id: 'VENDEDOR-UUID-7f3a',
     summary: 'visita uno',
     discovery: 'necesidad uno',
     agreement: 'acuerdo uno',
@@ -23,6 +27,7 @@ const lote: BatchActivity[] = [
     id: 'a2',
     quality: 100,
     franja: 'alta',
+    seller_id: 'VENDEDOR-UUID-9c2b',
     summary: 'visita dos',
     discovery: 'necesidad dos',
     agreement: 'acuerdo dos',
@@ -184,5 +189,45 @@ describe('R4 (77-jev-quality-backtest #77): el script aborta antes de tocar nada
     expect(codigo).toBe(1);
     expect(errores.join('\n')).toContain('JEV_BACKTEST_APPROVED');
     expect(errores.join('\n')).not.toContain('JEV_BACKTEST_DATABASE_URL');
+  });
+});
+
+describe('R11 (77-jev-quality-backtest #77): el informe va versionado, no puede llevar identificadores', () => {
+  const informe = async (): Promise<string> => {
+    const capturas: [Metrics, EvaluatedActivity[], JevResult[]][] = [];
+
+    await evaluarLote(lote, etiquetas, UMBRALES, {
+      consultar: () => Promise.resolve(respuestas),
+      guardarRespuestas: () => undefined,
+      guardarInforme: (m, filas, resp) => {
+        capturas.push([m, filas, resp]);
+      },
+    });
+
+    const guardado: LoteGuardado = {
+      semilla: 77,
+      generado: '2026-09-22T00:00:00.000Z',
+      candidatas: 120,
+      excluidas: 3,
+      desviaciones: [],
+      orden: lote,
+    };
+    const [m, filas, resp] = capturas[0];
+    return renderReport(m, filas, resp, guardado, parseArgs([]));
+  };
+
+  it('publica la concentracion por vendedor, que es lo que dice si el veredicto generaliza', async () => {
+    const md = await informe();
+
+    expect(md).toContain('Reparto por vendedor');
+    expect(md).toContain('Vendedores distintos: 2');
+  });
+
+  it('no publica ningun seller_id: el indice del reparto es arbitrario', async () => {
+    const md = await informe();
+
+    expect(md).not.toContain('VENDEDOR-UUID-7f3a');
+    expect(md).not.toContain('VENDEDOR-UUID-9c2b');
+    expect(md).not.toContain('seller_id');
   });
 });
