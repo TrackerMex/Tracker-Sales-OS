@@ -43,10 +43,13 @@ jobs:
         run: pnpm exec tsc --noEmit
 
       - name: Lint
-        run: pnpm exec eslint "{src,apps,libs,test}/**/*.ts"
+        run: pnpm exec eslint "{src,apps,libs,test,scripts}/**/*.ts"
 
       - name: Run unit tests
         run: pnpm test --runInBand
+
+      - name: Run script tests
+        run: pnpm test:scripts --runInBand
 
   frontend:
     name: Frontend
