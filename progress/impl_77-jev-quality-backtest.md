@@ -894,11 +894,11 @@ poder quedar sustituido por el de una corrida de prueba.
 ## 29. Commits de la sexta vuelta, en orden
 
 ```
-d8f3a4e test:  el ensayo no puede pisar el informe firmado (MEDIA-9)
+85a3c38 test:  el ensayo no puede pisar el informe firmado (MEDIA-9)
 1ec2365 fix:   el ensayo escribe su informe aparte (MEDIA-9)
 f3b0433 test:  el lote tiene que ser durable segun llega (MEDIA-10)
 d03c102 fix:   el lote se persiste segun llega, no al final (MEDIA-10)
-9a1c7f2 style: formato prettier en los tests de MEDIA-10
+01735ff style: formato prettier en los tests de MEDIA-10
 ```
 
 Modificados: `jev-client.ts`, `run-backtest.ts` y sus dos `.spec.ts`. Nada
