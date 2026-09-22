@@ -810,7 +810,7 @@
     "id": "77-jev-quality-backtest",
     "name": "Backtest offline: calidad por sustancia (Jev)",
     "description": "Medir, fuera de produccion, si el modelo Jev de TypeSafe juzga la calidad de una actividad mejor que la formula de longitud actual. Script de lectura en backend/scripts/ sobre 50 actividades reales estratificadas, etiquetado a ciegas por el director comercial, y comparacion de tres columnas: etiqueta humana, quality actual y score de Jev. No escribe en la base ni toca backend/src/modules/.",
-    "status": "pending",
+    "status": "in_progress",
     "priority": 77,
     "backend_modules": [],
     "frontend_modules": [],
