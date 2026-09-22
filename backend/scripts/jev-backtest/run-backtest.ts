@@ -38,7 +38,12 @@ import {
   runBatch,
 } from './jev-client';
 import { Metrics, Thresholds, computeMetrics } from './metrics';
-import { BATCH_QUERY, CANDIDATE_LIMIT, stratify } from './stratify';
+import {
+  BATCH_QUERY,
+  CANDIDATE_LIMIT,
+  sellerSpread,
+  stratify,
+} from './stratify';
 import {
   BatchActivity,
   EvaluatedActivity,
@@ -92,7 +97,7 @@ export interface RunDeps {
   fetchImpl: typeof fetch;
 }
 
-interface LoteGuardado {
+export interface LoteGuardado {
   semilla: number;
   generado: string;
   candidatas: number;
@@ -352,6 +357,32 @@ const pct = (v: number | null): string =>
 
 const num = (v: number | null): string => (v === null ? 'n/d' : v.toFixed(3));
 
+/**
+ * MEDIA-7 — concentracion del lote, anonimizada. El informe se versiona en
+ * progress/, asi que aqui no entra ningun `seller_id`: solo recuentos y un
+ * indice arbitrario que se asigna al imprimir.
+ */
+function seccionVendedores(lote: LoteGuardado): string[] {
+  const spread = sellerSpread(lote.orden);
+  return [
+    '## Reparto por vendedor en el lote (R11, anonimizado)',
+    '',
+    `- Vendedores distintos: ${spread.vendedores}`,
+    `- Fraccion del que mas aporta: ${pct(spread.fraccionMayor)} (${spread.mayor} de ${lote.orden.length})`,
+    `- Reparto, de mayor a menor: ${
+      spread.reparto.length
+        ? spread.reparto.map((n, i) => `vendedor ${i + 1}: ${n}`).join(', ')
+        : 'lote vacio'
+    }`,
+    '',
+    'El indice es arbitrario y se asigna al imprimir: desde aqui no se vuelve',
+    'al vendedor real. Sirve para leer si el veredicto generaliza o solo',
+    'describe a una o dos personas: cuanto mas concentrado el lote, menos',
+    'dice la tasa de falsos 100 sobre la formula.',
+    '',
+  ];
+}
+
 const tablaMatriz = (m: number[][], titulo: string): string =>
   [
     `| ${titulo} | 1 | 2 | 3 | 4 |`,
@@ -360,7 +391,7 @@ const tablaMatriz = (m: number[][], titulo: string): string =>
   ].join('\n');
 
 /** R11 — el informe. R8 exige el detalle por actividad, que va al final. */
-function renderReport(
+export function renderReport(
   m: Metrics,
   filas: EvaluatedActivity[],
   respuestas: JevResult[],
@@ -414,6 +445,7 @@ function renderReport(
     `- De esos falsos 100, Jev tambien los situa en 1 o 2: ${m.falsos100.detectadosPorJev} (${pct(m.falsos100.fraccionDetectada)})`,
     `- Falsos 100 sin respuesta de Jev, contados como no detectados: ${m.falsos100.falsos100SinRespuesta}`,
     '',
+    ...seccionVendedores(lote),
     '## Matriz de confusion: director contra Jev (R11)',
     '',
     tablaMatriz(m.matrizJev, 'jev →'),

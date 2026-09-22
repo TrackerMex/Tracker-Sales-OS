@@ -20,6 +20,12 @@ export interface TextFields {
 export interface SourceActivity extends TextFields {
   id: string;
   quality: number;
+  /**
+   * Solo para el diagnostico de concentracion del lote (MEDIA-7). Se queda en
+   * local como el `id`: no viaja a la API (R5), no aparece en el fichero del
+   * director (R6) y en el informe solo sale como recuento anonimo.
+   */
+  seller_id: string;
 }
 
 /** Actividad ya seleccionada para el lote, con la franja que ocupa. */

@@ -9,7 +9,7 @@ import { BatchActivity, Franja, SourceActivity, TextFields } from './types';
  * historia. La estratificacion de R2 se hace en memoria sobre este candidato.
  */
 export const BATCH_QUERY = `
-SELECT id, quality, summary, discovery, agreement, next_step
+SELECT id, quality, seller_id, summary, discovery, agreement, next_step
 FROM activities
 WHERE deleted_at IS NULL
 ORDER BY executed_at DESC
@@ -105,4 +105,43 @@ export function stratify(
   }
 
   return { batch, deviations, excluded: activities.length - usable.length };
+}
+
+export interface SellerSpread {
+  /** Vendedores distintos representados en el lote. */
+  vendedores: number;
+  /** Recuento por vendedor, de mayor a menor. Sin identificadores. */
+  reparto: number[];
+  /** Actividades del vendedor que mas aporta. */
+  mayor: number;
+  /** mayor sobre el total del lote; null si el lote esta vacio. */
+  fraccionMayor: number | null;
+}
+
+/**
+ * MEDIA-7 — concentracion del lote por vendedor. El candidato son las
+ * actividades mas recientes, sin control de diversidad, asi que un lote puede
+ * salir concentrado en una o dos personas; con el, la tasa de falsos 100
+ * describiria a esas personas y no a la formula, y el veredicto no
+ * generalizaria.
+ *
+ * Devuelve solo recuentos: el indice del reparto es la posicion en el orden
+ * descendente y no hay camino de vuelta al vendedor. El informe esta
+ * versionado, asi que ningun `seller_id` puede acabar en el.
+ */
+export function sellerSpread(batch: { seller_id: string }[]): SellerSpread {
+  const porVendedor = new Map<string, number>();
+  for (const a of batch) {
+    porVendedor.set(a.seller_id, (porVendedor.get(a.seller_id) ?? 0) + 1);
+  }
+
+  const reparto = [...porVendedor.values()].sort((x, y) => y - x);
+  const mayor = reparto[0] ?? 0;
+
+  return {
+    vendedores: porVendedor.size,
+    reparto,
+    mayor,
+    fraccionMayor: batch.length ? mayor / batch.length : null,
+  };
 }
