@@ -160,9 +160,13 @@ describe('R4 (77-jev-quality-backtest #77): el script aborta antes de tocar nada
     async (_nombre, argv) => {
       const fetchSpy = jest.fn();
 
-      const codigo = await main(argv, {}, {
-        fetchImpl: fetchSpy as unknown as typeof fetch,
-      });
+      const codigo = await main(
+        argv,
+        {},
+        {
+          fetchImpl: fetchSpy as unknown as typeof fetch,
+        },
+      );
 
       expect(codigo).toBe(1);
       expect(errores.join('\n')).toContain('JEV_BACKTEST_APPROVED');

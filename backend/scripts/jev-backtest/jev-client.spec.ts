@@ -325,3 +325,71 @@ describe('R10 (77-jev-quality-backtest #77): retomar el lote sin volver a llamar
     ]);
   });
 });
+
+describe('R5 (77-jev-quality-backtest #77): lo que sale de verdad por el cable', () => {
+  const capturar = async (fila: SourceActivity = actividad('a1')) => {
+    const { sleep } = conEsperas();
+    const fetchImpl = jest.fn().mockResolvedValue(respuesta(200, cuerpoOk(4)));
+
+    await askJev(fila, opciones(fetchImpl, sleep));
+
+    const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    return { url, init };
+  };
+
+  it('manda exactamente dos cabeceras: Content-Type y Authorization', async () => {
+    const { init } = await capturar();
+
+    expect(Object.keys(init.headers as Record<string, string>).sort()).toEqual([
+      'Authorization',
+      'Content-Type',
+    ]);
+  });
+
+  it('el init no lleva nada mas que method, headers y body', async () => {
+    const { init } = await capturar();
+
+    expect(Object.keys(init).sort()).toEqual(['body', 'headers', 'method']);
+  });
+
+  it('la URL es el endpoint pelado, sin query string', async () => {
+    const { url } = await capturar();
+
+    expect(url).toBe(JEV_ENDPOINT);
+    expect(url).not.toContain('?');
+  });
+
+  it('el cuerpo que viaja tiene solo state, model y questions', async () => {
+    const { init } = await capturar();
+    const cuerpo = JSON.parse(init.body as string) as Record<string, unknown>;
+
+    expect(Object.keys(cuerpo).sort()).toEqual(['model', 'questions', 'state']);
+    expect(Object.keys(cuerpo.state as Record<string, unknown>).sort()).toEqual(
+      ['agreement', 'discovery', 'next_step', 'summary'],
+    );
+  });
+
+  it('ni el id ni ningun otro identificador viajan en la peticion completa', async () => {
+    const fila = {
+      ...actividad('a1'),
+      id: 'ID-UNICO-7f3a',
+      seller_id: 'VENDEDOR-123',
+      client_id: 'CLIENTE-456',
+      quality: 100,
+      executed_at: '2026-03-04T10:00:00Z',
+    };
+
+    const { url, init } = await capturar(fila);
+    const peticion = `${url} ${JSON.stringify(init)}`;
+
+    for (const fuera of [
+      'ID-UNICO-7f3a',
+      'VENDEDOR-123',
+      'CLIENTE-456',
+      'quality',
+      '2026-03-04',
+    ]) {
+      expect(peticion).not.toContain(fuera);
+    }
+  });
+});
