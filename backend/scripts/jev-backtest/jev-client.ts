@@ -137,9 +137,9 @@ export function parseJevResponse(
   json: unknown,
   clave: string = QUESTION_KEY,
 ): JevParsed | null {
-  const raiz = json as Record<string, any> | null;
-  const pregunta: Record<string, any> | undefined =
-    raiz?.questions?.[clave] ?? raiz?.[clave];
+  const raiz = (json ?? {}) as Record<string, unknown>;
+  const contenedor = (raiz.questions ?? raiz) as Record<string, unknown>;
+  const pregunta = contenedor[clave] as Record<string, unknown> | undefined;
   if (!pregunta) return null;
 
   const nivel = aNivel(pregunta.answer);
@@ -182,7 +182,10 @@ export async function askJev(
         body: cuerpo,
       });
     } catch (e) {
-      return sinRespuesta(actividad.id, `fallo de red: ${(e as Error).message}`);
+      return sinRespuesta(
+        actividad.id,
+        `fallo de red: ${(e as Error).message}`,
+      );
     }
 
     if (REINTENTABLES.has(respuesta.status)) continue;

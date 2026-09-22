@@ -106,7 +106,5 @@ export function joinLabels(
   etiquetas: LabelRow[],
 ): Map<string, Level | null> {
   const porOrden = new Map(etiquetas.map((e) => [e.orden, e.nivel]));
-  return new Map(
-    ordenado.map((a, i) => [a.id, porOrden.get(i + 1) ?? null]),
-  );
+  return new Map(ordenado.map((a, i) => [a.id, porOrden.get(i + 1) ?? null]));
 }

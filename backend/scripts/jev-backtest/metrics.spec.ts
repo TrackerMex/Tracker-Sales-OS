@@ -31,7 +31,10 @@ const fila = (
  * etiqueta cinco en nivel 1 o 2 (los falsos 100). Dos mas de la franja media
  * que el director etiqueta bien.
  */
-const loteBase = (jevEn100: Level[], jevEnMedia: Level[]): EvaluatedActivity[] => {
+const loteBase = (
+  jevEn100: Level[],
+  jevEnMedia: Level[],
+): EvaluatedActivity[] => {
   const humanoEn100: Level[] = [1, 1, 2, 2, 1, 3, 4, 4, 3, 4];
   const humanoEnMedia: Level[] = [3, 4];
   return [
@@ -120,9 +123,10 @@ describe('R12 (77-jev-quality-backtest #77): tasa de falsos 100', () => {
   it('cuenta, sobre ese subconjunto, cuantos tumba tambien Jev', () => {
     expect(falseHundreds(LOTE_POSITIVO).detectadosPorJev).toBe(4);
     expect(falseHundreds(LOTE_POSITIVO).fraccionDetectada).toBeCloseTo(0.8, 10);
-    expect(
-      falseHundreds(LOTE_POCOS_DETECTADOS).fraccionDetectada,
-    ).toBeCloseTo(0.6, 10);
+    expect(falseHundreds(LOTE_POCOS_DETECTADOS).fraccionDetectada).toBeCloseTo(
+      0.6,
+      10,
+    );
   });
 
   it('un falso 100 sin respuesta de Jev cuenta como no detectado', () => {
@@ -205,7 +209,10 @@ describe('R11 (77-jev-quality-backtest #77): agregado para el informe', () => {
 
     expect(m.matrizJev).toHaveLength(4);
     expect(m.matrizQuality).toHaveLength(4);
-    expect(m.acuerdoExacto).toBeCloseTo(exactAgreement(pairsWith(LOTE_POSITIVO, 'jev')), 10);
+    expect(m.acuerdoExacto).toBeCloseTo(
+      exactAgreement(pairsWith(LOTE_POSITIVO, 'jev')),
+      10,
+    );
     expect(m.acuerdoAdyacente).toBeCloseTo(
       adjacentAgreement(pairsWith(LOTE_POSITIVO, 'jev')),
       10,

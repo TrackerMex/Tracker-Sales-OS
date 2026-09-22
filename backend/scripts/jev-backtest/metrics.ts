@@ -55,10 +55,7 @@ const fraccion = (n: number, total: number): number =>
 
 /** R11, cifra 1 — fraccion de pares donde los dos niveles coinciden. */
 export function exactAgreement(pares: LevelPair[]): number {
-  return fraccion(
-    pares.filter(([a, b]) => a === b).length,
-    pares.length,
-  );
+  return fraccion(pares.filter(([a, b]) => a === b).length, pares.length);
 }
 
 /** R11, cifra 2 — fraccion de pares que difieren como mucho en un nivel. */
@@ -71,9 +68,7 @@ export function adjacentAgreement(pares: LevelPair[]): number {
 
 /** Rangos con promedio en los empates, que es lo que exige Spearman. */
 function ranks(values: number[]): number[] {
-  const orden = values
-    .map((v, i) => ({ v, i }))
-    .sort((a, b) => a.v - b.v);
+  const orden = values.map((v, i) => ({ v, i })).sort((a, b) => a.v - b.v);
   const salida = new Array<number>(values.length).fill(0);
   let i = 0;
   while (i < orden.length) {
@@ -149,9 +144,7 @@ export function falseHundreds(filas: EvaluatedActivity[]): FalseHundredStats {
     tasaFalsos100: cien.length ? falsos.length / cien.length : null,
     detectadosPorJev: detectados.length,
     falsos100SinRespuesta: sinRespuesta.length,
-    fraccionDetectada: falsos.length
-      ? detectados.length / falsos.length
-      : null,
+    fraccionDetectada: falsos.length ? detectados.length / falsos.length : null,
   };
 }
 

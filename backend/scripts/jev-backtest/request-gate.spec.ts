@@ -1,8 +1,4 @@
-import {
-  QUESTION_KEY,
-  buildRequestBody,
-  requireApproval,
-} from './jev-client';
+import { QUESTION_KEY, buildRequestBody, requireApproval } from './jev-client';
 import { main } from './run-backtest';
 import { LEVELS, SourceActivity } from './types';
 
@@ -27,9 +23,13 @@ describe('R4 (77-jev-quality-backtest #77): aprobacion humana antes de salir de 
   it('sin JEV_BACKTEST_APPROVED el script sale con codigo distinto de cero y no construye ninguna peticion', async () => {
     const fetchSpy = jest.fn();
 
-    const codigo = await main(['--fase', 'evaluar'], {}, {
-      fetchImpl: fetchSpy as unknown as typeof fetch,
-    });
+    const codigo = await main(
+      ['--fase', 'evaluar'],
+      {},
+      {
+        fetchImpl: fetchSpy as unknown as typeof fetch,
+      },
+    );
 
     expect(codigo).not.toBe(0);
     expect(fetchSpy).not.toHaveBeenCalled();

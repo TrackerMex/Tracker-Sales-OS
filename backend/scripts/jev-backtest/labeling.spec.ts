@@ -20,12 +20,8 @@ const batchActivity = (
 });
 
 const lote: BatchActivity[] = [
-  ...Array.from({ length: 6 }, (_, i) =>
-    batchActivity(`A${i}`, 'alta', 100),
-  ),
-  ...Array.from({ length: 4 }, (_, i) =>
-    batchActivity(`M${i}`, 'media', 60),
-  ),
+  ...Array.from({ length: 6 }, (_, i) => batchActivity(`A${i}`, 'alta', 100)),
+  ...Array.from({ length: 4 }, (_, i) => batchActivity(`M${i}`, 'media', 60)),
   ...Array.from({ length: 3 }, (_, i) => batchActivity(`B${i}`, 'baja', 20)),
 ];
 

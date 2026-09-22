@@ -1,9 +1,4 @@
-import {
-  JEV_ENDPOINT,
-  askJev,
-  parseJevResponse,
-  runBatch,
-} from './jev-client';
+import { JEV_ENDPOINT, askJev, parseJevResponse, runBatch } from './jev-client';
 import { SourceActivity } from './types';
 
 const actividad = (id: string): SourceActivity => ({
@@ -42,7 +37,10 @@ const conEsperas = () => {
   };
 };
 
-const opciones = (fetchImpl: jest.Mock, sleep: (ms: number) => Promise<void>) => ({
+const opciones = (
+  fetchImpl: jest.Mock,
+  sleep: (ms: number) => Promise<void>,
+) => ({
   fetchImpl: fetchImpl as unknown as typeof fetch,
   apiKey: 'clave-de-prueba',
   sleep,
@@ -139,16 +137,18 @@ describe('R9 (77-jev-quality-backtest #77): reintentos con espera exponencial', 
 
   it('el lote continua cuando una actividad agota los reintentos', async () => {
     const { sleep } = conEsperas();
-    const fetchImpl = jest.fn().mockImplementation((_url, init: RequestInit) => {
-      const cuerpo = JSON.parse(init.body as string) as {
-        state: { summary: string };
-      };
-      return Promise.resolve(
-        cuerpo.state.summary.includes('a2')
-          ? respuesta(429)
-          : respuesta(200, cuerpoOk(4)),
-      );
-    });
+    const fetchImpl = jest
+      .fn()
+      .mockImplementation((_url, init: RequestInit) => {
+        const cuerpo = JSON.parse(init.body as string) as {
+          state: { summary: string };
+        };
+        return Promise.resolve(
+          cuerpo.state.summary.includes('a2')
+            ? respuesta(429)
+            : respuesta(200, cuerpoOk(4)),
+        );
+      });
 
     const res = await runBatch(
       [actividad('a1'), actividad('a2'), actividad('a3')],
@@ -156,11 +156,7 @@ describe('R9 (77-jev-quality-backtest #77): reintentos con espera exponencial', 
     );
 
     expect(res.map((r) => r.id)).toEqual(['a1', 'a2', 'a3']);
-    expect(res.map((r) => r.estado)).toEqual([
-      'ok',
-      'sin_respuesta',
-      'ok',
-    ]);
+    expect(res.map((r) => r.estado)).toEqual(['ok', 'sin_respuesta', 'ok']);
   });
 });
 
@@ -184,7 +180,7 @@ describe('R10 (77-jev-quality-backtest #77): modo seco', () => {
     const fetchImpl = jest.fn();
 
     const res = await runBatch([actividad('a1')], {
-      fetchImpl: fetchImpl as unknown as typeof fetch,
+      fetchImpl: fetchImpl,
       dryRun: true,
       respuestasEjemplo: [cuerpoOk(2)],
     });

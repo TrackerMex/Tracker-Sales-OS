@@ -106,6 +106,20 @@ export function parseArgs(argv: string[]): Options {
   };
 }
 
+/**
+ * `pg` no trae tipos y el proyecto no instala @types/pg, asi que se declara
+ * aqui lo poco que el script usa. Solo lee: no hay metodo de escritura en esta
+ * interfaz a proposito.
+ */
+interface ReadOnlyClient {
+  connect(): Promise<void>;
+  query(sql: string, params: unknown[]): Promise<{ rows: SourceActivity[] }>;
+  end(): Promise<void>;
+}
+const PgClient = Client as unknown as new (cfg: {
+  connectionString: string;
+}) => ReadOnlyClient;
+
 /** R1 + D7 — unica lectura de la base, con la credencial de solo lectura. */
 async function leerCandidatos(
   env: NodeJS.ProcessEnv,
@@ -118,11 +132,11 @@ async function leerCandidatos(
         'del usuario de solo lectura (D7).',
     );
   }
-  const client = new Client({ connectionString });
+  const client = new PgClient({ connectionString });
   await client.connect();
   try {
     const res = await client.query(BATCH_QUERY, [limite]);
-    return res.rows as SourceActivity[];
+    return res.rows;
   } finally {
     await client.end();
   }
@@ -277,7 +291,12 @@ function renderReport(
     `- Buenos (director 3 o 4) que Jev tumba a 1 o 2: ${pct(v.fraccionDegradados)} (${v.degradados} de ${v.buenos})`,
     '',
     ...(v.motivos.length
-      ? ['Motivos del veredicto negativo:', '', ...v.motivos.map((x) => `- ${x}`), '']
+      ? [
+          'Motivos del veredicto negativo:',
+          '',
+          ...v.motivos.map((x) => `- ${x}`),
+          '',
+        ]
       : []),
     '## Tasa de falsos 100 (R12)',
     '',
