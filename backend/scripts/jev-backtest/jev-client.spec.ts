@@ -435,16 +435,18 @@ describe('R9 (77-jev-quality-backtest #77): un cuerpo ilegible no se lleva el lo
 
   it('el lote continua y conserva lo ya pagado cuando una respuesta es ilegible', async () => {
     const { sleep } = conEsperas();
-    const fetchImpl = jest.fn().mockImplementation((_url, init: RequestInit) => {
-      const cuerpo = JSON.parse(init.body as string) as {
-        state: { summary: string };
-      };
-      return Promise.resolve(
-        cuerpo.state.summary.includes('a3')
-          ? respuestaRota()
-          : respuesta(200, cuerpoOk(4)),
-      );
-    });
+    const fetchImpl = jest
+      .fn()
+      .mockImplementation((_url, init: RequestInit) => {
+        const cuerpo = JSON.parse(init.body as string) as {
+          state: { summary: string };
+        };
+        return Promise.resolve(
+          cuerpo.state.summary.includes('a3')
+            ? respuestaRota()
+            : respuesta(200, cuerpoOk(4)),
+        );
+      });
 
     const res = await runBatch(
       [
