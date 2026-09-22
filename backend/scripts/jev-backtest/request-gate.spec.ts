@@ -5,6 +5,7 @@ import { LEVELS, SourceActivity } from './types';
 const actividad: SourceActivity = {
   id: '9f1c3b7e-0000-4000-8000-000000000001',
   quality: 100,
+  seller_id: 'VENDEDOR-UUID-7f3a',
   summary: 'visita de seguimiento en planta',
   discovery: 'necesita entrega quincenal',
   agreement: 'revisa la cotizacion el jueves',
@@ -69,7 +70,9 @@ describe('R5 (77-jev-quality-backtest #77): solo viajan los cuatro campos de tex
 
     for (const fuera of [
       actividad.id,
+      'VENDEDOR-UUID-7f3a',
       'VENDEDOR-123',
+      'seller_id',
       'CLIENTE-456',
       '87500',
       '2026-03-04',
