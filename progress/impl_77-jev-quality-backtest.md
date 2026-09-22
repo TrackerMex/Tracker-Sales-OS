@@ -694,3 +694,144 @@ los BAJA 1 a 6 y 8.
 Para T6 siguen haciendo falta, y no son míos: la credencial de solo lectura de
 D7 y la confirmación de la forma real de la respuesta de la API con la primera
 llamada.
+
+---
+
+# Quinta vuelta — ALTA-5, ALTA-6, MEDIA-8 y BAJA-10
+
+Segunda revisión: dos ALTA nuevos de la clase de ALTA-1 (rutas por las que se
+pierde el lote ya pagado), más un hueco de cableado y un `n/d` sin explicar.
+Cerrados los cuatro. MEDIA-2, MEDIA-3, MEDIA-6 y los BAJA 1 a 6 y 8 siguen
+abiertos por decisión del Líder; no se han tocado. T6 sigue sin ejecutarse.
+
+Las dos frases de `run-backtest.ts` que afirmaban que ningún fallo posterior
+puede costar una segunda exportación vuelven a ser ciertas.
+
+## 21. ALTA-5 — un cuerpo ilegible se llevaba el lote
+
+`await respuesta.json()` estaba fuera del `try`, que cerraba con el `catch` de
+red. Un **HTTP 200 cuyo cuerpo no es JSON** —HTML de un proxy o un WAF, cuerpo
+truncado, cuerpo vacío— lanzaba ahí: `askJev` no lo convertía en
+`sin_respuesta` (incumpliendo R9), la excepción subía por `runBatch` y se
+llevaba el array entero, así que `evaluarLote` nunca llegaba a
+`guardarRespuestas`. La pérdida de ALTA-1 una línea por encima de la costura
+que la arregló.
+
+El parseo entra ahora en el `try` y devuelve `sin_respuesta` con motivo. El
+test lo reproduce con el fallo en la 3.ª de 5 actividades: las dos ya pagadas
+sobreviven y el lote continúa.
+
+## 22. ALTA-6 — un ensayo en seco machacaba la corrida real
+
+`guardarRespuestas` escribía `RUTA_RESPUESTAS` pasara lo que pasara, y en seco
+`consultar` devuelve las de ejemplo: un solo `--fase evaluar --dry-run`
+después de la corrida real dejaba el fichero lleno de respuestas inventadas,
+sin aviso y sin copia.
+
+`rutaRespuestas(dryRun)` separa las respuestas del ensayo de las reales, al
+escribir y al retomar. **No es que se compruebe antes de sobrescribir: es que
+el ensayo no apunta ahí.** La ruta nueva cae bajo el mismo glob
+`progress/jev-backtest-*` del `.gitignore`.
+
+Sobre la sugerencia de leer el campo `modo`: con las rutas separadas el campo
+deja de poder ser la garantía, porque una corrida real nunca lee ni escribe el
+fichero del ensayo. Se queda en el fichero como etiqueta para quien lo abra.
+Si prefieres además la comprobación defensiva, dímelo.
+
+Verificado en el flujo real, con una corrida "real" ya pagada en disco:
+
+```
+[jev-backtest] 50 respuestas guardadas en .../jev-backtest-respuestas-seco.json
+respuestas reales intactas tras el ensayo: SI   (md5 idéntico)
+```
+
+y después `--reusar-respuestas` recupera la corrida real, dos veces seguidas,
+con las 50 respuestas crudas intactas.
+
+## 23. MEDIA-8 — la validación del etiquetado, enchufada y con red
+
+Sin cambio de producción: el cableado ya era correcto. Lo que faltaba era poder
+afirmarlo, y para eso `faseEvaluar` recibe los ficheros por `deps.fs` (con la
+implementación real por defecto) en vez de tocar el disco directamente.
+`sample-responses.json` se queda fuera de esa superficie: es una fixture que
+viaja con el script, no un artefacto que el script produzca.
+
+Tres casos sobre `faseEvaluar` con ficheros en memoria: un bloque de menos y
+una posición repetida paran antes de medir y **no escriben nada**; el
+etiquetado completo sigue adelante y deja el informe, para que un mutante que
+siempre aborte tampoco pase.
+
+| Mutante | Resultado |
+|---|---|
+| se quita la llamada a `validarEtiquetado` | **2 tests rojos** |
+
+Verificado también en el flujo real duplicando una posición del etiquetado:
+exit 1, `posiciones repetidas: 30` y `faltan las posiciones: 31`.
+
+## 24. BAJA-10 — el `n/d` de Spearman ya dice por qué
+
+Cuando hay pares comparables pero una de las dos series es constante, el
+informe explica que la correlación no existe, como ya hacía con el `n/d` de
+las tres cifras sin pares. Un segundo test evita que la explicación aparezca
+cuando la cifra sí tiene valor.
+
+## 25. Commits de la quinta vuelta, en orden
+
+```
+9e3e1e6 test: un cuerpo ilegible no puede llevarse el lote (ALTA-5)
+04b2ddf fix:  un cuerpo ilegible es sin_respuesta, no el fin del lote (ALTA-5)
+d253d22 test: un ensayo en seco no puede machacar la corrida real (ALTA-6)
+4f9ac0d fix:  el ensayo escribe en su propio fichero (ALTA-6)
+e767825 test: comprueba que validarEtiquetado sigue enchufada (MEDIA-8)
+366acb2 fix:  explica el n/d de Spearman con serie constante (BAJA-10)
+```
+
+Más `test:` de BAJA-10 y dos `style:` de prettier. Modificados:
+`jev-client.ts`, `run-backtest.ts` y sus dos `.spec.ts`. Nada fuera de
+`backend/scripts/`.
+
+Tests: **103 → 114**.
+
+## 26. Salida literal de los cuatro comandos (quinta vuelta)
+
+```
+=== $ cd backend && pnpm test ===
+
+> backend@0.0.1 test /home/claude/sites/Tracker-Sales-OS/backend
+> jest
+
+
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+Snapshots:   0 total
+Time:        4.243 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+
+> backend@0.0.1 test:scripts /home/claude/sites/Tracker-Sales-OS/backend
+> jest --config ./scripts/jest.config.js
+
+
+Test Suites: 6 passed, 6 total
+Tests:       114 passed, 114 total
+Snapshots:   0 total
+Time:        1.176 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+
+> backend@0.0.1 lint /home/claude/sites/Tracker-Sales-OS/backend
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+
+exit=0
+```
+
+`pnpm test` sigue en 15 suites / 78 tests: D9 intacto. Los ficheros de prueba
+del flujo se borraron y `progress/explore_jev-backtest.md` se restauró a su
+versión commiteada.
