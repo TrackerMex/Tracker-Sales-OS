@@ -172,13 +172,7 @@ describe('R11 (77-jev-quality-backtest #77): concentracion por vendedor en el lo
   });
 
   it('cuenta vendedores distintos y que fraccion se lleva el mayor', () => {
-    const spread = sellerSpread([
-      de('A'),
-      de('A'),
-      de('A'),
-      de('B'),
-      de('C'),
-    ]);
+    const spread = sellerSpread([de('A'), de('A'), de('A'), de('B'), de('C')]);
 
     expect(spread.vendedores).toBe(3);
     expect(spread.reparto).toEqual([3, 1, 1]);
