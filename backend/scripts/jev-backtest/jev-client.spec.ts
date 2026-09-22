@@ -411,3 +411,59 @@ describe('R5 (77-jev-quality-backtest #77): lo que sale de verdad por el cable',
     }
   });
 });
+
+describe('R9 (77-jev-quality-backtest #77): un cuerpo ilegible no se lleva el lote', () => {
+  const respuestaRota = (status = 200) => ({
+    status,
+    ok: status >= 200 && status < 300,
+    json: () =>
+      Promise.reject(
+        new SyntaxError('Unexpected token < in JSON at position 0'),
+      ),
+  });
+
+  it('un 200 que no trae JSON deja la actividad en sin_respuesta', async () => {
+    const { sleep } = conEsperas();
+    const fetchImpl = jest.fn().mockResolvedValue(respuestaRota());
+
+    const res = await askJev(actividad('a1'), opciones(fetchImpl, sleep));
+
+    expect(res.estado).toBe('sin_respuesta');
+    expect(res.nivel).toBeNull();
+    expect(res.motivo).toMatch(/cuerpo|JSON/i);
+  });
+
+  it('el lote continua y conserva lo ya pagado cuando una respuesta es ilegible', async () => {
+    const { sleep } = conEsperas();
+    const fetchImpl = jest.fn().mockImplementation((_url, init: RequestInit) => {
+      const cuerpo = JSON.parse(init.body as string) as {
+        state: { summary: string };
+      };
+      return Promise.resolve(
+        cuerpo.state.summary.includes('a3')
+          ? respuestaRota()
+          : respuesta(200, cuerpoOk(4)),
+      );
+    });
+
+    const res = await runBatch(
+      [
+        actividad('a1'),
+        actividad('a2'),
+        actividad('a3'),
+        actividad('a4'),
+        actividad('a5'),
+      ],
+      opciones(fetchImpl, sleep),
+    );
+
+    expect(res.map((r) => r.id)).toEqual(['a1', 'a2', 'a3', 'a4', 'a5']);
+    expect(res.map((r) => r.estado)).toEqual([
+      'ok',
+      'ok',
+      'sin_respuesta',
+      'ok',
+      'ok',
+    ]);
+  });
+});
