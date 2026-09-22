@@ -114,15 +114,22 @@ const sinRespuesta = (id: string, motivo: string): JevResult => ({
   motivo,
 });
 
+/**
+ * La escala de R7 tiene cuatro peldanos y ninguno entre medias. Un valor
+ * fraccionario no es un nivel: aceptarlo escribiria en un indice inexistente
+ * de la matriz 4x4 de R11 y la cuenta se perderia sin que nadie lo note.
+ */
+const esNivel = (n: number): boolean => Number.isInteger(n) && n >= 1 && n <= 4;
+
 function aNivel(valor: unknown): Level | null {
-  if (typeof valor === 'number' && valor >= 1 && valor <= 4) {
+  if (typeof valor === 'number' && esNivel(valor)) {
     return valor as Level;
   }
   if (typeof valor === 'string') {
     const porTexto = LEVELS.findIndex((l) => l === valor.trim());
     if (porTexto >= 0) return (porTexto + 1) as Level;
     const n = Number(valor);
-    if (n >= 1 && n <= 4) return n as Level;
+    if (esNivel(n)) return n as Level;
   }
   return null;
 }
