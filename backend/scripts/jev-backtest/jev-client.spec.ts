@@ -519,7 +519,7 @@ describe('R9 (77-jev-quality-backtest #77): cada respuesta se entrega segun lleg
     const entregadas: string[] = [];
 
     await runBatch([actividad('a1'), actividad('a2')], {
-      fetchImpl: jest.fn() as unknown as typeof fetch,
+      fetchImpl: jest.fn(),
       dryRun: true,
       respuestasEjemplo: [cuerpoOk(1), cuerpoOk(4)],
       onRespuesta: (r) => entregadas.push(r.id),

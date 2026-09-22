@@ -464,9 +464,10 @@ describe('R8 (77-jev-quality-backtest #77): el lote es durable segun llega, no a
       .split('\n')
       .filter((l) => l.trim());
     expect(lineas).toHaveLength(lote.length);
-    expect(
-      lineas.map((l) => (JSON.parse(l) as JevResult).id).sort(),
-    ).toEqual(['a1', 'a2']);
+    expect(lineas.map((l) => (JSON.parse(l) as JevResult).id).sort()).toEqual([
+      'a1',
+      'a2',
+    ]);
   });
 
   it('retomar lee ese fichero por lineas y se queda con la ultima de cada id', async () => {
