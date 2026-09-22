@@ -36,22 +36,56 @@ export function requireApproval(env: NodeJS.ProcessEnv): void {
   }
 }
 
+/** Los cuatro campos de texto, ya recortados y sin nulos. Nada mas. */
+export type TextoRecortado = Record<
+  'summary' | 'discovery' | 'agreement' | 'next_step',
+  string
+>;
+
 /**
- * R5 — recorta la fila a los cuatro campos de texto. El `id` y todo lo demas
- * (vendedor, cliente, importes, fechas) se quedan en local; la union con la
- * respuesta se hace por la posicion del lote.
+ * R5 — el unico recorte. Aqui, y solo aqui, la fila de la base se convierte en
+ * lo que puede salir de la empresa: el `id`, el vendedor, el cliente, los
+ * importes y las fechas se quedan fuera por construccion, no por convencion.
+ * Un campo nuevo aguas arriba no llega al otro lado si no se anade a esta
+ * lista a proposito.
  *
  * Riesgo residual declarado en D6: el texto libre puede contener nombres
  * escritos por el vendedor dentro de la frase. No se intenta filtrar con una
  * expresion regular porque no se puede hacer de forma fiable.
  */
-export function buildRequestBody(actividad: TextFields): JevRequestBody {
+export function recortarCampos(fila: TextFields): TextoRecortado {
+  return {
+    summary: fila.summary ?? '',
+    discovery: fila.discovery ?? '',
+    agreement: fila.agreement ?? '',
+    next_step: fila.next_step ?? '',
+  };
+}
+
+/**
+ * Exactamente los cuatro campos y ninguno mas. TypeScript es estructural, asi
+ * que un tipo mas ancho encajaria donde se pide uno mas estrecho; esto lo
+ * impide tipando como `never` toda clave que sobre, de modo que pasar la fila
+ * completa —con `id`, `quality` o `seller_id` dentro— no compila.
+ */
+export type SoloTexto<T extends TextFields> = T & {
+  [K in Exclude<keyof T, keyof TextFields>]: never;
+};
+
+/**
+ * R5 — el cuerpo que sale hacia TypeSafe. Solo acepta texto ya recortado: la
+ * garantia de que no viaja nada mas es del compilador (BAJA-7), y la
+ * asignacion explicita de las cuatro claves la sostiene tambien en ejecucion.
+ */
+export function buildRequestBody<T extends TextFields>(
+  texto: SoloTexto<T>,
+): JevRequestBody {
   return {
     state: {
-      summary: actividad.summary ?? '',
-      discovery: actividad.discovery ?? '',
-      agreement: actividad.agreement ?? '',
-      next_step: actividad.next_step ?? '',
+      summary: texto.summary ?? '',
+      discovery: texto.discovery ?? '',
+      agreement: texto.agreement ?? '',
+      next_step: texto.next_step ?? '',
     },
     model: JEV_MODEL,
     questions: {
@@ -192,7 +226,7 @@ export async function askJev(
   const maxReintentos = opciones.maxReintentos ?? 3;
   const base = opciones.baseEsperaMs ?? 1000;
   const sleep = opciones.sleep ?? esperaReal;
-  const cuerpo = JSON.stringify(buildRequestBody(actividad));
+  const cuerpo = JSON.stringify(buildRequestBody(recortarCampos(actividad)));
 
   for (let intento = 0; intento <= maxReintentos; intento++) {
     if (intento > 0) await sleep(base * 2 ** (intento - 1));
