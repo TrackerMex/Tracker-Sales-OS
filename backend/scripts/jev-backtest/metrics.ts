@@ -50,16 +50,21 @@ export function confusionMatrix(pares: LevelPair[]): number[][] {
   return m;
 }
 
-const fraccion = (n: number, total: number): number =>
-  total === 0 ? 0 : n / total;
+/**
+ * `null` cuando no hay conjunto sobre el que medir. Publicar un 0 en ese caso
+ * afirma un resultado que nadie ha medido, y el informe lo lee como un juicio
+ * del modelo en vez de como un hueco de datos (MEDIA-1).
+ */
+const fraccion = (n: number, total: number): number | null =>
+  total === 0 ? null : n / total;
 
 /** R11, cifra 1 — fraccion de pares donde los dos niveles coinciden. */
-export function exactAgreement(pares: LevelPair[]): number {
+export function exactAgreement(pares: LevelPair[]): number | null {
   return fraccion(pares.filter(([a, b]) => a === b).length, pares.length);
 }
 
 /** R11, cifra 2 — fraccion de pares que difieren como mucho en un nivel. */
-export function adjacentAgreement(pares: LevelPair[]): number {
+export function adjacentAgreement(pares: LevelPair[]): number | null {
   return fraccion(
     pares.filter(([a, b]) => Math.abs(a - b) <= 1).length,
     pares.length,
@@ -84,11 +89,11 @@ function ranks(values: number[]): number[] {
 /**
  * R11, cifra 3 — Spearman sobre los rangos. Es la cifra que importa si lo que
  * se va a usar es un promedio por vendedor y no el valor individual (D5).
- * Devuelve 0 si una de las dos series es constante: no hay correlacion que
- * medir, no es que sea nula.
+ * Devuelve null con menos de dos pares o si una de las dos series es
+ * constante: ahi la correlacion no existe, que no es lo mismo que valer cero.
  */
-export function spearman(xs: number[], ys: number[]): number {
-  if (xs.length !== ys.length || xs.length < 2) return 0;
+export function spearman(xs: number[], ys: number[]): number | null {
+  if (xs.length !== ys.length || xs.length < 2) return null;
   const rx = ranks(xs);
   const ry = ranks(ys);
   const media = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length;
@@ -106,7 +111,7 @@ export function spearman(xs: number[], ys: number[]): number {
     dy2 += dy * dy;
   }
   const den = Math.sqrt(dx2 * dy2);
-  return den === 0 ? 0 : num / den;
+  return den === 0 ? null : num / den;
 }
 
 export interface FalseHundredStats {
@@ -161,7 +166,8 @@ export interface Verdict extends Thresholds {
   buenos: number;
   /** De esas, las que Jev tumba a 1 o 2. */
   degradados: number;
-  fraccionDegradados: number;
+  /** null si el director no etiqueta a nadie en 3 o 4: no hay que degradar. */
+  fraccionDegradados: number | null;
   /** Vacio si el veredicto es positivo. */
   motivos: string[];
 }
@@ -194,7 +200,10 @@ export function verdict(
     );
   }
 
-  if (fraccionDegradados > umbrales.maxBuenosDegradados) {
+  if (
+    fraccionDegradados !== null &&
+    fraccionDegradados > umbrales.maxBuenosDegradados
+  ) {
     motivos.push(
       `Jev degrada a nivel 1 o 2 el ${pct(fraccionDegradados)} de las actividades que el director etiqueta en 3 o 4, por encima del ${pct(umbrales.maxBuenosDegradados)} admitido`,
     );
@@ -220,9 +229,9 @@ export interface Metrics {
   paresJev: number;
   matrizJev: number[][];
   matrizQuality: number[][];
-  acuerdoExacto: number;
-  acuerdoAdyacente: number;
-  spearman: number;
+  acuerdoExacto: number | null;
+  acuerdoAdyacente: number | null;
+  spearman: number | null;
   falsos100: FalseHundredStats;
   veredicto: Verdict;
 }

@@ -209,13 +209,11 @@ describe('R11 (77-jev-quality-backtest #77): agregado para el informe', () => {
 
     expect(m.matrizJev).toHaveLength(4);
     expect(m.matrizQuality).toHaveLength(4);
-    expect(m.acuerdoExacto).toBeCloseTo(
+    expect(m.acuerdoExacto).toBe(
       exactAgreement(pairsWith(LOTE_POSITIVO, 'jev')),
-      10,
     );
-    expect(m.acuerdoAdyacente).toBeCloseTo(
+    expect(m.acuerdoAdyacente).toBe(
       adjacentAgreement(pairsWith(LOTE_POSITIVO, 'jev')),
-      10,
     );
     expect(typeof m.spearman).toBe('number');
     expect(m.falsos100.falsos100).toBe(5);

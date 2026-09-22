@@ -336,6 +336,8 @@ export function mergeReport(previo: string, informe: string): string {
 const pct = (v: number | null): string =>
   v === null ? 'n/d' : `${(v * 100).toFixed(1)}%`;
 
+const num = (v: number | null): string => (v === null ? 'n/d' : v.toFixed(3));
+
 const tablaMatriz = (m: number[][], titulo: string): string =>
   [
     `| ${titulo} | 1 | 2 | 3 | 4 |`,
@@ -414,9 +416,17 @@ function renderReport(
     '',
     `- Acuerdo exacto: ${pct(m.acuerdoExacto)}`,
     `- Acuerdo adyacente (hasta un nivel de diferencia): ${pct(m.acuerdoAdyacente)}`,
-    `- Correlacion de Spearman: ${m.spearman.toFixed(3)}`,
+    `- Correlacion de Spearman: ${num(m.spearman)}`,
     '',
     'Ninguna de las tres decide el veredicto: lo decide la tasa de falsos 100.',
+    ...(m.paresJev === 0
+      ? [
+          '',
+          '**n/d**: no hay ni un solo par comparable, porque ninguna actividad',
+          'etiquetada por el director tiene respuesta de Jev. Las tres cifras no',
+          'se han podido medir; no son un cero.',
+        ]
+      : []),
     '',
     '## Detalle por actividad (R8)',
     '',
