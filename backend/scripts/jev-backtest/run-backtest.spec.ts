@@ -392,3 +392,51 @@ describe('R6 (77-jev-quality-backtest #77): la validacion del etiquetado esta en
     expect(Object.keys(escrituras)).toContain(RUTA_INFORME);
   });
 });
+
+describe('R11 (77-jev-quality-backtest #77): cada n/d del informe dice por que', () => {
+  const informeCon = async (
+    etiquetasDeDirector: Map<string, Level | null>,
+  ): Promise<string> => {
+    const capturas: [Metrics, EvaluatedActivity[], JevResult[]][] = [];
+
+    await evaluarLote(lote, etiquetasDeDirector, UMBRALES, {
+      consultar: () => Promise.resolve(respuestas),
+      guardarRespuestas: () => undefined,
+      guardarInforme: (m, filas, resp) => {
+        capturas.push([m, filas, resp]);
+      },
+    });
+
+    const guardado: LoteGuardado = {
+      semilla: 77,
+      generado: '2026-09-22T00:00:00.000Z',
+      candidatas: 120,
+      excluidas: 3,
+      desviaciones: [],
+      orden: lote,
+    };
+    const [m, filas, resp] = capturas[0];
+    return renderReport(m, filas, resp, guardado, parseArgs([]));
+  };
+
+  it('explica el n/d de Spearman cuando una de las series es constante', async () => {
+    // El director pone el mismo nivel a las dos: su serie no varia, asi que no
+    // hay correlacion que medir aunque haya pares comparables.
+    const md = await informeCon(
+      new Map([
+        ['a1', 1],
+        ['a2', 1],
+      ]),
+    );
+
+    expect(md).toContain('Correlacion de Spearman: n/d');
+    expect(md).toContain('Pares comparables: 2');
+    expect(md).toMatch(/constante/i);
+  });
+
+  it('no mete la explicacion cuando Spearman si tiene valor', async () => {
+    const md = await informeCon(etiquetas);
+
+    expect(md).not.toMatch(/constante/i);
+  });
+});
