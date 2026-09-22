@@ -37,6 +37,7 @@ import {
 } from './labeling';
 import {
   JevResult,
+  MOTIVO_NUNCA_LLAMADA,
   RespuestaGuardada,
   necesitaLlamada,
   nuncaLlamada,
@@ -605,14 +606,17 @@ export function renderReport(
     '',
     '## Detalle por actividad (R8)',
     '',
-    '| # | quality | director | jev | confianza | distribucion | estado |',
-    '| ---: | ---: | ---: | ---: | ---: | --- | --- |',
+    '| # | quality | director | jev | confianza | distribucion | estado | motivo |',
+    '| ---: | ---: | ---: | ---: | ---: | --- | --- | --- |',
     ...filas.map((f, i) => {
       const r = porId.get(f.id);
       const dist = r?.distribucion
         ? r.distribucion.map((p) => p.toFixed(2)).join(' / ')
         : '—';
-      return `| ${i + 1} | ${f.quality} | ${f.humano ?? '—'} | ${f.jev ?? '—'} | ${r?.confianza ?? '—'} | ${dist} | ${r?.estado ?? 'sin_respuesta'} |`;
+      // BAJA-14: el motivo separa "nunca se consulto" de "se consulto y
+      // fallo". La primera es un lote incompleto; la segunda, un dato.
+      const motivo = r?.motivo ?? (r ? '—' : MOTIVO_NUNCA_LLAMADA);
+      return `| ${i + 1} | ${f.quality} | ${f.humano ?? '—'} | ${f.jev ?? '—'} | ${r?.confianza ?? '—'} | ${dist} | ${r?.estado ?? 'sin_respuesta'} | ${motivo} |`;
     }),
     '',
     '## Limitaciones declaradas',
