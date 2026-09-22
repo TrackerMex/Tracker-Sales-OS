@@ -2,11 +2,16 @@ import { JevResult } from './jev-client';
 import { Metrics } from './metrics';
 import {
   LoteGuardado,
+  RUTA_ETIQUETADO,
+  RUTA_LOTE,
+  RUTA_RESPUESTAS,
   evaluarLote,
+  faseEvaluar,
   main,
   necesitaAprobacion,
   parseArgs,
   renderReport,
+  rutaRespuestas,
 } from './run-backtest';
 import { BatchActivity, EvaluatedActivity, Level } from './types';
 
@@ -229,5 +234,122 @@ describe('R11 (77-jev-quality-backtest #77): el informe va versionado, no puede 
     expect(md).not.toContain('VENDEDOR-UUID-7f3a');
     expect(md).not.toContain('VENDEDOR-UUID-9c2b');
     expect(md).not.toContain('seller_id');
+  });
+});
+
+// Ficheros en memoria: las pruebas de cableado no tocan el disco, y asi se
+// puede afirmar QUE se escribe y DONDE, que es lo que se perdio en ALTA-6.
+const fsFalso = (iniciales: Record<string, string> = {}) => {
+  const escrituras: Record<string, string> = {};
+  const leerDe = (ruta: string) => escrituras[ruta] ?? iniciales[ruta];
+  return {
+    escrituras,
+    fs: {
+      existe: (ruta: string) => leerDe(ruta) !== undefined,
+      leer: (ruta: string) => {
+        const contenido = leerDe(ruta);
+        if (contenido === undefined) {
+          throw new Error(`ENOENT: ${ruta}`);
+        }
+        return contenido;
+      },
+      escribir: (ruta: string, contenido: string) => {
+        escrituras[ruta] = contenido;
+      },
+    },
+  };
+};
+
+const loteGuardadoJson = JSON.stringify({
+  semilla: 77,
+  generado: '2026-09-22T00:00:00.000Z',
+  candidatas: 10,
+  excluidas: 0,
+  desviaciones: [],
+  orden: lote,
+} satisfies LoteGuardado);
+
+const etiquetadoDe = (niveles: number[]) =>
+  [
+    '# Etiquetado',
+    '',
+    ...niveles.flatMap((nivel, i) => [
+      '---',
+      '',
+      `## ${i + 1}`,
+      '',
+      '- Resumen: texto',
+      '',
+      `Nivel: ${[1, 2, 3, 4]
+        .map((k) => `[${k === nivel ? 'x' : ' '}] ${k}`)
+        .join('  ')}`,
+      '',
+    ]),
+  ].join('\n');
+
+const crudoDe = (nivel: number) => ({ questions: { nivel: { answer: nivel } } });
+
+describe('R10 (77-jev-quality-backtest #77): un ensayo en seco no destruye la corrida real', () => {
+  it('el fichero de respuestas no es el mismo en seco que en real', () => {
+    expect(rutaRespuestas(false)).toBe(RUTA_RESPUESTAS);
+    expect(rutaRespuestas(true)).not.toBe(RUTA_RESPUESTAS);
+  });
+
+  it('un --dry-run escribe en su propio fichero y no en el real', async () => {
+    const { fs, escrituras } = fsFalso({
+      [RUTA_LOTE]: loteGuardadoJson,
+      [RUTA_ETIQUETADO]: etiquetadoDe([1, 4]),
+    });
+
+    const codigo = await faseEvaluar(
+      parseArgs(['--fase', 'evaluar', '--dry-run']),
+      {},
+      { fs },
+    );
+
+    expect(codigo).toBe(0);
+    expect(Object.keys(escrituras)).toContain(rutaRespuestas(true));
+    expect(Object.keys(escrituras)).not.toContain(RUTA_RESPUESTAS);
+  });
+
+  it('las respuestas reales ya pagadas siguen intactas despues del ensayo', async () => {
+    const reales = JSON.stringify({
+      generado: '2026-09-22T00:00:00.000Z',
+      modo: 'real',
+      respuestas: [
+        { id: 'a1', crudo: crudoDe(1) },
+        { id: 'a2', crudo: crudoDe(4) },
+      ],
+    });
+    const { fs, escrituras } = fsFalso({
+      [RUTA_LOTE]: loteGuardadoJson,
+      [RUTA_ETIQUETADO]: etiquetadoDe([1, 4]),
+      [RUTA_RESPUESTAS]: reales,
+    });
+
+    await faseEvaluar(
+      parseArgs(['--fase', 'evaluar', '--dry-run']),
+      {},
+      { fs },
+    );
+
+    expect(escrituras[RUTA_RESPUESTAS]).toBeUndefined();
+    expect(fs.leer(RUTA_RESPUESTAS)).toBe(reales);
+  });
+
+  it('retomar una corrida real no lee el fichero del ensayo', async () => {
+    const { fs } = fsFalso({
+      [RUTA_LOTE]: loteGuardadoJson,
+      [RUTA_ETIQUETADO]: etiquetadoDe([1, 4]),
+      [rutaRespuestas(true)]: JSON.stringify({ respuestas: [] }),
+    });
+
+    await expect(
+      faseEvaluar(
+        parseArgs(['--fase', 'evaluar', '--reusar-respuestas']),
+        {},
+        { fs },
+      ),
+    ).rejects.toThrow(/no hay respuestas guardadas/);
   });
 });
