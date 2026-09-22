@@ -46,7 +46,8 @@ Se pasan al script como banderas (design §D10) y se reimprimen en el informe.
 | Hora del director para el etiquetado a ciegas (R6) | comprometida |
 | Credencial de solo lectura sobre `activities` (R1, design §D7) | **pendiente de recibir** |
 | `JEV_API_KEY` en el entorno del operador | pendiente de confirmar |
-| Script T0–T5 terminado y en verde | en curso (Implementer) |
+| Hallazgos abiertos que toquen datos o veredicto | **ninguno** |
+| Script terminado y revisado | **sí** — revisión independiente PASSED, 138 + 78 tests |
 
 ## 3b. Si la corrida se interrumpe
 
@@ -87,8 +88,18 @@ en cabecera y publica, por actividad, el motivo por el que falta — que no es l
 mismo «nunca se consultó» que «la API la rechazó».
 
 El coste de repetir una llamada no son los centavos de la API. Es que el texto
-de esa actividad vuelve a cruzar la frontera de confianza. Por eso la tabla de
-arriba es conservadora: ante la duda, no se vuelve a preguntar.
+de esa actividad vuelve a cruzar la frontera de confianza.
+
+La garantía que el código sostiene de verdad, y conviene no confundirla con
+una más amplia: **ninguna actividad cuyo servidor llegó a contestar se vuelve
+a exportar**. Eso lo asegura la comprobación del cuerpo crudo, que va por
+encima de la clasificación por motivo.
+
+Lo que **no** es cierto es que ante la duda no se vuelva a preguntar: el caso
+por defecto de `necesitaLlamada` reconsulta cuando el motivo no encaja en
+ningún rechazo definitivo conocido. Con los motivos que hoy produce el script
+la clasificación es correcta, pero un motivo nuevo caería del lado de volver a
+llamar. Quien añada motivos debe mirar esa función.
 
 ## 4. Parámetros de la corrida
 
@@ -109,3 +120,29 @@ tres cifras de acuerdo, la tasa de falsos 100 y el veredicto.
 ## 6. Veredicto
 
 Pendiente. Firma del director requerida.
+
+---
+
+## Anexo — hallazgos que se dejan abiertos a propósito
+
+Decisión del Líder, 2026-09-22, tras el PASSED de la revisión independiente.
+Ninguno provoca una reexportación de datos de cliente ni altera el veredicto.
+
+- **BAJA-17**: `408 Request Timeout` y `425 Too Early` se clasifican como
+  rechazo definitivo por ser 4xx, aunque por convención son transitorios, así
+  que esas actividades no se reconsultan y se quedan sin dato. Se deja porque
+  el sesgo va hacia no volver a exponer, que es la dirección correcta, y
+  porque el informe lo dice con su motivo en vez de callarlo. Si aparecen en
+  la corrida real, el operador puede decidir entonces.
+- **BAJA-18**: el aviso de informe parcial sugiere completar con
+  `--fase evaluar`, que no mueve las filas atascadas en un 4xx definitivo.
+  Se agota solo y la columna de motivo lo explica.
+- **BAJA-19**: el valor de `MOTIVO_NUNCA_LLAMADA` participa en la
+  clasificación por expresión regular y ningún test lo fija. Hoy no tiene
+  consecuencia porque ese marcador no se persiste. Queda como acoplamiento
+  latente si algún día se persistiera.
+- **MEDIA-2 y MEDIA-3**: los dos únicos puntos de decisión del veredicto sin
+  test dedicado. Se dejan porque el cálculo completo sí está cubierto y
+  verificado tres veces contra una implementación de referencia independiente.
+
+Si la corrida real destapa alguno, se registran como feature aparte.
