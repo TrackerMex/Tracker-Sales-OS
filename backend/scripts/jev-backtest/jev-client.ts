@@ -243,11 +243,10 @@ export async function runBatch(
     if (opciones.dryRun) {
       const ejemplos = opciones.respuestasEjemplo ?? [];
       const ejemplo = ejemplos.length ? ejemplos[i % ejemplos.length] : null;
-      const parsed = ejemplo ? parseJevResponse(ejemplo) : null;
       resultados.push(
-        parsed
-          ? { id: actividad.id, estado: 'ok', ...parsed }
-          : sinRespuesta(actividad.id, 'sin respuesta de ejemplo utilizable'),
+        ejemplo === null
+          ? sinRespuesta(actividad.id, 'sin respuesta de ejemplo utilizable')
+          : desdeCrudo(actividad.id, ejemplo),
       );
       continue;
     }
