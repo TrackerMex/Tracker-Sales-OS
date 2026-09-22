@@ -2,6 +2,7 @@ import {
   buildLabelingFile,
   parseLabelingFile,
   shuffleWithSeed,
+  validarEtiquetado,
 } from './labeling';
 import { BatchActivity, Franja, LEVELS } from './types';
 
@@ -136,3 +137,80 @@ function fichero_marcado(): string {
     '',
   ].join('\n');
 }
+
+describe('R6 (77-jev-quality-backtest #77): el etiquetado tiene que cuadrar con el lote', () => {
+  const bloque = (orden: number, nivel: number | null) =>
+    [
+      '---',
+      '',
+      `## ${orden}`,
+      '',
+      '- Resumen: texto',
+      '',
+      `Nivel: ${[1, 2, 3, 4]
+        .map((k) => `[${k === nivel ? 'x' : ' '}] ${k}`)
+        .join('  ')}`,
+      '',
+    ].join('\n');
+
+  const fichero = (bloques: string[]) =>
+    ['# Etiquetado', '', ...bloques].join('\n');
+
+  it('no se queja de un fichero completo y bien numerado', () => {
+    const etiquetas = parseLabelingFile(
+      fichero([bloque(1, 3), bloque(2, 1), bloque(3, 4)]),
+    );
+
+    expect(validarEtiquetado(etiquetas, 3)).toEqual([]);
+  });
+
+  it('un bloque sin marcar no es un error: es una actividad sin etiqueta', () => {
+    const etiquetas = parseLabelingFile(
+      fichero([bloque(1, 3), bloque(2, null), bloque(3, 4)]),
+    );
+
+    expect(validarEtiquetado(etiquetas, 3)).toEqual([]);
+  });
+
+  it('avisa de cuantos bloques faltan y de cuales', () => {
+    const etiquetas = parseLabelingFile(fichero([bloque(1, 3), bloque(3, 4)]));
+    const problemas = validarEtiquetado(etiquetas, 3);
+
+    expect(problemas.join(' ')).toContain('2 bloques');
+    expect(problemas.join(' ')).toContain('3 actividades');
+    expect(problemas.join(' ')).toContain('faltan');
+    expect(problemas.join(' ')).toContain('2');
+  });
+
+  it('avisa de una posicion repetida', () => {
+    const etiquetas = parseLabelingFile(
+      fichero([bloque(1, 3), bloque(2, 1), bloque(2, 4)]),
+    );
+    const problemas = validarEtiquetado(etiquetas, 3);
+
+    expect(problemas.join(' ')).toContain('repetidas');
+    expect(problemas.join(' ')).toContain('2');
+  });
+
+  it('avisa de una posicion que el lote no tiene', () => {
+    const etiquetas = parseLabelingFile(
+      fichero([bloque(1, 3), bloque(2, 1), bloque(9, 4)]),
+    );
+    const problemas = validarEtiquetado(etiquetas, 3);
+
+    expect(problemas.join(' ')).toContain('no tiene');
+    expect(problemas.join(' ')).toContain('9');
+  });
+
+  it('caza el bloque fantasma que crea una linea de texto que empieza por ##', () => {
+    const conFantasma = fichero([
+      bloque(1, 3),
+      bloque(2, 1),
+      bloque(3, 4),
+    ]).replace('- Resumen: texto', '- Resumen: el cliente pidio\n## 2 unidades');
+
+    const problemas = validarEtiquetado(parseLabelingFile(conFantasma), 3);
+
+    expect(problemas).not.toEqual([]);
+  });
+});
