@@ -50,39 +50,45 @@ Se pasan al script como banderas (design §D10) y se reimprimen en el informe.
 
 ## 3b. Si la corrida se interrumpe
 
-> **AVISO (2026-09-22).** La versión anterior de esta sección decía que
-> repetir `--fase evaluar` no repite las llamadas ya hechas. **Es falso.**
-> `runBatch` recorre el lote entero y vuelve a llamar por las 50, así que
-> repetir reexporta hasta 50 textos de clientes que ya habían salido. Lo
-> escribí yo y lo destapó la revisión independiente (ALTA-7). El reanudar
-> selectivo está en curso; hasta que esté, **no repitas `--fase evaluar`
-> sobre una corrida interrumpida** sin leer lo de abajo.
+> **Corrección registrada (2026-09-22).** La primera versión de esta sección
+> afirmaba que repetir `--fase evaluar` no repetía las llamadas ya hechas.
+> Entonces era **falso**: `runBatch` recorría el lote entero. Lo escribió el
+> Líder y lo destapó la revisión independiente (ALTA-7). Se deja constancia
+> en vez de reescribir en silencio, porque durante unas horas esa instrucción
+> estuvo publicada y alguien pudo seguirla. Lo que sigue describe el
+> comportamiento tras el cierre de ALTA-7, verificado ejecutando.
 
 Las respuestas se persisten **según llegan**, una línea JSON por actividad, en
 `progress/jev-backtest-respuestas.jsonl` (`-seco.jsonl` para los ensayos). Una
-corrida interrumpida no pierde lo ya pagado: se pierde como mucho la llamada
-que estaba en vuelo.
+corrida interrumpida pierde como mucho la llamada que estaba en vuelo.
 
-Qué hacer hoy, si el proceso muere o se corta la red:
+Si el proceso muere, se cuelga la red o se corta la sesión:
 
 - **No hay que reextraer el lote** ni volver a pedir el etiquetado al director.
-  Eso sigue siendo cierto.
-- **Si solo falta el informe**, usa `--fase evaluar --reusar-respuestas`: rehace
-  el informe con lo que ya hay en disco, sin red y sin `JEV_API_KEY`. Esta es
-  la vía segura.
-- **Si faltan respuestas**, hoy la única forma de obtenerlas es repetir
-  `--fase evaluar`, que vuelve a llamar por **todas** y reexpone las que ya
-  habían salido. Decisión del humano: asumir esa reexposición, o aceptar un
-  informe parcial. El informe cuenta las que faltan como «sin respuesta» y el
-  recuento cuadra, así que un informe parcial es honesto, no engañoso.
-- Una línea truncada por una escritura a medias se salta con aviso; las demás
-  se recuperan.
+- **Repite `--fase evaluar`.** Consulta solo lo que falta. Una respuesta buena
+  no se vuelve a pedir nunca.
+- **Si lo que falló fue nuestra lectura** de una respuesta que el servidor sí
+  dio, usa `--fase evaluar --reusar-respuestas`: rehace el informe con lo que
+  hay en disco, sin red y sin `JEV_API_KEY`.
 
-Cuando el reanudar selectivo esté cerrado, la tercera viñeta desaparece: se
-llamará solo por las que falten y esta sección se reescribirá.
+Qué se reconsulta y qué no, que es lo que decide cuánto texto vuelve a salir:
+
+| Estado previo | ¿Se consulta otra vez? | Por qué |
+|---|---|---|
+| no hay línea | **sí** | nunca se preguntó |
+| respuesta buena | **no** | una respuesta buena no se toca |
+| sin respuesta, pero con cuerpo crudo guardado | **no** | el servidor contestó; el fallo es de lectura, y lo arregla `--reusar-respuestas` |
+| `HTTP 4xx` que no sea 429 | **no** | rechazo definitivo: repetirlo exporta otra vez para obtener el mismo no |
+| 429 agotado, timeout, fallo de red, 5xx, cuerpo ilegible | **sí** | intercambio fallido sin resultado; preguntar otra vez es la única vía a un dato |
+
+Una línea truncada por una escritura a medias se salta con aviso; las demás se
+recuperan. Si al final falta alguna respuesta, el informe se declara **parcial**
+en cabecera y publica, por actividad, el motivo por el que falta — que no es lo
+mismo «nunca se consultó» que «la API la rechazó».
 
 El coste de repetir una llamada no son los centavos de la API. Es que el texto
-de esa actividad vuelve a cruzar la frontera de confianza.
+de esa actividad vuelve a cruzar la frontera de confianza. Por eso la tabla de
+arriba es conservadora: ante la duda, no se vuelve a preguntar.
 
 ## 4. Parámetros de la corrida
 
