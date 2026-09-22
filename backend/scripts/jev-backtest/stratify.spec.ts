@@ -31,7 +31,10 @@ describe('R1 (77-jev-quality-backtest #77): consulta de solo lectura', () => {
   it('la sentencia del lote es un SELECT sin ninguna escritura', () => {
     expect(BATCH_QUERY.trim().toUpperCase().startsWith('SELECT')).toBe(true);
     for (const verbo of ['INSERT', 'UPDATE', 'DELETE', 'ALTER', 'CREATE']) {
-      expect(BATCH_QUERY.toUpperCase()).not.toContain(verbo);
+      // Palabra completa: `deleted_at IS NULL` es un filtro, no una escritura.
+      expect(BATCH_QUERY.toUpperCase()).not.toMatch(
+        new RegExp(`\\b${verbo}\\b`),
+      );
     }
   });
 
