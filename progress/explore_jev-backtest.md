@@ -48,6 +48,26 @@ Se pasan al script como banderas (design §D10) y se reimprimen en el informe.
 | `JEV_API_KEY` en el entorno del operador | pendiente de confirmar |
 | Script T0–T5 terminado y en verde | en curso (Implementer) |
 
+## 3b. Si la corrida se interrumpe
+
+Las respuestas se persisten **según llegan**, una línea JSON por actividad, en
+`progress/jev-backtest-respuestas.jsonl` (`-seco.jsonl` para los ensayos). Una
+corrida interrumpida a media llamada no pierde lo ya pagado.
+
+Por tanto, si el proceso muere, se cuelga la red o se corta la sesión:
+
+- **No hay que reextraer el lote** ni volver a pedir el etiquetado al director.
+- **No hay que repetir las llamadas ya hechas.** Repetir `--fase evaluar`
+  añade líneas y, de cada actividad, gana la última.
+- Si solo falta el informe, `--fase evaluar --reusar-respuestas` lo rehace con
+  lo que ya hay en disco, sin red y sin `JEV_API_KEY`.
+- Una línea truncada por una escritura a medias se salta con aviso; las demás
+  se recuperan y el informe cuenta esa actividad como `sin respuesta`.
+
+Esto importa porque cada repetición de una llamada vuelve a sacar el texto de
+esa actividad fuera de la empresa. El coste de repetir no son los centavos de
+la API, es la exposición.
+
 ## 4. Parámetros de la corrida
 
 Se rellenan al ejecutar.
