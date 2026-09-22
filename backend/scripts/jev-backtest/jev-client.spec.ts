@@ -289,6 +289,21 @@ describe('R10 (77-jev-quality-backtest #77): retomar el lote sin volver a llamar
     expect(res.crudo).toEqual(cuerpoOk(3));
   });
 
+  it('el modo seco tambien conserva el crudo, asi que el lote se puede rehacer', async () => {
+    const fetchImpl = jest.fn();
+
+    const res = await runBatch([actividad('a1'), actividad('a2')], {
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      dryRun: true,
+      respuestasEjemplo: [cuerpoOk(2), cuerpoOk(3)],
+    });
+
+    expect(res[0].crudo).toEqual(cuerpoOk(2));
+    expect(res[1].crudo).toEqual(cuerpoOk(3));
+    // Releer lo guardado da exactamente lo mismo: retomar no degrada el lote.
+    expect(reparse(res)).toEqual(res);
+  });
+
   it('reparse reconstruye los resultados desde lo guardado, sin red', () => {
     const rehecho = reparse([
       { id: 'a1', crudo: cuerpoOk(4) },
