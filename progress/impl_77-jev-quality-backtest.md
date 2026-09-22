@@ -395,3 +395,178 @@ siguen sin hacer y son decisión del Líder.
 Las obsolescencias que señaló la revisión en §5 de este informe (`.gitignore`,
 glob de lint) están cerradas por `d39ac93` y `53b7443`; se dejan escritas como
 estaban para no reescribir la historia del primer entregable.
+
+---
+
+# Tercera vuelta — los tres MEDIA recomendados antes de T6
+
+Encargo del Líder tras aceptar los cuatro ALTA: cerrar MEDIA-1, MEDIA-5 y
+MEDIA-7. Los otros 4 MEDIA y los 9 BAJA siguen abiertos por decisión suya. T6
+sigue sin ejecutarse. Punto 4 de mi última entrega (la exención de
+`--reusar-respuestas`) resuelto por el Líder: **se queda como está**, una sola
+condición sin excepciones.
+
+## 10. MEDIA-1 — el informe ya no afirma lo que no ha medido
+
+`fraccion` devuelve `null` con denominador cero, así que dejan de fabricarse
+ceros sobre el conjunto vacío:
+
+| Cifra | Antes, sin datos | Ahora |
+|---|---|---|
+| Acuerdo exacto | `0.0%` | `n/d` |
+| Acuerdo adyacente | `0.0%` | `n/d` |
+| Correlación de Spearman | `0.000` | `n/d` |
+| Fracción de buenos degradados | `0.0%` | `n/d` |
+
+Spearman devuelve `null` también cuando una de las series es constante: ahí la
+correlación no existe, que no es lo mismo que valer cero. **Esto es BAJA-9**,
+que quedaba abierto; entra porque es la misma raíz y la misma línea. Si el
+Líder lo considera fuera de alcance, revertirlo es cambiar un `null` por un
+`0` en `spearman`.
+
+Cuando no hay ni un par comparable el informe añade, bajo las tres cifras, por
+qué son `n/d`. **El veredicto no cambia**: la condición B ya pasaba de forma
+vacua cuando no hay buenos que degradar; ahora la comparación lo dice en vez
+de apoyarse en que `0` no supera el umbral.
+
+## 11. MEDIA-5 — el etiquetado tiene que ser el lote que se entregó
+
+`validarEtiquetado(etiquetas, totalLote)` compara lo que devuelve el director
+contra lo que se le dio: número de bloques, posiciones repetidas, posiciones
+que faltan y posiciones que el lote no tiene, incluido el **bloque fantasma
+sin número** que crea una línea de texto que empieza por `## `. Un bloque sin
+marcar no es un error: es una actividad sin etiqueta, y ya se contaba como
+tal.
+
+`faseEvaluar` lo llama antes de unir etiquetas con respuestas y antes de medir
+nada. Si algo no cuadra, para con código 1 y dice qué. Verificado sobre el
+flujo real borrando el bloque 17 de un lote de 50:
+
+```
+[jev-backtest] .../progress/jev-backtest-etiquetado.md no cuadra con el lote:
+  - el fichero trae 49 bloques y el lote tiene 50 actividades
+  - faltan las posiciones: 17
+  Revisalo con el director antes de seguir; no se toca a mano.
+exit=1
+```
+
+## 12. MEDIA-7 — concentración por vendedor, sin publicar a nadie
+
+Las tres restricciones del encargo, en su orden:
+
+1. **`seller_id` entra en `BATCH_QUERY`**, solo para el diagnóstico. Misma
+   tabla `activities`, mismo `GRANT` de solo lectura: la credencial de D7 no
+   cambia.
+2. **No puede salir.** Las filas de prueba de R5 y R6 llevan ahora un
+   `seller_id` real, así que la red que se montó para ALTA-4 lo cubre.
+   Comprobado inyectando las tres fugas:
+
+   | Mutante | Resultado |
+   |---|---|
+   | `seller_id` dentro del `state` de la petición | **5 tests rojos** |
+   | el vendedor impreso en el fichero del director | **1 test rojo** |
+   | el informe publica los `seller_id` reales | **1 test rojo** |
+
+3. **El informe publica el reparto anonimizado.** `sellerSpread` devuelve solo
+   recuentos: vendedores distintos, reparto descendente y fracción del que más
+   aporta. El índice se asigna al imprimir y no hay camino de vuelta. Salida
+   real sobre un lote deliberadamente concentrado (30/14/6):
+
+```
+## Reparto por vendedor en el lote (R11, anonimizado)
+
+- Vendedores distintos: 3
+- Fraccion del que mas aporta: 60.0% (30 de 50)
+- Reparto, de mayor a menor: vendedor 1: 30, vendedor 2: 14, vendedor 3: 6
+```
+
+`grep` de los tres `seller_id` del lote y de la cadena `seller_id` sobre el
+informe generado: **0 coincidencias**.
+
+Decisión que tomé dentro del encargo: el reparto va **ordenado de mayor a
+menor** en vez de en un orden aleatorio. Es lo que hace legible la
+concentración de un vistazo, que era el objetivo; el precio es que "vendedor
+1" es siempre el que más aporta. Sigue sin ser un identificador.
+
+## 13. Commits de la tercera vuelta, en orden
+
+```
+11cb593 test: una cifra sin datos no puede publicarse como cero (MEDIA-1)
+2956fbf fix:  el informe dice n/d cuando no hay nada que medir (MEDIA-1)
+eb17c89 test: el fichero etiquetado tiene que cuadrar con el lote (MEDIA-5)
+fe8c32d fix:  aborta si el etiquetado no cuadra con el lote (MEDIA-5)
+9d9fce4 test: concentracion por vendedor, y que no se escape (MEDIA-7)
+444db3c test: la fila de R5 lleva seller_id de verdad (MEDIA-7)
+dc54587 feat: publica la concentracion por vendedor del lote (MEDIA-7)
+9c576fc style: formato prettier en el test de reparto por vendedor
+```
+
+Modificados: `types.ts`, `stratify.ts`, `labeling.ts`, `metrics.ts`,
+`run-backtest.ts` y sus cinco `.spec.ts`. Ningún fichero nuevo. Nada fuera de
+`backend/scripts/`.
+
+Tests: **81 → 99**.
+
+## 14. Salida literal de los cuatro comandos (tercera vuelta)
+
+```
+=== $ cd backend && pnpm test ===
+
+> backend@0.0.1 test /home/claude/sites/Tracker-Sales-OS/backend
+> jest
+
+
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+Snapshots:   0 total
+Time:        4.106 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+
+> backend@0.0.1 test:scripts /home/claude/sites/Tracker-Sales-OS/backend
+> jest --config ./scripts/jest.config.js
+
+
+Test Suites: 6 passed, 6 total
+Tests:       99 passed, 99 total
+Snapshots:   0 total
+Time:        1.011 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+
+> backend@0.0.1 lint /home/claude/sites/Tracker-Sales-OS/backend
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+
+exit=0
+```
+
+`pnpm test` sigue en 15 suites / 78 tests: D9 intacto.
+
+Verificación de flujo, sobre un lote sintético de 50 filas concentrado en tres
+vendedores (sin base de datos y sin red): `--fase evaluar --dry-run` imprime
+la sección de reparto sin un solo identificador; con el bloque 17 borrado del
+etiquetado aborta con código 1 y dice qué falta; y con todas las respuestas
+sin cuerpo crudo el informe publica `n/d` en las tres cifras de acuerdo con su
+explicación. Los tres ficheros de prueba se borraron y
+`progress/explore_jev-backtest.md` se restauró a su versión commiteada.
+
+## 15. Lo que sigue abierto
+
+Los 4 MEDIA restantes (MEDIA-2, MEDIA-3, MEDIA-4, MEDIA-6) y los 9 BAJA menos
+BAJA-9, que ha entrado con MEDIA-1. Dos apuntes por si se reabren:
+
+- **MEDIA-4** queda cerrado de hecho: `fraccion(n, 0)` ya no devuelve `0` sino
+  `null`, y hay test.
+- **BAJA-7** (pasar `lote.orden` entero a `runBatch` en vez de proyectarlo a
+  `TextFields`) pesa algo más desde esta vuelta, porque la fila que cruza esa
+  llamada ahora lleva `seller_id`. El recorte de R5 sigue siendo explícito en
+  `buildRequestBody` y hay tres tests que lo vigilan, pero la frontera sigue
+  descansando en una convención dentro de una función y no en el tipo que
+  cruza la llamada.
