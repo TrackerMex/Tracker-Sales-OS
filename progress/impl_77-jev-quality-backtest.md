@@ -316,7 +316,7 @@ c1ccaaf fix:  salva el lote antes de renderizar el informe (ALTA-1)
 ab88122 test: afirma sobre la peticion real, no sobre el constructor (ALTA-4)
 e4daa76 test: el modo seco tambien debe guardar el crudo (ALTA-1)
 1f64c9e fix:  el modo seco guarda el crudo como la corrida real (ALTA-1)
-dd9c6c4 style: quita una asercion de tipo innecesaria en el test
+a28a8ed style: quita una asercion de tipo innecesaria en el test
 ```
 
 Fichero nuevo: `backend/scripts/jev-backtest/run-backtest.spec.ts`
