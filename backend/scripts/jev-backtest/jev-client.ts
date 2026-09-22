@@ -253,8 +253,19 @@ export async function askJev(
       return sinRespuesta(actividad.id, `HTTP ${respuesta.status}`);
     }
 
-    const crudo: unknown = await respuesta.json();
-    return desdeCrudo(actividad.id, crudo);
+    // El cuerpo tambien entra en el try: un 200 que no trae JSON (HTML de un
+    // proxy, cuerpo truncado o vacio) es una actividad sin respuesta, no el
+    // final del lote. Si esto escapara, se llevaria por delante las respuestas
+    // ya pagadas que todavia no han llegado al disco (ALTA-5).
+    try {
+      const crudo: unknown = await respuesta.json();
+      return desdeCrudo(actividad.id, crudo);
+    } catch (e) {
+      return sinRespuesta(
+        actividad.id,
+        `cuerpo ilegible: ${(e as Error).message}`,
+      );
+    }
   }
 
   return sinRespuesta(
