@@ -224,3 +224,49 @@ describe('R11 (77-jev-quality-backtest #77): agregado para el informe', () => {
     expect(m.total).toBe(12);
   });
 });
+
+describe('R11 (77-jev-quality-backtest #77): sin datos se dice n/d, no cero', () => {
+  it('el acuerdo exacto y el adyacente no existen sin pares comparables', () => {
+    expect(exactAgreement([])).toBeNull();
+    expect(adjacentAgreement([])).toBeNull();
+  });
+
+  it('Spearman no existe con menos de dos pares', () => {
+    expect(spearman([], [])).toBeNull();
+    expect(spearman([1], [2])).toBeNull();
+  });
+
+  it('Spearman no existe si una serie es constante: no hay correlacion que medir', () => {
+    expect(spearman([1, 1, 1, 1], [1, 2, 3, 4])).toBeNull();
+    expect(spearman([1, 2, 3, 4], [2, 2, 2, 2])).toBeNull();
+  });
+
+  it('un lote entero sin respuesta de Jev no publica ninguna cifra de acuerdo', () => {
+    const m = computeMetrics(
+      [fila('a', 100, 1, null), fila('b', 60, 3, null)],
+      UMBRALES,
+    );
+
+    expect(m.paresJev).toBe(0);
+    expect(m.acuerdoExacto).toBeNull();
+    expect(m.acuerdoAdyacente).toBeNull();
+    expect(m.spearman).toBeNull();
+  });
+
+  it('sin actividades etiquetadas en 3 o 4 no hay fraccion de degradados', () => {
+    const v = verdict([fila('a', 100, 1, 1), fila('b', 100, 2, 2)], UMBRALES);
+
+    expect(v.buenos).toBe(0);
+    expect(v.fraccionDegradados).toBeNull();
+    expect(v.motivos.some((m) => m.includes('degrada'))).toBe(false);
+  });
+
+  it('las cifras que si tienen datos siguen siendo numeros', () => {
+    const m = computeMetrics(LOTE_POSITIVO, UMBRALES);
+
+    expect(typeof m.acuerdoExacto).toBe('number');
+    expect(typeof m.acuerdoAdyacente).toBe('number');
+    expect(typeof m.spearman).toBe('number');
+    expect(typeof m.veredicto.fraccionDegradados).toBe('number');
+  });
+});
