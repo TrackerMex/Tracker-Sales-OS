@@ -81,6 +81,13 @@ export interface JevResult {
   confianza: number | null;
   /** Por que no hubo respuesta. Solo presente cuando estado es sin_respuesta. */
   motivo?: string;
+  /**
+   * El cuerpo tal y como lo devolvio la API, sin interpretar. Se guarda para
+   * que un error de lectura por nuestra parte se pueda corregir releyendo el
+   * fichero, sin repetir las llamadas ni volver a sacar los textos de la
+   * empresa (ALTA-1).
+   */
+  crudo?: unknown;
 }
 
 export interface AskOptions {
@@ -157,12 +164,24 @@ export function parseJevResponse(
 
   return {
     nivel,
-    distribucion: Array.isArray(distribucion)
-      ? (distribucion as number[])
-      : null,
+    distribucion: aDistribucion(distribucion),
     confianza:
       typeof pregunta.confidence === 'number' ? pregunta.confidence : null,
   };
+}
+
+/**
+ * Una distribucion solo vale si TODOS sus elementos son numeros finitos. Con
+ * comprobar `Array.isArray` bastaba para que un array de cadenas llegara
+ * intacto al informe y lo tumbara al formatearlo, con el lote ya pagado y ya
+ * exportado (ALTA-1). Si no cuadra se descarta la distribucion, no el nivel:
+ * el veredicto de R13 se decide con el nivel.
+ */
+function aDistribucion(valor: unknown): number[] | null {
+  if (!Array.isArray(valor)) return null;
+  return valor.every((p) => typeof p === 'number' && Number.isFinite(p))
+    ? (valor as number[])
+    : null;
 }
 
 /** R8 + R9 — una actividad, con reintento exponencial sobre 429 y 529. */
@@ -200,10 +219,8 @@ export async function askJev(
       return sinRespuesta(actividad.id, `HTTP ${respuesta.status}`);
     }
 
-    const parsed = parseJevResponse(await respuesta.json());
-    return parsed
-      ? { id: actividad.id, estado: 'ok', ...parsed }
-      : sinRespuesta(actividad.id, 'respuesta sin la forma esperada');
+    const crudo: unknown = await respuesta.json();
+    return desdeCrudo(actividad.id, crudo);
   }
 
   return sinRespuesta(
@@ -244,4 +261,31 @@ export async function runBatch(
   }
 
   return resultados;
+}
+
+/** Resultado a partir de un cuerpo crudo, que se conserva siempre. */
+function desdeCrudo(id: string, crudo: unknown): JevResult {
+  const parsed = parseJevResponse(crudo);
+  return parsed
+    ? { id, estado: 'ok', ...parsed, crudo }
+    : { ...sinRespuesta(id, 'respuesta sin la forma esperada'), crudo };
+}
+
+export interface RespuestaGuardada {
+  id: string;
+  crudo?: unknown;
+  motivo?: string;
+}
+
+/**
+ * Rehace los resultados desde las respuestas crudas ya guardadas en disco.
+ * Es lo que permite corregir la lectura de la respuesta y volver a sacar el
+ * informe sin gastar una sola llamada ni exportar nada por segunda vez.
+ */
+export function reparse(guardadas: RespuestaGuardada[]): JevResult[] {
+  return guardadas.map((g) =>
+    g.crudo === undefined
+      ? sinRespuesta(g.id, g.motivo ?? 'sin respuesta cruda guardada')
+      : desdeCrudo(g.id, g.crudo),
+  );
 }

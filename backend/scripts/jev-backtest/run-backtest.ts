@@ -29,10 +29,21 @@ import {
   parseLabelingFile,
   shuffleWithSeed,
 } from './labeling';
-import { JevResult, requireApproval, runBatch } from './jev-client';
+import {
+  JevResult,
+  RespuestaGuardada,
+  reparse,
+  requireApproval,
+  runBatch,
+} from './jev-client';
 import { Metrics, Thresholds, computeMetrics } from './metrics';
 import { BATCH_QUERY, CANDIDATE_LIMIT, stratify } from './stratify';
-import { BatchActivity, EvaluatedActivity, SourceActivity } from './types';
+import {
+  BatchActivity,
+  EvaluatedActivity,
+  Level,
+  SourceActivity,
+} from './types';
 
 const RAIZ = resolve(__dirname, '..', '..', '..');
 export const RUTA_ETIQUETADO = resolve(
@@ -41,6 +52,18 @@ export const RUTA_ETIQUETADO = resolve(
   'jev-backtest-etiquetado.md',
 );
 export const RUTA_LOTE = resolve(RAIZ, 'progress', 'jev-backtest-lote.json');
+/**
+ * Respuestas crudas de la API. Se escribe en cuanto vuelven, antes de calcular
+ * nada, porque a esas alturas las llamadas ya estan pagadas y los textos ya han
+ * salido de la empresa: ningun fallo posterior puede costar una segunda
+ * exportacion (ALTA-1). Cubierto por el glob `progress/jev-backtest-*` de
+ * .gitignore, asi que no nace versionado.
+ */
+export const RUTA_RESPUESTAS = resolve(
+  RAIZ,
+  'progress',
+  'jev-backtest-respuestas.json',
+);
 export const RUTA_INFORME = resolve(
   RAIZ,
   'progress',
@@ -58,6 +81,8 @@ const MARCA_INFORME =
 export interface Options extends Thresholds {
   fase: string;
   dryRun: boolean;
+  /** Rehace el informe desde las respuestas ya guardadas, sin llamar a la API. */
+  reusarRespuestas: boolean;
   semilla: number;
   limite: number;
 }
@@ -98,6 +123,7 @@ export function parseArgs(argv: string[]): Options {
   return {
     fase: valor('--fase') ?? 'extraer',
     dryRun: argv.includes('--dry-run'),
+    reusarRespuestas: argv.includes('--reusar-respuestas'),
     semilla: numero('--semilla', DEFAULT_SEED),
     limite: numero('--limite', CANDIDATE_LIMIT),
     // R13 fija 70% y 15%; son los valores por defecto, no constantes (D10).
@@ -193,27 +219,42 @@ async function faseEvaluar(
     parseLabelingFile(readFileSync(RUTA_ETIQUETADO, 'utf8')),
   );
 
-  const respuestas = await runBatch(lote.orden, {
-    fetchImpl: deps.fetchImpl ?? fetch,
-    apiKey: env.JEV_API_KEY,
-    dryRun: opciones.dryRun,
-    respuestasEjemplo: opciones.dryRun ? leerEjemplos() : undefined,
+  const metricas = await evaluarLote(lote.orden, etiquetas, opciones, {
+    consultar: () =>
+      opciones.reusarRespuestas
+        ? Promise.resolve(leerRespuestasGuardadas())
+        : runBatch(lote.orden, {
+            fetchImpl: deps.fetchImpl ?? fetch,
+            apiKey: env.JEV_API_KEY,
+            dryRun: opciones.dryRun,
+            respuestasEjemplo: opciones.dryRun ? leerEjemplos() : undefined,
+          }),
+    guardarRespuestas: (respuestas) => {
+      writeFileSync(
+        RUTA_RESPUESTAS,
+        JSON.stringify(
+          {
+            generado: new Date().toISOString(),
+            modo: opciones.dryRun ? 'seco' : 'real',
+            respuestas,
+          },
+          null,
+          2,
+        ),
+        'utf8',
+      );
+      console.log(
+        `[jev-backtest] ${respuestas.length} respuestas guardadas en ${RUTA_RESPUESTAS}`,
+      );
+    },
+    guardarInforme: (m, filas, respuestas) => {
+      const informe = renderReport(m, filas, respuestas, lote, opciones);
+      const previo = existsSync(RUTA_INFORME)
+        ? readFileSync(RUTA_INFORME, 'utf8')
+        : '';
+      writeFileSync(RUTA_INFORME, mergeReport(previo, informe), 'utf8');
+    },
   });
-  const porId = new Map(respuestas.map((r) => [r.id, r]));
-
-  const filas: EvaluatedActivity[] = lote.orden.map((a) => ({
-    id: a.id,
-    quality: a.quality,
-    humano: etiquetas.get(a.id) ?? null,
-    jev: porId.get(a.id)?.nivel ?? null,
-  }));
-
-  const metricas = computeMetrics(filas, opciones);
-  const informe = renderReport(metricas, filas, respuestas, lote, opciones);
-  const previo = existsSync(RUTA_INFORME)
-    ? readFileSync(RUTA_INFORME, 'utf8')
-    : '';
-  writeFileSync(RUTA_INFORME, mergeReport(previo, informe), 'utf8');
 
   console.log(`[jev-backtest] informe en ${RUTA_INFORME}`);
   console.log(
@@ -223,6 +264,58 @@ async function faseEvaluar(
     console.log(`[jev-backtest] motivo: ${m}`);
   }
   return 0;
+}
+
+export interface EvaluarIO {
+  consultar: () => Promise<JevResult[]>;
+  guardarRespuestas: (respuestas: JevResult[]) => void;
+  guardarInforme: (
+    metricas: Metrics,
+    filas: EvaluatedActivity[],
+    respuestas: JevResult[],
+  ) => void;
+}
+
+/**
+ * El orden de estos tres pasos es la garantia de ALTA-1 y no es negociable:
+ * lo que vuelve de la API va a disco ANTES de calcular o renderizar nada. Si
+ * el informe revienta —por ejemplo porque la respuesta no tiene la forma que
+ * suponemos— se pierde el informe, que es gratis de rehacer, y no las 50
+ * llamadas ni la exportacion de 50 textos de clientes, que no lo es.
+ */
+export async function evaluarLote(
+  lote: BatchActivity[],
+  etiquetas: Map<string, Level | null>,
+  umbrales: Thresholds,
+  io: EvaluarIO,
+): Promise<Metrics> {
+  const respuestas = await io.consultar();
+  io.guardarRespuestas(respuestas);
+
+  const porId = new Map(respuestas.map((r) => [r.id, r]));
+  const filas: EvaluatedActivity[] = lote.map((a) => ({
+    id: a.id,
+    quality: a.quality,
+    humano: etiquetas.get(a.id) ?? null,
+    jev: porId.get(a.id)?.nivel ?? null,
+  }));
+
+  const metricas = computeMetrics(filas, umbrales);
+  io.guardarInforme(metricas, filas, respuestas);
+  return metricas;
+}
+
+/** R10 + ALTA-1 — rehace el lote desde lo ya guardado, sin tocar la red. */
+function leerRespuestasGuardadas(): JevResult[] {
+  if (!existsSync(RUTA_RESPUESTAS)) {
+    throw new Error(
+      `falta ${RUTA_RESPUESTAS}: no hay respuestas guardadas que reutilizar`,
+    );
+  }
+  const fichero = JSON.parse(readFileSync(RUTA_RESPUESTAS, 'utf8')) as {
+    respuestas: RespuestaGuardada[];
+  };
+  return reparse(fichero.respuestas);
 }
 
 function leerEjemplos(): unknown[] {
