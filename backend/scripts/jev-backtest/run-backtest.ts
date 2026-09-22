@@ -19,7 +19,12 @@
 // de codigo, es quien garantiza que el script no escribe. No se anade a
 // .env.example a proposito, no forma parte de la configuracion de la app.
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync,
+  existsSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
 import { resolve } from 'node:path';
 import { Client } from 'pg';
 import {
@@ -68,7 +73,7 @@ export const RUTA_LOTE = resolve(RAIZ, 'progress', 'jev-backtest-lote.json');
 export const RUTA_RESPUESTAS = resolve(
   RAIZ,
   'progress',
-  'jev-backtest-respuestas.json',
+  'jev-backtest-respuestas.jsonl',
 );
 
 /**
@@ -81,7 +86,7 @@ export const RUTA_RESPUESTAS = resolve(
 export const RUTA_RESPUESTAS_SECO = resolve(
   RAIZ,
   'progress',
-  'jev-backtest-respuestas-seco.json',
+  'jev-backtest-respuestas-seco.jsonl',
 );
 
 export const rutaRespuestas = (dryRun: boolean): string =>
@@ -138,12 +143,14 @@ export interface FicheroIO {
   existe: (ruta: string) => boolean;
   leer: (ruta: string) => string;
   escribir: (ruta: string, contenido: string) => void;
+  anadir: (ruta: string, contenido: string) => void;
 }
 
 const FICHERO_REAL: FicheroIO = {
   existe: (ruta) => existsSync(ruta),
   leer: (ruta) => readFileSync(ruta, 'utf8'),
   escribir: (ruta, contenido) => writeFileSync(ruta, contenido, 'utf8'),
+  anadir: (ruta, contenido) => appendFileSync(ruta, contenido, 'utf8'),
 };
 
 export interface RunDeps {
@@ -300,25 +307,14 @@ export async function faseEvaluar(
             apiKey: env.JEV_API_KEY,
             dryRun: opciones.dryRun,
             respuestasEjemplo: opciones.dryRun ? leerEjemplos() : undefined,
+            // MEDIA-10: una linea por actividad, en cuanto vuelve. El lote
+            // deja de ser durable solo cuando esta completo.
+            onRespuesta: (r) =>
+              fs.anadir(
+                rutaRespuestas(opciones.dryRun),
+                `${JSON.stringify(r)}\n`,
+              ),
           }),
-    guardarRespuestas: (respuestas) => {
-      const ruta = rutaRespuestas(opciones.dryRun);
-      fs.escribir(
-        ruta,
-        JSON.stringify(
-          {
-            generado: new Date().toISOString(),
-            modo: opciones.dryRun ? 'seco' : 'real',
-            respuestas,
-          },
-          null,
-          2,
-        ),
-      );
-      console.log(
-        `[jev-backtest] ${respuestas.length} respuestas guardadas en ${ruta}`,
-      );
-    },
     guardarInforme: (m, filas, respuestas) => {
       const ruta = rutaInforme(opciones.dryRun);
       const informe = renderReport(m, filas, respuestas, lote, opciones);
@@ -327,6 +323,9 @@ export async function faseEvaluar(
     },
   });
 
+  console.log(
+    `[jev-backtest] respuestas en ${rutaRespuestas(opciones.dryRun)}`,
+  );
   console.log(`[jev-backtest] informe en ${rutaInforme(opciones.dryRun)}`);
   console.log(
     `[jev-backtest] veredicto: ${metricas.veredicto.positivo ? 'POSITIVO' : 'NEGATIVO'}`,
@@ -339,7 +338,6 @@ export async function faseEvaluar(
 
 export interface EvaluarIO {
   consultar: () => Promise<JevResult[]>;
-  guardarRespuestas: (respuestas: JevResult[]) => void;
   guardarInforme: (
     metricas: Metrics,
     filas: EvaluatedActivity[],
@@ -348,11 +346,11 @@ export interface EvaluarIO {
 }
 
 /**
- * El orden de estos tres pasos es la garantia de ALTA-1 y no es negociable:
- * lo que vuelve de la API va a disco ANTES de calcular o renderizar nada. Si
- * el informe revienta —por ejemplo porque la respuesta no tiene la forma que
- * suponemos— se pierde el informe, que es gratis de rehacer, y no las 50
- * llamadas ni la exportacion de 50 textos de clientes, que no lo es.
+ * Consultar primero, calcular despues. La durabilidad ya no depende de este
+ * orden: cada respuesta llega al disco segun vuelve, dentro de `consultar`
+ * (MEDIA-10). Si el informe revienta —o si el proceso muere a mitad del lote—
+ * se pierde el informe, que es gratis de rehacer, y no las llamadas ya pagadas
+ * ni la exportacion de los textos, que no lo son.
  */
 export async function evaluarLote(
   lote: BatchActivity[],
@@ -361,7 +359,6 @@ export async function evaluarLote(
   io: EvaluarIO,
 ): Promise<Metrics> {
   const respuestas = await io.consultar();
-  io.guardarRespuestas(respuestas);
 
   const porId = new Map(respuestas.map((r) => [r.id, r]));
   const filas: EvaluatedActivity[] = lote.map((a) => ({
@@ -376,7 +373,15 @@ export async function evaluarLote(
   return metricas;
 }
 
-/** R10 + ALTA-1 — rehace el lote desde lo ya guardado, sin tocar la red. */
+/**
+ * R10 + MEDIA-10 — rehace el lote desde lo ya guardado, sin tocar la red.
+ *
+ * El fichero es una linea por respuesta, en orden de llegada. Se lee asi:
+ * - una linea ilegible se salta y se avisa, en vez de tumbar la lectura
+ *   entera: eso es justo lo que deja un proceso muerto a mitad de escritura;
+ * - de cada actividad se conserva la ultima linea, de modo que una segunda
+ *   pasada corrige a la primera sin borrar nada.
+ */
 function leerRespuestasGuardadas(fs: FicheroIO, dryRun: boolean): JevResult[] {
   const ruta = rutaRespuestas(dryRun);
   if (!fs.existe(ruta)) {
@@ -384,10 +389,25 @@ function leerRespuestasGuardadas(fs: FicheroIO, dryRun: boolean): JevResult[] {
       `falta ${ruta}: no hay respuestas guardadas que reutilizar`,
     );
   }
-  const fichero = JSON.parse(fs.leer(ruta)) as {
-    respuestas: RespuestaGuardada[];
-  };
-  return reparse(fichero.respuestas);
+
+  const porId = new Map<string, RespuestaGuardada>();
+  let ilegibles = 0;
+  for (const linea of fs.leer(ruta).split('\n')) {
+    if (!linea.trim()) continue;
+    try {
+      const guardada = JSON.parse(linea) as RespuestaGuardada;
+      porId.set(guardada.id, guardada);
+    } catch {
+      ilegibles += 1;
+    }
+  }
+  if (ilegibles) {
+    console.log(
+      `[jev-backtest] ${ilegibles} linea(s) ilegibles en ${ruta}, saltadas`,
+    );
+  }
+
+  return reparse([...porId.values()]);
 }
 
 function leerEjemplos(): unknown[] {

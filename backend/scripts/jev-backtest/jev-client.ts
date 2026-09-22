@@ -131,6 +131,8 @@ export interface AskOptions {
   /** R9: tres reintentos sobre el primer intento. */
   maxReintentos?: number;
   baseEsperaMs?: number;
+  /** Corta una peticion que no contesta (MEDIA-10). */
+  timeoutMs?: number;
 }
 
 export type BatchOptions = Omit<AskOptions, 'apiKey'> & {
@@ -138,7 +140,20 @@ export type BatchOptions = Omit<AskOptions, 'apiKey'> & {
   /** R10: resuelve contra respuestas de ejemplo, sin tocar la red. */
   dryRun?: boolean;
   respuestasEjemplo?: unknown[];
+  /**
+   * Se llama con cada respuesta en cuanto vuelve, antes de pedir la siguiente.
+   * Es lo que hace el lote durable segun llega y no solo cuando esta completo
+   * (MEDIA-10): si el proceso muere a mitad, lo ya pagado esta fuera de
+   * memoria.
+   */
+  onRespuesta?: (respuesta: JevResult) => void;
 };
+
+/**
+ * Una peticion que no contesta colgaba la corrida entera. 60 s es holgado para
+ * una pregunta de tipo score y sigue siendo finito.
+ */
+export const TIMEOUT_POR_DEFECTO_MS = 60_000;
 
 /** Codigos que R9 manda reintentar. Cualquier otro error no se reintenta. */
 const REINTENTABLES = new Set([429, 529]);
@@ -240,6 +255,9 @@ export async function askJev(
           Authorization: `Bearer ${opciones.apiKey}`,
         },
         body: cuerpo,
+        signal: AbortSignal.timeout(
+          opciones.timeoutMs ?? TIMEOUT_POR_DEFECTO_MS,
+        ),
       });
     } catch (e) {
       return sinRespuesta(
@@ -284,11 +302,18 @@ export async function runBatch(
 ): Promise<JevResult[]> {
   const resultados: JevResult[] = [];
 
+  const entregar = (resultado: JevResult): void => {
+    // Primero fuera de memoria, despues al array: si esto lanza, no se sigue
+    // gastando llamadas cuyo resultado no se puede guardar.
+    opciones.onRespuesta?.(resultado);
+    resultados.push(resultado);
+  };
+
   for (const [i, actividad] of lote.entries()) {
     if (opciones.dryRun) {
       const ejemplos = opciones.respuestasEjemplo ?? [];
       const ejemplo = ejemplos.length ? ejemplos[i % ejemplos.length] : null;
-      resultados.push(
+      entregar(
         ejemplo === null
           ? sinRespuesta(actividad.id, 'sin respuesta de ejemplo utilizable')
           : desdeCrudo(actividad.id, ejemplo),
@@ -299,9 +324,7 @@ export async function runBatch(
     if (!opciones.apiKey) {
       throw new Error('JEV_API_KEY no esta en el entorno');
     }
-    resultados.push(
-      await askJev(actividad, { ...opciones, apiKey: opciones.apiKey }),
-    );
+    entregar(await askJev(actividad, { ...opciones, apiKey: opciones.apiKey }));
   }
 
   return resultados;
