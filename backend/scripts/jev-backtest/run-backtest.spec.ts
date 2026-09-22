@@ -219,9 +219,11 @@ describe('R11 (77-jev-quality-backtest #77): el informe va versionado, no puede 
 // puede afirmar QUE se escribe y DONDE, que es lo que se perdio en ALTA-6.
 const fsFalso = (iniciales: Record<string, string> = {}) => {
   const escrituras: Record<string, string> = {};
+  const anadidos: string[] = [];
   const leerDe = (ruta: string) => escrituras[ruta] ?? iniciales[ruta];
   return {
     escrituras,
+    anadidos,
     fs: {
       existe: (ruta: string) => leerDe(ruta) !== undefined,
       leer: (ruta: string) => {
@@ -235,6 +237,7 @@ const fsFalso = (iniciales: Record<string, string> = {}) => {
         escrituras[ruta] = contenido;
       },
       anadir: (ruta: string, contenido: string) => {
+        anadidos.push(contenido);
         escrituras[ruta] = (leerDe(ruta) ?? '') + contenido;
       },
     },
@@ -516,5 +519,89 @@ describe('R8 (77-jev-quality-backtest #77): el lote es durable segun llega, no a
 
     expect(codigo).toBe(0);
     expect(escrituras[RUTA_INFORME]).toContain('Sin respuesta de Jev (R9): 1');
+  });
+});
+
+describe('R10 (77-jev-quality-backtest #77): reanudar sin volver a exportar lo ya exportado', () => {
+  const lineaOk = (id: string, nivel: number) =>
+    JSON.stringify({
+      id,
+      estado: 'ok',
+      nivel,
+      distribucion: null,
+      confianza: null,
+      crudo: crudoDe(nivel),
+    });
+
+  const lineaFallida = (id: string, motivo: string) =>
+    JSON.stringify({
+      id,
+      estado: 'sin_respuesta',
+      nivel: null,
+      distribucion: null,
+      confianza: null,
+      motivo,
+    });
+
+  const correrCon = (previo: string | undefined, argv: string[]) => {
+    const iniciales: Record<string, string> = {
+      [RUTA_LOTE]: loteGuardadoJson,
+      [RUTA_ETIQUETADO]: etiquetadoDe([1, 4]),
+    };
+    if (previo !== undefined) iniciales[rutaRespuestas(true)] = previo;
+    const { fs, escrituras, anadidos } = fsFalso(iniciales);
+    return {
+      escrituras,
+      anadidos,
+      correr: () => faseEvaluar(parseArgs(argv), {}, { fs }),
+    };
+  };
+
+  it('no vuelve a consultar la actividad que ya tiene respuesta buena', async () => {
+    const { correr, anadidos } = correrCon(`${lineaOk('a1', 4)}\n`, [
+      '--fase',
+      'evaluar',
+      '--dry-run',
+    ]);
+
+    await expect(correr()).resolves.toBe(0);
+
+    expect(anadidos).toHaveLength(1);
+    expect((JSON.parse(anadidos[0]) as JevResult).id).toBe('a2');
+  });
+
+  it('con el lote entero ya respondido no consulta nada', async () => {
+    const { correr, anadidos } = correrCon(
+      `${lineaOk('a1', 4)}\n${lineaOk('a2', 3)}\n`,
+      ['--fase', 'evaluar', '--dry-run'],
+    );
+
+    await expect(correr()).resolves.toBe(0);
+
+    expect(anadidos).toEqual([]);
+  });
+
+  it('si vuelve a consultar es porque la anterior no llego a ser respuesta', async () => {
+    const { correr, anadidos } = correrCon(
+      `${lineaOk('a1', 4)}\n${lineaFallida('a2', 'HTTP 429')}\n`,
+      ['--fase', 'evaluar', '--dry-run'],
+    );
+
+    await expect(correr()).resolves.toBe(0);
+
+    expect(anadidos).toHaveLength(1);
+    expect((JSON.parse(anadidos[0]) as JevResult).id).toBe('a2');
+  });
+
+  it('una respuesta buena no se degrada aunque el fichero traiga un fallo posterior', async () => {
+    const { correr, escrituras } = correrCon(
+      `${lineaOk('a1', 4)}\n${lineaFallida('a1', 'HTTP 429')}\n${lineaOk('a2', 3)}\n`,
+      ['--fase', 'evaluar', '--dry-run', '--reusar-respuestas'],
+    );
+
+    await expect(correr()).resolves.toBe(0);
+
+    const informe = escrituras[rutaInforme(true)];
+    expect(informe).toContain('Sin respuesta de Jev (R9): 0');
   });
 });

@@ -2,6 +2,7 @@ import {
   JEV_ENDPOINT,
   JevResult,
   askJev,
+  necesitaLlamada,
   parseJevResponse,
   reparse,
   runBatch,
@@ -586,5 +587,58 @@ describe('R9 (77-jev-quality-backtest #77): una peticion colgada no cuelga el lo
 
     expect(res.map((r) => r.estado)).toEqual(['sin_respuesta', 'ok']);
     expect(entregadas).toEqual(['a1', 'a2']);
+  });
+});
+
+describe('R9 (77-jev-quality-backtest #77): que actividades hay que volver a consultar', () => {
+  const guardada = (estado: 'ok' | 'sin_respuesta', extra = {}): JevResult => ({
+    id: 'a1',
+    estado,
+    nivel: estado === 'ok' ? 4 : null,
+    distribucion: null,
+    confianza: null,
+    ...extra,
+  });
+
+  it('sin nada guardado hay que llamar', () => {
+    expect(necesitaLlamada(undefined)).toBe(true);
+  });
+
+  it('una respuesta buena no se vuelve a pedir nunca', () => {
+    expect(necesitaLlamada(guardada('ok'))).toBe(false);
+    expect(necesitaLlamada(guardada('ok', { crudo: { a: 1 } }))).toBe(false);
+  });
+
+  it('se reintenta lo que no llego a ser una respuesta', () => {
+    for (const motivo of [
+      'agotados 3 reintentos con codigo reintentable',
+      'fallo de red: The operation was aborted due to timeout',
+      'fallo de red: socket hang up',
+      'HTTP 429',
+      'HTTP 500',
+      'HTTP 503',
+      'cuerpo ilegible: Unexpected token < in JSON at position 0',
+    ]) {
+      expect(necesitaLlamada(guardada('sin_respuesta', { motivo }))).toBe(true);
+    }
+  });
+
+  it('un 4xx que no es 429 es definitivo: repetirlo exporta otra vez para el mismo rechazo', () => {
+    for (const motivo of ['HTTP 400', 'HTTP 401', 'HTTP 403', 'HTTP 404']) {
+      expect(necesitaLlamada(guardada('sin_respuesta', { motivo }))).toBe(
+        false,
+      );
+    }
+  });
+
+  it('si el servidor contesto y guardamos su cuerpo, el arreglo es releerlo, no llamar otra vez', () => {
+    expect(
+      necesitaLlamada(
+        guardada('sin_respuesta', {
+          motivo: 'respuesta sin la forma esperada',
+          crudo: { otra: 'cosa' },
+        }),
+      ),
+    ).toBe(false);
   });
 });
