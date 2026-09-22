@@ -139,6 +139,114 @@ Todos los endpoints deben:
 
 ---
 
+## Backups de PostgreSQL en producción
+
+La automatización de la feature `65-prod-db-backups` vive en `ops/postgres-backup/`. Genera un dump diario en formato custom de PostgreSQL, conserva 30 días y publica un checksum SHA-256. No contiene ni requiere copiar la contraseña de la base: `pg_dump` corre dentro del contenedor y usa su socket local.
+
+### Instalación en el VPS
+
+Ejecutar desde una copia actualizada del repositorio como `root`:
+
+```bash
+install -d -m 0700 /var/backups/tracker-sales-postgres
+install -m 0750 ops/postgres-backup/backup.sh /usr/local/sbin/tracker-sales-db-backup
+install -m 0750 ops/postgres-backup/restore-test.sh /usr/local/sbin/tracker-sales-db-restore-test
+if [ ! -e /etc/tracker-sales-db-backup.conf ]; then
+  install -m 0600 ops/postgres-backup/backup.conf.example /etc/tracker-sales-db-backup.conf
+fi
+install -m 0644 ops/postgres-backup/tracker-sales-db-backup.service /etc/systemd/system/tracker-sales-db-backup.service
+install -m 0644 ops/postgres-backup/tracker-sales-db-backup.timer /etc/systemd/system/tracker-sales-db-backup.timer
+install -d -m 0755 /usr/local/share/doc/tracker-sales-os
+install -m 0644 docs/verification.md /usr/local/share/doc/tracker-sales-os/postgresql-backups.md
+```
+
+Antes de habilitar el timer o lanzar la primera corrida, revisar `/etc/tracker-sales-db-backup.conf`. Los defaults actuales esperan:
+
+- contenedor: `tracker-sales-os-trackersales-hibdzn`;
+- base y usuario PostgreSQL: autodetectados desde `POSTGRES_DB` y `POSTGRES_USER` del contenedor; pueden fijarse explícitamente si la inspección inicial confirma valores distintos;
+- destino local: `/var/backups/tracker-sales-postgres`;
+- retención: 30 días;
+- espacio libre mínimo: 512 MiB.
+
+Si la ruta de backups cambia, actualizar también `ReadWritePaths` en la unidad systemd y ejecutar `systemctl daemon-reload`.
+
+Después de confirmar la configuración:
+
+```bash
+systemctl daemon-reload
+systemctl enable --now tracker-sales-db-backup.timer
+systemctl start tracker-sales-db-backup.service
+```
+
+### Operación diaria y observabilidad
+
+```bash
+# Próxima/última corrida
+systemctl list-timers tracker-sales-db-backup.timer
+
+# Resultado de la última corrida y logs detallados
+systemctl status tracker-sales-db-backup.service
+journalctl -u tracker-sales-db-backup.service --since '7 days ago'
+
+# Fallos visibles para monitoreo del VPS
+systemctl is-failed tracker-sales-db-backup.service
+
+# Inventario sin exponer datos del dump
+find /var/backups/tracker-sales-postgres -maxdepth 1 -type f -name '*.dump' -printf '%TY-%Tm-%TdT%TH:%TM:%TS %s %f\n' | sort
+
+# Checksum del backup más reciente (ejecutar desde el directorio)
+cd /var/backups/tracker-sales-postgres
+sha256sum --check "$(find . -maxdepth 1 -type f -name '*.dump.sha256' -printf '%T@ %f\n' | sort -nr | awk 'NR == 1 { print $2; exit }')"
+```
+
+El timer corre a las 03:15 UTC con una demora aleatoria de hasta 15 minutos. `Persistent=true` hace que systemd ejecute una corrida pendiente después de un reinicio. Cada archivo se escribe a un temporal, se valida y sólo entonces se renombra al nombre definitivo; una corrida fallida no publica un dump parcial.
+
+La retención sólo elimina archivos `*.dump` de más de `RETENTION_DAYS` dentro del directorio dedicado y el checksum hermano. No usar ese directorio para otros dumps que deban conservarse indefinidamente.
+
+### Prueba de restauración aislada
+
+La prueba levanta un contenedor efímero `postgres:18` con red deshabilitada. No crea, borra ni modifica bases dentro del contenedor de producción.
+
+```bash
+# Usa el backup más reciente
+/usr/local/sbin/tracker-sales-db-restore-test
+
+# O valida un archivo específico
+/usr/local/sbin/tracker-sales-db-restore-test \
+  /var/backups/tracker-sales-postgres/sales-os_YYYYMMDDTHHMMSSZ.dump
+```
+
+La prueba verifica el checksum cuando existe, ejecuta `pg_restore --exit-on-error`, exige al menos una tabla en `public` y confirma `public.users`. El contenedor temporal se elimina incluso si la restauración falla. Guardar en `progress/impl_65-prod-db-backups.md` la fecha UTC, nombre y tamaño del dump, checksum abreviado, número de tablas restauradas, resultado del servicio y próxima corrida; nunca copiar datos ni credenciales de producción.
+
+### Restauración real por incidente
+
+No restaurar encima de `sales-os` mientras la aplicación escribe. El flujo seguro es crear una base nueva, validar y después cambiar `POSTGRES_DB` durante una ventana de mantenimiento:
+
+```bash
+# 1. Detener escrituras de la API desde Dokploy.
+# 2. Resolver el superusuario configurado y crear una base vacía de recuperación.
+container=tracker-sales-os-trackersales-hibdzn
+db_user="$(docker exec "$container" printenv POSTGRES_USER)"
+docker exec --user postgres "$container" \
+  createdb --username "$db_user" sales-os-recovery
+
+# 3. Transmitir el dump por stdin y restaurar con corte ante el primer error.
+# El shell root abre el archivo 0600; no queda una copia con permisos ambiguos en el contenedor.
+docker exec --interactive --user postgres "$container" \
+  pg_restore --username "$db_user" --dbname sales-os-recovery \
+  --no-owner --no-acl --exit-on-error \
+  </var/backups/tracker-sales-postgres/sales-os_YYYYMMDDTHHMMSSZ.dump
+
+# 4. Validar tablas y conteos de negocio antes de apuntar la API a la base recuperada.
+docker exec --user postgres "$container" \
+  psql --username "$db_user" --dbname sales-os-recovery \
+  --command "SELECT count(*) AS public_tables FROM pg_catalog.pg_tables WHERE schemaname = 'public';"
+```
+
+Rollback: mantener intacta la base original, revertir `POSTGRES_DB` al valor anterior y recrear el contenedor backend para que relea el entorno. Tras el incidente, eliminar la base de recuperación únicamente cuando exista aprobación explícita y otra copia verificada.
+
+---
+
 ## Variables de entorno requeridas para tests
 
 Para tests e2e se necesita una DB de test. Copiar `.env` a `.env.test`:
