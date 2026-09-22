@@ -68,7 +68,7 @@ describe('R8 (77-jev-quality-backtest #77): consulta al modelo', () => {
 
     const res = await askJev(actividad('a1'), opciones(fetchImpl, sleep));
 
-    expect(res).toEqual({
+    expect(res).toMatchObject({
       id: 'a1',
       estado: 'ok',
       nivel: 3,
@@ -234,5 +234,88 @@ describe('R8 (77-jev-quality-backtest #77): un nivel que no es 1, 2, 3 o 4 no se
     expect(res.estado).toBe('sin_respuesta');
     expect(res.nivel).toBeNull();
     expect(res.motivo).toContain('forma esperada');
+  });
+});
+
+describe('R8 (77-jev-quality-backtest #77): distribucion de probabilidades no fiable', () => {
+  it('acepta una distribucion de numeros finitos', () => {
+    const p = parseJevResponse({
+      questions: { nivel: { answer: 3, probabilities: [0.1, 0.2, 0.6, 0.1] } },
+    });
+
+    expect(p?.distribucion).toEqual([0.1, 0.2, 0.6, 0.1]);
+  });
+
+  it('descarta la distribucion si algun elemento no es un numero, sin perder el nivel', () => {
+    const p = parseJevResponse({
+      questions: {
+        nivel: { answer: 3, probabilities: ['0.7', '0.1', '0.1', '0.1'] },
+      },
+    });
+
+    expect(p?.nivel).toBe(3);
+    expect(p?.distribucion).toBeNull();
+  });
+
+  it('descarta tambien NaN, Infinity y null dentro del array', () => {
+    for (const probabilities of [
+      [0.5, NaN, 0.3, 0.2],
+      [0.5, Infinity, 0.3, 0.2],
+      [0.5, null, 0.3, 0.2],
+      [0.5, {}, 0.3, 0.2],
+    ]) {
+      const p = parseJevResponse({
+        questions: { nivel: { answer: 2, probabilities } },
+      });
+      expect(p?.nivel).toBe(2);
+      expect(p?.distribucion).toBeNull();
+    }
+  });
+});
+
+describe('R10 (77-jev-quality-backtest #77): retomar el lote sin volver a llamar a la API', () => {
+  it('guarda la respuesta cruda junto al resultado', async () => {
+    const { sleep } = conEsperas();
+    const fetchImpl = jest.fn().mockResolvedValue(respuesta(200, cuerpoOk(3)));
+
+    const res = await askJev(actividad('a1'), opciones(fetchImpl, sleep));
+
+    expect(res.crudo).toEqual(cuerpoOk(3));
+  });
+
+  it('reparse reconstruye los resultados desde lo guardado, sin red', () => {
+    const rehecho = reparse([
+      { id: 'a1', crudo: cuerpoOk(4) },
+      { id: 'a2', motivo: 'HTTP 500' },
+      { id: 'a3', crudo: { basura: true } },
+    ]);
+
+    expect(rehecho).toEqual([
+      {
+        id: 'a1',
+        estado: 'ok',
+        nivel: 4,
+        distribucion: [0.05, 0.1, 0.15, 0.7],
+        confianza: 0.82,
+        crudo: cuerpoOk(4),
+      },
+      {
+        id: 'a2',
+        estado: 'sin_respuesta',
+        nivel: null,
+        distribucion: null,
+        confianza: null,
+        motivo: 'HTTP 500',
+      },
+      {
+        id: 'a3',
+        estado: 'sin_respuesta',
+        nivel: null,
+        distribucion: null,
+        confianza: null,
+        motivo: 'respuesta sin la forma esperada',
+        crudo: { basura: true },
+      },
+    ]);
   });
 });
