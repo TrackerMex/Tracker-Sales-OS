@@ -59,7 +59,9 @@ Se rellenan al ejecutar.
 
 ## 5. Informe (R11, R12, R13)
 
-Pendiente de la ejecución. Contendrá las dos matrices de confusión 4x4, las
+El script inserta el informe generado bajo una marca al final de este fichero,
+después de §6, conservando intactas las secciones escritas a mano. Contendrá
+las dos matrices de confusión 4x4, las
 tres cifras de acuerdo, la tasa de falsos 100 y el veredicto.
 
 ## 6. Veredicto

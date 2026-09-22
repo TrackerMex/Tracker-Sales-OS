@@ -1,6 +1,6 @@
 ---
 feature: "77-jev-quality-backtest"
-status: draft        # draft | approved
+status: approved     # draft | approved
 tags: [harness, spec]
 ---
 

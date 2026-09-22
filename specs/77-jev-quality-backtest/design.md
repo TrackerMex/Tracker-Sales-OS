@@ -1,6 +1,6 @@
 ---
 feature: "77-jev-quality-backtest"
-status: draft        # draft | approved
+status: approved     # draft | approved
 tags: [harness, spec]
 ---
 
@@ -185,3 +185,29 @@ director los cambia, cambiarlos no debe costar un commit.
 
 El informe de R11 SHALL imprimir los dos valores efectivamente usados, para
 que el veredicto quede interpretable sin consultar el historial de comandos.
+
+## D11 — Cómo cuenta una actividad sin respuesta en el veredicto de R13
+
+R9 permite que una actividad quede como `sin_respuesta` tras agotar los
+reintentos. R13 no decía qué hacer con ella al calcular las dos condiciones.
+Se ratifica la lectura literal, que es además la conservadora:
+
+- Un **falso 100 sin respuesta** cuenta como **no detectado**. Resta en la
+  condición del 70%.
+- Un **bueno sin respuesta** **no** cuenta como degradado. No suma en la
+  condición del 15%.
+
+La asimetría es deliberada: las dos condiciones se leen en la dirección que
+perjudica al modelo, de modo que un fallo de infraestructura nunca pueda
+producir un veredicto positivo que no se ha ganado.
+
+El informe de R11 publica `falsos100SinRespuesta` como cifra propia, para que
+un veredicto negativo por cobertura se distinga de uno negativo por juicio. Si
+esa cifra es alta, la respuesta correcta es repetir la corrida, no dar el gate
+por cerrado.
+
+Corolario que se acepta: un lote donde el director no identifique **ningún**
+falso 100 no puede dar veredicto positivo, porque la condición del 70% se
+calcula sobre un conjunto vacío. Ese resultado no significa que Jev falle:
+significa que el lote no contenía el fenómeno que se quería medir, y que hay
+que reestratificar.
