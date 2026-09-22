@@ -293,7 +293,7 @@ describe('R10 (77-jev-quality-backtest #77): retomar el lote sin volver a llamar
     const fetchImpl = jest.fn();
 
     const res = await runBatch([actividad('a1'), actividad('a2')], {
-      fetchImpl: fetchImpl as unknown as typeof fetch,
+      fetchImpl: fetchImpl,
       dryRun: true,
       respuestasEjemplo: [cuerpoOk(2), cuerpoOk(3)],
     });
