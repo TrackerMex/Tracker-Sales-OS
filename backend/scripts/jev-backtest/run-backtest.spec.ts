@@ -390,7 +390,7 @@ describe('R6 (77-jev-quality-backtest #77): la validacion del etiquetado esta en
     const { correr, escrituras } = evaluarCon(etiquetadoDe([1, 4]));
 
     await expect(correr()).resolves.toBe(0);
-    expect(Object.keys(escrituras)).toContain(RUTA_INFORME);
+    expect(Object.keys(escrituras)).toContain(rutaInforme(true));
   });
 });
 

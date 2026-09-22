@@ -86,11 +86,30 @@ export const RUTA_RESPUESTAS_SECO = resolve(
 
 export const rutaRespuestas = (dryRun: boolean): string =>
   dryRun ? RUTA_RESPUESTAS_SECO : RUTA_RESPUESTAS;
+/**
+ * El informe de R11, donde firma el director. Esta versionado, al contrario
+ * que el resto de artefactos del backtest.
+ */
 export const RUTA_INFORME = resolve(
   RAIZ,
   'progress',
   'explore_jev-backtest.md',
 );
+
+/**
+ * El informe del ensayo va aparte (MEDIA-9). Por la misma razon que las
+ * respuestas: un `--dry-run` no puede sustituir el documento que el director
+ * firma, y ademas este no se versiona, porque cae bajo el glob
+ * `progress/jev-backtest-*` del .gitignore.
+ */
+export const RUTA_INFORME_SECO = resolve(
+  RAIZ,
+  'progress',
+  'jev-backtest-informe-seco.md',
+);
+
+export const rutaInforme = (dryRun: boolean): string =>
+  dryRun ? RUTA_INFORME_SECO : RUTA_INFORME;
 const RUTA_EJEMPLOS = resolve(__dirname, 'sample-responses.json');
 
 /**
@@ -301,13 +320,14 @@ export async function faseEvaluar(
       );
     },
     guardarInforme: (m, filas, respuestas) => {
+      const ruta = rutaInforme(opciones.dryRun);
       const informe = renderReport(m, filas, respuestas, lote, opciones);
-      const previo = fs.existe(RUTA_INFORME) ? fs.leer(RUTA_INFORME) : '';
-      fs.escribir(RUTA_INFORME, mergeReport(previo, informe));
+      const previo = fs.existe(ruta) ? fs.leer(ruta) : '';
+      fs.escribir(ruta, mergeReport(previo, informe));
     },
   });
 
-  console.log(`[jev-backtest] informe en ${RUTA_INFORME}`);
+  console.log(`[jev-backtest] informe en ${rutaInforme(opciones.dryRun)}`);
   console.log(
     `[jev-backtest] veredicto: ${metricas.veredicto.positivo ? 'POSITIVO' : 'NEGATIVO'}`,
   );
