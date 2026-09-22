@@ -1,0 +1,29 @@
+[Unit]
+Description=Tracker Sales OS PostgreSQL backup
+Documentation=file:/usr/local/share/doc/tracker-sales-os/postgresql-backups.md
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/tracker-sales-db-backup.conf
+ExecStart=/usr/local/sbin/tracker-sales-db-backup
+TimeoutStartSec=30min
+User=root
+Group=root
+UMask=0077
+RuntimeDirectory=tracker-sales-db-backup
+RuntimeDirectoryMode=0750
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+ReadWritePaths=/var/backups/tracker-sales-postgres /run/tracker-sales-db-backup
+RestrictAddressFamilies=AF_UNIX

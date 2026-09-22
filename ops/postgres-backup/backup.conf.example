@@ -1,0 +1,10 @@
+# Install as /etc/tracker-sales-db-backup.conf with mode 0600.
+# No database password is needed: pg_dump runs through the container's local socket.
+
+CONTAINER_NAME=tracker-sales-os-trackersales-hibdzn
+# Leave these empty to read POSTGRES_DB and POSTGRES_USER from the container.
+DATABASE_NAME=
+DATABASE_USER=
+BACKUP_DIR=/var/backups/tracker-sales-postgres
+RETENTION_DAYS=30
+MIN_FREE_MIB=512

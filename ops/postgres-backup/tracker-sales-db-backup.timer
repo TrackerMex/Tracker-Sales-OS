@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily Tracker Sales OS PostgreSQL backup
+
+[Timer]
+OnCalendar=*-*-* 03:15:00 UTC
+RandomizedDelaySec=15m
+Persistent=true
+AccuracySec=1m
+Unit=tracker-sales-db-backup.service
+
+[Install]
+WantedBy=timers.target
+
