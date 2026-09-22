@@ -66,8 +66,8 @@ const respuestas: JevResult[] = [
   },
 ];
 
-describe('R8 (77-jev-quality-backtest #77): las respuestas se guardan antes de calcular nada', () => {
-  it('guarda lo recibido antes de renderizar el informe', async () => {
+describe('R8 (77-jev-quality-backtest #77): nada se calcula antes de tener las respuestas', () => {
+  it('consulta primero y renderiza despues', async () => {
     const orden: string[] = [];
 
     await evaluarLote(lote, etiquetas, UMBRALES, {
@@ -75,40 +75,17 @@ describe('R8 (77-jev-quality-backtest #77): las respuestas se guardan antes de c
         orden.push('consultar');
         return Promise.resolve(respuestas);
       },
-      guardarRespuestas: (r) => {
-        orden.push('guardar');
-        expect(r).toEqual(respuestas);
-      },
       guardarInforme: () => {
         orden.push('informe');
       },
     });
 
-    expect(orden).toEqual(['consultar', 'guardar', 'informe']);
-  });
-
-  it('si el informe revienta, las 50 llamadas ya estan a salvo en disco', async () => {
-    const guardadas: JevResult[] = [];
-
-    await expect(
-      evaluarLote(lote, etiquetas, UMBRALES, {
-        consultar: () => Promise.resolve(respuestas),
-        guardarRespuestas: (r) => {
-          guardadas.push(...r);
-        },
-        guardarInforme: () => {
-          throw new TypeError('p.toFixed is not a function');
-        },
-      }),
-    ).rejects.toThrow('toFixed');
-
-    expect(guardadas).toEqual(respuestas);
+    expect(orden).toEqual(['consultar', 'informe']);
   });
 
   it('calcula las metricas sobre la union de etiquetas y respuestas', async () => {
     const metricas = await evaluarLote(lote, etiquetas, UMBRALES, {
       consultar: () => Promise.resolve(respuestas),
-      guardarRespuestas: () => undefined,
       guardarInforme: () => undefined,
     });
 
@@ -205,7 +182,6 @@ describe('R11 (77-jev-quality-backtest #77): el informe va versionado, no puede 
 
     await evaluarLote(lote, etiquetas, UMBRALES, {
       consultar: () => Promise.resolve(respuestas),
-      guardarRespuestas: () => undefined,
       guardarInforme: (m, filas, resp) => {
         capturas.push([m, filas, resp]);
       },
@@ -257,6 +233,9 @@ const fsFalso = (iniciales: Record<string, string> = {}) => {
       },
       escribir: (ruta: string, contenido: string) => {
         escrituras[ruta] = contenido;
+      },
+      anadir: (ruta: string, contenido: string) => {
+        escrituras[ruta] = (leerDe(ruta) ?? '') + contenido;
       },
     },
   };
@@ -402,7 +381,6 @@ describe('R11 (77-jev-quality-backtest #77): cada n/d del informe dice por que',
 
     await evaluarLote(lote, etiquetasDeDirector, UMBRALES, {
       consultar: () => Promise.resolve(respuestas),
-      guardarRespuestas: () => undefined,
       guardarInforme: (m, filas, resp) => {
         capturas.push([m, filas, resp]);
       },
@@ -466,5 +444,76 @@ describe('R11 (77-jev-quality-backtest #77): el ensayo tampoco pisa el informe q
     expect(Object.keys(escrituras)).toContain(rutaInforme(true));
     expect(escrituras[RUTA_INFORME]).toBeUndefined();
     expect(fs.leer(RUTA_INFORME)).toBe(previo);
+  });
+});
+
+describe('R8 (77-jev-quality-backtest #77): el lote es durable segun llega, no al final', () => {
+  it('deja una linea por actividad en el fichero de respuestas', async () => {
+    const { fs, escrituras } = fsFalso({
+      [RUTA_LOTE]: loteGuardadoJson,
+      [RUTA_ETIQUETADO]: etiquetadoDe([1, 4]),
+    });
+
+    await faseEvaluar(
+      parseArgs(['--fase', 'evaluar', '--dry-run']),
+      {},
+      { fs },
+    );
+
+    const lineas = escrituras[rutaRespuestas(true)]
+      .split('\n')
+      .filter((l) => l.trim());
+    expect(lineas).toHaveLength(lote.length);
+    expect(
+      lineas.map((l) => (JSON.parse(l) as JevResult).id).sort(),
+    ).toEqual(['a1', 'a2']);
+  });
+
+  it('retomar lee ese fichero por lineas y se queda con la ultima de cada id', async () => {
+    const lineas = [
+      JSON.stringify({ id: 'a1', crudo: crudoDe(1) }),
+      JSON.stringify({ id: 'a2', crudo: crudoDe(1) }),
+      // una segunda pasada corrigio a2: la ultima gana
+      JSON.stringify({ id: 'a2', crudo: crudoDe(4) }),
+      '',
+    ].join('\n');
+    const { fs, escrituras } = fsFalso({
+      [RUTA_LOTE]: loteGuardadoJson,
+      [RUTA_ETIQUETADO]: etiquetadoDe([1, 4]),
+      [RUTA_RESPUESTAS]: lineas,
+    });
+
+    const codigo = await faseEvaluar(
+      parseArgs(['--fase', 'evaluar', '--reusar-respuestas']),
+      {},
+      { fs },
+    );
+
+    expect(codigo).toBe(0);
+    const informe = escrituras[RUTA_INFORME];
+    expect(informe).toContain('Sin respuesta de Jev (R9): 0');
+    // a1 nivel 1 y a2 nivel 4: acuerdo exacto con el director, que puso 1 y 4
+    expect(informe).toContain('Acuerdo exacto: 100.0%');
+  });
+
+  it('una linea truncada no se lleva por delante el resto del fichero', async () => {
+    const lineas = [
+      JSON.stringify({ id: 'a1', crudo: crudoDe(1) }),
+      '{"id":"a2","crudo":{"questions":',
+    ].join('\n');
+    const { fs, escrituras } = fsFalso({
+      [RUTA_LOTE]: loteGuardadoJson,
+      [RUTA_ETIQUETADO]: etiquetadoDe([1, 4]),
+      [RUTA_RESPUESTAS]: lineas,
+    });
+
+    const codigo = await faseEvaluar(
+      parseArgs(['--fase', 'evaluar', '--reusar-respuestas']),
+      {},
+      { fs },
+    );
+
+    expect(codigo).toBe(0);
+    expect(escrituras[RUTA_INFORME]).toContain('Sin respuesta de Jev (R9): 1');
   });
 });

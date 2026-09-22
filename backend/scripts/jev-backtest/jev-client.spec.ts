@@ -1,5 +1,6 @@
 import {
   JEV_ENDPOINT,
+  JevResult,
   askJev,
   parseJevResponse,
   reparse,
@@ -365,7 +366,12 @@ describe('R5 (77-jev-quality-backtest #77): lo que sale de verdad por el cable',
   it('el init no lleva nada mas que method, headers y body', async () => {
     const { init } = await capturar();
 
-    expect(Object.keys(init).sort()).toEqual(['body', 'headers', 'method']);
+    expect(Object.keys(init).sort()).toEqual([
+      'body',
+      'headers',
+      'method',
+      'signal',
+    ]);
   });
 
   it('la URL es el endpoint pelado, sin query string', async () => {
@@ -467,5 +473,118 @@ describe('R9 (77-jev-quality-backtest #77): un cuerpo ilegible no se lleva el lo
       'ok',
       'ok',
     ]);
+  });
+});
+
+describe('R9 (77-jev-quality-backtest #77): cada respuesta se entrega segun llega', () => {
+  it('avisa de cada actividad antes de pedir la siguiente', async () => {
+    const { sleep } = conEsperas();
+    const entregadas: string[] = [];
+    const entregadasAlLlamar: number[] = [];
+    const fetchImpl = jest.fn().mockImplementation(() => {
+      entregadasAlLlamar.push(entregadas.length);
+      return Promise.resolve(respuesta(200, cuerpoOk(4)));
+    });
+
+    const res = await runBatch(
+      [actividad('a1'), actividad('a2'), actividad('a3')],
+      {
+        ...opciones(fetchImpl, sleep),
+        onRespuesta: (r) => entregadas.push(r.id),
+      },
+    );
+
+    // Antes de la n-esima llamada ya hay n-1 respuestas entregadas: si el
+    // proceso muere a mitad, lo pagado hasta ahi esta fuera de memoria.
+    expect(entregadasAlLlamar).toEqual([0, 1, 2]);
+    expect(entregadas).toEqual(['a1', 'a2', 'a3']);
+    expect(res.map((r) => r.id)).toEqual(entregadas);
+  });
+
+  it('entrega tambien las que quedan sin respuesta', async () => {
+    const { sleep } = conEsperas();
+    const entregadas: JevResult[] = [];
+    const fetchImpl = jest.fn().mockResolvedValue(respuesta(500));
+
+    await runBatch([actividad('a1')], {
+      ...opciones(fetchImpl, sleep),
+      onRespuesta: (r) => entregadas.push(r),
+    });
+
+    expect(entregadas).toHaveLength(1);
+    expect(entregadas[0].estado).toBe('sin_respuesta');
+  });
+
+  it('en seco tambien entrega una a una', async () => {
+    const entregadas: string[] = [];
+
+    await runBatch([actividad('a1'), actividad('a2')], {
+      fetchImpl: jest.fn() as unknown as typeof fetch,
+      dryRun: true,
+      respuestasEjemplo: [cuerpoOk(1), cuerpoOk(4)],
+      onRespuesta: (r) => entregadas.push(r.id),
+    });
+
+    expect(entregadas).toEqual(['a1', 'a2']);
+  });
+});
+
+describe('R9 (77-jev-quality-backtest #77): una peticion colgada no cuelga el lote', () => {
+  // Simula lo que hace fetch de verdad con una señal: si se aborta, rechaza.
+  const fetchQueCuelga = () =>
+    jest.fn().mockImplementation((_url, init: RequestInit) => {
+      return new Promise((_resolver, rechazar) => {
+        init.signal?.addEventListener('abort', () =>
+          rechazar(new Error('The operation was aborted due to timeout')),
+        );
+      });
+    });
+
+  it('manda una señal de aborto en cada peticion', async () => {
+    const { sleep } = conEsperas();
+    const fetchImpl = jest.fn().mockResolvedValue(respuesta(200, cuerpoOk(4)));
+
+    await askJev(actividad('a1'), opciones(fetchImpl, sleep));
+
+    const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(init.signal?.aborted).toBe(false);
+  });
+
+  it('una peticion que no contesta acaba en sin_respuesta, no en espera eterna', async () => {
+    const { sleep } = conEsperas();
+    const fetchImpl = fetchQueCuelga();
+
+    const res = await askJev(actividad('a1'), {
+      ...opciones(fetchImpl, sleep),
+      timeoutMs: 5,
+    });
+
+    expect(res.estado).toBe('sin_respuesta');
+    expect(res.motivo).toMatch(/red|abort/i);
+  });
+
+  it('el lote sigue despues de una peticion colgada', async () => {
+    const { sleep } = conEsperas();
+    const entregadas: string[] = [];
+    const fetchImpl = jest
+      .fn()
+      .mockImplementationOnce((_url: string, init: RequestInit) => {
+        return new Promise((_r, rechazar) => {
+          init.signal?.addEventListener('abort', () =>
+            rechazar(new Error('The operation was aborted due to timeout')),
+          );
+        });
+      })
+      .mockResolvedValue(respuesta(200, cuerpoOk(3)));
+
+    const res = await runBatch([actividad('a1'), actividad('a2')], {
+      ...opciones(fetchImpl, sleep),
+      timeoutMs: 5,
+      onRespuesta: (r) => entregadas.push(r.id),
+    });
+
+    expect(res.map((r) => r.estado)).toEqual(['sin_respuesta', 'ok']);
+    expect(entregadas).toEqual(['a1', 'a2']);
   });
 });
