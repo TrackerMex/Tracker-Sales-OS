@@ -441,6 +441,17 @@ function renderReport(
   ].join('\n');
 }
 
+/**
+ * R4 — la aprobacion protege todo lo que saca texto comercial de la base, no
+ * solo la llamada a la API: `extraer` ya deja 50 textos de clientes en disco.
+ * La unica exencion es `evaluar --dry-run`, que no lee produccion ni llama a
+ * la API porque trabaja contra el fichero de respuestas de ejemplo (R10).
+ * Cualquier fase que no se reconozca la exige tambien: falla cerrado.
+ */
+export function necesitaAprobacion(opciones: Options): boolean {
+  return !(opciones.fase === 'evaluar' && opciones.dryRun);
+}
+
 export async function main(
   argv: string[],
   env: NodeJS.ProcessEnv,
@@ -448,10 +459,7 @@ export async function main(
 ): Promise<number> {
   try {
     const opciones = parseArgs(argv);
-    // R4: la aprobacion protege todo lo que saca texto comercial de la base.
-    // Solo se exime `evaluar --dry-run`, que no llama a la API porque trabaja
-    // contra el fichero de respuestas de ejemplo (R10).
-    if (!(opciones.fase === 'evaluar' && opciones.dryRun)) {
+    if (necesitaAprobacion(opciones)) {
       requireApproval(env);
     }
 
