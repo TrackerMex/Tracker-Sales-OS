@@ -435,7 +435,7 @@ async function obtenerRespuestas(
   const reutilizadas = lote.length - pendientes.length;
   if (reutilizadas) {
     console.log(
-      `[jev-backtest] ${reutilizadas} actividades ya respondidas en ${ruta}: no se vuelven a consultar`,
+      `[jev-backtest] ${reutilizadas} actividades ya resueltas en ${ruta}: no se vuelven a consultar`,
     );
   }
 
