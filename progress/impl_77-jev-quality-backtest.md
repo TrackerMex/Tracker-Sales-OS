@@ -867,8 +867,11 @@ Leer es simétrico y resuelve el caso que genera este mismo fallo:
 - una línea ilegible se salta avisando, en vez de tumbar la lectura entera —
   eso es exactamente lo que deja un proceso muerto a mitad de escritura;
 - de cada actividad se conserva la **última** línea, así que una segunda pasada
-  corrige a la primera sin borrar nada. Por eso no hace falta truncar antes de
-  empezar, y por eso un reintento nunca destruye lo anterior.
+  corrige a la primera. Por eso no hace falta truncar antes de empezar.
+
+> **Corregido en la séptima vuelta**: «sin borrar nada» era cierto del fichero,
+> que conserva todas las líneas, pero no de lo que el script leía de vuelta —
+> un fallo posterior sí degradaba una respuesta buena. Ver §32 (MEDIA-11).
 
 **El cinturón.** Cada petición lleva `AbortSignal.timeout`, 60 s por defecto.
 Una que no contesta cae en el `catch` de red, queda `sin_respuesta` y el lote
@@ -968,7 +971,156 @@ restauró a su versión commiteada.
 
 El fichero de respuestas es ahora `progress/jev-backtest-respuestas.jsonl`
 (`-seco.jsonl` para los ensayos), una línea JSON por actividad. Si una corrida
-se interrumpe, **no hay que reextraer ni volver a llamar**: basta repetir
-`--fase evaluar` para las que falten, porque las líneas nuevas se añaden y la
-última de cada actividad gana; o `--fase evaluar --reusar-respuestas` para
-rehacer solo el informe con lo que ya hay.
+se interrumpe, basta repetir `--fase evaluar`; o
+`--fase evaluar --reusar-respuestas` para rehacer solo el informe con lo que ya
+hay.
+
+> **Corregido en la séptima vuelta**: cuando se escribió esto, repetir
+> `--fase evaluar` **sí** repetía todas las llamadas, porque `runBatch`
+> recorría el lote entero. Era falso y costaba reexportar hasta 50 textos. Ya
+> no: ver §32 (ALTA-7).
+
+---
+
+# Séptima vuelta — ALTA-7, MEDIA-11, BAJA-14 y BAJA-15
+
+La comprobación acotada retiró el PASSED por ALTA-7, que salió de una
+instrucción de operación —mía en §31 de este fichero, del Líder en §3b del
+explore— que el código no sostenía. Las dos frases quedan corregidas arriba,
+con su aviso, en vez de reescritas en silencio: importa que se vea que
+estuvieron mal. MEDIA-2, MEDIA-3 y los BAJA restantes siguen sin tocarse. T6
+sigue sin ejecutarse.
+
+## 32. ALTA-7 — reanudar consulta solo lo que falta
+
+`runBatch` recorría `lote.entries()` entero, así que repetir `--fase evaluar`
+volvía a sacar de la empresa hasta 50 textos que ya habían salido, justo en el
+único caso para el que existe reanudar.
+
+`obtenerRespuestas` lee el `.jsonl` previo, pasa a `runBatch` **solo las
+actividades pendientes** y compone el resultado con las que ya estaban.
+
+**Criterio de «falta»**, en `necesitaLlamada` y escrito ahí:
+
+| Estado previo | ¿Se vuelve a consultar? | Por qué |
+|---|---|---|
+| no hay línea | **sí** | nunca se preguntó |
+| `ok` | **no** | una respuesta buena no se toca nunca |
+| `sin_respuesta` **con** cuerpo crudo | **no** | el servidor contestó; el fallo es de lectura y se arregla con `--reusar-respuestas` |
+| `HTTP 4xx` que no sea 429 | **no** | rechazo definitivo: repetirlo exporta otra vez para el mismo no |
+| 429 agotado, timeout, fallo de red, 5xx, cuerpo ilegible | **sí** | intercambio fallido sin resultado; preguntar otra vez es la única vía a un dato |
+
+## 33. MEDIA-11 — confirmado, y cerrado por dos lados
+
+1. Con el reanudar selectivo, a una actividad ya respondida **no se le vuelve a
+   llamar**, así que no puede aparecer una línea de fallo posterior suya.
+2. Y si el fichero ya la trae —de una corrida anterior a este cambio o de una
+   edición a mano—, el lector **conserva la respuesta buena** en vez de dejar
+   ganar a la última. El fichero sigue guardando las dos líneas; lo que no
+   puede es perder la buena al leerlas.
+
+No es que sea improbable: hay un test por cada lado y los dos mutantes mueren.
+
+## 34. BAJA-14 y BAJA-15 — lo que lee quien firma
+
+- **BAJA-14**: el detalle por actividad publica el `motivo`. Quien firma
+  distingue «la API la rechazó», «agotó los reintentos» y «nunca se consultó»,
+  que no significan lo mismo para leer el veredicto. El recuento por consola de
+  cuántas respuestas carga `--reusar-respuestas` volvió con
+  `obtenerRespuestas`.
+- **BAJA-15**: si falta alguna respuesta, el informe abre con un aviso en
+  bloque de cita, antes del veredicto: cuántas tienen respuesta, cuántas nunca
+  se consultaron, por qué las cifras se leen mejor de lo que son, y cómo
+  completarlo — que ahora es barato.
+
+## 35. El comentario que sobraba
+
+`jev-client.ts`, en `entregar`: el orden `onRespuesta` antes de `push` se
+presentaba como la garantía, y ningún test lo sostiene porque invertir las
+líneas no cambia nada observable. El comentario dice ahora lo que es, una
+precaución. El orden se queda.
+
+Por la misma razón se corrigió el aviso de consola que decía «N actividades ya
+respondidas» cuando entre ellas hay rechazos 4xx, que no son respuestas.
+
+## 36. Mutantes de esta vuelta
+
+| Mutante | Resultado |
+|---|---|
+| consultar el lote entero en vez de solo lo pendiente | **3 tests rojos** |
+| el lector deja ganar a la última aunque degrade una buena | **1 test rojo** |
+| `necesitaLlamada` siempre true | **4 tests rojos** |
+| el aviso de informe parcial no se imprime | **2 tests rojos** |
+
+## 37. Commits de la séptima vuelta, en orden
+
+```
+770fb8f test: reanudar sin reexportar lo ya exportado (ALTA-7, MEDIA-11)
+c603e9a fix:  reanuda consultando solo lo que falta (ALTA-7, MEDIA-11)
+3571f17 test: el informe tiene que decir por que falta cada respuesta (BAJA-14)
+d7ec336 fix:  el detalle del informe publica el motivo (BAJA-14)
+e49757c test: un informe incompleto tiene que declararse (BAJA-15)
+4ce6cc9 fix:  el informe parcial se declara parcial (BAJA-15)
+9a7841f docs: el aviso de consola no dice mas de lo que sabe
+```
+
+Modificados: `jev-client.ts`, `run-backtest.ts` y sus dos `.spec.ts`. Nada
+fuera de `backend/scripts/`.
+
+Tests: **124 → 138**.
+
+## 38. Salida literal de los cuatro comandos (séptima vuelta)
+
+```
+=== $ cd backend && pnpm test ===
+
+> backend@0.0.1 test /home/claude/sites/Tracker-Sales-OS/backend
+> jest
+
+
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+Snapshots:   0 total
+Time:        6.384 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+
+> backend@0.0.1 test:scripts /home/claude/sites/Tracker-Sales-OS/backend
+> jest --config ./scripts/jest.config.js
+
+
+Test Suites: 6 passed, 6 total
+Tests:       138 passed, 138 total
+Snapshots:   0 total
+Time:        2.244 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+
+> backend@0.0.1 lint /home/claude/sites/Tracker-Sales-OS/backend
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+
+exit=0
+```
+
+Verificación de flujo sobre un lote sintético de 50 filas, sin base de datos y
+sin red:
+
+- 1.ª pasada: 50 líneas en el `.jsonl`.
+- 2.ª pasada con todo respondido: `50 actividades ya resueltas ... no se
+  vuelven a consultar`, **0 líneas nuevas**.
+- Marcando 7 actividades con `HTTP 429` y 3 con `HTTP 403`: la reanudación
+  consulta **exactamente las 7**, deja las 3 definitivas en paz y el fichero
+  pasa de 50 a 57 líneas.
+- Recortando el fichero a 20 líneas y reutilizando: el informe abre con
+  `INFORME PARCIAL ... 10 de 50 actividades del lote, y 30 nunca se llegaron a
+  consultar`, y las 30 aparecen en el detalle con su motivo.
+
+Los ficheros de prueba se borraron y `progress/explore_jev-backtest.md` se
+restauró a su versión commiteada.
