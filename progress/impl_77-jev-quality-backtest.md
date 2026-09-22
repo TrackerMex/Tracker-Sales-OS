@@ -778,17 +778,18 @@ cuando la cifra sí tiene valor.
 ## 25. Commits de la quinta vuelta, en orden
 
 ```
-9e3e1e6 test: un cuerpo ilegible no puede llevarse el lote (ALTA-5)
-04b2ddf fix:  un cuerpo ilegible es sin_respuesta, no el fin del lote (ALTA-5)
-d253d22 test: un ensayo en seco no puede machacar la corrida real (ALTA-6)
-4f9ac0d fix:  el ensayo escribe en su propio fichero (ALTA-6)
-e767825 test: comprueba que validarEtiquetado sigue enchufada (MEDIA-8)
-366acb2 fix:  explica el n/d de Spearman con serie constante (BAJA-10)
+f44822a test:  un cuerpo ilegible no puede llevarse el lote (ALTA-5)
+04b2ddf fix:   un cuerpo ilegible es sin_respuesta, no el fin del lote (ALTA-5)
+d253d22 test:  un ensayo en seco no puede machacar la corrida real (ALTA-6)
+4f9ac0d fix:   el ensayo escribe en su propio fichero (ALTA-6)
+e767825 test:  comprueba que validarEtiquetado sigue enchufada (MEDIA-8)
+108f961 test:  el n/d de Spearman tambien tiene que explicarse (BAJA-10)
+366acb2 fix:   explica el n/d de Spearman con serie constante (BAJA-10)
+42481b9 style: formato prettier en el test de cuerpo ilegible
 ```
 
-Más `test:` de BAJA-10 y dos `style:` de prettier. Modificados:
-`jev-client.ts`, `run-backtest.ts` y sus dos `.spec.ts`. Nada fuera de
-`backend/scripts/`.
+Modificados: `jev-client.ts`, `run-backtest.ts` y sus dos `.spec.ts`. Nada
+fuera de `backend/scripts/`.
 
 Tests: **103 → 114**.
 
