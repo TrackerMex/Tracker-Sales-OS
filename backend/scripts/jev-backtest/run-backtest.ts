@@ -506,6 +506,15 @@ export function renderReport(
           'se han podido medir; no son un cero.',
         ]
       : []),
+    ...(m.paresJev > 0 && m.spearman === null
+      ? [
+          '',
+          '**n/d en Spearman**: hay pares comparables, pero una de las dos',
+          'series es constante — todas las actividades comparadas llevan el',
+          'mismo nivel por un lado. Sobre una serie constante la correlacion no',
+          'existe; no es que sea nula.',
+        ]
+      : []),
     '',
     '## Detalle por actividad (R8)',
     '',
