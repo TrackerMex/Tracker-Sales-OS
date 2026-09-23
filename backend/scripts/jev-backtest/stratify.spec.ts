@@ -2,6 +2,7 @@ import {
   BATCH_QUERY,
   BATCH_TARGETS,
   compararConcentracion,
+  liderDelLote,
   classify,
   isEmptyActivity,
   sellerSpread,
@@ -371,6 +372,59 @@ describe('R11 (77-jev-quality-backtest #77): la comparacion sigue a una sola per
       enCandidatas: null,
       enLote: null,
       diferenciaPuntos: null,
+    });
+  });
+});
+
+describe('R11 (77-jev-quality-backtest #77): quien encabeza el lote, aunque no sea la referencia (MEDIA-19)', () => {
+  const de = (seller: string, n: number) =>
+    Array.from({ length: n }, () => ({ seller_id: seller }));
+
+  it('mira a quien mas aporta al LOTE, no a quien encabeza las candidatas', () => {
+    // En las candidatas manda B (30 de 40). En el lote manda A (3 de 4).
+    const candidatas = [...de('A', 10), ...de('B', 30)];
+    const lote = [...de('A', 3), ...de('B', 1)];
+
+    const l = liderDelLote(candidatas, lote);
+
+    expect(l.enLote).toBeCloseTo(0.75, 10);
+    expect(l.enCandidatas).toBeCloseTo(0.25, 10);
+  });
+
+  it('no publica ninguna resta: no mediria concentracion anadida', () => {
+    const l = liderDelLote(de('A', 10), de('A', 3));
+
+    expect(Object.keys(l).sort()).toEqual(['enCandidatas', 'enLote']);
+  });
+
+  it('cubre el punto ciego medido: casi la mitad del lote en quien no es la referencia', () => {
+    // 11 de 25 de la franja alta (44%) de alguien que en las candidatas es el 12%.
+    const candidatas = [...de('V-PEQUENO', 72), ...de('V-GRANDE', 528)];
+    const lote = [...de('V-PEQUENO', 11), ...de('V-GRANDE', 14)];
+
+    const l = liderDelLote(candidatas, lote);
+
+    expect(l.enCandidatas).toBeCloseTo(0.12, 10);
+    expect(l.enLote).toBeCloseTo(0.44, 10);
+  });
+
+  it('no emite ningun identificador de vendedor', () => {
+    const l = liderDelLote(
+      de('VENDEDOR-UUID-7f3a', 5),
+      de('VENDEDOR-UUID-7f3a', 2),
+    );
+
+    expect(JSON.stringify(l)).not.toContain('VENDEDOR');
+  });
+
+  it('sin candidatas o sin lote no hay nada que publicar', () => {
+    expect(liderDelLote([], de('A', 3))).toEqual({
+      enCandidatas: null,
+      enLote: null,
+    });
+    expect(liderDelLote(de('A', 3), [])).toEqual({
+      enCandidatas: null,
+      enLote: null,
     });
   });
 });
