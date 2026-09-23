@@ -301,8 +301,22 @@ movimiento que `TextoRecortado` hizo con R5 en BAJA-7.
 **No se hace, a diferencia de BAJA-7, y la diferencia importa**: alli la
 frontera era que texto de clientes reales saliera de la empresa, y un error
 costaba una exportacion irreversible. Aqui el coste de confundir un ambito es
-un numero mal impreso en un informe que lee una persona, y la fixture
-discriminante de MEDIA-17 ya mata los tres mutantes conocidos.
+un numero mal impreso en un informe que lee una persona, y regenerar lo
+corrige.
+
+**Enmienda (revision del 2026-09-23)**: la primera version de esta decision se
+apoyaba tambien en que «la fixture discriminante ya mata los mutantes
+conocidos». Esa pata no aguanta, y el revisor la tiro con un mutante
+desconocido a la primera. El principio de la fixture es «cualquier confusion
+cambia algun **numero impreso**», por eso discrimina las cuatro filas y la
+cifra titular. Pero la salida de D14 no es un numero: es un bloque de prosa que
+esta o no esta. El principio no alcanza a los predicados, y ahi vivia MEDIA-18.
+
+La conclusion no cambia —los tipos por ambito siguen sin amortizarse en un
+script de un solo uso— pero el remedio correcto es mas barato que tiparlo todo:
+**extender el principio de la fixture a las salidas de presencia y ausencia**,
+no solo a las celdas de la tabla. Eso cierra MEDIA-18 y cualquier aviso que se
+anada despues.
 
 Ademas este script corre una vez y se archiva: no tiene la vida por delante que
 justifica pagar una refactorizacion de varios ficheros. Si algun dia el
