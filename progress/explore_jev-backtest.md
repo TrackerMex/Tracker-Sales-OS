@@ -277,4 +277,41 @@ Ninguno provoca una reexportación de datos de cliente ni altera el veredicto.
   test dedicado. Se dejan porque el cálculo completo sí está cubierto y
   verificado tres veces contra una implementación de referencia independiente.
 
+- **MEDIA-20**: el aviso de D14 no esta discriminado contra el tercer ambito.
+  La fixture cruza franja alta contra lote entero, pero calcularlo sobre las
+  candidatas deja los 174 tests en verde. Codigo correcto, cableado sin
+  afirmar. Se cierra con un caso donde candidatas y franja alta caigan a
+  distinto lado del corte.
+- **BAJA-20**: el anexo dice que el tipo `LiderDelLote` no admite la resta;
+  en realidad lo que vigila el test son las claves del objeto devuelto, no la
+  interfaz. El candado es el correcto, la afirmacion era mas fuerte que el.
+
 Si la corrida real destapa alguno, se registran como feature aparte.
+
+## Como leer la seccion de concentracion del informe
+
+Verificado por la revision sobre tres poblaciones renderizadas. El informe
+responde tres preguntas, y ninguna necesita que el lector recuerde una regla:
+
+1. **Anadio concentracion el muestreo?** La cifra titular, emparejada por el
+   vendedor de las candidatas (D13). Esta centrada en cero: en un muestreo
+   justo sale negativa tantas veces como positiva.
+2. **Quien protagoniza el lote?** Sus dos fracciones, en la franja alta y en
+   las candidatas, publicadas como dos hechos y nunca como una resta.
+3. **Sostiene este lote un veredicto sobre el equipo?** El aviso de D14, que
+   aparece cuando mas de la mitad de la franja alta es de una sola persona y
+   advierte de que ahi reextraer no arregla nada.
+
+**Aviso para quien firme, cerca del corte.** Con una poblacion como la medida
+el 2026-09-23, la franja alta puede salir al 48% de una sola persona y **no
+haber aviso**, porque el corte es «mas de la mitad». El numero esta dos veces
+en negrita y se ve, pero cerca del corte lo que informa son las dos cifras y no
+la ausencia del aviso. Es la consecuencia aceptada de usar un corte en lenguaje
+llano en vez de un umbral estadistico, y se prefiere asi: la decision es
+humana.
+
+**Si la cifra titular acusa concentracion anadida**, la salida no es retocar el
+lote a mano —eso es la cuota que D12 descarta— sino volver a extraer con otra
+semilla y dejar constancia de las dos. Si el problema es la poblacion y no el
+muestreo, reextraer no cambia nada: o se amplia el lote, o el veredicto se
+firma sabiendo a quien describe.
