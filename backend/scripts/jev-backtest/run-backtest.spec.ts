@@ -1,7 +1,7 @@
 import { JevResult, MOTIVO_NUNCA_LLAMADA, nuncaLlamada } from './jev-client';
 import { DEFAULT_SEED, shuffleWithSeed } from './labeling';
 import { Metrics } from './metrics';
-import { stratify } from './stratify';
+import { compararConcentracion, stratify } from './stratify';
 import {
   LoteGuardado,
   RUTA_ETIQUETADO,
@@ -929,6 +929,41 @@ describe('R11 (77-jev-quality-backtest #77): la concentracion del lote se lee co
   });
 
   it('un lote extraido antes de esta comparacion no rompe el informe', async () => {
+    const md = await informeDe(respuestas);
+
+    expect(md).toContain('Reparto por vendedor');
+    expect(md).toMatch(/n\/d|regener/i);
+  });
+});
+
+describe('R11 (77-jev-quality-backtest #77): la cifra titular del informe (MEDIA-15)', () => {
+  it('el lote guarda la comparacion de la franja alta, emparejada por vendedor', async () => {
+    const { escrituras } = await extraerConPoblacion(['--fase', 'extraer']);
+    const guardado = JSON.parse(escrituras[RUTA_LOTE]) as LoteGuardado;
+
+    const candidatasAlta = poblacionSesgada.filter((a) => a.quality === 100);
+    const loteAlta = guardado.orden.filter((a) => a.franja === 'alta');
+
+    expect(guardado.comparacionAlta).toEqual(
+      compararConcentracion(candidatasAlta, loteAlta),
+    );
+  });
+
+  it('el informe publica las dos fracciones de esa persona y los puntos', async () => {
+    const md = await informeDe(respuestas, etiquetas, {
+      comparacionAlta: {
+        enCandidatas: 0.469,
+        enLote: 0.8,
+        diferenciaPuntos: 33.1,
+      },
+    });
+
+    expect(md).toContain('46.9%');
+    expect(md).toContain('80.0%');
+    expect(md).toMatch(/33\.1 puntos/);
+  });
+
+  it('un lote sin la comparacion no rompe el informe', async () => {
     const md = await informeDe(respuestas);
 
     expect(md).toContain('Reparto por vendedor');
