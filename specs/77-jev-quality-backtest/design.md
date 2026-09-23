@@ -211,3 +211,36 @@ falso 100 no puede dar veredicto positivo, porque la condición del 70% se
 calcula sobre un conjunto vacío. Ese resultado no significa que Jev falle:
 significa que el lote no contenía el fenómeno que se quería medir, y que hay
 que reestratificar.
+
+## D12 — Dentro de cada franja se elige al azar con la semilla, no por fecha
+
+R2 fija el reparto entre franjas (25/15/10) y no dice nada de cómo elegir
+dentro de cada una. Hueco de la spec, detectado en la primera extracción real
+del 2026-09-23.
+
+`stratify` hacía `pools[from].splice(0, n)` sobre filas que llegan en
+`ORDER BY executed_at DESC`, así que se quedaba con las n **más recientes** de
+cada franja. Efecto medido sobre el lote real:
+
+| | Población | Lote extraído |
+|---|---:|---:|
+| Fracción de los `quality = 100` del vendedor más prolífico | 46.9% | **80%** |
+
+Veinte de las 25 actividades de la franja alta eran de una sola persona, y los
+falsos 100 —la hipótesis entera de esta feature— se miden exclusivamente sobre
+esa franja. El veredicto habría descrito el estilo de escritura de un vendedor,
+no el del equipo.
+
+**Decisión**: barajar cada franja con la semilla antes de recortar. La semilla
+ya existe y ya se registra, así que el lote sigue siendo reproducible.
+
+**Se descarta poner un tope por vendedor.** Sería sobrecorregir: si una persona
+produce de verdad el 47% de los registros que puntúan 100, un lote donde
+aporte el 47% es el fiel, y forzarlo al 25% crearía el sesgo contrario. Lo que
+se quiere es una muestra representativa de la población, y eso lo da el azar,
+no una cuota.
+
+El informe sigue publicando la concentración por vendedor (MEDIA-7). Esa parte
+funcionó: reportar la concentración es lo que permitió ver el problema antes de
+gastar la hora del director. Lo que faltaba no era el aviso, era que el
+muestreo no lo provocara.
