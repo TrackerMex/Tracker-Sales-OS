@@ -1124,3 +1124,133 @@ sin red:
 
 Los ficheros de prueba se borraron y `progress/explore_jev-backtest.md` se
 restauró a su versión commiteada.
+
+---
+
+# Octava vuelta — D12: el muestreo dentro de la franja
+
+La primera extracción real destapó que `stratify` recortaba con
+`splice(0, n)` sobre filas que llegan en `ORDER BY executed_at DESC`, así que
+se quedaba con las **n más recientes** de cada franja. El Líder cerró el hueco
+de la spec con D12; esto es su implementación. T6 sigue sin ejecutarse.
+
+## 39. Qué cambió
+
+Las tres pools se barajan con `shuffleWithSeed` **justo antes de recortar**,
+así que el corte y el relleno desde la franja superior toman al azar en vez de
+quedarse con las más recientes.
+
+Se reutiliza el generador de R6, como pedía el encargo: hay **una sola**
+barajadura con semilla en el script. Eso hace que `stratify.ts` importe de
+`labeling.ts`; si prefieres que esa utilidad viva en un módulo neutro, es un
+movimiento mecánico, pero no lo hago por mi cuenta porque toca cinco ficheros
+para cero cambio de comportamiento.
+
+La semilla entra por parámetro y `faseExtraer` le pasa la de la corrida, que ya
+se registraba en el lote: misma semilla, mismo lote.
+
+**Sin tope por vendedor**, que D12 descarta por escrito. La representatividad
+la da el azar, no una cuota.
+
+### Efecto medido
+
+Sobre la población sintética del test, donde el monopolista es 25 de las 60
+actividades con `quality = 100` — el **41.7%**:
+
+| Semilla | Fracción del monopolista en la franja alta | Vendedores distintos en la franja |
+|---:|---:|---:|
+| antes (sin barajar) | **100%** (25 de 25) | **1** |
+| 77 | 32.0% | 6 |
+| 1234 | 36.0% | 6 |
+| 2026 | 36.0% | 6 |
+| 9 | 36.0% | 6 |
+
+La muestra pasa de invertir el sesgo a quedarse a 6-10 puntos de la población.
+
+## 40. Un mutante que sobrevivía, y ya no
+
+Con el arreglo puesto, quitarle la semilla a la llamada de `stratify` en
+`faseExtraer` dejaba los 143 tests en verde: nada comprobaba el cableado. No es
+cosmético — con `--semilla 1234` el fichero de etiquetado saldría ordenado con
+1234 y el muestreo con la de por defecto, así que «misma semilla, mismo lote»
+sería falso para cualquier semilla que no fuese la de defecto.
+
+Es el mismo hueco que ya apareció en el gate de R4 (ALTA-3) y en
+`validarEtiquetado` (MEDIA-8). Se cierra igual: el lector de candidatas entra
+por `deps`, con la implementación real por defecto, y un test corre `main
+--fase extraer --semilla 1234` **sin base de datos** y compara el lote
+guardado con `stratify(poblacion, 1234)` — y comprueba que **no** es el de la
+semilla por defecto.
+
+| Mutante | Resultado |
+|---|---|
+| no barajar (el comportamiento de ayer) | **4 tests rojos** |
+| barajar siempre con una semilla fija | **1 test rojo** |
+| `faseExtraer` no le pasa la semilla a `stratify` | **1 test rojo** (antes: ninguno) |
+
+## 41. Commits de la octava vuelta, en orden
+
+```
+9df4e4a test: el lote no puede heredar el sesgo de la franja (D12)
+81f3cbe fix:  baraja cada franja con la semilla antes de recortar (D12)
+3bcd6a1 test: la fase extraer tiene que usar la semilla de la corrida (D12)
+1aa837e fix:  la extraccion se puede probar sin base de datos (D12)
+```
+
+Modificados: `stratify.ts`, `run-backtest.ts` y sus dos `.spec.ts`. Nada fuera
+de `backend/scripts/`.
+
+Tests: **138 → 145**.
+
+## 42. Salida literal de los cuatro comandos (octava vuelta)
+
+```
+=== $ cd backend && pnpm test ===
+
+> backend@0.0.1 test /home/claude/sites/Tracker-Sales-OS/backend
+> jest
+
+
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+Snapshots:   0 total
+Time:        4.675 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+
+> backend@0.0.1 test:scripts /home/claude/sites/Tracker-Sales-OS/backend
+> jest --config ./scripts/jest.config.js
+
+
+Test Suites: 6 passed, 6 total
+Tests:       145 passed, 145 total
+Snapshots:   0 total
+Time:        1.104 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+
+> backend@0.0.1 lint /home/claude/sites/Tracker-Sales-OS/backend
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+
+exit=0
+```
+
+`pnpm test` sigue en 15 suites / 78 tests: D9 intacto.
+
+**Esta vuelta no lleva prueba de flujo contra disco, a propósito.** En
+`progress/` hay un lote real extraído (50 actividades con texto de clientes) y
+su fichero de etiquetado; correr el guion sintético de siempre los habría
+sobrescrito. La extracción se ejercita de extremo a extremo igual, con
+`main --fase extraer` sobre ficheros en memoria y sin base de datos, en el test
+de §40.
+
+El lote real de `progress/jev-backtest-lote.json` (semilla 77) quedó
+invalidado por D12 y hay que **regenerarlo con `--fase extraer`** antes de
+dárselo al director. No lo he tocado.
