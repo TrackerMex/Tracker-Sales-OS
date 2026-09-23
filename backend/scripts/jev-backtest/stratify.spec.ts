@@ -6,7 +6,7 @@ import {
   sellerSpread,
   stratify,
 } from './stratify';
-import { SourceActivity } from './types';
+import { BatchActivity, SourceActivity } from './types';
 
 const act = (
   id: string,
@@ -204,5 +204,102 @@ describe('R11 (77-jev-quality-backtest #77): concentracion por vendedor en el lo
       mayor: 0,
       fraccionMayor: null,
     });
+  });
+});
+
+describe('R2 (77-jev-quality-backtest #77): dentro de la franja se elige al azar, no por fecha', () => {
+  const deVendedor = (
+    id: string,
+    quality: number,
+    seller: string,
+  ): SourceActivity => ({ ...act(id, quality), seller_id: seller });
+
+  // La consulta llega en ORDER BY executed_at DESC, asi que "las primeras" son
+  // las mas recientes: si el vendedor mas activo ultimamente copa la cabecera
+  // de la franja, recortar sin barajar le entrega el lote entero.
+  const poblacionSesgada = [
+    ...Array.from({ length: 25 }, (_, i) =>
+      deVendedor(`reciente-${i}`, 100, 'V-MONOPOLIO'),
+    ),
+    ...Array.from({ length: 35 }, (_, i) =>
+      deVendedor(`antigua-${i}`, 100, `V-${i % 5}`),
+    ),
+    ...Array.from({ length: 30 }, (_, i) =>
+      deVendedor(`media-${i}`, 60, `V-${i % 5}`),
+    ),
+    ...Array.from({ length: 30 }, (_, i) =>
+      deVendedor(`baja-${i}`, 20, `V-${i % 5}`),
+    ),
+  ];
+
+  const fraccionAlta = (batch: BatchActivity[], seller: string) =>
+    batch.filter((a) => a.franja === 'alta' && a.seller_id === seller).length /
+    BATCH_TARGETS.alta;
+
+  it('el lote no hereda el sesgo de quien copa la cabecera de la franja', () => {
+    const { batch } = stratify(poblacionSesgada, 77);
+
+    // En la poblacion V-MONOPOLIO es 25 de 60 de la franja alta: 41.7%.
+    const enPoblacion = 25 / 60;
+    const enLote = fraccionAlta(batch, 'V-MONOPOLIO');
+
+    expect(enLote).toBeLessThan(0.7);
+    expect(Math.abs(enLote - enPoblacion)).toBeLessThan(0.25);
+  });
+
+  it('la franja alta trae varios vendedores, no uno', () => {
+    const { batch } = stratify(poblacionSesgada, 77);
+    const vendedores = new Set(
+      batch.filter((a) => a.franja === 'alta').map((a) => a.seller_id),
+    );
+
+    expect(vendedores.size).toBeGreaterThan(2);
+  });
+
+  it('el relleno desde la franja superior tambien toma al azar', () => {
+    const entrada = [
+      ...Array.from({ length: 30 }, (_, i) =>
+        deVendedor(`alta-${i}`, 100, `V-${i % 5}`),
+      ),
+      // La media tiene 21: las 15 primeras de otros y las 6 ultimas de uno
+      // solo, asi que recortar sin barajar deja un sobrante monopolizado.
+      ...Array.from({ length: 15 }, (_, i) =>
+        deVendedor(`media-${i}`, 60, `V-${i % 5}`),
+      ),
+      ...Array.from({ length: 6 }, (_, i) =>
+        deVendedor(`media-cola-${i}`, 60, 'V-COLA'),
+      ),
+      ...Array.from({ length: 4 }, (_, i) =>
+        deVendedor(`baja-${i}`, 20, `V-${i % 5}`),
+      ),
+    ];
+
+    const { batch, deviations } = stratify(entrada, 77);
+    const rellenadas = batch.filter(
+      (a) => a.franja === 'baja' && a.quality === 60,
+    );
+
+    expect(deviations).toHaveLength(1);
+    expect(rellenadas).toHaveLength(6);
+    expect(new Set(rellenadas.map((a) => a.seller_id)).size).toBeGreaterThan(1);
+  });
+
+  it('misma semilla, mismo lote; otra semilla, otro lote', () => {
+    const ids = (semilla: number) =>
+      stratify(poblacionSesgada, semilla)
+        .batch.map((a) => a.id)
+        .join(',');
+
+    expect(ids(77)).toBe(ids(77));
+    expect(ids(77)).not.toBe(ids(1234));
+  });
+
+  it('sigue respetando el reparto 25/15/10 y las exclusiones de R3', () => {
+    const { batch } = stratify(poblacionSesgada, 77);
+
+    expect(batch).toHaveLength(50);
+    expect(batch.filter((a) => a.franja === 'alta')).toHaveLength(25);
+    expect(batch.filter((a) => a.franja === 'media')).toHaveLength(15);
+    expect(batch.filter((a) => a.franja === 'baja')).toHaveLength(10);
   });
 });
