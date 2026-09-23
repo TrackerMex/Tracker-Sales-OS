@@ -568,9 +568,10 @@ function lineaComparacion(c: ComparacionConcentracion | undefined): string[] {
   }
   const signo = c.diferenciaPuntos >= 0 ? '+' : '';
   return [
-    `- Del vendedor que mas aporta a las candidatas con quality = 100: tiene el`,
-    `  **${pct(c.enCandidatas)}** de ellas y el **${pct(c.enLote)}** de la franja`,
-    `  alta del lote, asi que el muestreo le dio **${signo}${c.diferenciaPuntos.toFixed(1)} puntos**.`,
+    '- Del vendedor que mas aporta a las candidatas con quality = 100 —que puede',
+    `  no ser el que encabeza el lote—: tiene el **${pct(c.enCandidatas)}** de ellas`,
+    `  y el **${pct(c.enLote)}** de la franja alta del lote, asi que el muestreo`,
+    `  le dio **${signo}${c.diferenciaPuntos.toFixed(1)} puntos**.`,
   ];
 }
 
@@ -589,6 +590,7 @@ function avisoConcentracion(spreadAlta: SellerSpread): string[] {
     return [];
   }
   return [
+    '',
     '> **La franja alta la escribe sobre todo una persona.** Es el',
     `> ${pct(spreadAlta.fraccionMayor)} de las actividades con quality = 100 del`,
     '> lote, asi que lo que mida el veredicto sera su forma de escribir y no la',
@@ -635,7 +637,6 @@ function seccionVendedores(lote: LoteGuardado): string[] {
     fila('**Franja alta del lote**', spreadAlta, alta.length),
     '',
     ...lineaComparacion(lote.comparacionAlta),
-    '',
     ...avisoConcentracion(spreadAlta),
     `- Reparto del lote, de mayor a menor: ${
       spread.reparto.length
