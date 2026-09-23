@@ -1523,3 +1523,117 @@ exit=0
 
 `pnpm test` sigue en 15 suites / 78 tests: D9 intacto. `pnpm lint` cazó de paso
 un resto sin sentido en un helper de fixture, ya limpio.
+
+---
+
+# Undécima vuelta — MEDIA-18 y MEDIA-19
+
+Los dos lados del mismo hueco. T6 sigue sin ejecutarse. **Artefactos reales
+intactos**: md5 antes y después, los dos `OK`.
+
+## 54. MEDIA-18 — el ámbito del aviso de D14, y el principio que faltaba
+
+Calcular el aviso sobre el lote entero pasaba los 164 en verde **y borraba el
+aviso justo en el lote de ayer**: 80% de una persona en la franja alta, 40% en
+el total, diluido desaparece. La misma dilución que obliga a publicar cuatro
+filas y no dos, esta vez dentro de la función que decide si el lote sirve.
+
+Dos casos que se cruzan, para que el ámbito quede clavado por los dos lados:
+
+| Caso | Franja alta | Lote entero | Debe avisar |
+|---|---:|---:|---|
+| concentrado en la franja | 75% | 30% | **sí** |
+| concentrado fuera de la franja | 50% | 80% | **no** |
+
+| Mutante | Resultado |
+|---|---|
+| aviso sobre el lote entero | **2 tests rojos** |
+| aviso con el corte bajado (cualquier ámbito) | **2 tests rojos** |
+
+**El principio de la fixture queda extendido**, como pide la enmienda de D15:
+ya no dice «cualquier confusión cambia algún número impreso» sino que cubre
+también las salidas de presencia y ausencia. Ahí vivía MEDIA-18 y ahí vivirá el
+próximo aviso que alguien añada; queda escrito en el comentario de la fixture
+para que nazca cubierto.
+
+## 55. MEDIA-19 — el protagonista del lote, aunque no sea la referencia
+
+`liderDelLote` publica **dos hechos**: la fracción en el lote de quien más
+aporta a su franja alta, y la fracción de esa misma persona en las candidatas.
+**Sin resta, y el tipo no la lleva**: restarlas sería volver al sesgo que D13
+quitó, porque elegir al primero de la muestra ya selecciona la fluctuación al
+alza. Hay un test que exige que la función no devuelva ninguna diferencia.
+
+Así se lee ahora una población sana, donde el punto ciego era invisible:
+
+```
+| **Franja alta del lote** | 6 | 40.0% (10 de 25) |
+
+- Del vendedor que mas aporta a las candidatas con quality = 100 —que puede
+  no ser el que encabeza el lote—: tiene el **16.7%** de ellas y
+  el **12.0%** de la franja alta del lote, asi que el muestreo le dio
+  **-4.7 puntos**.
+- Quien mas aporta a la franja alta del lote tiene el **40.0%** de
+  ella y el **16.7%** de las candidatas con quality = 100.
+  Son dos hechos, no una resta: (...)
+```
+
+La cifra titular dice −4.7 y es correcta; el 40.0% del protagonista ya no hay
+que ir a buscarlo a la tabla ni deducirlo. Es el 10.3% de corridas que el
+revisor midió.
+
+| Mutante | Resultado |
+|---|---|
+| `liderAlta` calculado sobre el lote entero | **1 test rojo** |
+| no imprimir la línea del líder | **1 test rojo** |
+
+## 56. Commits de la undécima vuelta, en orden
+
+```
+7020523 test: el aviso de D14 mira la franja alta, no el lote (MEDIA-18)
+779a03d test: el lector tiene que ver al protagonista del lote (MEDIA-19)
+aceb989 feat: liderDelLote, dos hechos sobre quien encabeza el lote (MEDIA-19)
+a9cc338 test: el informe tiene que enseñar al protagonista del lote (MEDIA-19)
+d54012d fix:  el informe enseña al protagonista del lote (MEDIA-19)
+51a3050 docs: el aviso cierra la seccion en vez de partir la lista
+```
+
+Modificados: `stratify.ts`, `run-backtest.ts` y sus dos `.spec.ts`. Nada fuera
+de `backend/scripts/`.
+
+Tests: **164 → 174**.
+
+## 57. Salida literal de los cuatro comandos (undécima vuelta)
+
+```
+=== $ cd backend && pnpm test ===
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+Test Suites: 6 passed, 6 total
+Tests:       174 passed, 174 total
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+exit=0
+```
+
+`pnpm test` sigue en 15 suites / 78 tests: D9 intacto.
+
+## 58. Lo que ve quien firme, de un vistazo
+
+La sección de reparto del informe responde ahora las tres preguntas que hay que
+hacerse antes de darle el lote al director, sin regla de lectura que recordar:
+
+1. **¿El muestreo añadió concentración?** La cifra titular, centrada en cero,
+   emparejada por la referencia de las candidatas (D13).
+2. **¿Quién protagoniza el lote?** Sus dos fracciones, como hechos (MEDIA-19).
+3. **¿Puede este lote sostener un veredicto sobre el equipo?** El aviso, cuando
+   más de la mitad de la franja alta es de una persona, con la advertencia de
+   que ahí reextraer no arregla nada (D14).
