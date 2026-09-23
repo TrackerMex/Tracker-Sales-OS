@@ -1,7 +1,12 @@
 import { JevResult, MOTIVO_NUNCA_LLAMADA, nuncaLlamada } from './jev-client';
 import { DEFAULT_SEED, shuffleWithSeed } from './labeling';
 import { Metrics } from './metrics';
-import { compararConcentracion, stratify } from './stratify';
+import {
+  compararConcentracion,
+  isEmptyActivity,
+  sellerSpread,
+  stratify,
+} from './stratify';
 import {
   LoteGuardado,
   RUTA_ETIQUETADO,
@@ -691,6 +696,9 @@ describe('R11 (77-jev-quality-backtest #77): un informe incompleto se declara in
   });
 });
 
+const pctDe = (v: number | null): string =>
+  v === null ? 'n/d' : `${(v * 100).toFixed(1)}%`;
+
 const filaDe = (
   id: string,
   quality: number,
@@ -1012,5 +1020,101 @@ describe('R11 (77-jev-quality-backtest #77): una franja alta de una sola persona
     });
 
     expect(md).not.toMatch(/una sola persona|sobre todo una persona/i);
+  });
+});
+
+describe('R11 (77-jev-quality-backtest #77): cada celda del reparto sale del ambito que dice (MEDIA-17)', () => {
+  // Fixture construida para que CUALQUIER confusion de ambito cambie algun
+  // numero impreso: las filas que R3 descarta son de un vendedor propio y
+  // numerosas, la concentracion de la franja alta no se parece a la del total,
+  // y la del lote entero no se parece a la de su franja alta.
+  const vacia = {
+    summary: '',
+    discovery: null,
+    agreement: '  ',
+    next_step: null,
+  };
+  const poblacion: SourceActivity[] = [
+    ...Array.from({ length: 30 }, (_, i) => filaDe(`alto-${i}`, 100, 'V-ALTO')),
+    ...Array.from({ length: 30 }, (_, i) =>
+      filaDe(`a-${i}`, 100, `V-${i % 5}`),
+    ),
+    ...Array.from({ length: 35 }, (_, i) =>
+      filaDe(`medio-${i}`, 60, 'V-MEDIO'),
+    ),
+    ...Array.from({ length: 5 }, (_, i) => filaDe(`m-${i}`, 60, `V-${i % 5}`)),
+    ...Array.from({ length: 20 }, (_, i) => filaDe(`b-${i}`, 20, `V-${i % 5}`)),
+    // Descartadas por R3: si la linea base las contara, cambiarian los cuatro
+    // numeros de las dos primeras filas.
+    ...Array.from({ length: 25 }, (_, i) => ({
+      ...filaDe(`vacia-${i}`, 100, 'V-VACIO'),
+      ...vacia,
+    })),
+  ];
+
+  const informeDelLote = async () => {
+    const { fs, escrituras } = fsFalso({});
+    await main(
+      ['--fase', 'extraer'],
+      { JEV_BACKTEST_APPROVED: 'si' },
+      {
+        fs,
+        leerCandidatos: () => Promise.resolve(poblacion),
+      },
+    );
+    const guardado = JSON.parse(escrituras[RUTA_LOTE]) as LoteGuardado;
+    return { guardado, md: await informeDe(respuestas, etiquetas, guardado) };
+  };
+
+  const elegibles = poblacion.filter((a) => !isEmptyActivity(a));
+  const elegiblesAlta = elegibles.filter((a) => a.quality === 100);
+
+  it('las dos filas de candidatas excluyen lo que descarta R3', async () => {
+    const { md } = await informeDelLote();
+
+    const todas = sellerSpread(elegibles);
+    const alta = sellerSpread(elegiblesAlta);
+    expect(md).toContain(
+      `| Candidatas elegibles | ${todas.vendedores} | ${pctDe(todas.fraccionMayor)} (${todas.mayor} de ${elegibles.length}) |`,
+    );
+    expect(md).toContain(
+      `| Candidatas con quality = 100 | ${alta.vendedores} | ${pctDe(alta.fraccionMayor)} (${alta.mayor} de ${elegiblesAlta.length}) |`,
+    );
+  });
+
+  it('la fila de la franja alta del lote no es la del lote entero', async () => {
+    const { guardado, md } = await informeDelLote();
+
+    const loteAlta = guardado.orden.filter((a) => a.franja === 'alta');
+    const spreadAlta = sellerSpread(loteAlta);
+    const spreadTodo = sellerSpread(guardado.orden);
+
+    expect(spreadAlta.fraccionMayor).not.toBeCloseTo(
+      spreadTodo.fraccionMayor as number,
+      2,
+    );
+    expect(md).toContain(
+      `| **Franja alta del lote** | ${spreadAlta.vendedores} | ${pctDe(spreadAlta.fraccionMayor)} (${spreadAlta.mayor} de ${loteAlta.length}) |`,
+    );
+    expect(md).toContain(
+      `| Lote completo | ${spreadTodo.vendedores} | ${pctDe(spreadTodo.fraccionMayor)} (${spreadTodo.mayor} de ${guardado.orden.length}) |`,
+    );
+  });
+
+  it('la cifra titular se calcula contra las candidatas de quality = 100, no contra todas', async () => {
+    const { guardado, md } = await informeDelLote();
+
+    const loteAlta = guardado.orden.filter((a) => a.franja === 'alta');
+    const buena = compararConcentracion(elegiblesAlta, loteAlta);
+    const equivocada = compararConcentracion(elegibles, loteAlta);
+
+    expect(buena.diferenciaPuntos).not.toBeCloseTo(
+      equivocada.diferenciaPuntos as number,
+      1,
+    );
+    expect(md).toContain(
+      `${(buena.diferenciaPuntos as number) >= 0 ? '+' : ''}${(buena.diferenciaPuntos as number).toFixed(1)} puntos`,
+    );
+    expect(md).toContain(`**${pctDe(buena.enCandidatas)}** de ellas`);
   });
 });
