@@ -244,3 +244,66 @@ El informe sigue publicando la concentración por vendedor (MEDIA-7). Esa parte
 funcionó: reportar la concentración es lo que permitió ver el problema antes de
 gastar la hora del director. Lo que faltaba no era el aviso, era que el
 muestreo no lo provocara.
+
+## D13 — La cifra de concentración se empareja por el vendedor de las candidatas
+
+Cerrando MEDIA-15. La primera version restaba dos **maximos sobre vendedores**
+sin saber si eran la misma persona, y el maximo de una muestra esta sesgado al
+alza por construccion: sobre 400 semillas con seis vendedores parejos al 16.7%,
+un muestreo demostrablemente justo daba media **+10.3 puntos** y **cero**
+diferencias negativas. Un numero que siempre acusa deja de leerse.
+
+El Lider indico emparejar por quien mas aporta **al lote**. Medido, esa
+variante no arregla nada (+10.3, 0 de 400 negativas): elegir a quien encabeza
+la muestra ya selecciona la fluctuacion al alza, que es justo lo que hace
+`max`. La referencia tiene que venir del lado que no es muestra.
+
+**Decision, contra la indicacion original y con la medicion delante**: se
+empareja por quien mas aporta a las **candidatas** con `quality = 100`, y se
+compara su fraccion alli con la fraccion de **esa misma persona** en la franja
+alta del lote. Resultado sobre las mismas 400 semillas: media **+0.3 puntos**,
+223 de 400 negativas. La cifra pasa a estar centrada en cero, que es lo que
+debe hacer una diferencia entre una muestra justa y su poblacion.
+
+Lo que esta variante no ve: un vendedor pequeno en la poblacion que se hinche
+en el lote sin llegar a la mitad. Eso queda en la fila absoluta de la tabla, y
+de la mitad en adelante lo recoge el aviso de D14.
+
+Por eso el informe dice de quien habla: el vendedor de referencia puede no ser
+el que encabeza el lote, y sin esa frase la cifra parece contradecir la tabla.
+
+## D14 — El aviso cuando la franja alta es de una sola persona
+
+Cerrando MEDIA-16. La diferencia de D13 responde «anadio concentracion el
+muestreo?». El humano que decide necesita responder otra cosa: «puede este lote
+sostener un veredicto sobre el equipo?».
+
+Son preguntas distintas y solo publicabamos la primera. Con una poblacion donde
+una persona concentra el 80% de los `quality = 100`, la franja alta sale 20 de
+25 de esa persona y la diferencia dice **0.0**: correcto, porque el lote es
+fiel, y coherente con D12, que descarta la cuota. Pero el lote no sostiene un
+veredicto sobre el equipo.
+
+Cuando mas de la mitad de la franja alta es de una sola persona, el informe lo
+avisa y dice que ahi **reextraer no arregla nada**, porque el problema esta en
+la poblacion y no en el muestreo. El corte es en lenguaje llano —«mas de la
+mitad»— y no un criterio estadistico disfrazado: la decision sigue siendo
+humana.
+
+## D15 — Por que no se tipan los ambitos del reparto por vendedor
+
+`sellerSpread` acepta cualquier `{seller_id}[]`, asi que candidatas, elegibles,
+lote y franja alta son intercambiables para el compilador. Es la quinta vez en
+esta feature que aparece la misma clase: la logica correcta y el cableado sin
+candado. El cierre estructural seria tipos distintos por ambito, el mismo
+movimiento que `TextoRecortado` hizo con R5 en BAJA-7.
+
+**No se hace, a diferencia de BAJA-7, y la diferencia importa**: alli la
+frontera era que texto de clientes reales saliera de la empresa, y un error
+costaba una exportacion irreversible. Aqui el coste de confundir un ambito es
+un numero mal impreso en un informe que lee una persona, y la fixture
+discriminante de MEDIA-17 ya mata los tres mutantes conocidos.
+
+Ademas este script corre una vez y se archiva: no tiene la vida por delante que
+justifica pagar una refactorizacion de varios ficheros. Si algun dia el
+muestreo se reutiliza fuera del backtest, esta es la primera deuda a cobrar.
