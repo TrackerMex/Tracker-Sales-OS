@@ -1,6 +1,7 @@
 import {
   BATCH_QUERY,
   BATCH_TARGETS,
+  compararConcentracion,
   classify,
   isEmptyActivity,
   sellerSpread,
@@ -301,5 +302,70 @@ describe('R2 (77-jev-quality-backtest #77): dentro de la franja se elige al azar
     expect(batch.filter((a) => a.franja === 'alta')).toHaveLength(25);
     expect(batch.filter((a) => a.franja === 'media')).toHaveLength(15);
     expect(batch.filter((a) => a.franja === 'baja')).toHaveLength(10);
+  });
+});
+
+describe('R11 (77-jev-quality-backtest #77): la comparacion sigue a una sola persona (MEDIA-15)', () => {
+  const de = (seller: string, n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      seller_id: `${seller}-${i}` && seller,
+    }));
+
+  it('toma como referencia a quien mas aporta a las candidatas, y mide a esa persona en el lote', () => {
+    // En las candidatas manda B (30 de 40). En el lote manda A (3 de 4).
+    const candidatas = [...de('A', 10), ...de('B', 30)];
+    const lote = [...de('A', 3), ...de('B', 1)];
+
+    const c = compararConcentracion(candidatas, lote);
+
+    expect(c.enCandidatas).toBeCloseTo(0.75, 10);
+    expect(c.enLote).toBeCloseTo(0.25, 10);
+    expect(c.diferenciaPuntos).toBeCloseTo(-50, 10);
+  });
+
+  it('un muestreo fiel no inventa concentracion', () => {
+    const candidatas = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5'].flatMap((v) =>
+      de(v, 100),
+    );
+    const lote = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5'].flatMap((v) => de(v, 4));
+
+    expect(
+      compararConcentracion(candidatas, lote).diferenciaPuntos,
+    ).toBeCloseTo(0, 10);
+  });
+
+  it('reproduce el escenario que motivo todo esto', () => {
+    // 300 de 640 de una persona en las candidatas; 20 de 25 en la franja alta.
+    const candidatas = [...de('V-PROLIFICO', 300), ...de('OTROS', 340)];
+    const lote = [...de('V-PROLIFICO', 20), ...de('OTROS', 5)];
+
+    const c = compararConcentracion(candidatas, lote);
+
+    expect(c.enCandidatas).toBeCloseTo(300 / 640, 10);
+    expect(c.enLote).toBeCloseTo(0.8, 10);
+    expect(c.diferenciaPuntos).toBeCloseTo(33.1, 1);
+  });
+
+  it('no emite ningun identificador de vendedor', () => {
+    const c = compararConcentracion(
+      de('VENDEDOR-UUID-7f3a', 5),
+      de('VENDEDOR-UUID-7f3a', 2),
+    );
+
+    expect(JSON.stringify(c)).not.toContain('VENDEDOR');
+    expect(JSON.stringify(c)).not.toContain('7f3a');
+  });
+
+  it('sin candidatas o sin lote no hay comparacion', () => {
+    expect(compararConcentracion([], de('A', 3))).toEqual({
+      enCandidatas: null,
+      enLote: null,
+      diferenciaPuntos: null,
+    });
+    expect(compararConcentracion(de('A', 3), [])).toEqual({
+      enCandidatas: null,
+      enLote: null,
+      diferenciaPuntos: null,
+    });
   });
 });
