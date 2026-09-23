@@ -49,6 +49,8 @@ import { Metrics, Thresholds, computeMetrics } from './metrics';
 import {
   BATCH_QUERY,
   CANDIDATE_LIMIT,
+  SellerSpread,
+  isEmptyActivity,
   sellerSpread,
   stratify,
 } from './stratify';
@@ -170,6 +172,16 @@ export interface LoteGuardado {
   semilla: number;
   generado: string;
   candidatas: number;
+  /**
+   * MEDIA-12 — reparto por vendedor de las candidatas de las que sale el lote,
+   * que es la linea base contra la que se lee la concentracion del lote. Sin
+   * ella, un 64% en la franja alta no se distingue de un muestreo sano sobre
+   * una poblacion al 47%. Opcional: un lote extraido antes de esto no la trae.
+   */
+  repartoCandidatas?: {
+    todas: SellerSpread;
+    alta: SellerSpread;
+  };
   excluidas: number;
   desviaciones: string[];
   orden: BatchActivity[];
@@ -262,10 +274,17 @@ async function faseExtraer(
   fs.escribir(RUTA_ETIQUETADO, buildLabelingFile(ordenado, opciones.semilla));
   // El lote queda en local (R5): es la clave para volver a unir las respuestas
   // con la fila, y nunca se le ensena al director.
+  // La linea base se mide sobre las mismas filas de las que puede salir el
+  // lote: las que R3 descarta no compiten por entrar (MEDIA-12).
+  const elegibles = candidatas.filter((a) => !isEmptyActivity(a));
   const guardado: LoteGuardado = {
     semilla: opciones.semilla,
     generado: new Date().toISOString(),
     candidatas: candidatas.length,
+    repartoCandidatas: {
+      todas: sellerSpread(elegibles),
+      alta: sellerSpread(elegibles.filter((a) => a.quality === 100)),
+    },
     excluidas: excluded,
     desviaciones: deviations,
     orden: ordenado,
@@ -524,21 +543,62 @@ function avisoParcial(m: Metrics, respuestas: JevResult[]): string[] {
  */
 function seccionVendedores(lote: LoteGuardado): string[] {
   const spread = sellerSpread(lote.orden);
+  const alta = lote.orden.filter((a) => a.franja === 'alta');
+  const spreadAlta = sellerSpread(alta);
+  const base = lote.repartoCandidatas;
+
+  const fila = (ambito: string, s: SellerSpread, total: number) =>
+    `| ${ambito} | ${s.vendedores} | ${pct(s.fraccionMayor)} (${s.mayor} de ${total}) |`;
+  const totalDe = (s: SellerSpread) => s.reparto.reduce((a, b) => a + b, 0);
+
+  const diferencia =
+    base &&
+    spreadAlta.fraccionMayor !== null &&
+    base.alta.fraccionMayor !== null
+      ? `${((spreadAlta.fraccionMayor - base.alta.fraccionMayor) * 100).toFixed(1)} puntos`
+      : 'n/d';
+
   return [
-    '## Reparto por vendedor en el lote (R11, anonimizado)',
+    '## Reparto por vendedor (R11, anonimizado)',
     '',
-    `- Vendedores distintos: ${spread.vendedores}`,
-    `- Fraccion del que mas aporta: ${pct(spread.fraccionMayor)} (${spread.mayor} de ${lote.orden.length})`,
-    `- Reparto, de mayor a menor: ${
+    'La concentracion del lote no significa nada sola: hay que leerla contra la',
+    'de las candidatas de las que salio (MEDIA-12). La fila que decide es la de',
+    'la franja alta, porque los falsos 100 se miden solo ahi.',
+    '',
+    '| Ambito | Vendedores | Fraccion del que mas aporta |',
+    '| --- | ---: | ---: |',
+    ...(base
+      ? [
+          fila('Candidatas elegibles', base.todas, totalDe(base.todas)),
+          fila('Candidatas con quality = 100', base.alta, totalDe(base.alta)),
+        ]
+      : [
+          '| Candidatas | n/d | n/d |',
+          '| Candidatas con quality = 100 | n/d | n/d |',
+        ]),
+    fila('Lote completo', spread, lote.orden.length),
+    fila('**Franja alta del lote**', spreadAlta, alta.length),
+    '',
+    `- Diferencia en la franja alta, lote menos candidatas: **${diferencia}**`,
+    `- Reparto del lote, de mayor a menor: ${
       spread.reparto.length
         ? spread.reparto.map((n, i) => `vendedor ${i + 1}: ${n}`).join(', ')
         : 'lote vacio'
     }`,
     '',
-    'El indice es arbitrario y se asigna al imprimir: desde aqui no se vuelve',
-    'al vendedor real. Sirve para leer si el veredicto generaliza o solo',
-    'describe a una o dos personas: cuanto mas concentrado el lote, menos',
-    'dice la tasa de falsos 100 sobre la formula.',
+    ...(base
+      ? []
+      : [
+          'Las dos primeras filas salen `n/d` porque este lote se extrajo antes',
+          'de que se guardara el reparto de las candidatas: regeneralo con',
+          '`--fase extraer` si necesitas la comparacion.',
+          '',
+        ]),
+    'El indice es arbitrario y se asigna al imprimir: desde aqui no se vuelve al',
+    'vendedor real. Con 25 actividades en la franja alta la banda es ancha, asi',
+    'que una diferencia de bastantes puntos cabe dentro del azar; estas cifras',
+    'estan para que la decision la tome una persona, no para aprobar o suspender',
+    'el lote por un umbral.',
     '',
   ];
 }

@@ -210,7 +210,9 @@ describe('R11 (77-jev-quality-backtest #77): el informe va versionado, no puede 
     const md = await informe();
 
     expect(md).toContain('Reparto por vendedor');
-    expect(md).toContain('Vendedores distintos: 2');
+    // La concentracion del lote ahora va en tabla, junto a la de las
+    // candidatas (MEDIA-12): dos vendedores distintos en el lote completo.
+    expect(md).toContain('| Lote completo | 2 |');
   });
 
   it('no publica ningun seller_id: el indice del reparto es arbitrario', async () => {
