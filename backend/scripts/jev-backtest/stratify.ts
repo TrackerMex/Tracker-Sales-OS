@@ -168,3 +168,55 @@ export function sellerSpread(batch: { seller_id: string }[]): SellerSpread {
     fraccionMayor: batch.length ? mayor / batch.length : null,
   };
 }
+
+export interface ComparacionConcentracion {
+  /** Fraccion, en las candidatas, del vendedor que mas aporta a las candidatas. */
+  enCandidatas: number | null;
+  /** Fraccion de ESE MISMO vendedor dentro del lote. */
+  enLote: number | null;
+  /** Puntos que el muestreo le anadio (positivo) o le quito (negativo). */
+  diferenciaPuntos: number | null;
+}
+
+/**
+ * MEDIA-15 — cuanta concentracion anadio el muestreo, siguiendo a **una sola
+ * persona** entre los dos ambitos.
+ *
+ * Restar dos maximos sobre vendedores compara a gente distinta y ademas
+ * infla siempre, porque el maximo de una muestra esta sesgado al alza: medido
+ * sobre 400 semillas con 6 vendedores parejos al 16.7%, un muestreo
+ * demostrablemente justo daba +10.3 puntos de media y ni una sola lectura
+ * negativa. Emparejar por quien encabeza el LOTE no lo arregla —da lo mismo,
+ * porque elegir al primero de la muestra ya selecciona la fluctuacion al alza—
+ * asi que la referencia se toma del lado que no es muestra: quien mas aporta a
+ * las candidatas. Con esa referencia la media cae a +0.3 y 223 de 400 lecturas
+ * salen negativas, que es lo que tiene que hacer un numero honesto.
+ *
+ * No emite identidades: el informe esta versionado. El empate se resuelve por
+ * el id menor, solo para que el resultado sea reproducible.
+ */
+export function compararConcentracion(
+  candidatas: { seller_id: string }[],
+  lote: { seller_id: string }[],
+): ComparacionConcentracion {
+  const vacia = { enCandidatas: null, enLote: null, diferenciaPuntos: null };
+  if (!candidatas.length || !lote.length) return vacia;
+
+  const cuentas = new Map<string, number>();
+  for (const a of candidatas) {
+    cuentas.set(a.seller_id, (cuentas.get(a.seller_id) ?? 0) + 1);
+  }
+  const referencia = [...cuentas.entries()].sort(
+    (x, y) => y[1] - x[1] || x[0].localeCompare(y[0]),
+  )[0][0];
+
+  const enCandidatas = (cuentas.get(referencia) ?? 0) / candidatas.length;
+  const enLote =
+    lote.filter((a) => a.seller_id === referencia).length / lote.length;
+
+  return {
+    enCandidatas,
+    enLote,
+    diferenciaPuntos: (enLote - enCandidatas) * 100,
+  };
+}

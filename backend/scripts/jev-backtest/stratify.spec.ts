@@ -336,8 +336,15 @@ describe('R11 (77-jev-quality-backtest #77): la comparacion sigue a una sola per
 
   it('reproduce el escenario que motivo todo esto', () => {
     // 300 de 640 de una persona en las candidatas; 20 de 25 en la franja alta.
-    const candidatas = [...de('V-PROLIFICO', 300), ...de('OTROS', 340)];
-    const lote = [...de('V-PROLIFICO', 20), ...de('OTROS', 5)];
+    // El resto repartido entre cinco, para que el prolifico sea el mayor.
+    const candidatas = [
+      ...de('V-PROLIFICO', 300),
+      ...['O0', 'O1', 'O2', 'O3', 'O4'].flatMap((v) => de(v, 68)),
+    ];
+    const lote = [
+      ...de('V-PROLIFICO', 20),
+      ...['O0', 'O1', 'O2', 'O3', 'O4'].flatMap((v) => de(v, 1)),
+    ];
 
     const c = compararConcentracion(candidatas, lote);
 
