@@ -1611,3 +1611,701 @@ modificar código ni hacer commits. Tabla de verdad, mutantes y corridas
 `--dry-run` en un worktree aislado, ya eliminado; árbol de trabajo limpio. No se
 llamó a `api.typesafe.ai` ni se abrió conexión a ninguna base de datos. T6 no se
 ejecutó.*
+
+---
+---
+
+# COMPROBACIÓN ACOTADA — D12, muestreo dentro de la franja (`ff38c1f..HEAD`, `37c9e94`)
+
+Vuelta nueva, disparada por un defecto que destapó la primera extracción real,
+no una revisión. Cuatro puntos y nada más.
+
+**Restricción respetada**: no he leído, escrito ni ejecutado nada contra
+`progress/jev-backtest-lote.json` ni `progress/jev-backtest-etiquetado.md`.
+Guardé su md5 antes de empezar y lo verifiqué al terminar: los dos `OK`, con el
+mtime de las 18:56:26 intacto. Todo lo que ejercité fue en memoria o en un
+worktree aislado con su propio `progress/`.
+
+## Veredicto
+
+**PASSED**
+
+El arreglo es correcto y, lo que importa más, es **estadísticamente correcto**:
+sobre 400 semillas la fracción del vendedor mayoritario en la franja alta da
+una media de 46.6% contra una población del 47.0%, con una desviación típica de
+9.7 puntos frente a los 10.0 teóricos de `sqrt(p(1−p)/25)`. Eso es un muestreo
+aleatorio simple de manual, ni sesgado ni sobrecorregido. **No hay regresión.**
+
+Tres hallazgos nuevos, todos **MEDIA** y todos de cobertura o de informe:
+ninguno es un defecto del código de hoy y ninguno puede falsear el veredicto.
+El que recomiendo atender antes de regenerar el lote es MEDIA-12, porque es el
+control que hace comprobable justo lo que esta vuelta acaba de arreglar.
+
+## Punto 1 — El arreglo
+
+**Ninguna ruta recorta sin barajar.** Hay un solo `splice` en todo el módulo
+(`stratify.ts:105`), dentro de `take`, y los dos únicos sitios que cortan —la
+cuota de la franja y el relleno desde la superior— pasan por él. El bucle que
+baraja las tres pools corre antes del bucle que recorta. Verificado también por
+comportamiento: ni la franja alta del lote son las 25 primeras del pool, ni el
+relleno son las primeras del pool restante.
+
+**«Misma semilla, mismo lote» se sostiene:**
+
+| Comprobación | Resultado |
+|---|---|
+| semilla 77 dos veces | lotes idénticos |
+| semilla 77 vs 1234 | distintos |
+| semilla 77 vs 78 | distintos |
+| sin semilla vs `DEFAULT_SEED` | idénticos |
+
+Mutantes, todos muertos: no barajar (5 rojos), barajar con una semilla fija en
+vez de la de la corrida (2), barajar **después** de recortar (5), barajar solo
+la franja alta (1), barajar solo media y baja (2).
+
+## Punto 2 — Que no sobrecorrige, y el residuo
+
+**No hay cuota por ningún lado.** `grep` limpio, y la prueba de comportamiento
+que importa: sobre una población donde un vendedor es el **90%** de los
+`quality = 100`, el lote le da el **92%**. Refleja la concentración en vez de
+recortarla, que es exactamente lo que D12 decidió por escrito.
+
+**Insesgadez, medida sobre 400 semillas** (población: el vendedor A es 94 de
+200 `quality = 100`, el 47.0%, y son además las más recientes — el patrón que
+provocó el fallo):
+
+| Cifra | Valor |
+|---|---|
+| media de la fracción de A en la franja alta | **46.6%** (población 47.0%) |
+| desviación típica | 9.7 puntos |
+| teórico `sqrt(p(1−p)/25)` | 10.0 puntos |
+| p5 / p95 | 32% / 64% |
+| mín / máx | 20% / 80% |
+| comportamiento de ayer, sin barajar | **100%** |
+
+La media cae a 0.4 puntos de la población y la dispersión coincide con la
+teórica: el estimador es insesgado y el muestreo es honesto.
+
+**El residuo que sí queda no es sesgo, es varianza.** Con n=25 una sola
+extracción se mueve entre el 32% y el 64% con un 90% de probabilidad, y **1 de
+las 400 semillas reprodujo el 80% de ayer por puro azar**. El arreglo convierte
+un sesgo sistemático (100%, siempre) en ruido centrado (47% ± 10). Eso es lo
+correcto y no hay nada mejor que hacer con n=25 sin meter una cuota, que D12
+descarta con razón. Pero significa que **una extracción concreta puede seguir
+saliendo poco representativa**, y que el control tiene que ser mirar el número,
+no confiar en el método. De ahí MEDIA-12.
+
+### MEDIA-12 — el informe publica la concentración del lote, pero no la de la población
+
+`run-backtest.ts:365-384` (`seccionVendedores`) llama a `sellerSpread(lote.orden)`
+y publica «Fracción del que más aporta: 64.0%». El lector no tiene con qué
+compararlo: **la concentración de la población nunca se calcula**. `LoteGuardado`
+guarda `candidatas` como un número suelto, sin reparto por vendedor.
+
+D12 detectó el problema con la comparación «Población 46.9% vs Lote 80%», y esa
+comparación **no se puede hacer desde el informe**. Un 64% —que está dentro del
+p95 de un muestreo perfecto sobre una población del 47%— se lee igual que un
+64% sobre una población del 20%, que sería un lote inservible. Tampoco hay
+umbral ni instrucción en ningún sitio: ni el informe ni §3b dicen qué
+concentración es demasiada ni que la respuesta sea volver a extraer con otra
+semilla.
+
+Es barato: las candidatas están en memoria en `faseExtraer` y `sellerSpread` ya
+existe; publicar el mismo par de cifras sobre la población es anónimo
+(recuentos) y cabe en `LoteGuardado`. Es el control del que depende todo lo que
+esta vuelta acaba de arreglar, y hoy está a medias.
+
+## Punto 3 — El mutante del cableado
+
+**Muere de verdad** (1 test rojo) y el test corre **sin base de datos y sin
+disco**: entra por `deps.leerCandidatos` y `deps.fs` en memoria, así que respeta
+también la restricción nueva de no tocar `progress/`. Comprueba lo correcto:
+que el lote guardado es el de `stratify(poblacion, 1234)` **y no** el de
+`DEFAULT_SEED`.
+
+### MEDIA-13 — el gemelo del mutante recién cerrado sigue vivo
+
+`run-backtest.ts:259`. Cambiar `shuffleWithSeed(batch, opciones.semilla)` por
+`shuffleWithSeed(batch, 77)` deja los **145 tests en verde**. Lo ejercité de
+extremo a extremo:
+
+```
+semilla registrada en el lote : 1234
+el orden guardado reproduce shuffleWithSeed(..., 1234): false
+mismo conjunto de actividades (solo cambia el orden)  : true
+```
+
+Es decir: el lote diría «semilla 1234» y el fichero del director saldría
+ordenado con 77. R6 exige que el orden esté aleatorizado «con semilla fija y
+**registrada**», y la registrada dejaría de reproducirlo.
+
+El hueco es fino y entiendo por qué se coló: el test nuevo hace `.sort()` sobre
+los ids antes de comparar —correcto, porque ahí lo que se prueba es la
+**pertenencia** al lote— y por eso no puede ver el orden. No hay ningún test en
+la suite que compare el `orden` guardado contra la semilla de la corrida. Las
+dos líneas consecutivas de `faseExtraer` consumen la misma semilla; una acaba
+de recibir su red y la otra sigue sin ella.
+
+### MEDIA-14 — la decisión de «sin cuota» no tiene test
+
+Inyecté una cuota de máximo 8 actividades por vendedor dentro de `take`:
+**145 en verde**. D12 descarta el tope por vendedor de forma explícita y
+razonada, y es la decisión más fácil de que alguien revierta «ayudando» — sobre
+todo ahora que el informe le pone la concentración delante. Se fija en una
+línea: una población donde un vendedor es el 90% tiene que producir un lote
+donde lo siga siendo. Es la misma prueba que yo usé para confirmar que hoy no
+hay cuota.
+
+## Punto 4 — La dirección de la dependencia: mi juicio
+
+**Coincido contigo: déjalo como está.** No he encontrado nada que lo haga más
+que estético, y sí he encontrado lo único que podría haberlo hecho, así que lo
+digo con la medición delante en vez de por impresión.
+
+Lo comprobado:
+
+- **No hay ciclo.** El grafo de los seis módulos es un DAG limpio:
+  `types` ← `labeling` ← `stratify`, y `run-backtest` por encima de todos.
+- **`labeling.ts` no tiene efectos a nivel de módulo**, solo declaraciones, así
+  que el import no puede cambiar el orden de carga ni arrastrar nada.
+- **Lo que sí podía ser sustantivo, y no lo es**: ahora la misma semilla baraja
+  las pools (selección) y el lote (orden que ve el director). Si eso dejara
+  rastro de la franja en la posición del fichero, R6 se rompería. Medido sobre
+  300 semillas, la correlación entre posición y franja da una media de
+  **0.0137** y ninguna semilla pasa de |r| = 0.5. No filtra nada.
+- La alternativa que descartaste —dos generadores con la misma semilla y
+  distinto comportamiento— habría sido bastante peor, y estoy de acuerdo en que
+  cinco ficheros movidos por estética no se pagan solos.
+
+Un matiz que vale una línea, no una tarea: `stratify(activities)` toma ahora su
+semilla por defecto de `DEFAULT_SEED`, **importado del módulo del etiquetado**.
+Quien lea la firma de `stratify` tiene que irse a `labeling.ts` para saber que
+el muestreo por defecto es 77, y quien algún día cambie `DEFAULT_SEED` pensando
+en el orden del etiquetado cambiará también qué actividades se muestrean. Es
+rastreable —la semilla se registra en el lote y en el informe—, así que es coste
+de lectura y no de corrección. Si algún día se mueve la utilidad a un módulo
+neutro, la ganancia gratis es llevarse `DEFAULT_SEED` con ella.
+
+## Regresión
+
+**Ninguna.** Novena vuelta sobre estos ficheros y la implementación de
+referencia en Python —la misma desde la primera revisión, sin tocarla— sigue
+dando lo mismo:
+
+| Comprobación | Referencia | Informe |
+|---|---|---|
+| Matriz director × Jev | `[[1,0,1,0],[0,1,0,0],[2,0,2,0],[0,2,0,3]]` | idéntica |
+| Acuerdo exacto / adyacente | 58.3% / 58.3% | 58.3% / 58.3% |
+| Spearman | 0.480 | 0.480 |
+| Falsos 100 detectados | 66.7% | 66.7% |
+| Buenos degradados | 44.4% (4 de 9) | 44.4% (4 de 9) |
+
+Y los mutantes de lo ya cerrado siguen muriendo tras tocar `stratify`: R3 sin
+excluir vacías (1 rojo), `classify` con la frontera corrida (3), relleno en
+cascada (2), `seller_id` fuera de `BATCH_QUERY` (1), ALTA-7 consultando el lote
+entero (3).
+
+## Mutantes
+
+8 inyectados sobre D12, **6 muertos**:
+
+| Mutante | Resultado |
+|---|---|
+| no barajar (el comportamiento de ayer) | 5 rojos |
+| barajar después de recortar | 5 rojos |
+| barajar con una semilla fija | 2 rojos |
+| barajar solo media y baja | 2 rojos |
+| barajar solo la franja alta | 1 rojo |
+| `faseExtraer` no pasa la semilla a `stratify` | 1 rojo |
+| **se cuela una cuota por vendedor** | **145 en verde** → MEDIA-14 |
+| **`faseExtraer` usa otra semilla para el etiquetado** | **145 en verde** → MEDIA-13 |
+
+## Los cuatro comandos
+
+```
+=== $ cd backend && pnpm test ===
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+Test Suites: 6 passed, 6 total
+Tests:       145 passed, 145 total
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+exit=0
+```
+
+## Recomendado antes de regenerar el lote
+
+1. **MEDIA-12** — publicar también la concentración de la población, para que
+   la comparación que detectó D12 se pueda hacer desde el informe. Es el único
+   que pediría antes de darle el lote al director.
+2. MEDIA-13 y MEDIA-14 cuando toque: dos tests, ningún cambio de producción.
+
+---
+
+*Comprobación acotada a los cuatro puntos, sin modificar código ni hacer
+commits. Mutantes, Monte Carlo sobre 400 semillas y pruebas de flujo en un
+worktree aislado, ya eliminado. **Los dos artefactos de la extracción real no se
+leyeron ni se tocaron**: md5 verificado antes y después, mtime 18:56:26
+intacto. No se llamó a `api.typesafe.ai` ni se abrió conexión a ninguna base de
+datos. T6 no se ejecutó.*
+
+---
+---
+
+# COMPROBACIÓN ACOTADA — MEDIA-12, 13 y 14 (`37c9e94..HEAD`, `11747c2`)
+
+Última antes de regenerar el lote real. El peso está en MEDIA-12: es el
+instrumento con el que un humano decide si el lote sirve, y no hay red detrás.
+
+**Restricción respetada**: md5 de `progress/jev-backtest-lote.json` y
+`progress/jev-backtest-etiquetado.md` tomado antes y verificado después, los dos
+`OK`, mtime 18:56:26 intacto. No los leí ni los usé. El caso de compatibilidad
+lo reconstruí con un lote equivalente en memoria.
+
+## Veredicto
+
+**PASSED**
+
+Los tres cierres son correctos y las cuatro filas comparan lo que dicen
+comparar: lo verifiqué con fixtures adversarias, no por lectura. **No hay
+regresión.** Sin fuga: cero identificadores en el informe versionado.
+
+Tres hallazgos nuevos, todos **MEDIA**, todos sobre el mismo objeto: la cifra
+titular. Ninguno toca el veredicto del backtest ni expone datos. Pero como el
+encargo dice que este número va a decidir si se gasta la hora del director,
+los detallo con las mediciones delante.
+
+**Respuesta corta a «¿sirve de verdad como control?»**: para el fallo que lo
+motivó, sí, y de forma contundente. Como instrumento general, a medias — las
+filas absolutas dicen la verdad en los tres escenarios que probé; la
+**diferencia**, que es lo que el texto señala como «la fila que decide», es la
+parte que engaña.
+
+## Punto 1 — Las cuatro filas comparan lo que dicen
+
+Las dos propiedades que pediste comprobar **se cumplen**, y las medí con una
+población construida para romperlas.
+
+**«Candidatas elegibles» excluye de verdad lo de R3.** Metí 60 filas con los
+cuatro campos vacíos, todas del mismo vendedor ficticio:
+
+| | Resultado |
+|---|---|
+| candidatas crudas / elegibles | 420 / 360 (60 descartadas por R3) |
+| línea base de la franja alta **si usara las crudas** | 36.2% — sería el vendedor de las vacías, falsa |
+| línea base con **elegibles** (lo que hace el código) | **47.0%** — el vendedor real, correcta |
+
+**La base de la franja alta son los `quality = 100`, no todas las candidatas.**
+Sobre la misma población: todas las elegibles dan 26.1% y las de `quality = 100`
+dan 47.0%. Con una franja alta al 36%, comparar contra «todas» daría **+9.9
+puntos** donde la verdad es **−11.0**: no solo cambia la magnitud, **invierte el
+signo**. El código compara contra `base.alta`. ✓
+
+**El escenario de ayer, exacto** (candidatas al 46.9%, franja alta del lote al
+80%) — reconstruido y renderizado:
+
+```
+| Candidatas con quality = 100 | 8 | 46.9% (300 de 640) |
+| **Franja alta del lote**     | 6 |   80.0% (20 de 25) |
+
+- Diferencia en la franja alta, lote menos candidatas: **33.1 puntos**
+```
+
+Salta a la vista. Para el fallo que motivó todo esto, el instrumento funciona.
+
+## Punto 2 — ¿Puede mentir la cifra? Sí, en dos direcciones
+
+**Sin umbral ni semáforo.** Confirmado: en `seccionVendedores` no hay una sola
+comparación, ni formato condicional, ni etiqueta de criterio. La única
+aparición de la palabra «umbral» es la frase que dice que **no** lo hay. ✓
+
+### MEDIA-15 — un lote sano parece concentrado, de forma sistemática
+
+La diferencia resta dos **máximos sobre vendedores**, y `sellerSpread` no
+guarda identidad: el «que más aporta» de las candidatas y el del lote **pueden
+ser personas distintas**. Además el máximo de una muestra es un estimador
+sesgado al alza, porque basta que a un vendedor le toque la suerte para que se
+convierta en el máximo. Medido sobre 400 semillas:
+
+| Población | Diferencia media | p5 | p95 | Diferencias negativas |
+|---|---:|---:|---:|---:|
+| un dominante claro (47%, resto ~5%) | −0.4 pts | −15 | +17 | ~mitad |
+| **6 vendedores parejos al 17.0%** | **+10.0 pts** | **+3** | **+19** | **0 de 400** |
+
+Con vendedores parejos —el caso normal de una PME— un muestreo
+**demostrablemente justo** nunca produce una diferencia negativa y de media
+publica +10 puntos de concentración que no existe. Dos corridas reales:
+
+- 6 vendedores al 16.7% → `Diferencia: **19.0 puntos**`
+- 4 vendedores a exactamente 25% → `Diferencia: **7.0 puntos**`
+
+La dirección del error es la segura —falsa alarma, no falsa tranquilidad— y una
+falsa alarma solo cuesta volver a extraer, que es gratis. Pero quema la
+confianza en el único número que al lector se le dice que mire. Se arregla sin
+inventar umbral: seguir internamente **al mismo vendedor** entre los dos ámbitos
+(la identidad no hace falta imprimirla) y publicar su diferencia, en vez de
+restar dos máximos que pueden ser de personas distintas.
+
+**Y no hay forma de situar el número.** El texto dice que «con 25 actividades la
+banda es ancha», que es honesto pero no es una cantidad: el lector no puede
+saber si su +19 es normal o no. La cifra que lo resolvería —`sqrt(p(1−p)/n)`
+sobre la línea base, una línea— **describe** la dispersión, no decide nada, así
+que no es el umbral que pediste evitar. Hoy el informe deja dos porcentajes y
+una resta, e invita a leer cualquier diferencia como un problema.
+
+### MEDIA-16 — una población concentrada de verdad marca 0.0 puntos
+
+Si la concentración está en la población y el muestreo es fiel, la diferencia es
+cero. Renderizado con una población donde una persona es el 80% de los
+`quality = 100`:
+
+```
+| Candidatas con quality = 100 | 10 | 80.0% (80 de 100) |
+| **Franja alta del lote**     |  5 |  80.0% (20 de 25) |
+
+- Diferencia en la franja alta, lote menos candidatas: **0.0 puntos**
+```
+
+Aritméticamente correcto, y coherente con D12: el lote es fiel y no hay que
+poner cuota. Pero la franja alta es **20 de 25 de una persona** —la foto exacta
+de ayer— y la cifra titular dice `0.0`. La pregunta que responde la diferencia
+es «¿añadió concentración el muestreo?»; la que tiene que responder el humano
+antes de gastar la hora del director es «¿puede este lote sostener un veredicto
+sobre el equipo?». No son la misma, y el texto señala la diferencia como «la
+fila que decide».
+
+La información está: la fila absoluta dice 80.0% (20 de 25). Lo que falta es una
+línea que diga que una franja alta concentrada en una persona invalida el lote
+**aunque la diferencia sea cero**, porque entonces el problema no es el muestreo
+sino que la población no permite la pregunta. Sigue sin ser un umbral.
+
+## Punto 3 — Fuga
+
+**Cero.** Corrida completa con `seller_id` y `id` reconocibles:
+
+| Fichero | `SELLER-UUID-*` | `seller_id` | `ACT-UUID-*` |
+|---|---|---|---|
+| informe versionado | no | no | no |
+| fichero del director (R6) | no | — | no |
+
+`repartoCandidatas`, que sí viaja en el lote (no versionado), son solo
+recuentos: `{"todas":{"vendedores":4,"reparto":[100,100,100,100],…}}`, sin un
+solo identificador. `sellerSpread` sigue devolviendo únicamente recuentos y
+`seller_id` no aparece en ningún camino hacia el informe.
+
+## Punto 4 — MEDIA-13 y MEDIA-14
+
+**MEDIA-13 comprueba el orden, no la pertenencia.** Leído: el test hace
+`.orden.map(a => a.id).join(',')` **sin `.sort()`** y lo compara contra
+`shuffleWithSeed(stratify(poblacion, s).batch, s)`, más un segundo caso que
+comprueba que el fichero del director sale en ese mismo orden. Es exactamente lo
+que faltaba. Mutante `shuffleWithSeed(batch, 77)`: **1 rojo** (antes: ninguno).
+
+**MEDIA-14**: cuota de 8 por vendedor → **1 rojo** (antes: ninguno). El anexo
+dice 3; mi cuota está escrita de otra forma, así que el recuento difiere sin que
+eso signifique nada.
+
+## Punto 5 — Compatibilidad con un lote antiguo
+
+No revienta y el aviso es claro. Con un lote sin `repartoCandidatas`:
+
+```
+| Candidatas                   | n/d | n/d |
+| Candidatas con quality = 100 | n/d | n/d |
+| Lote completo                |   6 | 40.0% (20 de 50) |
+| **Franja alta del lote**     |   6 | 80.0% (20 de 25) |
+
+- Diferencia en la franja alta, lote menos candidatas: **n/d**
+
+Las dos primeras filas salen `n/d` porque este lote se extrajo antes
+de que se guardara el reparto de las candidatas: regeneralo con
+`--fase extraer` si necesitas la comparacion.
+```
+
+Exit 0, las dos filas del lote siguen calculándose, y el aviso dice qué hacer.
+✓ Es el caso del lote que hay en `progress/`, reconstruido sin tocarlo.
+
+## Hallazgo nuevo sobre la cobertura
+
+### MEDIA-17 — tres de las cuatro propiedades de MEDIA-12 no tienen test
+
+Las comprobé y **se cumplen en el código de hoy**; lo que no existe es la red.
+Los tres mutantes pasan los **151 tests en verde**:
+
+| Mutante | Efecto medido | Tests |
+|---|---|---|
+| la línea base usa las candidatas **crudas**, ignorando R3 | base de 47.0% → 36.2% | **151 verde** |
+| la diferencia se calcula contra `base.todas` en vez de `base.alta` | −11.0 pts → +9.9 pts, **cambia de signo** | **151 verde** |
+| la fila «Franja alta del lote» usa `lote.orden` entero | publica el total diluido bajo la etiqueta de la franja | **151 verde** |
+
+Las tres son exactamente las propiedades que me pediste verificar, y las tres
+son las que el anexo defiende como el fondo del diseño. Sí muere el mutante que
+cambia lo que se **guarda** (`alta: sellerSpread(elegibles)` → 1 rojo) y el que
+deja de guardar `repartoCandidatas` (1 rojo): la persistencia tiene red, el
+cálculo y la presentación no. Es el mismo patrón que ALTA-3, MEDIA-8, la semilla
+de D12 y MEDIA-13 — código correcto, cableado sin afirmar —, y esta vez sobre el
+instrumento del que depende la decisión humana.
+
+## Regresión
+
+**Ninguna.** Décima vuelta y la referencia en Python, la misma desde la primera
+revisión, sigue dando lo mismo: matriz
+`[[1,0,1,0],[0,1,0,0],[2,0,2,0],[0,2,0,3]]`, acuerdos 58.3% / 58.3%, Spearman
+0.480, falsos 100 66.7%, degradados 44.4% (4 de 9), 12 pares comparables.
+
+## Los cuatro comandos
+
+```
+=== $ cd backend && pnpm test ===
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+Test Suites: 6 passed, 6 total
+Tests:       151 passed, 151 total
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+exit=0
+```
+
+## Antes de regenerar el lote
+
+El instrumento vale para lo que se construyó y el lote se puede regenerar hoy:
+las filas absolutas son correctas y la de la franja alta es la que hay que
+mirar. Lo que recomendaría, en este orden:
+
+1. **MEDIA-15** — comparar el mismo vendedor entre ámbitos. Es el cambio que
+   hace que la cifra titular signifique lo que dice. Sin él, léase la **fila
+   absoluta de la franja alta** contra la de candidatas y no la resta.
+2. **MEDIA-16** — una línea diciendo que una franja alta concentrada en una
+   persona invalida el lote aunque la diferencia sea cero.
+3. **MEDIA-17** — tres tests, ningún cambio de producción.
+
+---
+
+*Comprobación acotada a los cinco puntos, sin modificar código ni hacer commits.
+Mutantes, Monte Carlo sobre 400 semillas y renderizados de informe en un
+worktree aislado, ya eliminado. **Los dos artefactos de la extracción real no se
+leyeron ni se tocaron**: md5 verificado antes y después, mtime 18:56:26 intacto.
+No se llamó a `api.typesafe.ai` ni se abrió conexión a ninguna base de datos. T6
+no se ejecutó.*
+
+---
+---
+
+# COMPROBACIÓN ACOTADA FINAL — MEDIA-15, 16 y 17 (`11747c2..HEAD`, `9708f79`)
+
+**Restricción respetada**: md5 de los dos artefactos de las 18:56 tomado antes y
+verificado después, los dos `OK`. No los leí ni los usé; los casos que los
+necesitaban se reconstruyeron en memoria.
+
+## Veredicto
+
+**PASSED**
+
+Los tres cierres son correctos, sin regresión y sin fuga. Reproduje las tres
+variantes de MEDIA-15 con mi propia herramienta y **el Implementer tiene razón**:
+la variante que se le pidió no arregla nada y la que implementó sí. De ocho
+confusiones de ámbito que inyecté —cuatro que él no había previsto— **mueren
+siete**.
+
+Dos hallazgos nuevos, los dos MEDIA, los dos sobre el mismo punto ciego: el
+ámbito de D14 y el vendedor del que la cifra titular no habla.
+
+## Punto 1 — Las tres variantes, medidas por mí
+
+Implementé las tres por separado, sin llamar a la suya salvo para contrastar.
+Población: 6 vendedores parejos al 16.7% de los `quality = 100`, muestreo justo
+por construcción, 400 semillas.
+
+| Variante | Media | Negativas | p5 | p95 |
+|---|---:|---:|---:|---:|
+| A — `max − max` (lo que había) | **+10.5** | **0/400** | +3 | +19 |
+| B — pareja por el top del **lote** (lo que pediste) | **+10.5** | **0/400** | +3 | +19 |
+| C — pareja por el top de las **candidatas** (lo implementado) | **−0.7** | **252/400** | −13 | +11 |
+| C′ — su `compararConcentracion`, para contrastar | −0.7 | 252/400 | −13 | +11 |
+
+Mi C y su C′ coinciden en las 400 semillas hasta 1e-9.
+
+**B es idéntica a A hasta el decimal**, no parecida. Eso confirma su
+razonamiento mejor que su tabla: elegir a quien encabeza la muestra **es** la
+operación `max`, así que emparejar por el lote reproduce el sesgo entero. La
+referencia tiene que venir del lado que no es muestra, y la variante implementada
+**sí queda centrada en cero** (media −0.7, más negativas que positivas, banda
+simétrica). Se desvió de la instrucción con la medición delante y acertó.
+
+### MEDIA-19 — el caso ciego, cuantificado: 1 corrida de cada 10
+
+Él lo declara en prosa; lo he medido, y no es una esquina. Sobre 2000 semillas
+de esa misma población sana:
+
+- la peor concentración vista en la franja alta es del **44%**, por alguien que
+  **no** es el vendedor de referencia, y la cifra titular de esa corrida marca
+  **−8.7 puntos** — es decir, activamente tranquilizadora;
+- en **207 de 2000 corridas (10.3%)** alguien tiene entre el 30% y el 50% de la
+  franja alta mientras la cifra titular se queda dentro de ±5 puntos.
+
+Ahí no avisa nadie: la cifra titular habla de otra persona y D14 no llega porque
+no se pasa de la mitad. La fila absoluta sí lo dice (`44.0% (11 de 25)`), y el
+informe ya advierte que la referencia «puede no ser el que encabeza el lote» —
+pero no publica **su** número, que es el que haría visible el 44%. El arreglo es
+de encuadre, no de estadística: publicar también el par del que encabeza el lote
+como dos hechos («tiene el 44% de la franja alta y el 16.7% de las candidatas»),
+sin llamarlo concentración añadida, que es donde el sesgo de B haría daño.
+
+## Punto 2 — MEDIA-16 / D14
+
+Se dispara donde debe y no donde no debe:
+
+| Lote | Franja alta | ¿Avisa? |
+|---|---|---|
+| el de ayer: 20 de 25 de una persona | 80.0% | **sí** |
+| sano: 6 vendedores parejos | 20.0% | no |
+
+Y el texto dice lo que pediste, con todas las letras: «si el muestreo añadió
+cero puntos, significa que el lote es fiel a una población que ya está
+concentrada, no que el lote sirva… volver a extraer con otra semilla no lo
+arregla: o se amplía el lote, o el veredicto se firma sabiendo a quién
+describe». Cierra exactamente el bucle del humano con prisa reextrayendo tres
+veces. ✓
+
+Sobre el lote de ayer el informe da ahora **tres** señales coherentes: la fila
+absoluta al 80.0%, la cifra titular en **+33.1 puntos** y el aviso de D14.
+
+## Punto 3 — MEDIA-17, y una cuarta confusión
+
+La fixture discriminante es buena. Ocho confusiones de ámbito, **siete
+muertas**:
+
+| Confusión | Tests rojos |
+|---|---|
+| base sobre candidatas crudas, ignorando R3 | 2 |
+| fila «Franja alta» sobre el lote entero | 1 |
+| `repartoCandidatas.alta` = todas las elegibles | 2 |
+| *(nueva)* la referencia de la cifra son todas las elegibles | 2 |
+| *(nueva)* la cifra se mide sobre el lote entero | 2 |
+| *(nueva)* D14 corta en «al menos la mitad» | 1 |
+| *(nueva)* `compararConcentracion` elige al que **menos** aporta | 2 |
+| **(nueva) D14 se calcula sobre el lote entero, no la franja alta** | **0 — sobrevive** |
+
+### MEDIA-18 — el ámbito de D14 no está discriminado
+
+`run-backtest.ts`, la llamada `avisoConcentracion(spreadAlta)`. Cambiarla a
+`avisoConcentracion(spread)` deja los **164 tests en verde**, y le cuesta al
+informe exactamente lo que D14 existe para evitar. Renderizado:
+
+```
+AYER: 20 de 25 en la franja alta (80%), 40% del lote entero
+  con el codigo de hoy      -> [AVISO D14 presente: true]
+  con avisoConcentracion(spread) -> [AVISO D14 presente: false]
+```
+
+El lote de ayer es 80% de una persona en la franja alta y 40% en el total: por
+encima del corte en el ámbito que importa y por debajo en el que no. La
+confusión de un solo token **borra el aviso** en el caso exacto que lo motivó,
+que es la misma dilución que el anexo usa para justificar por qué hacían falta
+cuatro filas y no dos.
+
+Se cierra con una línea de la fixture: un lote cuya franja alta pase de la mitad
+mientras el total no —que además es la forma realista, 25 filas concentradas y
+25 repartidas.
+
+## Punto 4 — Regresión
+
+**Ninguna.** Séptima revisión y la referencia en Python, la misma desde la
+primera, sigue dando lo mismo: matriz
+`[[1,0,1,0],[0,1,0,0],[2,0,2,0],[0,2,0,3]]`, acuerdos 58.3% / 58.3%, Spearman
+0.480, falsos 100 66.7%, degradados 44.4% (4 de 9), 12 pares. Fuga: cero
+coincidencias de `seller_id` en el informe versionado.
+
+## Punto 5 — Mi opinión sobre D15
+
+**La decisión es la correcta. La justificación tiene una pata que no aguanta, y
+te traigo el caso concreto que pediste.**
+
+De acuerdo con los dos argumentos de fondo, y creo que son los que mandan:
+
+- **La asimetría de coste es real.** En BAJA-7 un error mandaba texto de
+  clientes a un tercero y no había vuelta atrás; aquí un ámbito confundido
+  imprime un número torcido en un fichero que lee una persona y se corrige
+  regenerando. Pagar una refactorización de varios ficheros por eso sería
+  aplicar la misma medicina a dos enfermedades distintas.
+- **El script corre una vez y se archiva.** Los tipos por ámbito se amortizan
+  con el tiempo de vida, y aquí no lo hay. Tu apunte de cobrarlo si el muestreo
+  se reutiliza fuera del backtest es el momento correcto.
+
+Donde te corrijo es en la tercera pata: «**la fixture ya mata los mutantes
+conocidos**». Los conocidos sí; **encontré uno desconocido entre los ocho
+primeros que probé**, y no es casualidad dónde cayó. El principio de la fixture
+es «cualquier confusión de ámbito cambia algún **número impreso**», y por eso
+discrimina las cuatro filas y la cifra titular. Pero la salida de D14 **no es un
+número**: es un bloque de prosa que está o no está. El principio de la fixture
+no alcanza a los predicados, y ahí es exactamente donde vive MEDIA-18.
+
+Así que la conclusión no es «tipa los ámbitos», es más barata: **extiende el
+principio de la fixture a las salidas que son presencia/ausencia, no solo a las
+celdas**. Una línea de fixture cierra MEDIA-18 y, de paso, cualquier aviso que
+se añada después. Si en algún momento este muestreo sale del backtest, entonces
+sí, los tipos; hoy no.
+
+## Los cuatro comandos
+
+```
+=== $ cd backend && pnpm test ===
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+Test Suites: 6 passed, 6 total
+Tests:       164 passed, 164 total
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+exit=0
+```
+
+## ¿Sirve ya el informe para decidir si el lote va al director?
+
+**Sí.** Es la primera vuelta en la que lo digo sin reservas sobre el caso que
+importa: para el lote de ayer el informe da tres señales que apuntan en la misma
+dirección —80.0% en la fila, +33.1 puntos en la cifra titular y el aviso de D14
+diciendo que reextraer no arregla nada— y para un lote sano no da ninguna falsa
+alarma, que era el defecto de la vuelta anterior.
+
+Lo que queda es un punto ciego acotado y medido: alguien que se hinche hasta
+por debajo de la mitad sin ser el vendedor de referencia, en torno a 1 corrida
+de cada 10 (MEDIA-19). La defensa práctica mientras tanto cabe en una frase:
+**mirar la fila absoluta de la franja alta además de la cifra titular.** Con eso
+el lote se puede regenerar y llevar al director.
+
+Recomendado, por orden: **MEDIA-18** (una línea de fixture, cierra el agujero
+del aviso), luego **MEDIA-19** (publicar también el par del que encabeza el
+lote).
+
+---
+
+*Comprobación acotada a los cinco puntos, sin modificar código de producción.
+Mutantes, Monte Carlo sobre 400 y 2000 semillas y renderizados de informe en un
+worktree aislado, ya eliminado. **Los dos artefactos de la extracción real no se
+leyeron ni se tocaron**: md5 verificado antes y después. No se llamó a
+`api.typesafe.ai` ni se abrió conexión a ninguna base de datos. T6 no se
+ejecutó.*
