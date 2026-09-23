@@ -44,10 +44,36 @@ Se pasan al script como banderas (design §D10) y se reimprimen en el informe.
 | Aprobación de salida de datos (R4) | concedida, §1 |
 | Umbrales confirmados (R13) | confirmados, §2 |
 | Hora del director para el etiquetado a ciegas (R6) | comprometida |
-| Credencial de solo lectura sobre `activities` (R1, design §D7) | **pendiente de recibir** |
+| Credencial de solo lectura sobre `activities` (R1, design §D7) | **verificada 2026-09-23** — ver §3a |
 | `JEV_API_KEY` en el entorno del operador | pendiente de confirmar |
 | Hallazgos abiertos que toquen datos o veredicto | **ninguno** |
 | Script terminado y revisado | **sí** — revisión independiente PASSED, 138 + 78 tests |
+
+## 3a. La credencial de solo lectura, verificada
+
+Usuario `jev_backtest_ro` creado en el Postgres de produccion
+(contenedor `tracker-sales-os-trackersales-hibdzn`, `postgres:18`), con
+`CONNECT` a la base, `USAGE` sobre `public` y **`SELECT` unicamente sobre
+`activities`**. Ningun otro privilegio.
+
+Verificado el 2026-09-23 por el humano, desde la VPS, en los dos sentidos:
+
+| Comprobacion | Resultado |
+|---|---|
+| `UPDATE activities SET quality = quality WHERE false` | `ERROR: permission denied for table activities` |
+| `select count(*) from activities where deleted_at is null` | `2061` |
+
+Esto es lo que D7 pedia: la garantia de solo lectura la da el motor, no una
+revision del codigo. Si el script intentara escribir, fallaria en Postgres.
+
+La contrasena vive en un fichero de entorno con permisos 600 fuera del
+repositorio. No esta en `.env.example` ni en ningun fichero versionado, a
+proposito: no forma parte de la configuracion de la aplicacion.
+
+**Tamano del universo**: 2061 actividades no borradas. El script pide las 2000
+mas recientes como candidatas (`CANDIDATE_LIMIT`), de las que estratifica el
+lote de 50. Queda por confirmar que las tres franjas de R2 tienen suficientes
+filas; si alguna no, R2 completa desde la franja superior y lo registra.
 
 ## 3b. Si la corrida se interrumpe
 
