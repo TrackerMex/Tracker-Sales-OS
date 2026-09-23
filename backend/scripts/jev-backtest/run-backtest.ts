@@ -50,9 +50,11 @@ import {
   BATCH_QUERY,
   CANDIDATE_LIMIT,
   ComparacionConcentracion,
+  LiderDelLote,
   SellerSpread,
   compararConcentracion,
   isEmptyActivity,
+  liderDelLote,
   sellerSpread,
   stratify,
 } from './stratify';
@@ -190,6 +192,11 @@ export interface LoteGuardado {
    * comparaba a gente distinta e inflaba siempre.
    */
   comparacionAlta?: ComparacionConcentracion;
+  /**
+   * MEDIA-19 — quien encabeza la franja alta del lote, que puede no ser la
+   * referencia de `comparacionAlta`. Dos hechos, sin resta.
+   */
+  liderAlta?: LiderDelLote;
   excluidas: number;
   desviaciones: string[];
   orden: BatchActivity[];
@@ -294,6 +301,10 @@ async function faseExtraer(
       alta: sellerSpread(elegibles.filter((a) => a.quality === 100)),
     },
     comparacionAlta: compararConcentracion(
+      elegibles.filter((a) => a.quality === 100),
+      ordenado.filter((a) => a.franja === 'alta'),
+    ),
+    liderAlta: liderDelLote(
       elegibles.filter((a) => a.quality === 100),
       ordenado.filter((a) => a.franja === 'alta'),
     ),
@@ -605,6 +616,21 @@ function avisoConcentracion(spreadAlta: SellerSpread): string[] {
   ];
 }
 
+/**
+ * MEDIA-19 — quien encabeza el lote, aunque no sea la referencia de D13. Dos
+ * hechos y ninguna resta: restarlos volveria al sesgo que D13 quito.
+ */
+function lineaLider(l: LiderDelLote | undefined): string[] {
+  if (!l || l.enLote === null) return [];
+  return [
+    `- Quien mas aporta a la franja alta del lote tiene el **${pct(l.enLote)}**`,
+    `  de ella y el **${pct(l.enCandidatas)}** de las candidatas con`,
+    '  quality = 100. Son dos hechos, no una resta: el maximo de una muestra',
+    '  sube por azar, asi que la distancia entre ellos no mide concentracion',
+    '  anadida — eso lo dice la cifra de arriba.',
+  ];
+}
+
 function seccionVendedores(lote: LoteGuardado): string[] {
   const spread = sellerSpread(lote.orden);
   const alta = lote.orden.filter((a) => a.franja === 'alta');
@@ -637,6 +663,7 @@ function seccionVendedores(lote: LoteGuardado): string[] {
     fila('**Franja alta del lote**', spreadAlta, alta.length),
     '',
     ...lineaComparacion(lote.comparacionAlta),
+    ...lineaLider(lote.liderAlta),
     ...avisoConcentracion(spreadAlta),
     `- Reparto del lote, de mayor a menor: ${
       spread.reparto.length
