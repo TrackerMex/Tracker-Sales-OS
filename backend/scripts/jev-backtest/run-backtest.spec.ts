@@ -1024,10 +1024,15 @@ describe('R11 (77-jev-quality-backtest #77): una franja alta de una sola persona
 });
 
 describe('R11 (77-jev-quality-backtest #77): cada celda del reparto sale del ambito que dice (MEDIA-17)', () => {
-  // Fixture construida para que CUALQUIER confusion de ambito cambie algun
-  // numero impreso: las filas que R3 descarta son de un vendedor propio y
-  // numerosas, la concentracion de la franja alta no se parece a la del total,
-  // y la del lote entero no se parece a la de su franja alta.
+  // Fixture construida para que CUALQUIER confusion de ambito se note: las
+  // filas que R3 descarta son de un vendedor propio y numerosas, la
+  // concentracion de la franja alta no se parece a la del total, y la del lote
+  // entero no se parece a la de su franja alta.
+  //
+  // El principio incluye las salidas de presencia y ausencia, no solo las
+  // celdas de la tabla (D15, enmienda): un aviso que aparece o desaparece
+  // segun el ambito tambien tiene que quedar discriminado, porque ahi vivia
+  // MEDIA-18 y ahi vivira el proximo aviso que alguien anada.
   const vacia = {
     summary: '',
     discovery: null,
@@ -1116,5 +1121,60 @@ describe('R11 (77-jev-quality-backtest #77): cada celda del reparto sale del amb
       `${(buena.diferenciaPuntos as number) >= 0 ? '+' : ''}${(buena.diferenciaPuntos as number).toFixed(1)} puntos`,
     );
     expect(md).toContain(`**${pctDe(buena.enCandidatas)}** de ellas`);
+  });
+});
+
+describe('R11 (77-jev-quality-backtest #77): el aviso de D14 mira la franja alta, no el lote (MEDIA-18)', () => {
+  // Mismo principio que la fixture de MEDIA-17, aplicado a una salida que no
+  // es un numero sino prosa que esta o no esta (D15, enmienda).
+  const loteDe = (
+    altaSellers: string[],
+    restoSellers: string[],
+  ): BatchActivity[] =>
+    [
+      ...altaSellers.map((seller, i) => ({
+        seller,
+        franja: 'alta' as const,
+        i,
+      })),
+      ...restoSellers.map((seller, i) => ({
+        seller,
+        franja: 'media' as const,
+        i: i + altaSellers.length,
+      })),
+    ].map(({ seller, franja, i }) => ({
+      id: `x${i}`,
+      quality: franja === 'alta' ? 100 : 60,
+      franja,
+      seller_id: seller,
+      summary: `visita ${i}`,
+      discovery: `necesidad ${i}`,
+      agreement: `acuerdo ${i}`,
+      next_step: `paso ${i}`,
+    }));
+
+  it('avisa si la franja alta pasa de la mitad aunque el lote entero no llegue', async () => {
+    // Franja alta: 3 de 4 de V-A (75%). Lote entero: 3 de 10 (30%).
+    const md = await informeDe(respuestas, etiquetas, {
+      orden: loteDe(
+        ['V-A', 'V-A', 'V-A', 'V-B'],
+        ['V-C', 'V-D', 'V-E', 'V-F', 'V-G', 'V-H'],
+      ),
+    });
+
+    expect(md).toMatch(/sobre todo una persona/i);
+    expect(md).toContain('75.0%');
+  });
+
+  it('no avisa si quien pasa de la mitad lo hace fuera de la franja alta', async () => {
+    // Franja alta: 2 de 4 de V-A (50%, no pasa). Lote entero: 8 de 10 (80%).
+    const md = await informeDe(respuestas, etiquetas, {
+      orden: loteDe(
+        ['V-A', 'V-A', 'V-B', 'V-B'],
+        ['V-A', 'V-A', 'V-A', 'V-A', 'V-A', 'V-A'],
+      ),
+    });
+
+    expect(md).not.toMatch(/sobre todo una persona/i);
   });
 });
