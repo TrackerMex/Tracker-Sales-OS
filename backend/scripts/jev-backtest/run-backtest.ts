@@ -574,6 +574,35 @@ function lineaComparacion(c: ComparacionConcentracion | undefined): string[] {
   ];
 }
 
+/**
+ * MEDIA-16 — la cifra titular responde "cuanta concentracion anadio el
+ * muestreo". Esta responde la otra pregunta, que es la que decide: "puede este
+ * lote sostener un veredicto sobre el equipo".
+ *
+ * El corte es "mas de la mitad", que es lenguaje llano y no un criterio
+ * estadistico disfrazado: si mas de la mitad de la franja alta la escribe una
+ * persona, lo que se mida sera su forma de escribir. La cifra absoluta se
+ * publica siempre; esto solo pone la frase al lado cuando hace falta.
+ */
+function avisoConcentracion(spreadAlta: SellerSpread): string[] {
+  if (spreadAlta.fraccionMayor === null || spreadAlta.fraccionMayor <= 0.5) {
+    return [];
+  }
+  return [
+    '> **La franja alta la escribe sobre todo una persona.** Es el',
+    `> ${pct(spreadAlta.fraccionMayor)} de las actividades con quality = 100 del`,
+    '> lote, asi que lo que mida el veredicto sera su forma de escribir y no la',
+    '> del equipo.',
+    '>',
+    '> Esto es independiente de la cifra de arriba: si el muestreo anadio cero',
+    '> puntos, significa que el lote es fiel a una poblacion que ya esta',
+    '> concentrada, no que el lote sirva. El problema entonces no es el muestreo',
+    '> sino la poblacion, y volver a extraer con otra semilla no lo arregla: o',
+    '> se amplia el lote, o el veredicto se firma sabiendo a quien describe.',
+    '',
+  ];
+}
+
 function seccionVendedores(lote: LoteGuardado): string[] {
   const spread = sellerSpread(lote.orden);
   const alta = lote.orden.filter((a) => a.franja === 'alta');
@@ -606,6 +635,8 @@ function seccionVendedores(lote: LoteGuardado): string[] {
     fila('**Franja alta del lote**', spreadAlta, alta.length),
     '',
     ...lineaComparacion(lote.comparacionAlta),
+    '',
+    ...avisoConcentracion(spreadAlta),
     `- Reparto del lote, de mayor a menor: ${
       spread.reparto.length
         ? spread.reparto.map((n, i) => `vendedor ${i + 1}: ${n}`).join(', ')
