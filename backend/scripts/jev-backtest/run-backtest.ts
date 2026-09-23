@@ -580,9 +580,9 @@ function lineaComparacion(c: ComparacionConcentracion | undefined): string[] {
   const signo = c.diferenciaPuntos >= 0 ? '+' : '';
   return [
     '- Del vendedor que mas aporta a las candidatas con quality = 100 —que puede',
-    `  no ser el que encabeza el lote—: tiene el **${pct(c.enCandidatas)}** de ellas`,
-    `  y el **${pct(c.enLote)}** de la franja alta del lote, asi que el muestreo`,
-    `  le dio **${signo}${c.diferenciaPuntos.toFixed(1)} puntos**.`,
+    `  no ser el que encabeza el lote—: tiene el **${pct(c.enCandidatas)}** de ellas y`,
+    `  el **${pct(c.enLote)}** de la franja alta del lote, asi que el muestreo le dio`,
+    `  **${signo}${c.diferenciaPuntos.toFixed(1)} puntos**.`,
   ];
 }
 
@@ -623,11 +623,11 @@ function avisoConcentracion(spreadAlta: SellerSpread): string[] {
 function lineaLider(l: LiderDelLote | undefined): string[] {
   if (!l || l.enLote === null) return [];
   return [
-    `- Quien mas aporta a la franja alta del lote tiene el **${pct(l.enLote)}**`,
-    `  de ella y el **${pct(l.enCandidatas)}** de las candidatas con`,
-    '  quality = 100. Son dos hechos, no una resta: el maximo de una muestra',
-    '  sube por azar, asi que la distancia entre ellos no mide concentracion',
-    '  anadida — eso lo dice la cifra de arriba.',
+    `- Quien mas aporta a la franja alta del lote tiene el **${pct(l.enLote)}** de`,
+    `  ella y el **${pct(l.enCandidatas)}** de las candidatas con quality = 100.`,
+    '  Son dos hechos, no una resta: el maximo de una muestra sube por azar, asi',
+    '  que la distancia entre ellos no mide concentracion anadida — eso lo dice',
+    '  la cifra de arriba.',
   ];
 }
 
@@ -664,12 +664,12 @@ function seccionVendedores(lote: LoteGuardado): string[] {
     '',
     ...lineaComparacion(lote.comparacionAlta),
     ...lineaLider(lote.liderAlta),
-    ...avisoConcentracion(spreadAlta),
     `- Reparto del lote, de mayor a menor: ${
       spread.reparto.length
         ? spread.reparto.map((n, i) => `vendedor ${i + 1}: ${n}`).join(', ')
         : 'lote vacio'
     }`,
+    ...avisoConcentracion(spreadAlta),
     '',
     ...(base
       ? []
