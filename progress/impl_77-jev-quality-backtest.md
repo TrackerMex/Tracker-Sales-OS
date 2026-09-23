@@ -1388,3 +1388,138 @@ director**: si la diferencia con las candidatas es grande, la salida no es
 retocar el lote a mano, es volver a extraer con otra semilla y dejar constancia
 de las dos. Con 25 actividades, una diferencia de bastantes puntos cabe dentro
 del azar, y ese juicio es humano por diseño.
+
+---
+
+# Décima vuelta — MEDIA-15, MEDIA-16 y MEDIA-17: la cifra titular
+
+Los tres son sobre el número que el informe le dice al lector que mire. T6
+sigue sin ejecutarse. **Los artefactos reales siguen intactos**: md5 antes y
+después, `jev-backtest-lote.json` y `jev-backtest-etiquetado.md` los dos `OK`.
+
+## 49. MEDIA-15 — y una desviación medida del encargo
+
+El encargo decía: emparejar por **quien más aporta al lote** y medir a esa
+persona en las candidatas. Lo implementé, lo medí sobre 400 semillas y **no
+quita el sesgo**:
+
+| Variante, 6 vendedores parejos al 16.7% (muestreo justo) | Media | Negativas |
+|---|---:|---:|
+| `max − max` (lo que había) | +10.3 | **0 de 400** |
+| pareja por el top del **lote** (lo pedido) | +10.3 | **0 de 400** |
+| pareja por el top de las **candidatas** (lo implementado) | **+0.3** | **223 de 400** |
+
+La razón es que elegir a quien encabeza la muestra **ya selecciona una
+fluctuación al alza**: es la misma selección que hace `max` y por eso da el
+mismo número. La referencia tiene que venir del lado que no es muestra.
+
+Así que la implementación toma como referencia a quien más aporta a las
+candidatas con `quality = 100` y mide a esa misma persona en la franja alta del
+lote. Sobre el escenario de ayer sigue marcando lo que debe. **Si prefieres la
+variante literal, se cambia en una línea, pero entonces el número vuelve a
+acusar siempre.**
+
+Lo que esta variante no ve: un vendedor pequeño en la población que se hinche
+en el lote sin llegar a más de la mitad. Eso se queda en la fila absoluta, y a
+partir de la mitad lo coge MEDIA-16.
+
+El informe imprime ahora, sobre un muestreo sano:
+
+```
+| **Franja alta del lote** | 6 | 40.0% (10 de 25) |
+
+- Del vendedor que mas aporta a las candidatas con quality = 100 —que puede
+  no ser el que encabeza el lote—: tiene el **16.7%** de ellas
+  y el **12.0%** de la franja alta del lote, asi que el muestreo
+  le dio **-4.7 puntos**.
+```
+
+Ese caso enseña por qué hacía falta la aclaración «que puede no ser el que
+encabeza el lote»: la tabla marca 40.0% y la cifra titular 12.0% porque son dos
+personas distintas. La fórmula vieja habría publicado +23 puntos de falsa
+alarma.
+
+## 50. MEDIA-16 — la pregunta que la cifra titular no responde
+
+Cuando más de la mitad de la franja alta del lote la escribe una persona, el
+informe lo dice al lado de la cifra: lo que mida el veredicto será su forma de
+escribir; **la diferencia cero no salva al lote**, significa que es fiel a una
+población ya concentrada; y ahí el problema es la población, así que reextraer
+no arregla nada — o se amplía el lote, o el veredicto se firma sabiendo a quién
+describe.
+
+El corte es «más de la mitad»: lenguaje llano, no un criterio estadístico
+disfrazado. La cifra absoluta se publica siempre; esto solo pone la frase al
+lado cuando hace falta.
+
+## 51. MEDIA-17 — y la respuesta a «ciérralo como clase»
+
+Los tres mutantes pasaban los 161 en verde. En vez de tres tests sueltos hay
+**una fixture construida para que cualquier confusión de ámbito cambie algún
+número impreso**: las filas que descarta R3 son de un vendedor propio y
+numerosas, la concentración de la franja alta no se parece a la del total, y la
+del lote entero no se parece a la de su franja alta. Los valores esperados se
+calculan con las entradas correctas y se comparan contra el texto del informe,
+de extremo a extremo desde `main --fase extraer`. Escala: cada celda nueva del
+informe entra en la misma fixture.
+
+| Mutante | Resultado |
+|---|---|
+| línea base sobre candidatas crudas, ignorando R3 | **1 test rojo** |
+| cifra titular contra todas las candidatas | **2 tests rojos** |
+| fila «Franja alta del lote» sobre el lote entero | **1 test rojo** |
+
+**Como clase, la raíz es que todos los ámbitos tienen el mismo tipo.**
+`sellerSpread(rows)` acepta cualquier `{seller_id}[]`, así que candidatas,
+elegibles, lote y franja alta son intercambiables para el compilador: pasar el
+argumento equivocado es invisible hasta que alguien mira el número. Es la misma
+raíz de las cinco veces (ALTA-3, MEDIA-8, la semilla de D12, MEDIA-13 y esta).
+
+El cierre estructural sería el movimiento de BAJA-7: **tipos distintos por
+ámbito** —`CandidatasElegibles`, `FranjaAlta`— de modo que la confusión no
+compile, igual que `TextoRecortado` cerró R5. No lo hago por mi cuenta: toca
+varios ficheros, es una decisión de diseño tuya, y la fixture discriminante ya
+cubre el informe de hoy. Dilo y lo hago en una vuelta aparte.
+
+## 52. Commits de la décima vuelta, en orden
+
+```
+efba8da test:  la cifra titular tiene que seguir a una sola persona (MEDIA-15)
+f81a900 feat:  compararConcentracion sigue a una sola persona (MEDIA-15)
+c3a7780 test:  el informe tiene que publicar la comparacion emparejada (MEDIA-15)
+55bee55 fix:   la cifra titular emparejada sustituye a la resta de maximos (MEDIA-15)
+234acf1 test:  el caso que deberia parar todo tiene que avisar (MEDIA-16)
+fa9c9a8 fix:   avisa cuando la franja alta es de una sola persona (MEDIA-16)
+64a5c5a test:  una fixture que discrimine todos los ambitos del reparto (MEDIA-17)
+0fbc165 docs:  la cifra titular dice de quien habla
+2eb4316 style: quita un resto sin sentido del helper de la fixture
+```
+
+Modificados: `stratify.ts`, `run-backtest.ts` y sus dos `.spec.ts`. Nada fuera
+de `backend/scripts/`.
+
+Tests: **151 → 164**.
+
+## 53. Salida literal de los cuatro comandos (décima vuelta)
+
+```
+=== $ cd backend && pnpm test ===
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+Test Suites: 6 passed, 6 total
+Tests:       164 passed, 164 total
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+exit=0
+```
+
+`pnpm test` sigue en 15 suites / 78 tests: D9 intacto. `pnpm lint` cazó de paso
+un resto sin sentido en un helper de fixture, ya limpio.
