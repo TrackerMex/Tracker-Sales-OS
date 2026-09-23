@@ -970,3 +970,47 @@ describe('R11 (77-jev-quality-backtest #77): la cifra titular del informe (MEDIA
     expect(md).toMatch(/n\/d|regener/i);
   });
 });
+
+describe('R11 (77-jev-quality-backtest #77): una franja alta de una sola persona se avisa (MEDIA-16)', () => {
+  const altaDe = (sellers: string[]): BatchActivity[] =>
+    sellers.map((seller, i) => ({
+      id: `x${i}`,
+      quality: 100,
+      franja: 'alta' as const,
+      seller_id: seller,
+      summary: `visita ${i}`,
+      discovery: `necesidad ${i}`,
+      agreement: `acuerdo ${i}`,
+      next_step: `paso ${i}`,
+    }));
+
+  it('avisa aunque el muestreo haya sido fiel y la diferencia sea cero', async () => {
+    const md = await informeDe(respuestas, etiquetas, {
+      orden: altaDe(['V-A', 'V-A', 'V-A', 'V-B']),
+      comparacionAlta: {
+        enCandidatas: 0.75,
+        enLote: 0.75,
+        diferenciaPuntos: 0,
+      },
+    });
+
+    expect(md).toMatch(/una sola persona|sobre todo una persona/i);
+    expect(md).toContain('75.0%');
+    // Que la diferencia sea cero no salva al lote, y reextraer no lo arregla.
+    expect(md).toMatch(/no.{0,40}(arregla|sirve|sostiene)/i);
+    expect(md).toMatch(/poblacion/i);
+  });
+
+  it('no avisa cuando la franja alta esta repartida', async () => {
+    const md = await informeDe(respuestas, etiquetas, {
+      orden: altaDe(['V-A', 'V-A', 'V-B', 'V-C']),
+      comparacionAlta: {
+        enCandidatas: 0.3,
+        enLote: 0.5,
+        diferenciaPuntos: 20,
+      },
+    });
+
+    expect(md).not.toMatch(/una sola persona|sobre todo una persona/i);
+  });
+});
