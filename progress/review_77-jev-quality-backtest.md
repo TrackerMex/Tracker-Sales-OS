@@ -2309,3 +2309,234 @@ worktree aislado, ya eliminado. **Los dos artefactos de la extracción real no s
 leyeron ni se tocaron**: md5 verificado antes y después. No se llamó a
 `api.typesafe.ai` ni se abrió conexión a ninguna base de datos. T6 no se
 ejecutó.*
+
+---
+---
+
+# CIERRE — MEDIA-18 y MEDIA-19 (`8ff68f1..HEAD`, `8579afd`)
+
+Última comprobación. Regla de parada acordada: solo un BLOQUEANTE o un ALTA
+detiene la regeneración del lote; lo que quede por debajo se registra como deuda
+abierta y no abre otra vuelta.
+
+**Restricción respetada**: md5 de los dos artefactos de las 18:56 tomado antes y
+verificado después, los dos `OK`.
+
+## Veredicto
+
+**PASSED. Ningún BLOQUEANTE, ningún ALTA. El lote se puede regenerar.**
+
+Dos hallazgos nuevos, los dos por debajo de la barra y los dos de cobertura
+—código correcto, cableado sin afirmar—, que quedan como deuda: **MEDIA-20** y
+**BAJA-20**. Sin regresión, octava vez.
+
+## Punto 1 — MEDIA-19: dos hechos y ninguna resta
+
+El tipo tiene exactamente dos campos y el test `expect(Object.keys(l).sort())
+.toEqual(['enCandidatas','enLote'])` vigila el objeto devuelto. Mutantes:
+
+| Mutante | Resultado |
+|---|---|
+| `liderDelLote` **devuelve** una resta | **1 rojo** |
+| `liderAlta` se calcula sobre el lote entero | **1 rojo** |
+| no se imprime la línea del líder | **1 rojo** |
+| `lineaLider` intercambia `enLote` por `enCandidatas` | **1 rojo** |
+| *el **tipo** gana un campo opcional de resta* | **174 verde** → BAJA-20 |
+
+**Y el escenario que reporté, reconstruido**: semilla 17 sobre la población
+sana, el 44% en manos de quien no es la referencia y la cifra titular en −8.7.
+Lo que sale hoy:
+
+```
+| **Franja alta del lote** | 6 | 44.0% (11 de 25) |
+
+- Del vendedor que mas aporta a las candidatas con quality = 100 —que puede
+  no ser el que encabeza el lote—: tiene el 16.7% de ellas y
+  el 8.0% de la franja alta del lote, asi que el muestreo le dio -8.7 puntos.
+- Quien mas aporta a la franja alta del lote tiene el **44.0%** de
+  ella y el **16.7%** de las candidatas con quality = 100.
+```
+
+**El lector lo ve.** El 44% pasa de estar escondido en una celda de la tabla a
+ser una viñeta con su contraste al lado, y la frase explica por qué no se
+restan. MEDIA-19 cerrado: era el 10.3% de corridas que medí y ya no es ciego.
+
+## Punto 2 — MEDIA-18: el ámbito, atacado por el lado que no probó
+
+Él clavó franja-vs-lote por los dos lados (75/30 avisa, 50/80 no avisa). Probé
+cuatro ataques más:
+
+| Ataque | Resultado |
+|---|---|
+| el aviso sobre el lote entero | **2 rojos** |
+| el corte en «al menos la mitad» (frontera exacta) | **2 rojos** |
+| el corte subido a 0.8 | **2 rojos** |
+| el corte bajado a 0.2 | **2 rojos** |
+| **el aviso sobre las CANDIDATAS, no sobre el lote** | **174 verde** → MEDIA-20 |
+
+### MEDIA-20 — el tercer ámbito del aviso no está discriminado
+
+`run-backtest.ts`, `avisoConcentracion(spreadAlta)`. La fixture cruza *franja
+alta vs lote entero*, pero no *franja alta vs candidatas*: sustituir el
+argumento por `base.alta` deja los **174 tests en verde**. Con la población de
+ayer (candidatas al 46.9%, franja alta del lote al 80%) el aviso **no
+aparecería**, porque 46.9% no pasa de la mitad. Es la misma clase de MEDIA-18,
+un ámbito más allá.
+
+El código de hoy es correcto. Se cierra añadiendo a la fixture un caso donde la
+concentración de las candidatas y la de la franja alta caigan a distinto lado
+del corte. Queda como deuda.
+
+### BAJA-20 — lo que protege el test es el retorno, no el tipo
+
+El anexo dice que «el tipo no lleva la resta». Añadir
+`diferenciaPuntos?: number` a `LiderDelLote` compila y pasa los 174: la
+comprobación es sobre las claves del objeto devuelto, no sobre la interfaz. En
+cuanto alguien **devuelve** el campo, el test salta (mutante 2 → 1 rojo), que es
+la garantía que importa. La afirmación es más fuerte que el candado; el candado
+es el correcto.
+
+## Punto 3 — El principio extendido de la fixture
+
+Está escrito donde tiene que estar (`run-backtest.spec.ts:1033-1036`): «el
+principio incluye las salidas de presencia y ausencia, no solo las celdas de la
+tabla (D15, enmienda)… ahí vivía MEDIA-18 y ahí vivirá el próximo aviso que
+alguien añada».
+
+**¿Nacería cubierto un aviso nuevo inventado por mí?** Los datos sí lo
+permiten: los dos lotes de la fixture cruzan el corte del 50% en sentidos
+opuestos (75/30 y 50/80), así que cualquier predicado nuevo sobre el par
+franja-vs-lote quedaría discriminado en cuanto se le añada su aserción. Pero
+**nada obliga** a quien añada el aviso a escribirla: el principio es una
+convención documentada, no un mecanismo. Es exactamente lo que D15 cambió por no
+tipar los ámbitos, está asumido, y MEDIA-20 es la primera factura — el tercer
+ámbito no lo cubren los datos de la fixture.
+
+## Punto 4 — Regresión
+
+**Ninguna, octava vez.** La referencia en Python, la misma desde la primera
+revisión: matriz `[[1,0,1,0],[0,1,0,0],[2,0,2,0],[0,2,0,3]]`, acuerdos
+58.3% / 58.3%, Spearman 0.480, falsos 100 66.7%, degradados 44.4% (4 de 9), 12
+pares. Fuga: 0 coincidencias de `seller_id` en el informe versionado.
+
+## Punto 5 — Lo que ve quien firma
+
+Rendericé la sección con tres poblaciones. Las tres preguntas se responden **sin
+regla de lectura**:
+
+| | 1) sana, semilla 17 | 2) sana, semilla 77 | 3) como la de ayer |
+|---|---|---|---|
+| **¿Añadió concentración el muestreo?** | −8.7 pts | +3.3 pts | +1.0 pts |
+| **¿Quién protagoniza el lote?** | **44.0%** vs 16.7% | 24.0% vs 16.7% | 48.0% vs 47.0% |
+| **¿Sostiene un veredicto del equipo?** | sin aviso | sin aviso | sin aviso |
+| Fila absoluta de la franja alta | 44.0% | 24.0% | 48.0% |
+
+Las dos primeras preguntas tienen respuesta explícita y coherente en los tres
+casos. La tercera es binaria por diseño: el aviso salta pasada la mitad, y lo
+verifiqué disparando con 80% y callando con 24%.
+
+Una observación para el gate, no un hallazgo: en el caso 3 la franja alta es
+**48% de una sola persona** y no hay aviso, porque el corte es «más de la
+mitad». El número está dos veces en negrita —en la tabla y en la línea del
+protagonista— así que se ve; pero cerca del corte, lo que informa son esas dos
+cifras y no la ausencia del aviso. Es la consecuencia aceptada de un corte en
+lenguaje llano, y me parece la elección correcta frente a un umbral estadístico.
+
+## Inventario final de hallazgos
+
+47 hallazgos a lo largo de las ocho revisiones y las cinco comprobaciones
+acotadas. (El recuento de 29 corresponde a las tres revisiones completas; las
+comprobaciones acotadas añadieron 18 más.)
+
+### Cerrados y verificados — 30
+
+**ALTA (7 de 7)**: ALTA-1 pérdida del lote al renderizar · ALTA-2 nivel
+fraccionario corrompía la matriz · ALTA-3 gate de R4 sin test en `extraer` ·
+ALTA-4 R5 sin aserción sobre la petición real · ALTA-5 cuerpo ilegible se
+llevaba el lote · ALTA-6 el ensayo machacaba la corrida real · ALTA-7 el
+procedimiento de reanudación decía lo contrario del código.
+
+**MEDIA (16)**: MEDIA-1 cifras sin datos publicadas como cero · MEDIA-4 división
+por conjunto vacío · MEDIA-5 etiquetado que no cuadra con el lote · MEDIA-7
+concentración por vendedor · MEDIA-8 `validarEtiquetado` sin cableado probado ·
+MEDIA-9 informe compartido entre modos · MEDIA-10 el lote solo era durable al
+final · MEDIA-11 «gana la última» degradaba una buena · MEDIA-12 informe sin
+línea base · MEDIA-13 semilla del etiquetado sin test · MEDIA-14 «sin cuota» sin
+test · MEDIA-15 la resta de máximos inflaba siempre · MEDIA-16 población
+concentrada marcaba 0.0 · MEDIA-17 los ámbitos del reparto sin discriminar ·
+MEDIA-18 el ámbito del aviso · MEDIA-19 el protagonista invisible.
+
+**BAJA (7)**: BAJA-7 la frontera de R5 pasa a ser del compilador · BAJA-9
+Spearman `null` con serie constante · BAJA-10 el `n/d` explicado · BAJA-11 `modo`
+mal etiquetado · BAJA-14 «nunca llamada» frente a «llamada y falló» · BAJA-15 el
+informe parcial se declara · y **D12**, que no fue hallazgo mío sino de la
+primera extracción real.
+
+### Abiertos por decisión del Líder — 9
+
+MEDIA-2 (la mitad del 15% de D11 sin test) · MEDIA-3 (las dos fronteras de R13
+sin test) · **MEDIA-6 → BAJA** (texto multilínea sin escapar; su consecuencia
+dejó de ser silenciosa al cerrarse MEDIA-5) · BAJA-1 (aserción frágil en
+`labeling.spec.ts:75`) · BAJA-2 (un commit verde toca un test) · BAJA-3 (cuatro
+rojos por módulo ausente) · BAJA-4 (`JEV_BACKTEST_APPROVED=no` vale como sí) ·
+BAJA-5 (`--fase` sin valor cae en `extraer`) · BAJA-6 (`--min… 1` significa
+100%) · BAJA-8 (dos casillas marcadas).
+
+### Abiertos sin decidir — 8
+
+- **MEDIA-20** (nuevo) — el aviso de D14 no está discriminado contra el ámbito
+  de las candidatas.
+- **BAJA-12** — si `guardarRespuestas` falla no hay red; caso particular de la
+  clase que cerró MEDIA-10.
+- **BAJA-13** — `fetchImpl` que resuelve `null` se lleva el lote; no alcanzable
+  con el `fetch` real.
+- **BAJA-16** — §3b dice «ante la duda, no se vuelve a preguntar» y el caso por
+  defecto de `necesitaLlamada` vuelve a preguntar.
+- **BAJA-17** — `408` y `425` tratados como rechazo definitivo.
+- **BAJA-18** — el aviso parcial recomienda `--fase evaluar` también para filas
+  que ese comando no arregla.
+- **BAJA-19** — el valor de `MOTIVO_NUNCA_LLAMADA` es carga útil para la
+  clasificación por regex, sin test.
+- **BAJA-20** (nuevo) — el tipo `LiderDelLote` admite un campo opcional de resta;
+  lo protegido es el retorno.
+
+### Pendiente y ajeno al script
+
+La credencial de solo lectura de D7 (`explore_jev-backtest.md` §3 la sigue
+marcando «pendiente de recibir») y confirmar la forma real de la respuesta de la
+API con la primera llamada de T6.
+
+## Los cuatro comandos
+
+```
+=== $ cd backend && pnpm test ===
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+Test Suites: 6 passed, 6 total
+Tests:       174 passed, 174 total
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+exit=0
+```
+
+## Juicio final
+
+**El lote regenerado puede ir al director.** Las tres preguntas que decide el
+humano están respondidas en el informe sin que haya que recordar ninguna regla,
+que era la condición que puse la vuelta pasada y la única que faltaba.
+
+---
+
+*Comprobación acotada a los cinco puntos, sin modificar código de producción.
+Mutantes y renderizados en un worktree aislado, ya eliminado. **Los dos
+artefactos de la extracción real no se leyeron ni se tocaron**: md5 verificado
+antes y después. No se llamó a `api.typesafe.ai` ni se abrió conexión a ninguna
+base de datos. T6 no se ejecutó.*
