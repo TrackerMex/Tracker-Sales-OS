@@ -398,9 +398,16 @@ describe('R11 (77-jev-quality-backtest #77): quien encabeza el lote, aunque no s
   });
 
   it('cubre el punto ciego medido: casi la mitad del lote en quien no es la referencia', () => {
-    // 11 de 25 de la franja alta (44%) de alguien que en las candidatas es el 12%.
-    const candidatas = [...de('V-PEQUENO', 72), ...de('V-GRANDE', 528)];
-    const lote = [...de('V-PEQUENO', 11), ...de('V-GRANDE', 14)];
+    // 11 de 25 de la franja alta (44%) de alguien que en las candidatas es el
+    // 12%. El resto repartido, para que el lider del lote sea el pequeno.
+    const candidatas = [
+      ...de('V-PEQUENO', 72),
+      ...['G1', 'G2', 'G3', 'G4', 'G5', 'G6'].flatMap((v) => de(v, 88)),
+    ];
+    const lote = [
+      ...de('V-PEQUENO', 11),
+      ...['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'].flatMap((v) => de(v, 2)),
+    ];
 
     const l = liderDelLote(candidatas, lote);
 

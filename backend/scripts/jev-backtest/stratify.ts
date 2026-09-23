@@ -220,3 +220,48 @@ export function compararConcentracion(
     diferenciaPuntos: (enLote - enCandidatas) * 100,
   };
 }
+
+export interface LiderDelLote {
+  /** Fraccion, en el lote, del vendedor que mas aporta al lote. */
+  enLote: number | null;
+  /** Fraccion de ESE MISMO vendedor en las candidatas. */
+  enCandidatas: number | null;
+}
+
+/**
+ * MEDIA-19 — quien encabeza el lote, que puede no ser la referencia de D13.
+ *
+ * La cifra de `compararConcentracion` esta centrada en cero, pero por eso
+ * mismo no ve a un vendedor pequeno en la poblacion que se hinche en el lote
+ * sin llegar a la mitad: medido sobre 2000 semillas de una poblacion sana, en
+ * el 10.3% de las corridas alguien tiene entre el 30% y el 50% de la franja
+ * alta mientras la cifra titular no se mueve de cero. El lector tiene que ver
+ * al protagonista del lote aunque no sea la referencia.
+ *
+ * **Devuelve dos hechos y ninguna resta, a proposito.** Restar estas dos
+ * fracciones seria volver a D13: el maximo de una muestra sube por azar, asi
+ * que la distancia entre ambas no mide concentracion anadida.
+ */
+export function liderDelLote(
+  candidatas: { seller_id: string }[],
+  lote: { seller_id: string }[],
+): LiderDelLote {
+  if (!candidatas.length || !lote.length) {
+    return { enLote: null, enCandidatas: null };
+  }
+
+  const enElLote = new Map<string, number>();
+  for (const a of lote) {
+    enElLote.set(a.seller_id, (enElLote.get(a.seller_id) ?? 0) + 1);
+  }
+  const lider = [...enElLote.entries()].sort(
+    (x, y) => y[1] - x[1] || x[0].localeCompare(y[0]),
+  )[0][0];
+
+  return {
+    enLote: (enElLote.get(lider) ?? 0) / lote.length,
+    enCandidatas:
+      candidatas.filter((a) => a.seller_id === lider).length /
+      candidatas.length,
+  };
+}
