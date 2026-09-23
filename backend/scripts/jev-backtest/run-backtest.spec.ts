@@ -1,5 +1,7 @@
 import { JevResult, MOTIVO_NUNCA_LLAMADA, nuncaLlamada } from './jev-client';
+import { DEFAULT_SEED } from './labeling';
 import { Metrics } from './metrics';
+import { stratify } from './stratify';
 import {
   LoteGuardado,
   RUTA_ETIQUETADO,
@@ -15,7 +17,12 @@ import {
   rutaInforme,
   rutaRespuestas,
 } from './run-backtest';
-import { BatchActivity, EvaluatedActivity, Level } from './types';
+import {
+  BatchActivity,
+  EvaluatedActivity,
+  Level,
+  SourceActivity,
+} from './types';
 
 const UMBRALES = { minFalsos100Detectados: 0.7, maxBuenosDegradados: 0.15 };
 
@@ -677,5 +684,92 @@ describe('R11 (77-jev-quality-backtest #77): un informe incompleto se declara in
     const md = await informeDe(respuestas);
 
     expect(md).not.toMatch(/parcial/i);
+  });
+});
+
+describe('R2 (77-jev-quality-backtest #77): la fase extraer usa la semilla de la corrida', () => {
+  const poblacion: SourceActivity[] = [
+    ...Array.from({ length: 25 }, (_, i) => ({
+      id: `reciente-${i}`,
+      quality: 100,
+      seller_id: 'V-MONOPOLIO',
+      summary: `visita ${i}`,
+      discovery: `necesidad ${i}`,
+      agreement: `acuerdo ${i}`,
+      next_step: `paso ${i}`,
+    })),
+    ...Array.from({ length: 35 }, (_, i) => ({
+      id: `antigua-${i}`,
+      quality: 100,
+      seller_id: `V-${i % 5}`,
+      summary: `visita ${i}`,
+      discovery: `necesidad ${i}`,
+      agreement: `acuerdo ${i}`,
+      next_step: `paso ${i}`,
+    })),
+    ...Array.from({ length: 30 }, (_, i) => ({
+      id: `media-${i}`,
+      quality: 60,
+      seller_id: `V-${i % 5}`,
+      summary: `visita ${i}`,
+      discovery: `necesidad ${i}`,
+      agreement: `acuerdo ${i}`,
+      next_step: `paso ${i}`,
+    })),
+    ...Array.from({ length: 30 }, (_, i) => ({
+      id: `baja-${i}`,
+      quality: 20,
+      seller_id: `V-${i % 5}`,
+      summary: `visita ${i}`,
+      discovery: `necesidad ${i}`,
+      agreement: `acuerdo ${i}`,
+      next_step: `paso ${i}`,
+    })),
+  ];
+
+  const extraerCon = async (argv: string[]) => {
+    const { fs, escrituras } = fsFalso({});
+    const codigo = await main(
+      argv,
+      { JEV_BACKTEST_APPROVED: 'si' },
+      {
+        fs,
+        leerCandidatos: () => Promise.resolve(poblacion),
+      },
+    );
+    return { codigo, escrituras };
+  };
+
+  const idsDe = (json: string) =>
+    (JSON.parse(json) as LoteGuardado).orden
+      .map((a) => a.id)
+      .sort()
+      .join(',');
+
+  const idsStratify = (semilla: number) =>
+    stratify(poblacion, semilla)
+      .batch.map((a) => a.id)
+      .sort()
+      .join(',');
+
+  it('guarda el lote que corresponde a la semilla pedida, no a la de por defecto', async () => {
+    const { codigo, escrituras } = await extraerCon([
+      '--fase',
+      'extraer',
+      '--semilla',
+      '1234',
+    ]);
+
+    expect(codigo).toBe(0);
+    const guardado = JSON.parse(escrituras[RUTA_LOTE]) as LoteGuardado;
+    expect(guardado.semilla).toBe(1234);
+    expect(idsDe(escrituras[RUTA_LOTE])).toBe(idsStratify(1234));
+    expect(idsDe(escrituras[RUTA_LOTE])).not.toBe(idsStratify(DEFAULT_SEED));
+  });
+
+  it('sin --semilla usa la de por defecto', async () => {
+    const { escrituras } = await extraerCon(['--fase', 'extraer']);
+
+    expect(idsDe(escrituras[RUTA_LOTE])).toBe(idsStratify(DEFAULT_SEED));
   });
 });
