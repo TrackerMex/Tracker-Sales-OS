@@ -307,9 +307,7 @@ describe('R2 (77-jev-quality-backtest #77): dentro de la franja se elige al azar
 
 describe('R11 (77-jev-quality-backtest #77): la comparacion sigue a una sola persona (MEDIA-15)', () => {
   const de = (seller: string, n: number) =>
-    Array.from({ length: n }, (_, i) => ({
-      seller_id: `${seller}-${i}` && seller,
-    }));
+    Array.from({ length: n }, () => ({ seller_id: seller }));
 
   it('toma como referencia a quien mas aporta a las candidatas, y mide a esa persona en el lote', () => {
     // En las candidatas manda B (30 de 40). En el lote manda A (3 de 4).
