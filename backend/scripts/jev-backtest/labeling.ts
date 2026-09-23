@@ -3,7 +3,16 @@
 
 import { BatchActivity, LEVELS, Level, TextFields } from './types';
 
-/** Semilla por defecto. Se registra en el informe para poder reproducir. */
+/**
+ * Semilla por defecto. Se registra en el lote y en el informe para poder
+ * reproducir.
+ *
+ * Vive en este modulo por historia, no por diseño: `stratify` usa la misma
+ * semilla para decidir **que** se muestrea dentro de cada franja (D12), no
+ * solo en que orden lo ve el director. Quien la cambie pensando unicamente en
+ * el orden del etiquetado cambiara tambien el lote. Si algun dia
+ * `shuffleWithSeed` se muda a un modulo neutro, DEFAULT_SEED se va con ella.
+ */
 export const DEFAULT_SEED = 77;
 
 /** PRNG determinista (mulberry32): misma semilla, misma secuencia. */
