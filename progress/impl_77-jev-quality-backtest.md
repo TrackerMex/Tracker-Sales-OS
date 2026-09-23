@@ -1254,3 +1254,137 @@ de §40.
 El lote real de `progress/jev-backtest-lote.json` (semilla 77) quedó
 invalidado por D12 y hay que **regenerarlo con `--fase extraer`** antes de
 dárselo al director. No lo he tocado.
+
+---
+
+# Novena vuelta — MEDIA-12, MEDIA-13 y MEDIA-14
+
+Los tres, antes de regenerar el lote. T6 sigue sin ejecutarse.
+
+**Los dos artefactos de la extracción real no se han tocado.** Guardé su md5
+antes de empezar y lo verifiqué al terminar: `jev-backtest-lote.json` y
+`jev-backtest-etiquetado.md`, los dos `OK`. Esta vuelta tampoco lleva prueba
+contra disco por esa razón; la extracción se ejercita de extremo a extremo con
+ficheros en memoria.
+
+## 43. MEDIA-12 — la concentración del lote ya se lee contra su línea base
+
+`faseExtraer` guarda en el lote el reparto por vendedor de las **candidatas
+elegibles** —las mismas filas que podían entrar, sin las que descarta R3— en
+dos ámbitos: todas y las de `quality = 100`. El informe pasa de una lista
+suelta a una tabla de cuatro filas con la diferencia ya calculada:
+
+```
+| Ambito                       | Vendedores | Fraccion del que mas aporta |
+| ---                          |       ---: |                        ---: |
+| Candidatas elegibles         |          8 |            15.0% (300 de 2000) |
+| Candidatas con quality = 100 |          7 |             46.9% (300 de 640) |
+| Lote completo                |          8 |                18.0% (9 de 50) |
+| **Franja alta del lote**     |          6 |                36.0% (9 de 25) |
+
+- Diferencia en la franja alta, lote menos candidatas: **-10.9 puntos**
+```
+
+**La fila que decide es la de la franja alta**, y publicar solo el total no
+habría servido: el defecto de ayer vivía ahí —20 de 25 de una persona— y en el
+total del lote se habría diluido hasta no llamar la atención. Los falsos 100 se
+miden exclusivamente sobre esa franja, así que es la única comparación que
+responde «¿este lote generaliza?».
+
+**Sin umbral ni semáforo**, como pediste. El texto del informe dice que con 25
+actividades la banda es ancha y que las cifras están para que decida una
+persona. No hay ningún número con pinta de criterio estadístico.
+
+`sellerSpread` sigue devolviendo solo recuentos, así que en el informe
+versionado no entra ningún identificador. Un lote extraído antes de esto no
+rompe nada: las dos filas de candidatas salen `n/d` y el informe dice que se
+regenere si se necesita la comparación.
+
+## 44. MEDIA-13 y MEDIA-14 — dos candados, sin cambio de producción
+
+Los dos son comportamiento correcto que no tenía forma de afirmarse.
+
+- **MEDIA-13**: el test de la vuelta anterior ordena los ids para probar
+  pertenencia, y por eso no podía ver el orden. Ahora se compara el orden tal
+  cual contra `shuffleWithSeed(stratify(poblacion, s).batch, s)`, y además que
+  el fichero del director salga en ese mismo orden.
+- **MEDIA-14**: sobre una población donde una persona produce de verdad el
+  91.7% de los `quality = 100`, el lote tiene que reflejarlo. Cualquier cuota
+  por debajo de 18 de 25 lo rompe.
+
+| Mutante | Resultado |
+|---|---|
+| `shuffleWithSeed(batch, 77)` en vez de la semilla de la corrida | **1 test rojo** (antes: ninguno) |
+| tope de 8 actividades por vendedor | **3 tests rojos** (antes: ninguno) |
+
+## 45. La nota de `DEFAULT_SEED`
+
+Anotada donde se define, en `labeling.ts`, que es donde alguien iría a
+cambiarla: desde D12 la misma semilla decide **qué** se muestrea dentro de cada
+franja, no solo en qué orden lo ve el director, así que cambiarla pensando en
+el etiquetado cambia también el lote. Sin tarea asociada; `shuffleWithSeed` se
+queda donde está y, si algún día se mueve, `DEFAULT_SEED` se va con ella.
+
+## 46. Commits de la novena vuelta, en orden
+
+```
+a76272c test: la semilla registrada y la ausencia de cuota, con red (MEDIA-13, MEDIA-14)
+176ffa5 test: la concentracion del lote no significa nada sola (MEDIA-12)
+fe111a0 fix:  el informe compara la concentracion del lote con su linea base (MEDIA-12)
+3bdedc5 docs: avisa de que DEFAULT_SEED ya no solo ordena
+```
+
+Modificados: `run-backtest.ts`, `labeling.ts` y `run-backtest.spec.ts`. Nada
+fuera de `backend/scripts/`.
+
+Tests: **145 → 151**.
+
+## 47. Salida literal de los cuatro comandos (novena vuelta)
+
+```
+=== $ cd backend && pnpm test ===
+
+> backend@0.0.1 test /home/claude/sites/Tracker-Sales-OS/backend
+> jest
+
+
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+Snapshots:   0 total
+Time:        5.449 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+
+> backend@0.0.1 test:scripts /home/claude/sites/Tracker-Sales-OS/backend
+> jest --config ./scripts/jest.config.js
+
+
+Test Suites: 6 passed, 6 total
+Tests:       151 passed, 151 total
+Snapshots:   0 total
+Time:        2.291 s
+Ran all test suites.
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+
+exit=0
+```
+
+`pnpm test` sigue en 15 suites / 78 tests: D9 intacto.
+
+## 48. Al regenerar el lote
+
+El lote nuevo traerá ya el reparto de las candidatas, así que el informe podrá
+hacer la comparación. **Mira la fila de la franja alta antes de dárselo al
+director**: si la diferencia con las candidatas es grande, la salida no es
+retocar el lote a mano, es volver a extraer con otra semilla y dejar constancia
+de las dos. Con 25 actividades, una diferencia de bastantes puntos cabe dentro
+del azar, y ese juicio es humano por diseño.
