@@ -1,5 +1,5 @@
 import { JevResult, MOTIVO_NUNCA_LLAMADA, nuncaLlamada } from './jev-client';
-import { DEFAULT_SEED } from './labeling';
+import { DEFAULT_SEED, shuffleWithSeed } from './labeling';
 import { Metrics } from './metrics';
 import { stratify } from './stratify';
 import {
@@ -687,6 +687,48 @@ describe('R11 (77-jev-quality-backtest #77): un informe incompleto se declara in
   });
 });
 
+const filaDe = (
+  id: string,
+  quality: number,
+  seller: string,
+): SourceActivity => ({
+  id,
+  quality,
+  seller_id: seller,
+  summary: `visita ${id}`,
+  discovery: `necesidad ${id}`,
+  agreement: `acuerdo ${id}`,
+  next_step: `paso ${id}`,
+});
+
+const poblacionSesgada: SourceActivity[] = [
+  ...Array.from({ length: 25 }, (_, i) =>
+    filaDe(`reciente-${i}`, 100, 'V-MONOPOLIO'),
+  ),
+  ...Array.from({ length: 35 }, (_, i) =>
+    filaDe(`antigua-${i}`, 100, `V-${i % 5}`),
+  ),
+  ...Array.from({ length: 30 }, (_, i) =>
+    filaDe(`media-${i}`, 60, `V-${i % 5}`),
+  ),
+  ...Array.from({ length: 30 }, (_, i) =>
+    filaDe(`baja-${i}`, 20, `V-${i % 5}`),
+  ),
+];
+
+const extraerConPoblacion = async (argv: string[]) => {
+  const { fs, escrituras } = fsFalso({});
+  const codigo = await main(
+    argv,
+    { JEV_BACKTEST_APPROVED: 'si' },
+    {
+      fs,
+      leerCandidatos: () => Promise.resolve(poblacionSesgada),
+    },
+  );
+  return { codigo, escrituras };
+};
+
 describe('R2 (77-jev-quality-backtest #77): la fase extraer usa la semilla de la corrida', () => {
   const poblacion: SourceActivity[] = [
     ...Array.from({ length: 25 }, (_, i) => ({
@@ -771,5 +813,75 @@ describe('R2 (77-jev-quality-backtest #77): la fase extraer usa la semilla de la
     const { escrituras } = await extraerCon(['--fase', 'extraer']);
 
     expect(idsDe(escrituras[RUTA_LOTE])).toBe(idsStratify(DEFAULT_SEED));
+  });
+});
+
+describe('R6 (77-jev-quality-backtest #77): la semilla registrada reproduce el orden del etiquetado', () => {
+  const ordenDe = (json: string) =>
+    (JSON.parse(json) as LoteGuardado).orden.map((a) => a.id).join(',');
+
+  const ordenEsperado = (semilla: number) =>
+    shuffleWithSeed(stratify(poblacionSesgada, semilla).batch, semilla)
+      .map((a) => a.id)
+      .join(',');
+
+  it('el orden guardado es el que da la semilla pedida, no el de la de por defecto', async () => {
+    const { escrituras } = await extraerConPoblacion([
+      '--fase',
+      'extraer',
+      '--semilla',
+      '1234',
+    ]);
+
+    expect(ordenDe(escrituras[RUTA_LOTE])).toBe(ordenEsperado(1234));
+    expect(ordenDe(escrituras[RUTA_LOTE])).not.toBe(
+      ordenEsperado(DEFAULT_SEED),
+    );
+  });
+
+  it('el fichero del director sale en ese mismo orden', async () => {
+    const { escrituras } = await extraerConPoblacion([
+      '--fase',
+      'extraer',
+      '--semilla',
+      '1234',
+    ]);
+
+    const orden = (JSON.parse(escrituras[RUTA_LOTE]) as LoteGuardado).orden;
+    const etiquetado = escrituras[RUTA_ETIQUETADO];
+    // Con delimitador: "visita antigua-1" es prefijo de "visita antigua-10".
+    const posiciones = orden.map((a) =>
+      etiquetado.indexOf(`- Resumen: ${a.summary as string}\n`),
+    );
+
+    expect(posiciones.every((p) => p >= 0)).toBe(true);
+    expect(posiciones).toEqual([...posiciones].sort((a, b) => a - b));
+  });
+});
+
+describe('R2 (77-jev-quality-backtest #77): sin cuota por vendedor (D12)', () => {
+  // Poblacion donde una persona produce de verdad el 91.7% de los quality=100.
+  const dominada: SourceActivity[] = [
+    ...Array.from({ length: 55 }, (_, i) =>
+      filaDe(`dom-${i}`, 100, 'V-DOMINANTE'),
+    ),
+    ...Array.from({ length: 5 }, (_, i) => filaDe(`otro-${i}`, 100, `V-${i}`)),
+    ...Array.from({ length: 30 }, (_, i) =>
+      filaDe(`media-${i}`, 60, `V-${i % 5}`),
+    ),
+    ...Array.from({ length: 30 }, (_, i) =>
+      filaDe(`baja-${i}`, 20, `V-${i % 5}`),
+    ),
+  ];
+
+  it('si alguien produce de verdad casi toda la franja, el lote lo refleja', () => {
+    const alta = stratify(dominada, 77).batch.filter(
+      (a) => a.franja === 'alta',
+    );
+    const dominante = alta.filter((a) => a.seller_id === 'V-DOMINANTE').length;
+
+    // Con un tope por vendedor esto caeria a la cuota. La muestra fiel de una
+    // poblacion al 91.7% no es un reparto equilibrado (D12).
+    expect(dominante).toBeGreaterThanOrEqual(18);
   });
 });
