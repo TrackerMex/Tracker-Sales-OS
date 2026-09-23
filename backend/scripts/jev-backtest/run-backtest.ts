@@ -159,6 +159,11 @@ const FICHERO_REAL: FicheroIO = {
 export interface RunDeps {
   fetchImpl: typeof fetch;
   fs: FicheroIO;
+  /** Entra por aqui para poder probar la extraccion sin base de datos. */
+  leerCandidatos: (
+    env: NodeJS.ProcessEnv,
+    limite: number,
+  ) => Promise<SourceActivity[]>;
 }
 
 export interface LoteGuardado {
@@ -244,7 +249,10 @@ async function faseExtraer(
   deps: Partial<RunDeps>,
 ): Promise<number> {
   const fs = deps.fs ?? FICHERO_REAL;
-  const candidatas = await leerCandidatos(env, opciones.limite);
+  const candidatas = await (deps.leerCandidatos ?? leerCandidatos)(
+    env,
+    opciones.limite,
+  );
   const { batch, deviations, excluded } = stratify(
     candidatas,
     opciones.semilla,
