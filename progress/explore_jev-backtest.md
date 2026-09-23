@@ -75,6 +75,82 @@ mas recientes como candidatas (`CANDIDATE_LIMIT`), de las que estratifica el
 lote de 50. Queda por confirmar que las tres franjas de R2 tienen suficientes
 filas; si alguna no, R2 completa desde la franja superior y lo registra.
 
+## 3c. Desde donde se ejecuta, y con que cadena de conexion
+
+**Decision del humano, 2026-09-23: desde un contenedor desechable unido a la
+red de Docker.** No desde `tracker-sales-api` y no desde el host.
+
+Por que no desde el contenedor del backend, que era la primera idea: su imagen
+de produccion (`backend/Dockerfile`, etapa `production`) hace
+`pnpm install --prod` y `COPY --from=build /app/dist ./dist`. No tiene
+`backend/scripts/` ni `ts-node`, porque `ts-node` es devDependency. No es un
+descuido de la imagen: es correcta para lo que hace.
+
+Por que no desde el host: los contenedores de Postgres no publican el 5432, asi
+que desde el host no hay ruta sin tocar la infraestructura.
+
+El contenedor desechable resuelve las dos cosas sin cambiar nada desplegado:
+entra en la red, monta el repositorio que ya tiene `node_modules` con las
+devDependencies, corre, y desaparece.
+
+**Red y nombre**: la base es un servicio Swarm en `dokploy-network`, y su DNS
+resuelve por el nombre del servicio (verificado 2026-09-23):
+
+```
+tracker-sales-os-trackersales-hibdzn -> 10.0.1.4
+```
+
+Se usa el nombre, no la IP: la IP cambia si el servicio se reprograma.
+
+**Fichero de entorno** (`~/.jev-backtest.env`, permisos 600, fuera del repo):
+
+```
+JEV_BACKTEST_APPROVED=si
+JEV_BACKTEST_DATABASE_URL=postgres://jev_backtest_ro:<CLAVE>@tracker-sales-os-trackersales-hibdzn:5432/<POSTGRES_DB>
+JEV_API_KEY=<clave de TypeSafe>
+```
+
+**Montaje**: la raiz del repositorio, no solo `backend/`. El script resuelve
+sus salidas con `RAIZ = resolve(__dirname, '..', '..', '..')`, que es la raiz
+del repositorio, y escribe en `<repo>/progress/`. Montando solo `backend/` no
+podria escribir el lote ni el informe.
+
+**Fase 1 — extraer el lote y generar el fichero de etiquetado:**
+
+```bash
+docker run --rm \
+  --network dokploy-network \
+  --user "$(id -u):$(id -g)" \
+  -v /home/claude/sites/Tracker-Sales-OS:/app -w /app/backend \
+  --env-file ~/.jev-backtest.env \
+  node:22-alpine \
+  npx ts-node scripts/jev-backtest/run-backtest.ts --fase extraer
+```
+
+El `--user` evita que los ficheros de `progress/` queden como root en el host.
+
+**Fase 2 — tras el etiquetado del director:**
+
+```bash
+docker run --rm \
+  --network dokploy-network \
+  --user "$(id -u):$(id -g)" \
+  -v /home/claude/sites/Tracker-Sales-OS:/app -w /app/backend \
+  --env-file ~/.jev-backtest.env \
+  node:22-alpine \
+  npx ts-node scripts/jev-backtest/run-backtest.ts --fase evaluar \
+    --min-falsos-100-detectados 0.70 --max-buenos-degradados 0.15
+```
+
+**Ensayo sin red ni datos reales**, que no necesita ni la base ni la API:
+
+```bash
+docker run --rm --user "$(id -u):$(id -g)" \
+  -v /home/claude/sites/Tracker-Sales-OS:/app -w /app/backend \
+  node:22-alpine \
+  npx ts-node scripts/jev-backtest/run-backtest.ts --fase evaluar --dry-run
+```
+
 ## 3b. Si la corrida se interrumpe
 
 > **Corrección registrada (2026-09-22).** La primera versión de esta sección
