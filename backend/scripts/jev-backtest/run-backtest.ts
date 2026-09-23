@@ -245,7 +245,10 @@ async function faseExtraer(
 ): Promise<number> {
   const fs = deps.fs ?? FICHERO_REAL;
   const candidatas = await leerCandidatos(env, opciones.limite);
-  const { batch, deviations, excluded } = stratify(candidatas);
+  const { batch, deviations, excluded } = stratify(
+    candidatas,
+    opciones.semilla,
+  );
   const ordenado = shuffleWithSeed(batch, opciones.semilla);
 
   fs.escribir(RUTA_ETIQUETADO, buildLabelingFile(ordenado, opciones.semilla));

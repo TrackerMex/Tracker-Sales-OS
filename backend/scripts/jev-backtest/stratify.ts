@@ -1,6 +1,7 @@
 // R1, R2, R3 — extraccion y estratificacion del lote. Logica pura: recibe las
 // filas ya leidas y no habla ni con la base de datos ni con la red.
 
+import { DEFAULT_SEED, shuffleWithSeed } from './labeling';
 import { BatchActivity, Franja, SourceActivity, TextFields } from './types';
 
 /**
@@ -61,8 +62,25 @@ export function classify(quality: number): Franja | null {
   return null;
 }
 
+/**
+ * D12 — el reparto entre franjas lo fija R2; dentro de cada una se elige al
+ * azar con la semilla, no por fecha.
+ *
+ * Las filas llegan en `ORDER BY executed_at DESC`, asi que recortar sin
+ * barajar se queda con las mas recientes y entrega la franja a quien mas ha
+ * escrito ultimamente. Medido en la primera extraccion real: el vendedor mas
+ * prolifico era el 46.9% de los `quality = 100` de la poblacion y el 80% del
+ * lote. Como los falsos 100 se miden solo sobre esa franja, el veredicto
+ * habria descrito a una persona y no al equipo.
+ *
+ * Se baraja con `shuffleWithSeed`, el mismo generador que ordena el fichero de
+ * etiquetado (R6), a proposito: una sola barajadura con semilla en el script.
+ * La semilla ya se registra en el lote, asi que el resultado sigue siendo
+ * reproducible — misma semilla, mismo lote.
+ */
 export function stratify(
   activities: SourceActivity[],
+  semilla: number = DEFAULT_SEED,
   targets: Record<Franja, number> = BATCH_TARGETS,
 ): StratifyResult {
   const usable = activities.filter((a) => !isEmptyActivity(a));
@@ -74,6 +92,11 @@ export function stratify(
   for (const a of usable) {
     const franja = classify(a.quality);
     if (franja) pools[franja].push(a);
+  }
+  // Antes de recortar: asi tanto el corte como el relleno desde la franja
+  // superior toman al azar y no las primeras.
+  for (const franja of ['alta', 'media', 'baja'] as Franja[]) {
+    pools[franja] = shuffleWithSeed(pools[franja], semilla);
   }
 
   const batch: BatchActivity[] = [];
