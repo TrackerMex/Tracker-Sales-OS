@@ -1191,9 +1191,9 @@ semilla por defecto.
 ## 41. Commits de la octava vuelta, en orden
 
 ```
-9df4e4a test: el lote no puede heredar el sesgo de la franja (D12)
-81f3cbe fix:  baraja cada franja con la semilla antes de recortar (D12)
-3bcd6a1 test: la fase extraer tiene que usar la semilla de la corrida (D12)
+b833345 test: el lote no puede heredar el sesgo de la franja (D12)
+07af9c9 fix:  baraja cada franja con la semilla antes de recortar (D12)
+bb97424 test: la fase extraer tiene que usar la semilla de la corrida (D12)
 1aa837e fix:  la extraccion se puede probar sin base de datos (D12)
 ```
 
