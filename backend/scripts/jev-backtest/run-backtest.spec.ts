@@ -4,6 +4,7 @@ import { Metrics } from './metrics';
 import {
   compararConcentracion,
   isEmptyActivity,
+  liderDelLote,
   sellerSpread,
   stratify,
 } from './stratify';
@@ -1176,5 +1177,38 @@ describe('R11 (77-jev-quality-backtest #77): el aviso de D14 mira la franja alta
     });
 
     expect(md).not.toMatch(/sobre todo una persona/i);
+  });
+});
+
+describe('R11 (77-jev-quality-backtest #77): el informe enseña al protagonista del lote (MEDIA-19)', () => {
+  it('el lote guarda el par de quien encabeza su franja alta', async () => {
+    const { escrituras } = await extraerConPoblacion(['--fase', 'extraer']);
+    const guardado = JSON.parse(escrituras[RUTA_LOTE]) as LoteGuardado;
+
+    const candidatasAlta = poblacionSesgada.filter((a) => a.quality === 100);
+    const loteAlta = guardado.orden.filter((a) => a.franja === 'alta');
+
+    expect(guardado.liderAlta).toEqual(liderDelLote(candidatasAlta, loteAlta));
+  });
+
+  it('publica sus dos fracciones sin presentarlas como una resta', async () => {
+    const md = await informeDe(respuestas, etiquetas, {
+      comparacionAlta: {
+        enCandidatas: 0.2,
+        enLote: 0.12,
+        diferenciaPuntos: -8.7,
+      },
+      liderAlta: { enLote: 0.44, enCandidatas: 0.12 },
+    });
+
+    expect(md).toContain('44.0%');
+    expect(md).toContain('12.0%');
+    expect(md).toMatch(/dos hechos|no.{0,30}resta/i);
+  });
+
+  it('un lote sin ese par no rompe el informe', async () => {
+    const md = await informeDe(respuestas);
+
+    expect(md).toContain('Reparto por vendedor');
   });
 });
