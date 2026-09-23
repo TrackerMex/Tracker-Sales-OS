@@ -49,7 +49,9 @@ import { Metrics, Thresholds, computeMetrics } from './metrics';
 import {
   BATCH_QUERY,
   CANDIDATE_LIMIT,
+  ComparacionConcentracion,
   SellerSpread,
+  compararConcentracion,
   isEmptyActivity,
   sellerSpread,
   stratify,
@@ -182,6 +184,12 @@ export interface LoteGuardado {
     todas: SellerSpread;
     alta: SellerSpread;
   };
+  /**
+   * MEDIA-15 — cuanta concentracion anadio el muestreo en la franja alta,
+   * siguiendo a una sola persona entre los dos ambitos. Restar dos maximos
+   * comparaba a gente distinta e inflaba siempre.
+   */
+  comparacionAlta?: ComparacionConcentracion;
   excluidas: number;
   desviaciones: string[];
   orden: BatchActivity[];
@@ -285,6 +293,10 @@ async function faseExtraer(
       todas: sellerSpread(elegibles),
       alta: sellerSpread(elegibles.filter((a) => a.quality === 100)),
     },
+    comparacionAlta: compararConcentracion(
+      elegibles.filter((a) => a.quality === 100),
+      ordenado.filter((a) => a.franja === 'alta'),
+    ),
     excluidas: excluded,
     desviaciones: deviations,
     orden: ordenado,
@@ -541,6 +553,27 @@ function avisoParcial(m: Metrics, respuestas: JevResult[]): string[] {
  * progress/, asi que aqui no entra ningun `seller_id`: solo recuentos y un
  * indice arbitrario que se asigna al imprimir.
  */
+/**
+ * MEDIA-15 — la cifra titular. Las dos fracciones son de la MISMA persona: la
+ * que mas aporta a las candidatas con `quality = 100`. Restar dos maximos
+ * comparaba a gente distinta y ademas inflaba siempre, porque el maximo de una
+ * muestra esta sesgado al alza.
+ */
+function lineaComparacion(c: ComparacionConcentracion | undefined): string[] {
+  if (!c || c.diferenciaPuntos === null) {
+    return [
+      '- Concentracion anadida por el muestreo: **n/d**, este lote se extrajo',
+      '  antes de que se guardara la comparacion; regeneralo con `--fase extraer`.',
+    ];
+  }
+  const signo = c.diferenciaPuntos >= 0 ? '+' : '';
+  return [
+    `- Del vendedor que mas aporta a las candidatas con quality = 100: tiene el`,
+    `  **${pct(c.enCandidatas)}** de ellas y el **${pct(c.enLote)}** de la franja`,
+    `  alta del lote, asi que el muestreo le dio **${signo}${c.diferenciaPuntos.toFixed(1)} puntos**.`,
+  ];
+}
+
 function seccionVendedores(lote: LoteGuardado): string[] {
   const spread = sellerSpread(lote.orden);
   const alta = lote.orden.filter((a) => a.franja === 'alta');
@@ -550,13 +583,6 @@ function seccionVendedores(lote: LoteGuardado): string[] {
   const fila = (ambito: string, s: SellerSpread, total: number) =>
     `| ${ambito} | ${s.vendedores} | ${pct(s.fraccionMayor)} (${s.mayor} de ${total}) |`;
   const totalDe = (s: SellerSpread) => s.reparto.reduce((a, b) => a + b, 0);
-
-  const diferencia =
-    base &&
-    spreadAlta.fraccionMayor !== null &&
-    base.alta.fraccionMayor !== null
-      ? `${((spreadAlta.fraccionMayor - base.alta.fraccionMayor) * 100).toFixed(1)} puntos`
-      : 'n/d';
 
   return [
     '## Reparto por vendedor (R11, anonimizado)',
@@ -579,7 +605,7 @@ function seccionVendedores(lote: LoteGuardado): string[] {
     fila('Lote completo', spread, lote.orden.length),
     fila('**Franja alta del lote**', spreadAlta, alta.length),
     '',
-    `- Diferencia en la franja alta, lote menos candidatas: **${diferencia}**`,
+    ...lineaComparacion(lote.comparacionAlta),
     `- Reparto del lote, de mayor a menor: ${
       spread.reparto.length
         ? spread.reparto.map((n, i) => `vendedor ${i + 1}: ${n}`).join(', ')
