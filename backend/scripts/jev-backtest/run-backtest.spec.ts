@@ -616,6 +616,7 @@ describe('R10 (77-jev-quality-backtest #77): reanudar sin volver a exportar lo y
 const informeDe = async (
   resp: JevResult[],
   etq: Map<string, Level | null> = etiquetas,
+  extra: Partial<LoteGuardado> = {},
 ): Promise<string> => {
   const capturas: [Metrics, EvaluatedActivity[], JevResult[]][] = [];
 
@@ -633,6 +634,7 @@ const informeDe = async (
     excluidas: 3,
     desviaciones: [],
     orden: lote,
+    ...extra,
   };
   const [m, filas, r] = capturas[0];
   return renderReport(m, filas, r, guardado, parseArgs([]));
@@ -883,5 +885,51 @@ describe('R2 (77-jev-quality-backtest #77): sin cuota por vendedor (D12)', () =>
     // Con un tope por vendedor esto caeria a la cuota. La muestra fiel de una
     // poblacion al 91.7% no es un reparto equilibrado (D12).
     expect(dominante).toBeGreaterThanOrEqual(18);
+  });
+});
+
+describe('R11 (77-jev-quality-backtest #77): la concentracion del lote se lee contra la de las candidatas', () => {
+  it('el lote guarda el reparto por vendedor de las candidatas, en total y en la franja alta', async () => {
+    const { escrituras } = await extraerConPoblacion(['--fase', 'extraer']);
+    const guardado = JSON.parse(escrituras[RUTA_LOTE]) as LoteGuardado;
+
+    expect(guardado.repartoCandidatas?.todas.vendedores).toBe(6);
+    // V-MONOPOLIO son 25 de las 60 candidatas con quality = 100.
+    expect(guardado.repartoCandidatas?.alta.fraccionMayor).toBeCloseTo(
+      25 / 60,
+      10,
+    );
+  });
+
+  it('el informe publica las dos concentraciones juntas y su diferencia', async () => {
+    const md = await informeDe(respuestas, etiquetas, {
+      repartoCandidatas: {
+        todas: {
+          vendedores: 6,
+          reparto: [940, 300, 300, 200, 160, 100],
+          mayor: 940,
+          fraccionMayor: 0.47,
+        },
+        alta: {
+          vendedores: 6,
+          reparto: [300, 120, 100, 80, 30, 10],
+          mayor: 300,
+          fraccionMayor: 0.469,
+        },
+      },
+    });
+
+    expect(md).toContain('Candidatas');
+    expect(md).toContain('47.0%');
+    expect(md).toContain('46.9%');
+    // Y la diferencia con la franja alta del lote, sin obligar a restar.
+    expect(md).toMatch(/diferencia[^\n]*puntos/i);
+  });
+
+  it('un lote extraido antes de esta comparacion no rompe el informe', async () => {
+    const md = await informeDe(respuestas);
+
+    expect(md).toContain('Reparto por vendedor');
+    expect(md).toMatch(/n\/d|regener/i);
   });
 });
