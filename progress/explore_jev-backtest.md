@@ -72,8 +72,38 @@ proposito: no forma parte de la configuracion de la aplicacion.
 
 **Tamano del universo**: 2061 actividades no borradas. El script pide las 2000
 mas recientes como candidatas (`CANDIDATE_LIMIT`), de las que estratifica el
-lote de 50. Queda por confirmar que las tres franjas de R2 tienen suficientes
-filas; si alguna no, R2 completa desde la franja superior y lo registra.
+lote de 50.
+
+**Reparto de `quality`**, medido el 2026-09-23 sobre la base de produccion:
+
+| `quality` | Actividades | % |
+|---:|---:|---:|
+| 0 | 11 | 0.5% |
+| 20 | 624 | 30.3% |
+| 40 | 338 | 16.4% |
+| 60 | 397 | 19.3% |
+| 80 | 303 | 14.7% |
+| 100 | 389 | 18.9% |
+
+Las tres franjas de R2 tienen holgura, asi que **el lote sale completo y el
+relleno desde la franja superior no se dispara**:
+
+| Franja | Definicion | Necesita | Disponibles |
+|---|---|---:|---:|
+| alta | `quality = 100` | 25 | 389 |
+| media | `quality` entre 40 y 80 | 15 | 1038 |
+| baja | `quality` <= 20 | 10 | 635 |
+
+Dos lecturas de estos numeros que conviene tener antes del etiquetado, porque
+acotan lo que el backtest puede llegar a demostrar:
+
+1. **El 18.9% de las actividades puntua 100 hoy.** Esa es la poblacion sobre la
+   que actua la hipotesis. Si el director juzga vacia una fraccion apreciable
+   de las 25 que le toquen, el efecto sobre el semaforo no es marginal: son 389
+   registros que hoy entran al score como perfectos.
+2. **El 30.3% puntua exactamente 20**, es decir satisface uno solo de los cinco
+   checks de longitud. Es un dato para el director por si mismo, independiente
+   de lo que diga Jev, y probablemente merezca mirarse aparte de esta feature.
 
 ## 3c. Desde donde se ejecuta, y con que cadena de conexion
 
