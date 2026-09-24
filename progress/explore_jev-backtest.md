@@ -400,3 +400,41 @@ por construccion. Repetir con otra semilla da otras 25 actividades de
 
 El titular del informe lleva el matiz con su direccion, para que nadie copie
 «POSITIVO» o «NEGATIVO» a un correo sin el.
+
+---
+
+## Reextraccion declarada de antemano (2026-09-24)
+
+**Compromiso registrado antes de conocer el resultado.**
+
+La primera extraccion con `--solo-alta` y semilla 77 dio una franja alta con el
+**68.0%** en una sola persona, frente al 47.9% de las candidatas: **+20.1
+puntos, 2.0 desviaciones tipicas** (sigma = 10.0 con p = 0.479 y n = 25). Es
+una tirada en el percentil 97 de su propia poblacion.
+
+**Se reextrae una sola vez, con semilla 1234, y se acepta el resultado sea cual
+sea.** Firmado por el humano antes de correr el comando.
+
+Por que esto no contradice la decision del lote anterior, donde se descarto
+reextraer: alli la tirada estaba a 1.2 sigma, que es ordinaria, y volver a
+tirar habria sido quedarse con el numero que mas gusta. A 2.0 sigma la muestra
+es genuinamente poco representativa de su propia poblacion, y una reextraccion
+**declarada antes de mirar** no es elegir: es no quedarse con un mal sorteo. La
+diferencia entre las dos cosas es exactamente si la regla se fija antes o
+despues de ver el numero.
+
+Si el lote de la semilla 1234 sale peor, se acepta igual. Esa es la parte que
+hace honesto el procedimiento.
+
+### Hallazgo de paso: la semilla no reproduce el lote a lo largo del tiempo
+
+El lote completo del 2026-09-24T15:19 y el de `--solo-alta` del mismo dia
+usaron los dos la semilla 77 y dieron franjas altas distintas (60.0% y 68.0%).
+No es un fallo de D12 ni de R6: el pool de candidatas se mueve, porque
+`BATCH_QUERY` pide las 2000 mas recientes y los vendedores siguen registrando
+actividad.
+
+**La reproducibilidad que da la semilla vale a poblacion fija**, no a lo largo
+de los dias. Quien quiera reproducir un lote exacto necesita la semilla **y**
+el fichero del lote guardado, que es lo que ya se versiona en
+`jev-backtest-lote.json`. Merece una nota en la spec si esta feature se repite.
