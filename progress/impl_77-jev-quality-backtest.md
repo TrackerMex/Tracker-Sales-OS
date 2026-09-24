@@ -1637,3 +1637,131 @@ hacerse antes de darle el lote al director, sin regla de lectura que recordar:
 3. **¿Puede este lote sostener un veredicto sobre el equipo?** El aviso, cuando
    más de la mitad de la franja alta es de una persona, con la advertencia de
    que ahí reextraer no arregla nada (D14).
+
+---
+
+# Duodécima vuelta — R14, el lote recortado a la franja alta
+
+Restricción del negocio: el director comercial no tiene la hora que pedía el
+lote de 50. T6 sigue sin ejecutarse. **Artefactos reales intactos**: md5 antes
+y después, los dos `OK`.
+
+## 59. Qué hace `--solo-alta`
+
+La bandera pone a cero los objetivos de media y baja, así que R2 se aplica solo
+a la franja alta y el resto del reparto no cambia. **`stratify` no se toca**:
+el parámetro `targets` ya existía, y por eso el relleno, la barajadura con
+semilla y las desviaciones siguen funcionando igual.
+
+| | Lote completo | `--solo-alta` |
+|---|---:|---:|
+| Actividades | 50 | **25** |
+| Bloques en el fichero del director | 50 | **25** |
+| Llamadas a la API | 50 | **25** |
+| Conjunto de la condición A de R13 | 25 | **25** |
+
+La última fila es la que importa: **el gate se decide sobre exactamente el
+mismo conjunto** (D16). Los umbrales no cambian porque no hay nada que
+reajustar.
+
+## 60. Los cinco detalles que pediste cuidar
+
+1. **Umbrales**: intactos, 70% y 15%.
+2. **Condición B sin denominador**: pasa de posible a probable en este modo, y
+   el informe ya no deja creer que Jev acertó. Renderizado real con las 25
+   puntuadas en nivel 1 o 2:
+
+   ```
+   - Buenos (director 3 o 4) que Jev tumba a 1 o 2: n/d (0 de 0)
+
+   > **La condicion B no se ha podido medir.** El director no etiqueto
+   > ninguna actividad en nivel 3 o 4, asi que no hay buenos que Jev
+   > pudiera degradar: la condicion pasa por no tener nada que la
+   > incumpla, no porque Jev haya acertado. El veredicto lo decide
+   > entonces la condicion A en solitario.
+   ```
+
+3. **Concentración**: se sigue publicando, colapsada a dos filas —candidatas
+   con `quality = 100` y lote— porque en este modo el lote **es** la franja
+   alta y las filas del total repetirían las mismas cifras.
+4. **Aviso de D14**: vivo, calculado sobre la franja alta, que ahora es el lote.
+5. **Modo registrado**: en el lote guardado y en la cabecera del informe —
+   `Alcance del lote: **solo la franja alta** — 25 actividades con quality =
+   100, sin las franjas media y baja (R14)`.
+
+| Mutante | Resultado |
+|---|---|
+| `--solo-alta` ignorado | **3 tests rojos** |
+| el modo no se registra en el lote | **1 test rojo** |
+| el aviso de la condición B no se imprime | **1 test rojo** |
+
+## 61. La deuda que preguntabas: cerrada, era barata
+
+`--fase extraer` imprime ahora al terminar las mismas cifras que guarda:
+
+```
+[jev-backtest] lote de 25 actividades
+[jev-backtest] concentracion de la franja alta (25 actividades):
+[jev-backtest]   referencia de las candidatas: 16.7% alli y 4.0% en el lote (-12.7 puntos)
+[jev-backtest]   quien encabeza el lote: 28.0% del lote y 16.6% de las candidatas
+```
+
+Y cuando más de la mitad de la franja alta es de una sola persona, un `AVISO:`
+con las dos salidas que tiene el operador según esté concentrada la población o
+no. Costó ocho líneas y tres tests porque todo lo que imprime ya estaba
+calculado ahí mismo; lo único que faltaba era enseñarlo **cuando reextraer con
+otra semilla todavía es gratis**, en vez de en un informe que se genera después
+de la hora del director y de las llamadas.
+
+## 62. Commits de la duodécima vuelta, en orden
+
+```
+5bfe1bb test: modo solo franja alta (R14)
+a57b75b feat: modo --solo-alta, el lote son las 25 de quality 100 (R14)
+30666e1 test: la concentracion tiene que verse al extraer
+6ecb3a5 feat: --fase extraer imprime la concentracion al terminar
+```
+
+Modificados: `run-backtest.ts` y `run-backtest.spec.ts`. Nada fuera de
+`backend/scripts/`.
+
+Tests: **174 → 185**.
+
+## 63. Salida literal de los cuatro comandos (duodécima vuelta)
+
+```
+=== $ cd backend && pnpm test ===
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+Test Suites: 6 passed, 6 total
+Tests:       185 passed, 185 total
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+exit=0
+```
+
+`pnpm test` sigue en 15 suites / 78 tests: D9 intacto.
+
+## 64. Cómo se corre ahora
+
+```bash
+# Fase 1 — lote de 25, solo quality = 100
+JEV_BACKTEST_APPROVED=si JEV_BACKTEST_DATABASE_URL=postgres://solo_lectura@... \
+  npx ts-node backend/scripts/jev-backtest/run-backtest.ts --fase extraer --solo-alta
+
+# Mira la concentracion que imprime antes de darle el fichero al director.
+# Fase 2 — igual que siempre; el modo sale del lote, no de la bandera
+JEV_BACKTEST_APPROVED=si JEV_API_KEY=... \
+  npx ts-node backend/scripts/jev-backtest/run-backtest.ts --fase evaluar
+```
+
+El modo se lee del lote guardado, no de la bandera, así que un informe generado
+sin `--solo-alta` sigue diciendo la verdad sobre el lote que describe.
