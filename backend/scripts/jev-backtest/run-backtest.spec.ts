@@ -1428,14 +1428,19 @@ describe('R13 (77-jev-quality-backtest #77): un denominador pequeño no es un ju
     const md = informeDeFilas(lote25(5, 1));
     const titular = md.slice(md.indexOf('## Veredicto'));
 
-    expect(titular).toMatch(/\*\*NEGATIVO\*\*[^\n]*condicion B/i);
+    // La direccion importa: "falla sobre pocos" no es "pasa sobre pocos".
+    expect(titular).toMatch(
+      /\*\*NEGATIVO\*\*[^\n]*condicion B falla sobre solo 5/i,
+    );
   });
 
   it('el titular lleva el matiz cuando la condicion B pasa sobre pocos', async () => {
     const md = informeDeFilas(lote25(5, 0));
     const titular = md.slice(md.indexOf('## Veredicto'));
 
-    expect(titular).toMatch(/\*\*POSITIVO\*\*[^\n]*condicion B/i);
+    expect(titular).toMatch(
+      /\*\*POSITIVO\*\*[^\n]*condicion B pasa sobre solo 5/i,
+    );
   });
 
   it('el titular dice que la condicion B no se midio cuando no hay ningun bueno', async () => {
