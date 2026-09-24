@@ -438,3 +438,38 @@ actividad.
 de los dias. Quien quiera reproducir un lote exacto necesita la semilla **y**
 el fichero del lote guardado, que es lo que ya se versiona en
 `jev-backtest-lote.json`. Merece una nota en la spec si esta feature se repite.
+
+
+## Lote definitivo (2026-09-24T16:23Z)
+
+Resultado de la reextraccion declarada. **Se acepta.**
+
+- **Semilla**: 1234 · **modo**: `--solo-alta` (R14) · **actividades**: 25, todas
+  de `quality = 100`
+- **Candidatas**: 2000 · **excluidas por R3**: 0 · **desviaciones de R2**:
+  ninguna
+- **Vendedores en el lote**: 5 · **reparto**: 13 / 9 / 1 / 1 / 1
+
+| | Franja alta del lote | Candidatas con `quality = 100` |
+|---|---:|---:|
+| Fraccion del que mas aporta | **52.0%** (13 de 25) | 47.9% |
+
+**Cifra titular emparejada (D13): +4.1 puntos**, es decir 0.41 desviaciones
+tipicas. Una tirada representativa: el lote refleja su poblacion. Quien
+encabeza el lote es el mismo que encabeza las candidatas, asi que tampoco
+aplica el punto ciego de MEDIA-19.
+
+**El aviso de D14 se dispara igualmente**, porque 52.0% pasa de la mitad. No es
+una contradiccion con lo anterior: la poblacion esta al 47.9%, justo por debajo
+del corte, asi que cualquier lote fiel se queda rondando la linea. Es el caso
+del borde que esta descrito arriba — cerca del corte informan las dos cifras,
+no la presencia o ausencia del aviso.
+
+**Lo que hay que saber al firmar el veredicto**: algo mas de la mitad de estas
+25 actividades las escribio la misma persona, y eso refleja la realidad de la
+base, donde esa persona produce el 47.9% de todos los registros que puntuan
+100. El veredicto hablara en buena medida de su forma de escribir. Para que
+hablase del equipo habria que ampliar la franja alta, al precio de mas tiempo
+del director.
+
+Fichero para el director: `progress/jev-backtest-etiquetado.md`, **25 bloques**.
