@@ -1,5 +1,10 @@
 import { JevResult, MOTIVO_NUNCA_LLAMADA, nuncaLlamada } from './jev-client';
-import { DEFAULT_SEED, shuffleWithSeed } from './labeling';
+import {
+  DEFAULT_SEED,
+  parseLabelingFile,
+  shuffleWithSeed,
+  validarEtiquetado,
+} from './labeling';
 import { Metrics } from './metrics';
 import {
   compararConcentracion,
@@ -1210,5 +1215,93 @@ describe('R11 (77-jev-quality-backtest #77): el informe enseña al protagonista 
     const md = await informeDe(respuestas);
 
     expect(md).toContain('Reparto por vendedor');
+  });
+});
+
+describe('R14 (77-jev-quality-backtest #77): modo solo franja alta', () => {
+  const extraerSoloAlta = async (argv: string[] = []) => {
+    const { fs, escrituras } = fsFalso({});
+    const codigo = await main(
+      ['--fase', 'extraer', '--solo-alta', ...argv],
+      { JEV_BACKTEST_APPROVED: 'si' },
+      { fs, leerCandidatos: () => Promise.resolve(poblacionSesgada) },
+    );
+    return { codigo, escrituras };
+  };
+
+  it('el lote son 25 actividades, todas de quality = 100', async () => {
+    const { codigo, escrituras } = await extraerSoloAlta();
+    const guardado = JSON.parse(escrituras[RUTA_LOTE]) as LoteGuardado;
+
+    expect(codigo).toBe(0);
+    expect(guardado.orden).toHaveLength(25);
+    expect(guardado.orden.every((a) => a.quality === 100)).toBe(true);
+    expect(guardado.orden.every((a) => a.franja === 'alta')).toBe(true);
+  });
+
+  it('el modo queda registrado en el lote, para que nadie lea 25 creyendo que son 50', async () => {
+    const { escrituras } = await extraerSoloAlta();
+
+    expect((JSON.parse(escrituras[RUTA_LOTE]) as LoteGuardado).soloAlta).toBe(
+      true,
+    );
+  });
+
+  it('sin la bandera el lote sigue siendo de 50 con las tres franjas', async () => {
+    const { escrituras } = await extraerConPoblacion(['--fase', 'extraer']);
+    const guardado = JSON.parse(escrituras[RUTA_LOTE]) as LoteGuardado;
+
+    expect(guardado.orden).toHaveLength(50);
+    expect(guardado.soloAlta).toBeFalsy();
+  });
+
+  it('el fichero del director lleva 25 bloques, y la validacion exige esos 25', async () => {
+    const { escrituras } = await extraerSoloAlta();
+    const etiquetado = escrituras[RUTA_ETIQUETADO];
+
+    expect(parseLabelingFile(etiquetado)).toHaveLength(25);
+    expect(validarEtiquetado(parseLabelingFile(etiquetado), 25)).toEqual([]);
+    expect(validarEtiquetado(parseLabelingFile(etiquetado), 50)).not.toEqual(
+      [],
+    );
+  });
+
+  it('el informe dice en que modo se extrajo el lote', async () => {
+    const md = await informeDe(respuestas, etiquetas, { soloAlta: true });
+
+    expect(md).toMatch(/solo.{0,15}alta|solo las de quality/i);
+  });
+
+  it('la seccion de concentracion no duplica el lote con su franja alta', async () => {
+    const md = await informeDe(respuestas, etiquetas, {
+      soloAlta: true,
+      repartoCandidatas: {
+        todas: { vendedores: 6, reparto: [10], mayor: 10, fraccionMayor: 0.3 },
+        alta: { vendedores: 5, reparto: [8], mayor: 8, fraccionMayor: 0.4 },
+      },
+    });
+
+    expect(md).not.toContain('Lote completo');
+    expect(md).not.toContain('Candidatas elegibles');
+    expect(md).toContain('Candidatas con quality = 100');
+  });
+});
+
+describe('R13 (77-jev-quality-backtest #77): sin actividades de nivel 3 o 4 la condicion B no se mide', () => {
+  const todasPobres = new Map<string, Level | null>([
+    ['a1', 1],
+    ['a2', 2],
+  ]);
+
+  it('el informe lo dice en vez de dejar creer que nadie degrado nada', async () => {
+    const md = await informeDe(respuestas, todasPobres, { soloAlta: true });
+
+    expect(md).toMatch(/condicion B.{0,80}(no se ha podido medir|sin medir)/is);
+  });
+
+  it('con actividades de nivel 3 o 4 no aparece ese aviso', async () => {
+    const md = await informeDe(respuestas, etiquetas, { soloAlta: true });
+
+    expect(md).not.toMatch(/condicion B.{0,80}no se ha podido medir/is);
   });
 });
