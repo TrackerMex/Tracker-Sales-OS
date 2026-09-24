@@ -48,6 +48,7 @@ import {
 import { Metrics, Thresholds, computeMetrics } from './metrics';
 import {
   BATCH_QUERY,
+  BATCH_TARGETS,
   CANDIDATE_LIMIT,
   ComparacionConcentracion,
   LiderDelLote,
@@ -136,6 +137,8 @@ const MARCA_INFORME =
 export interface Options extends Thresholds {
   fase: string;
   dryRun: boolean;
+  /** R14 — el lote son solo las 25 actividades con quality = 100. */
+  soloAlta: boolean;
   /** Rehace el informe desde las respuestas ya guardadas, sin llamar a la API. */
   reusarRespuestas: boolean;
   semilla: number;
@@ -197,6 +200,12 @@ export interface LoteGuardado {
    * referencia de `comparacionAlta`. Dos hechos, sin resta.
    */
   liderAlta?: LiderDelLote;
+  /**
+   * R14 — el lote se extrajo en modo solo franja alta: 25 actividades con
+   * quality = 100 y nada mas. Queda registrado para que nadie lea un veredicto
+   * de 25 creyendo que es de 50.
+   */
+  soloAlta?: boolean;
   excluidas: number;
   desviaciones: string[];
   orden: BatchActivity[];
@@ -225,6 +234,7 @@ export function parseArgs(argv: string[]): Options {
   return {
     fase: valor('--fase') ?? 'extraer',
     dryRun: argv.includes('--dry-run'),
+    soloAlta: argv.includes('--solo-alta'),
     reusarRespuestas: argv.includes('--reusar-respuestas'),
     semilla: numero('--semilla', DEFAULT_SEED),
     limite: numero('--limite', CANDIDATE_LIMIT),
@@ -280,9 +290,12 @@ async function faseExtraer(
     env,
     opciones.limite,
   );
+  // R14 — en modo solo alta, R2 se aplica unicamente a la franja alta: los
+  // objetivos de media y baja pasan a cero y el resto del reparto no cambia.
   const { batch, deviations, excluded } = stratify(
     candidatas,
     opciones.semilla,
+    opciones.soloAlta ? { ...BATCH_TARGETS, media: 0, baja: 0 } : BATCH_TARGETS,
   );
   const ordenado = shuffleWithSeed(batch, opciones.semilla);
 
@@ -295,6 +308,7 @@ async function faseExtraer(
   const guardado: LoteGuardado = {
     semilla: opciones.semilla,
     generado: new Date().toISOString(),
+    soloAlta: opciones.soloAlta,
     candidatas: candidatas.length,
     repartoCandidatas: {
       todas: sellerSpread(elegibles),
@@ -650,17 +664,26 @@ function seccionVendedores(lote: LoteGuardado): string[] {
     '',
     '| Ambito | Vendedores | Fraccion del que mas aporta |',
     '| --- | ---: | ---: |',
+    // R14: en modo solo alta el lote ES la franja alta, asi que las filas del
+    // total repetirian las de la franja. Se publican solo las dos que dicen
+    // algo distinto.
     ...(base
       ? [
-          fila('Candidatas elegibles', base.todas, totalDe(base.todas)),
+          ...(lote.soloAlta
+            ? []
+            : [fila('Candidatas elegibles', base.todas, totalDe(base.todas))]),
           fila('Candidatas con quality = 100', base.alta, totalDe(base.alta)),
         ]
       : [
-          '| Candidatas | n/d | n/d |',
+          ...(lote.soloAlta ? [] : ['| Candidatas | n/d | n/d |']),
           '| Candidatas con quality = 100 | n/d | n/d |',
         ]),
-    fila('Lote completo', spread, lote.orden.length),
-    fila('**Franja alta del lote**', spreadAlta, alta.length),
+    ...(lote.soloAlta
+      ? [fila('**Lote (franja alta)**', spreadAlta, alta.length)]
+      : [
+          fila('Lote completo', spread, lote.orden.length),
+          fila('**Franja alta del lote**', spreadAlta, alta.length),
+        ]),
     '',
     ...lineaComparacion(lote.comparacionAlta),
     ...lineaLider(lote.liderAlta),
@@ -712,6 +735,11 @@ export function renderReport(
     `- Generado: ${new Date().toISOString()}`,
     `- Modo: ${opciones.dryRun ? 'SECO (respuestas de ejemplo, R10)' : 'real contra la API'}`,
     `- Semilla de aleatorizacion: ${lote.semilla}`,
+    `- Alcance del lote: ${
+      lote.soloAlta
+        ? '**solo la franja alta** — 25 actividades con quality = 100, sin las franjas media y baja (R14)'
+        : 'las tres franjas, 25/15/10 (R2)'
+    }`,
     `- Candidatas leidas: ${lote.candidatas}`,
     `- Excluidas por R3 (cuatro campos vacios): ${lote.excluidas}`,
     `- Actividades del lote: ${m.total}`,
@@ -735,6 +763,16 @@ export function renderReport(
     `- Umbral usado, maximo de buenos degradados: ${pct(v.maxBuenosDegradados)}`,
     `- Falsos 100 que Jev situa en nivel 1 o 2: ${pct(v.fraccionDetectada)}`,
     `- Buenos (director 3 o 4) que Jev tumba a 1 o 2: ${pct(v.fraccionDegradados)} (${v.degradados} de ${v.buenos})`,
+    ...(v.buenos === 0
+      ? [
+          '',
+          '> **La condicion B no se ha podido medir.** El director no etiqueto',
+          '> ninguna actividad en nivel 3 o 4, asi que no hay buenos que Jev',
+          '> pudiera degradar: la condicion pasa por no tener nada que la',
+          '> incumpla, no porque Jev haya acertado. El veredicto lo decide',
+          '> entonces la condicion A en solitario.',
+        ]
+      : []),
     '',
     ...(v.motivos.length
       ? [
