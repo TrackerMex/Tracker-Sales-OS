@@ -5,7 +5,7 @@ import {
   shuffleWithSeed,
   validarEtiquetado,
 } from './labeling';
-import { Metrics } from './metrics';
+import { Metrics, computeMetrics } from './metrics';
 import {
   compararConcentracion,
   isEmptyActivity,
@@ -1364,5 +1364,99 @@ describe('R11 (77-jev-quality-backtest #77): la concentracion se ve al extraer, 
     const { salida } = await extraerCapturando(poblacionSesgada);
 
     expect(salida).not.toMatch(/aviso/i);
+  });
+});
+
+describe('R13 (77-jev-quality-backtest #77): un denominador pequeño no es un juicio (MEDIA-22, MEDIA-21)', () => {
+  const filaEvaluada = (
+    id: string,
+    humano: Level,
+    jev: Level,
+  ): EvaluatedActivity => ({ id, quality: 100, humano, jev });
+
+  const informeDeFilas = (
+    filas: EvaluatedActivity[],
+    argv: string[] = [],
+  ): string => {
+    const opciones = parseArgs(argv);
+    const m = computeMetrics(filas, opciones);
+    const resp: JevResult[] = filas.map((f) => ({
+      id: f.id,
+      estado: 'ok',
+      nivel: f.jev,
+      distribucion: null,
+      confianza: null,
+    }));
+    const guardado: LoteGuardado = {
+      semilla: 77,
+      generado: '2026-09-24T00:00:00.000Z',
+      soloAlta: true,
+      candidatas: 800,
+      excluidas: 0,
+      desviaciones: [],
+      orden: [],
+    };
+    return renderReport(m, filas, resp, guardado, opciones);
+  };
+
+  /** 20 falsos 100 que Jev detecta todos, mas `buenos` actividades de nivel 3. */
+  const lote25 = (buenos: number, degradados: number): EvaluatedActivity[] => [
+    ...Array.from({ length: 25 - buenos }, (_, i) =>
+      filaEvaluada(`malo-${i}`, 1, 1),
+    ),
+    ...Array.from({ length: buenos }, (_, i) =>
+      filaEvaluada(`bueno-${i}`, 3, i < degradados ? 1 : 3),
+    ),
+  ];
+
+  it('avisa de que basta una actividad para decidir la condicion B', async () => {
+    const md = informeDeFilas(lote25(5, 1));
+
+    expect(md).toMatch(/condicion B se decide sobre|se decide sobre 5/i);
+    expect(md).toContain('5');
+    expect(md).toMatch(/basta.{0,40}una/i);
+    expect(md).toContain('20.0%');
+  });
+
+  it('dice que un negativo asi es "no se pudo medir", no "Jev falla"', async () => {
+    const md = informeDeFilas(lote25(5, 1));
+
+    expect(md).toMatch(/no se pudo medir|no dice que Jev falle/i);
+  });
+
+  it('el titular lleva el matiz cuando la condicion B falla sobre pocos', async () => {
+    const md = informeDeFilas(lote25(5, 1));
+    const titular = md.slice(md.indexOf('## Veredicto'));
+
+    expect(titular).toMatch(/\*\*NEGATIVO\*\*[^\n]*condicion B/i);
+  });
+
+  it('el titular lleva el matiz cuando la condicion B pasa sobre pocos', async () => {
+    const md = informeDeFilas(lote25(5, 0));
+    const titular = md.slice(md.indexOf('## Veredicto'));
+
+    expect(titular).toMatch(/\*\*POSITIVO\*\*[^\n]*condicion B/i);
+  });
+
+  it('el titular dice que la condicion B no se midio cuando no hay ningun bueno', async () => {
+    const md = informeDeFilas(lote25(0, 0));
+    const titular = md.slice(md.indexOf('## Veredicto'));
+
+    expect(titular).toMatch(/\*\*POSITIVO\*\*[^\n]*no se ha podido medir/i);
+  });
+
+  it('con denominador holgado no hay matiz ni aviso', async () => {
+    const md = informeDeFilas(lote25(20, 0));
+    const titular = md.slice(md.indexOf('## Veredicto'));
+
+    expect(titular).toMatch(/\*\*POSITIVO\*\*\s*\n/);
+    expect(md).not.toMatch(/se decide sobre|no se ha podido medir/i);
+  });
+
+  it('el corte sale del umbral que fije el humano, no de una constante', async () => {
+    // Con el 50% admitido, una de cinco (20%) ya no decide nada.
+    const md = informeDeFilas(lote25(5, 0), ['--max-buenos-degradados', '0.5']);
+
+    expect(md).not.toMatch(/se decide sobre/i);
   });
 });
