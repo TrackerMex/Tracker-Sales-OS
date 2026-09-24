@@ -45,7 +45,7 @@ import {
   requireApproval,
   runBatch,
 } from './jev-client';
-import { Metrics, Thresholds, computeMetrics } from './metrics';
+import { Metrics, Thresholds, Verdict, computeMetrics } from './metrics';
 import {
   BATCH_QUERY,
   BATCH_TARGETS,
@@ -745,6 +745,73 @@ const tablaMatriz = (m: number[][], titulo: string): string =>
     ...m.map((fila, i) => `| director ${i + 1} | ${fila.join(' | ')} |`),
   ].join('\n');
 
+/**
+ * MEDIA-22 — con pocos buenos, una sola actividad decide la condicion B. El
+ * corte no es un umbral inventado: sale del que fije el humano en R13, de modo
+ * que si el umbral cambia, esto cambia con el.
+ */
+function unaActividadDecideB(v: Verdict): boolean {
+  return v.buenos > 0 && 1 / v.buenos > v.maxBuenosDegradados;
+}
+
+/** La condicion B fallo, con la misma cuenta que usa el veredicto. */
+function fallaB(v: Verdict): boolean {
+  return (
+    v.fraccionDegradados !== null &&
+    v.fraccionDegradados > v.maxBuenosDegradados
+  );
+}
+
+/**
+ * MEDIA-21 — el titular no puede viajar solo. Quien copie la palabra a un
+ * correo tiene que llevarse con ella la salvedad, si la hay.
+ */
+function matizVeredicto(v: Verdict): string {
+  if (v.buenos === 0) {
+    return v.positivo
+      ? ' (solo por la condicion A; la B no se ha podido medir)'
+      : ' (por la condicion A; la B no se ha podido medir)';
+  }
+  if (unaActividadDecideB(v)) {
+    return fallaB(v)
+      ? ` (la condicion B falla sobre solo ${v.buenos} actividades)`
+      : ` (la condicion B pasa sobre solo ${v.buenos} actividades)`;
+  }
+  return '';
+}
+
+/**
+ * MEDIA-22 — el aviso de la condicion B, en sus dos formas: sin denominador y
+ * con uno tan pequeno que una sola actividad lo decide.
+ */
+function avisoCondicionB(v: Verdict): string[] {
+  if (v.buenos === 0) {
+    return [
+      '',
+      '> **La condicion B no se ha podido medir.** El director no etiqueto',
+      '> ninguna actividad en nivel 3 o 4, asi que no hay buenos que Jev',
+      '> pudiera degradar: la condicion pasa por no tener nada que la',
+      '> incumpla, no porque Jev haya acertado. El veredicto lo decide',
+      '> entonces la condicion A en solitario.',
+    ];
+  }
+  if (!unaActividadDecideB(v)) return [];
+
+  return [
+    '',
+    `> **La condicion B se decide sobre ${v.buenos} actividades.** Son las que el`,
+    '> director etiqueto en nivel 3 o 4, y con esas basta que Jev degrade **una**',
+    `> para marcar el ${pct(1 / v.buenos)} y pasarse del ${pct(v.maxBuenosDegradados)} admitido.`,
+    '>',
+    `> ${fallaB(v) ? 'Un negativo con ese denominador' : 'Un margen asi'} no dice que Jev falle ni que acierte: dice que la`,
+    '> condicion B **no se pudo medir** con este lote. Es el reverso de D16: al',
+    '> quedarnos solo con la franja alta, cuantos buenos haya depende por',
+    '> completo de cuantas de las 25 sobrevivan al juicio del director. Si el',
+    '> veredicto depende de esta condicion, lo que mide es ampliar el lote;',
+    '> repetirlo con la misma semilla, no.',
+  ];
+}
+
 /** R11 — el informe. R8 exige el detalle por actividad, que va al final. */
 export function renderReport(
   m: Metrics,
@@ -784,22 +851,13 @@ export function renderReport(
       : ['## Desviaciones de la estratificacion de R2', '', 'Ninguna.', '']),
     '## Veredicto (R13)',
     '',
-    `**${v.positivo ? 'POSITIVO' : 'NEGATIVO'}**`,
+    `**${v.positivo ? 'POSITIVO' : 'NEGATIVO'}**${matizVeredicto(v)}`,
     '',
     `- Umbral usado, minimo de falsos 100 detectados: ${pct(v.minFalsos100Detectados)}`,
     `- Umbral usado, maximo de buenos degradados: ${pct(v.maxBuenosDegradados)}`,
     `- Falsos 100 que Jev situa en nivel 1 o 2: ${pct(v.fraccionDetectada)}`,
     `- Buenos (director 3 o 4) que Jev tumba a 1 o 2: ${pct(v.fraccionDegradados)} (${v.degradados} de ${v.buenos})`,
-    ...(v.buenos === 0
-      ? [
-          '',
-          '> **La condicion B no se ha podido medir.** El director no etiqueto',
-          '> ninguna actividad en nivel 3 o 4, asi que no hay buenos que Jev',
-          '> pudiera degradar: la condicion pasa por no tener nada que la',
-          '> incumpla, no porque Jev haya acertado. El veredicto lo decide',
-          '> entonces la condicion A en solitario.',
-        ]
-      : []),
+    ...avisoCondicionB(v),
     '',
     ...(v.motivos.length
       ? [
