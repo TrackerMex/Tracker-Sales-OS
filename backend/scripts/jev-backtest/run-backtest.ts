@@ -328,7 +328,34 @@ async function faseExtraer(
   };
   fs.escribir(RUTA_LOTE, JSON.stringify(guardado, null, 2));
 
+  // Las cifras que deciden si este lote sirve se leen aqui, cuando reextraer
+  // con otra semilla todavia es gratis, y no solo en el informe, que se genera
+  // despues de la hora del director y de gastar las llamadas.
+  const altaDelLote = ordenado.filter((a) => a.franja === 'alta');
+  const spreadAltaLote = sellerSpread(altaDelLote);
   console.log(`[jev-backtest] lote de ${batch.length} actividades`);
+  console.log(
+    `[jev-backtest] concentracion de la franja alta (${altaDelLote.length} actividades):`,
+  );
+  console.log(
+    `[jev-backtest]   referencia de las candidatas: ${pct(guardado.comparacionAlta?.enCandidatas ?? null)} alli` +
+      ` y ${pct(guardado.comparacionAlta?.enLote ?? null)} en el lote` +
+      ` (${guardado.comparacionAlta?.diferenciaPuntos?.toFixed(1) ?? 'n/d'} puntos)`,
+  );
+  console.log(
+    `[jev-backtest]   quien encabeza el lote: ${pct(guardado.liderAlta?.enLote ?? null)} del lote` +
+      ` y ${pct(guardado.liderAlta?.enCandidatas ?? null)} de las candidatas`,
+  );
+  if (
+    spreadAltaLote.fraccionMayor !== null &&
+    spreadAltaLote.fraccionMayor > 0.5
+  ) {
+    console.log(
+      `[jev-backtest] AVISO: la franja alta la escribe sobre todo una sola persona` +
+        ` (${pct(spreadAltaLote.fraccionMayor)}). Lo que mida el veredicto sera su forma de escribir.` +
+        ` Si la poblacion no esta concentrada, reextrae con otra semilla; si lo esta, reextraer no lo arregla.`,
+    );
+  }
   console.log(`[jev-backtest] etiquetado en ${RUTA_ETIQUETADO}`);
   for (const d of deviations) console.log(`[jev-backtest] desviacion: ${d}`);
   return 0;
