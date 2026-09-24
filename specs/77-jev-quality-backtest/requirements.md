@@ -125,6 +125,19 @@ viable.
   dos umbrales son la decisión que el gate humano confirma o cambia antes de
   correr el lote, no después (ver [[design]] §D5).
 
+### Modo reducido a la franja alta
+
+- **R14**: EL SISTEMA SHALL soportar un modo, activado por `--solo-alta`, en el
+  que el lote conste **unicamente de las 25 actividades con `quality = 100`**,
+  sin las franjas media y baja. En ese modo, R2 se aplica solo a la franja
+  alta, el fichero de etiquetado de R6 contiene 25 bloques, y la validacion de
+  MEDIA-5 exige esos 25. Todo lo demas —R4, R5, R7, R8, R9, R10, R13 y la
+  publicacion de concentracion— se mantiene sin cambio.
+
+  Origen: decision del humano del 2026-09-24, porque el director comercial no
+  dispone de la hora que pedia el lote completo. Ver [[design]] §D16 para por
+  que este recorte no debilita el veredicto y que si se pierde.
+
 ## Fuera de alcance
 
 - Cualquier cambio en `calculateQuality` o en los dos consumidores de

@@ -321,3 +321,41 @@ anada despues.
 Ademas este script corre una vez y se archiva: no tiene la vida por delante que
 justifica pagar una refactorizacion de varios ficheros. Si algun dia el
 muestreo se reutiliza fuera del backtest, esta es la primera deuda a cobrar.
+
+
+## D16 — Por que etiquetar solo la franja alta no debilita el veredicto
+
+El lote completo pedia una hora del director comercial. No la tiene, y esa es
+una restriccion real del negocio, no una preferencia. R14 recorta el lote a las
+25 actividades con `quality = 100`.
+
+**Lo que no se pierde, que es lo que decide:**
+
+- La franja alta **ya eran 25 actividades** dentro del lote de 50. El
+  subconjunto sobre el que se calcula la condicion A de R13 —la fraccion de
+  falsos 100 que Jev detecta— no cambia de tamano. Cero perdida de potencia
+  donde vive la hipotesis.
+- La condicion B —cuantas actividades de nivel 3 o 4 degrada Jev— se calcula
+  sobre lo que el director puntue alto. En la practica esas salen sobre todo de
+  la franja alta: las franjas media y baja son, por definicion de la formula de
+  longitud, registros cortos, y es poco probable que el director los puntue 3
+  o 4. Se pierde el margen de los pocos que lo fueran.
+
+**Lo que si se pierde:**
+
+- Las tres cifras de acuerdo —exacto, adyacente y Spearman— dejan de cubrir
+  todo el rango de calidad y describen solo el extremo alto. Por **D5 esas
+  cifras se publican pero no deciden el veredicto**, asi que el gate no se
+  toca; lo que se pierde es la comparacion entre Jev y la formula de longitud a
+  lo largo del rango, que era informacion util y no criterio.
+- Ya no se puede afirmar nada sobre como se comporta Jev con registros cortos.
+  Si alguna vez se usa para puntuar todo el rango —F80—, eso habra que medirlo
+  entonces.
+
+**Efecto secundario a favor**: la evaluacion pasa de 50 a 25 llamadas, asi que
+sale de la empresa la mitad de texto de clientes. Coherente con el resto de la
+feature, donde el coste que se cuida no es el de la API sino el de la
+exposicion.
+
+Los dos umbrales de R13 no cambian: la condicion A se mide sobre el mismo
+conjunto que antes.
