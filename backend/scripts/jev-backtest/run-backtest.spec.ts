@@ -1409,7 +1409,7 @@ describe('R13 (77-jev-quality-backtest #77): un denominador pequeño no es un ju
     ),
   ];
 
-  it('avisa de que basta una actividad para decidir la condicion B', async () => {
+  it('avisa de que basta una actividad para decidir la condicion B', () => {
     const md = informeDeFilas(lote25(5, 1));
 
     expect(md).toMatch(/condicion B se decide sobre|se decide sobre 5/i);
@@ -1418,13 +1418,13 @@ describe('R13 (77-jev-quality-backtest #77): un denominador pequeño no es un ju
     expect(md).toContain('20.0%');
   });
 
-  it('dice que un negativo asi es "no se pudo medir", no "Jev falla"', async () => {
+  it('dice que un negativo asi es "no se pudo medir", no "Jev falla"', () => {
     const md = informeDeFilas(lote25(5, 1));
 
     expect(md).toMatch(/no se pudo medir|no dice que Jev falle/i);
   });
 
-  it('el titular lleva el matiz cuando la condicion B falla sobre pocos', async () => {
+  it('el titular lleva el matiz cuando la condicion B falla sobre pocos', () => {
     const md = informeDeFilas(lote25(5, 1));
     const titular = md.slice(md.indexOf('## Veredicto'));
 
@@ -1434,7 +1434,7 @@ describe('R13 (77-jev-quality-backtest #77): un denominador pequeño no es un ju
     );
   });
 
-  it('el titular lleva el matiz cuando la condicion B pasa sobre pocos', async () => {
+  it('el titular lleva el matiz cuando la condicion B pasa sobre pocos', () => {
     const md = informeDeFilas(lote25(5, 0));
     const titular = md.slice(md.indexOf('## Veredicto'));
 
@@ -1443,14 +1443,14 @@ describe('R13 (77-jev-quality-backtest #77): un denominador pequeño no es un ju
     );
   });
 
-  it('el titular dice que la condicion B no se midio cuando no hay ningun bueno', async () => {
+  it('el titular dice que la condicion B no se midio cuando no hay ningun bueno', () => {
     const md = informeDeFilas(lote25(0, 0));
     const titular = md.slice(md.indexOf('## Veredicto'));
 
     expect(titular).toMatch(/\*\*POSITIVO\*\*[^\n]*no se ha podido medir/i);
   });
 
-  it('con denominador holgado no hay matiz ni aviso', async () => {
+  it('con denominador holgado no hay matiz ni aviso', () => {
     const md = informeDeFilas(lote25(20, 0));
     const titular = md.slice(md.indexOf('## Veredicto'));
 
@@ -1458,7 +1458,7 @@ describe('R13 (77-jev-quality-backtest #77): un denominador pequeño no es un ju
     expect(md).not.toMatch(/se decide sobre|no se ha podido medir/i);
   });
 
-  it('el corte sale del umbral que fije el humano, no de una constante', async () => {
+  it('el corte sale del umbral que fije el humano, no de una constante', () => {
     // Con el 50% admitido, una de cinco (20%) ya no decide nada.
     const md = informeDeFilas(lote25(5, 0), ['--max-buenos-degradados', '0.5']);
 
