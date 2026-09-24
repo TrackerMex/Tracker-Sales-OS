@@ -1765,3 +1765,124 @@ JEV_BACKTEST_APPROVED=si JEV_API_KEY=... \
 
 El modo se lee del lote guardado, no de la bandera, así que un informe generado
 sin `--solo-alta` sigue diciendo la verdad sobre el lote que describe.
+
+---
+
+# Decimotercera vuelta — MEDIA-22 y MEDIA-21: cómo se lee el veredicto
+
+Los dos antes de la fase de evaluar, que es inminente. T6 sigue sin ejecutarse.
+**Artefactos reales intactos**: md5 antes y después, los dos `OK`.
+
+## 65. MEDIA-22 — el aviso de la condición B, ahora también con denominador pequeño
+
+Tu diagnóstico es el que importa: **el resultado más probable del backtest es un
+NEGATIVO decidido por un denominador de 5**, y eso no es un juicio sobre Jev,
+es falta de datos. Si la hipótesis de la feature acierta y el director tumba 20
+de las 25, quedan 5 buenos, y con 5 basta que Jev degrade uno para marcar 20% y
+pasarse del 15%.
+
+**El corte no es un umbral inventado: sale del que fije el humano.** La
+condición es `1 / buenos > maxBuenosDegradados` — es decir, «basta una sola
+actividad para superar el umbral». Si el director cambia el umbral de R13, el
+aviso cambia con él: hay un test que corre con `--max-buenos-degradados 0.5` y
+comprueba que con 5 buenos ya no aparece nada.
+
+Así sale el escenario más probable, renderizado de verdad:
+
+```
+**NEGATIVO** (la condicion B falla sobre solo 5 actividades)
+
+- Buenos (director 3 o 4) que Jev tumba a 1 o 2: 20.0% (1 de 5)
+
+> **La condicion B se decide sobre 5 actividades.** Son las que el
+> director etiqueto en nivel 3 o 4, y con esas basta que Jev degrade **una**
+> para marcar el 20.0% y pasarse del 15.0% admitido.
+>
+> Un negativo con ese denominador no dice que Jev falle
+> ni que acierte: dice que la condicion B **no se pudo medir** con este lote.
+>
+> Es el reverso de D16: al quedarnos solo con la franja alta, cuantos buenos
+> haya depende por completo de cuantas de las 25 sobrevivan al juicio del
+> director. Si el veredicto depende de esta condicion, lo que mide es
+> ampliar el lote; repetirlo con la misma semilla, no.
+```
+
+El aviso sale también cuando la condición **pasa** sobre pocos: un positivo con
+denominador de 5 tampoco es un juicio.
+
+## 66. MEDIA-21 — el titular no viaja solo
+
+Tres formas, en la dirección que corresponda:
+
+| Situación | Titular |
+|---|---|
+| sin buenos, positivo | `**POSITIVO** (solo por la condicion A; la B no se ha podido medir)` |
+| sin buenos, negativo | `**NEGATIVO** (por la condicion A; la B no se ha podido medir)` |
+| B falla sobre pocos | `**NEGATIVO** (la condicion B falla sobre solo 5 actividades)` |
+| B pasa sobre pocos | `**POSITIVO** (la condicion B pasa sobre solo 5 actividades)` |
+| denominador holgado | `**POSITIVO**`, sin matiz |
+
+## 67. Un mutante que sobrevivió a mi primera red
+
+Mis dos aserciones pedían que el titular **mencionara** la condición B, y con
+eso un matiz sin dirección —«se decide sobre solo 5»— pasaba los 192 en verde.
+No es lo mismo que falle sobre pocos que que pase sobre pocos. Apreté las dos
+aserciones a exigir la palabra; el mutante deja ahora 2 tests rojos.
+
+| Mutante | Resultado |
+|---|---|
+| el aviso vuelve a mirar solo el cero | **2 tests rojos** |
+| el titular sin matiz | **3 tests rojos** |
+| el corte con una constante en vez del umbral | **1 test rojo** |
+| el matiz sin dirección | **2 tests rojos** (0 antes de apretar) |
+
+## 68. Commits de la decimotercera vuelta, en orden
+
+```
+6a9f350 test:  un denominador pequeño no es un juicio (MEDIA-22, MEDIA-21)
+4d58e46 fix:   avisa del denominador pequeño y matiza el titular (MEDIA-22, MEDIA-21)
+ef5148e test:  el matiz del titular tiene que decir la direccion (MEDIA-21)
+cf2959f docs:  rewrapea el aviso de la condicion B
+092299c style: quita el async de los tests que no esperan nada
+```
+
+Modificados: `run-backtest.ts` y `run-backtest.spec.ts`. Nada fuera de
+`backend/scripts/`.
+
+Tests: **185 → 192**.
+
+## 69. Salida literal de los cuatro comandos (decimotercera vuelta)
+
+```
+=== $ cd backend && pnpm test ===
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+Test Suites: 6 passed, 6 total
+Tests:       192 passed, 192 total
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+exit=0
+```
+
+`pnpm test` sigue en 15 suites / 78 tests: D9 intacto. `pnpm lint` cazó siete
+`async` sin `await` en los tests nuevos, ya quitados.
+
+## 70. Lo que lee quien firme el veredicto
+
+Con estas dos, el informe distingue las tres cosas que un gate tiene que
+distinguir:
+
+1. **Jev acierta** — condición A con su fracción, sobre las 25 de siempre.
+2. **Jev falla** — condición B incumplida sobre un denominador que la sostenga.
+3. **No se pudo medir** — condición B sin denominador o con uno que decide una
+   sola actividad, dicho en el titular y explicado debajo.
+
+La tercera es la que faltaba, y es la más probable.
