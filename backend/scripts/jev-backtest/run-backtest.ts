@@ -803,12 +803,13 @@ function avisoCondicionB(v: Verdict): string[] {
     '> director etiqueto en nivel 3 o 4, y con esas basta que Jev degrade **una**',
     `> para marcar el ${pct(1 / v.buenos)} y pasarse del ${pct(v.maxBuenosDegradados)} admitido.`,
     '>',
-    `> ${fallaB(v) ? 'Un negativo con ese denominador' : 'Un margen asi'} no dice que Jev falle ni que acierte: dice que la`,
-    '> condicion B **no se pudo medir** con este lote. Es el reverso de D16: al',
-    '> quedarnos solo con la franja alta, cuantos buenos haya depende por',
-    '> completo de cuantas de las 25 sobrevivan al juicio del director. Si el',
-    '> veredicto depende de esta condicion, lo que mide es ampliar el lote;',
-    '> repetirlo con la misma semilla, no.',
+    `> ${fallaB(v) ? 'Un negativo con ese denominador' : 'Un margen asi'} no dice que Jev falle`,
+    '> ni que acierte: dice que la condicion B **no se pudo medir** con este lote.',
+    '>',
+    '> Es el reverso de D16: al quedarnos solo con la franja alta, cuantos buenos',
+    '> haya depende por completo de cuantas de las 25 sobrevivan al juicio del',
+    '> director. Si el veredicto depende de esta condicion, lo que mide es',
+    '> ampliar el lote; repetirlo con la misma semilla, no.',
   ];
 }
 
