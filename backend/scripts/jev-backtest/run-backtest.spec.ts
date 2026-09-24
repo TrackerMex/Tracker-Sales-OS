@@ -1305,3 +1305,64 @@ describe('R13 (77-jev-quality-backtest #77): sin actividades de nivel 3 o 4 la c
     expect(md).not.toMatch(/condicion B.{0,80}no se ha podido medir/is);
   });
 });
+
+describe('R11 (77-jev-quality-backtest #77): la concentracion se ve al extraer, no solo en el informe', () => {
+  const extraerCapturando = async (poblacion: SourceActivity[]) => {
+    const logs: string[] = [];
+    const spy = jest.spyOn(console, 'log').mockImplementation((...args) => {
+      logs.push(args.map(String).join(' '));
+    });
+    const { fs, escrituras } = fsFalso({});
+    await main(
+      ['--fase', 'extraer'],
+      { JEV_BACKTEST_APPROVED: 'si' },
+      {
+        fs,
+        leerCandidatos: () => Promise.resolve(poblacion),
+      },
+    );
+    spy.mockRestore();
+    return {
+      salida: logs.join('\n'),
+      guardado: JSON.parse(escrituras[RUTA_LOTE]) as LoteGuardado,
+    };
+  };
+
+  it('imprime las mismas cifras que guarda, cuando todavia se puede decidir', async () => {
+    const { salida, guardado } = await extraerCapturando(poblacionSesgada);
+
+    expect(salida).toMatch(/concentracion/i);
+    expect(salida).toContain(
+      pctDe(guardado.comparacionAlta?.enCandidatas ?? null),
+    );
+    expect(salida).toContain(pctDe(guardado.liderAlta?.enLote ?? null));
+  });
+
+  it('avisa por consola cuando la franja alta es de una sola persona', async () => {
+    const dominada: SourceActivity[] = [
+      ...Array.from({ length: 55 }, (_, i) =>
+        filaDe(`dom-${i}`, 100, 'V-DOMINANTE'),
+      ),
+      ...Array.from({ length: 5 }, (_, i) =>
+        filaDe(`otro-${i}`, 100, `V-${i}`),
+      ),
+      ...Array.from({ length: 30 }, (_, i) =>
+        filaDe(`media-${i}`, 60, `V-${i % 5}`),
+      ),
+      ...Array.from({ length: 30 }, (_, i) =>
+        filaDe(`baja-${i}`, 20, `V-${i % 5}`),
+      ),
+    ];
+
+    const { salida } = await extraerCapturando(dominada);
+
+    expect(salida).toMatch(/aviso/i);
+    expect(salida).toMatch(/una sola persona|sobre todo una persona/i);
+  });
+
+  it('no avisa cuando la franja esta repartida', async () => {
+    const { salida } = await extraerCapturando(poblacionSesgada);
+
+    expect(salida).not.toMatch(/aviso/i);
+  });
+});
