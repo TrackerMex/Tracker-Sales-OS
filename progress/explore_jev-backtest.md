@@ -235,12 +235,60 @@ llamar. Quien añada motivos debe mirar esa función.
 
 ## 4. Parámetros de la corrida
 
-Se rellenan al ejecutar.
+- **Semilla de aleatorización**: 77
+- **Extracción del lote**: 2026-09-24T15:19:03Z
+- **Candidatas**: 2000 · **excluidas por R3**: 0 · **desviaciones de R2**: ninguna
+- **Franjas**: alta 25, media 15, baja 10 — completas, sin relleno
+- **Modelo**: `jev-latest` (registrar la versión exacta que devuelva la API)
+- **Fecha de la evaluación**: _pendiente_
 
-- Semilla de aleatorización: _pendiente_
-- Fecha y hora de la corrida: _pendiente_
-- Modelo: `jev-latest` (registrar la versión exacta que devuelva la API)
-- Desviaciones de la estratificación de R2: _pendiente_
+### Concentración del lote, y la decisión humana que la acompaña
+
+| | Franja alta del lote | Candidatas con `quality = 100` |
+|---|---:|---:|
+| Vendedores distintos | 4 | 5 |
+| Fracción del que más aporta | **60.0%** (15 de 25) | 48.1% |
+
+Cifra titular emparejada (D13): **+11.9 puntos**. El que encabeza el lote es el
+mismo que encabeza las candidatas, así que no aplica el punto ciego de
+MEDIA-19.
+
+**El aviso de D14 se dispara**: más de la mitad de la franja alta es de una
+sola persona.
+
+**Los +11.9 puntos no son una anomalía.** Con p = 0.481 y n = 25 la desviación
+típica es de 10.0 puntos, así que esta extracción está a 1.2 desviaciones: una
+tirada ordinaria. El origen de la concentración no es el muestreo, es la
+población — un solo vendedor produce el 48.1% de todos los registros que
+puntúan 100 en la base. Cualquier lote fiel saldrá cerca de ese 48%.
+
+**Decisión del humano, 2026-09-24: se firma el lote sabiendo a quién
+describe.** Se descartaron las dos alternativas:
+
+- *Ampliar la franja alta* de 25 a 40-50 para que entren más vendedores en
+  términos absolutos. Habría hecho que el veredicto hablara del equipo, al
+  precio de una vuelta de código y de más tiempo del director.
+- *Reextraer con otra semilla* buscando acercarse al 48%. Se descarta por
+  principio: elegir la tirada que más gusta es la cuota que D12 rechaza, por la
+  puerta de atrás. Y aun en el mejor caso casi la mitad de la franja seguiría
+  siendo la misma persona.
+
+**Consecuencia que queda escrita para quien lea el veredicto**: el resultado de
+este backtest habla sobre todo de un vendedor. Si Jev acierta o falla sobre
+este lote, lo que se ha medido es su comportamiento frente al estilo de
+escritura de esa persona. Para afirmar algo sobre el equipo haría falta ampliar
+la franja alta. No es una limitación del backtest: es que el fenómeno que se
+quiere medir —registros que puntúan 100 sin tener sustancia— está concentrado
+en quien produce casi la mitad de los registros que puntúan 100.
+
+### Deuda registrada el 2026-09-24
+
+**La concentración solo se ve en el informe, que se genera en la fase de
+evaluar.** Es decir, después de que el director haya etiquetado y después de
+gastar las 50 llamadas. La decisión que esas cifras informan se toma antes, así
+que hubo que leer `jev-backtest-lote.json` a mano para tomarla. El control
+existe y es correcto; lo que falta es que `--fase extraer` lo imprima al
+terminar, que es el momento en que se decide.
 
 ## 5. Informe (R11, R12, R13)
 
