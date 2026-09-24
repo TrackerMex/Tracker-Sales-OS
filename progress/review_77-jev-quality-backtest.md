@@ -2540,3 +2540,226 @@ Mutantes y renderizados en un worktree aislado, ya eliminado. **Los dos
 artefactos de la extracción real no se leyeron ni se tocaron**: md5 verificado
 antes y después. No se llamó a `api.typesafe.ai` ni se abrió conexión a ninguna
 base de datos. T6 no se ejecutó.*
+
+---
+---
+
+# REVISIÓN DE R14 — modo `--solo-alta` (`dd8c7fa..HEAD`, `8b977b4`)
+
+Acotada a R14 y a la deuda del extraer. El resto quedó cerrado con el PASSED
+anterior y su inventario de 47 hallazgos.
+
+**Restricción respetada**: no leí ni escribí nada en `progress/` del repo real, y
+no usé su md5 ni su mtime como invariante, porque el humano está regenerando el
+lote en paralelo. Todo en worktree aislado y en memoria.
+
+## Veredicto
+
+**PASSED. Ningún BLOQUEANTE, ningún ALTA.**
+
+**La tesis de D16 se sostiene**, y lo digo con 1000 comparaciones detrás, no por
+lectura del código. Sin regresión. Los ocho mutantes que inyecté sobre R14
+mueren.
+
+Dos hallazgos nuevos, los dos **MEDIA** y los dos sobre cómo se lee la condición
+B, que es donde R14 cambia el terreno: **MEDIA-21** y **MEDIA-22**.
+
+## Punto 1 — La tesis de D16
+
+Comparé, para cada semilla, el conjunto de ids de la franja alta del lote de 50
+contra el lote entero de `--solo-alta`. Cinco formas de población × 200
+semillas:
+
+| Población | Discrepancias | alta(50) / solo-alta |
+|---|---:|---|
+| holgada (60/40/40) | **0/200** | 25 / 25 |
+| media corta (60/5/40), rellena desde alta | **0/200** | 25 / 25 |
+| media y baja cortas (60/3/2) | **0/200** | 25 / 25 |
+| alta corta (18/40/40), lote incompleto | **0/200** | 18 / 18 |
+| justa (25/15/10) | **0/200** | 25 / 25 |
+
+**Cero discrepancias en las 1000.** Y no solo el conjunto: también el **orden**
+coincide. Incluí a propósito los dos casos que podían romperla —la franja media
+corta, que en el lote de 50 se rellena tomando más filas del pool de alta, y la
+franja alta corta, que deja el lote incompleto— porque son los únicos en los que
+el recorrido de `stratify` difiere entre modos. En ninguno cambia qué 25 filas
+acaban en la franja alta: el relleno se lleva filas **sobrantes** del pool, ya
+spliceadas las 25, y la desviación por franja alta corta se registra igual en
+los dos modos.
+
+La implementación es la mínima: `stratify` no se toca y la bandera solo pasa
+`{ ...BATCH_TARGETS, media: 0, baja: 0 }` por el parámetro `targets` que ya
+existía. Con objetivo cero, `take` devuelve 0, `faltan` sale 0 y el bucle
+continúa sin inventar desviaciones — verificado, la lista sale vacía.
+
+**Conclusión: el recorte no debilita la condición A.** Se calcula sobre
+exactamente el mismo conjunto de 25 actividades que en el lote de 50.
+
+## Punto 2 — La condición B sin denominador
+
+El aviso funciona y está clavado por los dos lados:
+
+| Mutante | Resultado |
+|---|---|
+| el aviso de B vacía no se imprime | **1 rojo** |
+| el aviso de B vacía sale siempre | **1 rojo** |
+
+Construí el escenario de riesgo —las 25 puntuadas en nivel 1 o 2, con Jev
+detectándolas todas— y esto es lo que sale:
+
+```
+## Veredicto (R13)
+
+**POSITIVO**
+
+- Umbral usado, minimo de falsos 100 detectados: 70.0%
+- Umbral usado, maximo de buenos degradados: 15.0%
+- Falsos 100 que Jev situa en nivel 1 o 2: 100.0%
+- Buenos (director 3 o 4) que Jev tumba a 1 o 2: n/d (0 de 0)
+
+> **La condicion B no se ha podido medir.** El director no etiqueto
+> ninguna actividad en nivel 3 o 4, asi que no hay buenos que Jev
+> pudiera degradar: la condicion pasa por no tener nada que la
+> incumpla, no porque Jev haya acertado. El veredicto lo decide
+> entonces la condicion A en solitario.
+```
+
+El POSITIVO es la lectura literal y correcta de R13 —«no sitúa más del 15% de»
+un conjunto vacío es cierto por vacuidad—, coherente con el paso vacuo que ya
+validé en la primera revisión. El texto dice exactamente lo que hay que decir.
+
+### MEDIA-21 — el titular va ocho líneas por delante del matiz
+
+`run-backtest.ts`, sección del veredicto. La palabra **POSITIVO** aparece ocho
+líneas antes del aviso. Quien lea la sección entera no se confunde: el
+`n/d (0 de 0)` está en la línea inmediatamente anterior y el aviso es una cita
+en bloque con entradilla en negrita. Pero quien busque el titular —o pegue el
+veredicto en un correo— se lleva «POSITIVO» sin el matiz que dice que media
+condición no se midió.
+
+Es el único sitio del informe donde una lectura rápida da la respuesta
+equivocada, y cuesta una línea: calificar el titular,
+`**POSITIVO** (solo por la condicion A; la B no se ha podido medir)`. Lo dejo
+como MEDIA y no como ALTA porque la información está, es adyacente y es
+visualmente distinta, y porque el veredicto no está falseado.
+
+### MEDIA-22 — el aviso es binario en cero, y B se rompe mucho antes
+
+El aviso salta solo con `buenos === 0`. Con un denominador diminuto pero no
+nulo no hay ningún matiz, y la cifra se publica como si fuera una tasa:
+
+```
+- Buenos (director 3 o 4) que Jev tumba a 1 o 2: 100.0% (1 de 1)
+...
+- Jev degrada a nivel 1 o 2 el 100.0% de las actividades que el director
+  etiqueta en 3 o 4, por encima del 15.0% admitido
+```
+
+Un motivo de veredicto negativo apoyado en **una sola actividad**. Y con
+`buenos = 5` —el reparto que predice la propia hipótesis de la feature, 20 de
+25 tumbadas— basta que Jev degrade una para pasar del 15%.
+
+**R14 hace este caso mucho más probable**, y es justo el argumento de D16 leído
+al revés: si las etiquetas 3 o 4 salían «sobre todo de la franja alta», al
+quedarse solo con ella el denominador de B pasa a depender por completo de
+cuántas de las 25 sobrevivan al juicio del director, y la hipótesis de la
+feature dice que serán pocas.
+
+La dirección del error es la segura —un denominador pequeño infla la tasa y
+empuja a NEGATIVO, nunca fabrica un POSITIVO—, y el `(1 de 1)` está impreso. Por
+eso es MEDIA. Pero produce un «negativo por juicio» que en realidad es un
+«negativo por falta de datos», que es exactamente la distinción que D11 se
+escribió para preservar. El mismo aviso, extendido a un denominador pequeño,
+lo cierra sin inventar umbral: basta con decir sobre cuántas se calcula.
+
+## Punto 3 — La sección de concentración colapsada
+
+Correcta. En modo `--solo-alta` la tabla baja a dos filas y no queda ninguna
+comparación vacía, duplicada ni contra sí misma:
+
+```
+| Ambito | Vendedores | Fraccion del que mas aporta |
+| Candidatas con quality = 100 | 6 | 16.7% (20 de 120) |
+| **Lote (franja alta)** | 6 | 24.0% (6 de 25) |
+```
+
+Desaparecen «Candidatas elegibles» y «Lote completo», que en este modo repetían
+la fila de al lado. Las dos líneas de MEDIA-15 y MEDIA-19 siguen publicándose
+y siguen hablando del conjunto correcto, porque en este modo el lote **es** la
+franja alta. El aviso de D14 se calcula sobre `spreadAlta`, que aquí es el lote
+entero: el conjunto correcto. Mutante que impide el colapso: **1 rojo**.
+
+## Punto 4 — El modo se lee del lote, no de la bandera
+
+Confirmado por las dos vías. Por lectura: `opciones.soloAlta` solo se consulta
+en `parseArgs` y en `faseExtraer` (líneas 237, 298, 311); las cuatro lecturas
+del camino del informe —699, 705, 708, 766— usan `lote.soloAlta`. Por
+comportamiento: **todos los informes de esta revisión los generé con
+`--fase evaluar --dry-run` sin la bandera**, y salen correctamente rotulados
+«Alcance del lote: **solo la franja alta**» con la tabla colapsada.
+
+Al revés también: un lote anterior a R14, sin el campo, imprime «las tres
+franjas, 25/15/10 (R2)» y mantiene las cuatro filas. No encontré ninguna forma
+de que un lote de 50 se evalúe como de 25 ni al contrario. Mutantes: no
+registrar `soloAlta` → **1 rojo**; el informe ignorando el alcance → **1 rojo**.
+
+## Punto 5 — La concentración impresa al extraer
+
+Tres sitios, un solo número. Verificado en la misma corrida:
+
+| | referencia candidatas / lote | líder lote / candidatas |
+|---|---|---|
+| consola de `--fase extraer` | 16.7% y 20.0% (3.3 puntos) | 24.0% y 16.7% |
+| `jev-backtest-lote.json` | `enCandidatas 0.1667, enLote 0.2, dif 3.33` | `enLote 0.24, enCandidatas 0.1667` |
+| informe | 16.7% y 20.0%, +3.3 puntos | 24.0% y 16.7% |
+
+Coinciden por construcción: la consola imprime los mismos objetos `guardado.*`
+que se persisten y que el informe vuelve a leer. El aviso de concentración de la
+consola además dice lo correcto en las dos ramas —si la población no está
+concentrada, reextrae; si lo está, reextraer no lo arregla—. Mutante que quita
+la impresión: **1 rojo**. Deuda cerrada.
+
+## Regresión
+
+**Ninguna.** La referencia en Python, la misma desde la primera revisión, sobre
+un lote de 12 sin `soloAlta`: matriz `[[1,0,1,0],[0,1,0,0],[2,0,2,0],[0,2,0,3]]`,
+acuerdos 58.3% / 58.3%, Spearman 0.480, falsos 100 66.7%, degradados 44.4%
+(4 de 9), 12 pares comparables. Fuga: ninguna.
+
+## Los cuatro comandos
+
+```
+=== $ cd backend && pnpm test ===
+Test Suites: 15 passed, 15 total
+Tests:       78 passed, 78 total
+exit=0
+
+=== $ cd backend && pnpm test:scripts ===
+Test Suites: 6 passed, 6 total
+Tests:       185 passed, 185 total
+exit=0
+
+=== $ cd backend && npx tsc --noEmit ===
+exit=0
+
+=== $ cd backend && pnpm lint ===
+> eslint "{src,apps,libs,test,scripts}/**/*.ts" --fix
+exit=0
+```
+
+## Actualización del inventario
+
+49 hallazgos. Los 47 anteriores sin cambio —30 cerrados, 9 abiertos por decisión
+del Líder, 8 abiertos sin decidir— más los dos de hoy, **MEDIA-21** y
+**MEDIA-22**, que entran como abiertos sin decidir. Ninguno de los dos detiene
+nada: las etiquetas del director son sobre el texto de las actividades y no las
+invalida ningún hallazgo mío; los dos afectan a cómo se lee el informe después,
+y tienen hasta la fase de evaluar para decidirse.
+
+---
+
+*Revisión acotada a R14, sin modificar código. Mutantes, 1000 comparaciones de
+estratificación y renderizados de informe en un worktree aislado, ya eliminado.
+**No se leyó ni se escribió nada en el `progress/` del repo real**, que el humano
+está regenerando en paralelo. No se llamó a `api.typesafe.ai` ni se abrió
+conexión a ninguna base de datos. T6 no se ejecutó.*
