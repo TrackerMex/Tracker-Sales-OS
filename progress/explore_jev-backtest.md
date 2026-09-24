@@ -363,3 +363,40 @@ lote a mano —eso es la cuota que D12 descarta— sino volver a extraer con otr
 semilla y dejar constancia de las dos. Si el problema es la poblacion y no el
 muestreo, reextraer no cambia nada: o se amplia el lote, o el veredicto se
 firma sabiendo a quien describe.
+
+---
+
+## Como leer el veredicto (anadido 2026-09-24)
+
+El informe distingue **tres** desenlaces, no dos. La tercera es la que faltaba
+y, por la aritmetica de esta feature, la mas probable.
+
+| Desenlace | Que significa | Que hacer |
+|---|---|---|
+| **Jev acierta** | La condicion A se cumple sobre las 25 actividades, y la B se decide sobre un denominador que la sostenga | Seguir con F78 |
+| **Jev falla** | La B se incumple con suficientes actividades detras como para que sea un juicio | Archivar el plan |
+| **No se pudo medir** | La B no tiene denominador, o lo tiene tan pequeno que una sola actividad decide | Ampliar el lote, **no** repetir con otra semilla |
+
+**Por que la tercera es la mas probable.** Si la hipotesis de la feature acierta
+—si esos registros que puntuan 100 estan efectivamente vacios— el director
+tumbara la mayoria de las 25 a nivel 1 o 2, y quedaran pocos «buenos». Con 5,
+basta que Jev degrade uno para marcar el 20% y pasarse del 15% admitido.
+
+Es el reverso de D16. Aquel argumento decia que las etiquetas de nivel 3 o 4
+salen sobre todo de la franja alta, y por eso recortar el lote no perdia nada
+del gate. Cierto, pero al quedarnos solo con ella el denominador de la
+condicion B pasa a depender por completo de cuantas de las 25 sobrevivan al
+juicio del director.
+
+El corte del aviso no es una constante inventada: sale del propio umbral de
+R13, `1 / buenos > maxBuenosDegradados`, es decir «basta una sola actividad
+para superarlo». Si se cambia el umbral, el aviso cambia con el.
+
+**Si sale «no se pudo medir», la salida es ampliar el lote**, no repetirlo con
+otra semilla: el problema no es que la muestra salga rara, es que la condicion
+B se mide sobre las actividades que el director considera buenas, y son pocas
+por construccion. Repetir con otra semilla da otras 25 actividades de
+`quality = 100` y el mismo problema.
+
+El titular del informe lleva el matiz con su direccion, para que nadie copie
+«POSITIVO» o «NEGATIVO» a un correo sin el.
