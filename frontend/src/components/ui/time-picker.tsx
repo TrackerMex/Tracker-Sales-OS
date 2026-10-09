@@ -81,7 +81,7 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
           e.target.select()
         }}
         className={cn(
-          "w-7 border-0 bg-transparent p-0 text-center tabular-nums text-slate-900 outline-none focus:bg-transparent disabled:cursor-not-allowed",
+          "w-7 border-0 bg-transparent p-0 text-center tabular-nums text-foreground outline-none focus:bg-transparent disabled:cursor-not-allowed",
           className,
         )}
       />
@@ -119,7 +119,7 @@ const TimePeriodToggle = React.forwardRef<
       onClick={toggle}
       onKeyDown={handleKeyDown}
       className={cn(
-        "border-0 bg-transparent p-0 text-center tabular-nums text-slate-900 outline-none focus:bg-transparent disabled:cursor-not-allowed",
+        "border-0 bg-transparent p-0 text-center tabular-nums text-foreground outline-none focus:bg-transparent disabled:cursor-not-allowed",
         className,
       )}
     >

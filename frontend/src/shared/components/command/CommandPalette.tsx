@@ -3,7 +3,14 @@ import { useNavigate } from "@tanstack/react-router"
 import { useAppStore } from "@/shared/store/app.store"
 import { NAV_SECTIONS } from "@/shared/navigation/nav-items"
 import {
-  CommandDialog,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Command,
   CommandInput,
   CommandList,
   CommandEmpty,
@@ -49,31 +56,41 @@ export function CommandPalette() {
   })).filter((s) => s.items.length > 0)
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Buscar módulo o acción..." />
-      <CommandList>
-        <CommandEmpty>Sin resultados.</CommandEmpty>
-        <CommandGroup heading="Acciones">
-          <CommandItem onSelect={() => run("/actividades/nueva")}>
-            Registrar actividad
-          </CommandItem>
-          <CommandItem onSelect={() => run("/agenda")}>Nueva tarea</CommandItem>
-          <CommandItem onSelect={() => run("/clientes")}>
-            Nuevo prospecto
-          </CommandItem>
-        </CommandGroup>
-        <CommandSeparator />
-        {sections.map((section) => (
-          <CommandGroup key={section.header} heading={section.header}>
-            {section.items.map((item) => (
-              <CommandItem key={item.to} onSelect={() => run(item.to)}>
-                {item.icon}
-                {item.label}
+    // Same markup as CommandDialog (components/ui/command.tsx), which does not
+    // forward className to DialogContent; sm:max-w-md keeps the 448px width.
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="overflow-hidden p-0 sm:max-w-md">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Paleta de comandos</DialogTitle>
+          <DialogDescription>Busca un comando o navega...</DialogDescription>
+        </DialogHeader>
+        <Command className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium">
+          <CommandInput placeholder="Buscar módulo o acción..." />
+          <CommandList>
+            <CommandEmpty>Sin resultados.</CommandEmpty>
+            <CommandGroup heading="Acciones">
+              <CommandItem onSelect={() => run("/actividades/nueva")}>
+                Registrar actividad
               </CommandItem>
+              <CommandItem onSelect={() => run("/agenda")}>Nueva tarea</CommandItem>
+              <CommandItem onSelect={() => run("/clientes")}>
+                Nuevo prospecto
+              </CommandItem>
+            </CommandGroup>
+            <CommandSeparator />
+            {sections.map((section) => (
+              <CommandGroup key={section.header} heading={section.header}>
+                {section.items.map((item) => (
+                  <CommandItem key={item.to} onSelect={() => run(item.to)}>
+                    {item.icon}
+                    {item.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
             ))}
-          </CommandGroup>
-        ))}
-      </CommandList>
-    </CommandDialog>
+          </CommandList>
+        </Command>
+      </DialogContent>
+    </Dialog>
   )
 }

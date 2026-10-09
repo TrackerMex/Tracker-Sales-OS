@@ -9,6 +9,7 @@ import { ClientCombobox } from "@/shared/components/forms/ClientCombobox"
 import { DatePickerField } from "@/shared/components/forms/DatePickerField"
 import { TimePickerField } from "@/shared/components/forms/TimePickerField"
 import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import {
   Accordion,
@@ -120,175 +121,219 @@ export function EditTaskForm({
         if (!open) onClose()
       }}
     >
-      <DialogContent className="max-h-[92vh] w-[min(calc(100vw-2rem),780px)] max-w-none overflow-y-auto sm:max-w-none">
-        <DialogHeader>
+      <DialogContent className="max-h-[92vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-5xl">
+        <DialogHeader className="border-b p-4 md:p-6">
           <DialogTitle>Editar tarea</DialogTitle>
           <DialogDescription>Modifica los datos de la tarea.</DialogDescription>
         </DialogHeader>
 
-        <form
-          ref={formRef}
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-[11px]"
-        >
-          <FormErrorSummary error={errorSummary} />
-
-          <div>
-            <ClientCombobox
-              value={clientId}
-              onSelect={(client) => {
-                const changed = (client?.id ?? "") !== clientId
-                setClientId(client?.id ?? "")
-                setSelectedClient(client)
-                if (changed) setContactId("")
-                clearField("clientId")
-              }}
-              onResolve={(client) => setSelectedClient(client)}
-              initialLabel={task.clientName}
-              placeholder="Sin cliente / prospecto nuevo"
-              error={!!fieldErrors.clientId}
-            />
-            <FieldError name="clientId" message={fieldErrors.clientId} />
-          </div>
-
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            <div>
-              <Select
-                value={type}
-                onValueChange={(v) => {
-                  setType(v)
-                  clearField("type")
-                }}
-              >
-                <SelectTrigger {...fieldErrorProps("type", fieldErrors.type)}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TASK_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError name="type" message={fieldErrors.type} />
+        <form ref={formRef} onSubmit={handleSubmit}>
+          {errorSummary && (
+            <div className="p-4 pb-0 md:px-6">
+              <FormErrorSummary error={errorSummary} />
             </div>
-            <div>
-              <Select
-                value={contactId}
-                onValueChange={(v) => {
-                  setContactId(v === "__none__" ? "" : v)
-                  clearField("contactId")
-                }}
-                disabled={!selectedClient}
-              >
-                <SelectTrigger
-                  {...fieldErrorProps("contactId", fieldErrors.contactId)}
-                >
-                  <SelectValue
-                    placeholder={
-                      selectedClient
-                        ? "Selecciona un contacto"
-                        : "Selecciona primero una empresa"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Sin contacto</SelectItem>
-                  {contacts.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                      {c.role ? ` · ${c.role}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError name="contactId" message={fieldErrors.contactId} />
-            </div>
-          </div>
-
-          <div>
-            <Textarea
-              value={objective}
-              onChange={(e) => {
-                setObjective(e.target.value)
-                clearField("title")
-              }}
-              required
-              placeholder="¿Qué vas a hacer y para qué?"
-              className="h-[110px] resize-none"
-              {...fieldErrorProps("title", fieldErrors.title)}
-            />
-            <FieldError name="title" message={fieldErrors.title} />
-          </div>
-
-          <div>
-            {task.status === "Completado" ? (
-              <div className="rounded-lg border border-tracker-border bg-tracker-surface-alt px-3 py-2.5 text-xs text-tracker-text-secondary">
-                <span className="mb-1 block font-semibold text-slate-700">
-                  Resultado esperado
-                </span>
-                {description || (
-                  <em className="text-tracker-text-muted">
-                    Sin resultado registrado
-                  </em>
-                )}
-              </div>
-            ) : (
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="¿Cuál es el resultado esperado de esta tarea?"
-                className="h-[72px] resize-none"
-              />
-            )}
-          </div>
-
-          <div>
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              <DatePickerField
-                value={date}
-                onChange={(v) => {
-                  setDate(v)
-                  clearField("scheduledAt")
-                }}
-                {...fieldErrorProps("scheduledAt", fieldErrors.scheduledAt)}
-              />
-              <TimePickerField
-                value={time}
-                onChange={(v) => {
-                  setTime(v)
-                  clearField("scheduledAt")
-                }}
-                aria-invalid={!!fieldErrors.scheduledAt}
-              />
-            </div>
-            <FieldError name="scheduledAt" message={fieldErrors.scheduledAt} />
-          </div>
-
-          {showOutlookReminder && (
-            <Accordion type="single" collapsible defaultValue="outlook">
-              <AccordionItem value="outlook">
-                <AccordionTrigger>Recordatorio Outlook</AccordionTrigger>
-                <AccordionContent>
-                  <div className="rounded-lg border border-[#BFDBFE] bg-blue-50 px-[13px] py-[11px] text-xs font-semibold text-[#1D4ED8]">
-                    Recordatorio: si es videoconferencia o cita, actualízala
-                    también en Outlook.
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
           )}
 
-          <Button
-            type="submit"
-            disabled={isLoading || !objective.trim()}
-            variant="success"
-            size="lg"
-            className="justify-center"
-          >
-            {isLoading ? "Guardando..." : "Actualizar tarea"}
-          </Button>
+          <div className="grid gap-px bg-border xl:grid-cols-2">
+            <section className="bg-background p-4 md:p-6">
+              <h5 className="text-base font-semibold">Tarea</h5>
+              <div className="mt-6 flex flex-col gap-6">
+                <div>
+                  <Label htmlFor="edit-task-client">Cliente</Label>
+                  <div className="mt-2">
+                    <ClientCombobox
+                      id="edit-task-client"
+                      value={clientId}
+                      onSelect={(client) => {
+                        const changed = (client?.id ?? "") !== clientId
+                        setClientId(client?.id ?? "")
+                        setSelectedClient(client)
+                        if (changed) setContactId("")
+                        clearField("clientId")
+                      }}
+                      onResolve={(client) => setSelectedClient(client)}
+                      initialLabel={task.clientName}
+                      placeholder="Sin cliente / prospecto nuevo"
+                      error={!!fieldErrors.clientId}
+                    />
+                  </div>
+                  <FieldError name="clientId" message={fieldErrors.clientId} />
+                </div>
+
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div>
+                    <Label htmlFor="edit-task-type">Tipo</Label>
+                    <Select
+                      value={type}
+                      onValueChange={(v) => {
+                        setType(v)
+                        clearField("type")
+                      }}
+                    >
+                      <SelectTrigger
+                        id="edit-task-type"
+                        className="mt-2 w-full"
+                        {...fieldErrorProps("type", fieldErrors.type)}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TASK_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FieldError name="type" message={fieldErrors.type} />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-task-contact">Contacto</Label>
+                    <Select
+                      value={contactId}
+                      onValueChange={(v) => {
+                        setContactId(v === "__none__" ? "" : v)
+                        clearField("contactId")
+                      }}
+                      disabled={!selectedClient}
+                    >
+                      <SelectTrigger
+                        id="edit-task-contact"
+                        className="mt-2 w-full"
+                        {...fieldErrorProps("contactId", fieldErrors.contactId)}
+                      >
+                        <SelectValue
+                          placeholder={
+                            selectedClient
+                              ? "Selecciona un contacto"
+                              : "Selecciona primero una empresa"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Sin contacto</SelectItem>
+                        {contacts.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                            {c.role ? ` · ${c.role}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FieldError
+                      name="contactId"
+                      message={fieldErrors.contactId}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-task-objective">Objetivo</Label>
+                  <Textarea
+                    id="edit-task-objective"
+                    value={objective}
+                    onChange={(e) => {
+                      setObjective(e.target.value)
+                      clearField("title")
+                    }}
+                    required
+                    placeholder="¿Qué vas a hacer y para qué?"
+                    className="mt-2 h-28 resize-none"
+                    {...fieldErrorProps("title", fieldErrors.title)}
+                  />
+                  <FieldError name="title" message={fieldErrors.title} />
+                </div>
+
+                <div>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <Label>Fecha</Label>
+                      <div className="mt-2">
+                        <DatePickerField
+                          value={date}
+                          onChange={(v) => {
+                            setDate(v)
+                            clearField("scheduledAt")
+                          }}
+                          {...fieldErrorProps(
+                            "scheduledAt",
+                            fieldErrors.scheduledAt
+                          )}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Hora</Label>
+                      <TimePickerField
+                        value={time}
+                        onChange={(v) => {
+                          setTime(v)
+                          clearField("scheduledAt")
+                        }}
+                        aria-invalid={!!fieldErrors.scheduledAt}
+                        className="mt-2"
+                      />
+                    </div>
+                  </div>
+                  <FieldError
+                    name="scheduledAt"
+                    message={fieldErrors.scheduledAt}
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-background p-4 md:p-6">
+              <h5 className="text-base font-semibold">Resultado</h5>
+              <div className="mt-6 flex flex-col gap-6">
+                {task.status === "Completado" ? (
+                  <div>
+                    <Label>Resultado esperado</Label>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {description || <em>Sin resultado registrado</em>}
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <Label htmlFor="edit-task-description">
+                      Resultado esperado
+                    </Label>
+                    <Textarea
+                      id="edit-task-description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="¿Cuál es el resultado esperado de esta tarea?"
+                      className="mt-2 h-20 resize-none"
+                    />
+                  </div>
+                )}
+
+                {showOutlookReminder && (
+                  <Accordion type="single" collapsible defaultValue="outlook">
+                    <AccordionItem value="outlook">
+                      <AccordionTrigger>Recordatorio Outlook</AccordionTrigger>
+                      <AccordionContent>
+                        <p className="border bg-muted/30 p-3 text-xs text-foreground">
+                          Recordatorio: si es videoconferencia o cita,
+                          actualízala también en Outlook.
+                        </p>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                )}
+              </div>
+            </section>
+          </div>
+
+          <div className="flex justify-end border-t p-4 md:px-6">
+            <Button
+              type="submit"
+              disabled={isLoading || !objective.trim()}
+              size="lg"
+            >
+              {isLoading ? "Guardando..." : "Actualizar tarea"}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

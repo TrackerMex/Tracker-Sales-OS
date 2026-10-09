@@ -36,7 +36,8 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const port = process.env.PORT || 3000;
-  await app.listen(port);
+  // HOST is optional (e.g. 127.0.0.1 for local runs); unset keeps the default bind.
+  await (process.env.HOST ? app.listen(port, process.env.HOST) : app.listen(port));
   console.log(`API running on http://localhost:${port}/api`);
   console.log(`Swagger docs: http://localhost:${port}/api/docs`);
 }

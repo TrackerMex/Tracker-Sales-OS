@@ -12,16 +12,16 @@ function Checkbox({
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       className={cn(
-        "peer size-4 shrink-0 rounded-[4px] border-[1.5px] border-[var(--tracker-border)] bg-[var(--tracker-surface-alt)] transition-colors outline-none focus-visible:border-[var(--tracker-green)] disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[var(--tracker-danger)] data-[state=checked]:border-[var(--tracker-green)] data-[state=checked]:bg-[var(--tracker-green)] data-[state=checked]:text-[var(--tracker-dark)]",
+        "peer flex size-4 shrink-0 items-center justify-center rounded-none border border-input transition-colors outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 aria-invalid:aria-checked:border-primary data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 dark:data-checked:bg-primary",
         className
       )}
       {...props}
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
-        className="flex items-center justify-center text-current"
+        className="flex items-center justify-center text-current [&>svg]:size-3.5"
       >
-        <CheckIcon className="size-3" />
+        <CheckIcon />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )

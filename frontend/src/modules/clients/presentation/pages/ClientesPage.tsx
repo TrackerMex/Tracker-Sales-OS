@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from "react"
-import type { FormEvent } from "react"
+import type { FormEvent, ReactNode } from "react"
 import { toast } from "sonner"
 import { useQuery } from "@tanstack/react-query"
-import { MoreHorizontalIcon } from "@/shared/components/Icon"
+import type { ColumnDef } from "@tanstack/react-table"
+import {
+  BuildingIcon,
+  ChevronLeftIcon,
+  EditIcon,
+  MoreHorizontalIcon,
+  PlusIcon,
+  SearchIcon,
+} from "@/shared/components/Icon"
 import { UserRole } from "@/core/domain/types/common.types"
 import { useAppStore } from "@/shared/store/app.store"
 import { activitiesApi } from "@/modules/activities/infrastructure/activities.api"
@@ -22,9 +30,15 @@ import { fieldErrorProps } from "@/shared/components/forms/field-error-props"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Badge, type BadgeVariant } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/shared/components/layout/PageHeader"
+import { SectionCard } from "@/shared/components/layout/SectionCard"
+import { DataTable } from "@/shared/components/data/DataTable"
+import { EmptyState } from "@/shared/components/data/EmptyState"
+import { StatusBadge } from "@/shared/components/data/StatusBadge"
+import type { StatusTone } from "@/shared/lib/status"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,14 +107,9 @@ const clientSources: ClientSource[] = [
   "Dirección Comercial",
 ]
 
-const stageBadgeVariant: Record<PipelineStage, BadgeVariant> = {
-  Prospecto: "gray",
-  Contactado: "navy",
-  Interesado: "navy",
-  Propuesta: "amber",
-  Negociación: "amber",
-  Cierre: "green",
-  Perdido: "red",
+function qualityTone(quality: number): StatusTone {
+  if (quality === 100) return "success"
+  return quality < 60 ? "danger" : "pending"
 }
 
 const emptyContact: CreateContactInput = {
@@ -151,6 +160,23 @@ function cleanContact(c: CreateContactInput): CreateContactInput {
 }
 
 type View = { mode: "list" } | { mode: "detail"; clientId: string }
+
+function InfoItem({
+  label,
+  className,
+  children,
+}: {
+  label: string
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <div className={className}>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-sm">{children}</dd>
+    </div>
+  )
+}
 
 export function ClientesPage() {
   const currentUser = useAppStore((s) => s.currentUser)
@@ -358,174 +384,163 @@ export function ClientesPage() {
     setView({ mode: "list" })
   }
 
+  function sellerName(id: string) {
+    return activeSellers.find((s) => s.id === id)?.name ?? id.slice(0, 8)
+  }
+
   // --- DETAIL VIEW ---
   if (view.mode === "detail" && selectedClient) {
     return (
-      <div className="space-y-4 p-6">
-        <Button variant="ghost" onClick={goToList}>
-          ← Volver a clientes
+      <div>
+        <Button variant="ghost" onClick={goToList} className="mb-2 -ml-2.5">
+          <ChevronLeftIcon />
+          Volver a clientes
         </Button>
+        <PageHeader
+          title={selectedClient.name}
+          description={
+            <span className="mt-1 flex flex-wrap items-center gap-2">
+              <StatusBadge status={selectedClient.stage} />
+              <StatusBadge tone={qualityTone(selectedClient.dataQuality)}>
+                Datos {selectedClient.dataQuality}%
+              </StatusBadge>
+              {selectedClient.isCold && (
+                <StatusBadge tone="danger">Fría</StatusBadge>
+              )}
+            </span>
+          }
+          actions={
+            <Button onClick={() => openEdit(selectedClient)}>
+              <EditIcon />
+              Editar cliente
+            </Button>
+          }
+        />
 
-        <div className="grid grid-cols-[280px_1fr] gap-5">
-          {/* Left sidebar */}
-          <div className="space-y-5 rounded-xl bg-tracker-dark p-5">
-            <div>
-              <h2 className="text-lg font-bold text-white">
-                {selectedClient.name}
-              </h2>
-              <div className="mt-2 flex items-center gap-2">
-                <Badge variant={stageBadgeVariant[selectedClient.stage]}>
-                  {selectedClient.stage}
-                </Badge>
-                <Badge
-                  variant={
-                    selectedClient.dataQuality === 100
-                      ? "green"
-                      : selectedClient.dataQuality < 60
-                        ? "red"
-                        : "amber"
-                  }
-                >
-                  Datos {selectedClient.dataQuality}%
-                </Badge>
-                <span className="text-[11px] text-slate-400">
-                  Seller {selectedClient.sellerId.slice(0, 8)}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <p className="slabel text-slate-400">Contactos</p>
-              <div className="mt-2 space-y-2">
-                {selectedClient.contacts.length > 0 ? (
-                  selectedClient.contacts.map((c) => (
-                    <div key={c.id} className="rounded-lg bg-white/5 p-2.5">
-                      <p className="text-sm font-semibold text-white">
-                        {c.name}
-                      </p>
-                      <p className="text-[11px] text-slate-400">
-                        {c.role || "Sin rol"} {c.phone ? `· ${c.phone}` : ""}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-500">Sin contactos</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <p className="slabel text-slate-400">Pain / Necesidad</p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-300">
-                {selectedClient.pain || "Sin registrarlo"}
-              </p>
-            </div>
-
-            <div>
-              <p className="slabel text-slate-400">Proveedor actual</p>
-              <p className="mt-1 text-xs text-slate-300">
+        <div className="grid grid-cols-12 gap-px bg-border p-px">
+          <section className="col-span-12 bg-background p-6 lg:col-span-7">
+            <h2 className="text-base font-semibold">Datos del cliente</h2>
+            <dl className="mt-6 grid gap-6 sm:grid-cols-2">
+              <InfoItem label="Tipo">{selectedClient.type}</InfoItem>
+              <InfoItem label="Vendedor">
+                {sellerName(selectedClient.sellerId)}
+              </InfoItem>
+              <InfoItem label="Proveedor actual">
                 {selectedClient.provider || "Sin info"}
-              </p>
-            </div>
-
-            <div>
-              <p className="slabel text-slate-400">Siguiente paso</p>
-              <p className="mt-1 text-xs text-slate-300">
+              </InfoItem>
+              <InfoItem label="Siguiente paso">
                 {selectedClient.nextStep || "—"}
+                {selectedClient.nextDate && (
+                  <span className="block text-muted-foreground">
+                    {formatDate(selectedClient.nextDate)}
+                    {selectedClient.nextTime
+                      ? ` ${selectedClient.nextTime}`
+                      : ""}
+                  </span>
+                )}
+              </InfoItem>
+              <InfoItem label="Pain / Necesidad" className="sm:col-span-2">
+                {selectedClient.pain || "Sin registrarlo"}
+              </InfoItem>
+            </dl>
+          </section>
+
+          <section className="col-span-12 bg-background p-6 lg:col-span-5">
+            <h2 className="text-base font-semibold">Contactos</h2>
+            {selectedClient.contacts.length > 0 ? (
+              <ul className="mt-4 divide-y">
+                {selectedClient.contacts.map((c) => (
+                  <li key={c.id} className="py-3">
+                    <p className="text-sm font-medium">{c.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {c.role || "Sin rol"} {c.phone ? `· ${c.phone}` : ""}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4 text-sm text-muted-foreground">
+                Sin contactos
               </p>
-              {selectedClient.nextDate && (
-                <p className="mt-0.5 text-[11px] text-slate-500">
-                  {formatDate(selectedClient.nextDate)}
-                  {selectedClient.nextTime ? ` ${selectedClient.nextTime}` : ""}
-                </p>
-              )}
+            )}
+          </section>
+
+          <section className="col-span-12 bg-background p-6">
+            <h2 className="text-base font-semibold">Actualizar etapa</h2>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {pipelineStages.map((s) => {
+                // With a deal, the deal stage is the pipeline source of truth
+                const isActive = activeDeal
+                  ? activeDeal.stage === s
+                  : selectedClient.stage === s
+                // The current stage stays enabled (full contrast) but inert.
+                const disabled =
+                  !isActive &&
+                  !!activeDeal &&
+                  !ALLOWED_TRANSITIONS[activeDeal.stage].includes(s)
+                return (
+                  <Button
+                    key={s}
+                    size="sm"
+                    variant={isActive ? "default" : "outline"}
+                    aria-current={isActive ? "step" : undefined}
+                    disabled={disabled}
+                    onClick={isActive ? undefined : () => handleStageChange(s)}
+                  >
+                    {s}
+                  </Button>
+                )
+              })}
             </div>
+          </section>
 
-            <div className="border-t border-white/10 pt-2">
-              <p className="slabel mb-2 text-slate-400">Registrar avance</p>
-              <Button
-                onClick={() => openEdit(selectedClient)}
-                variant="success"
-                className="w-full justify-center"
-              >
-                Editar cliente
-              </Button>
-            </div>
-          </div>
-
-          {/* Right content */}
-          <div className="space-y-5">
-            {/* Stage update */}
-            <Card className="p-5">
-              <p className="slabel mb-3">Actualizar stage</p>
-              <div className="flex flex-wrap gap-2">
-                {pipelineStages.map((s) => {
-                  // With a deal, the deal stage is the pipeline source of truth
-                  const isActive = activeDeal
-                    ? activeDeal.stage === s
-                    : selectedClient.stage === s
-                  const disabled = activeDeal
-                    ? isActive ||
-                      !ALLOWED_TRANSITIONS[activeDeal.stage].includes(s)
-                    : false
-                  return (
-                    <Button
-                      key={s}
-                      size="sm"
-                      variant={isActive ? "default" : "secondary"}
-                      disabled={disabled}
-                      onClick={() => handleStageChange(s)}
-                    >
-                      {s}
-                    </Button>
-                  )
-                })}
-              </div>
-            </Card>
-
-            {/* Activity history */}
-            <Card className="p-5">
-              <p className="slabel mb-3">
-                Historial de actividad ({clientActivities.length})
-              </p>
-              {clientActivities.length === 0 ? (
-                <div className="empty-state">
-                  Sin actividades registradas para este cliente
-                </div>
-              ) : (
-                <div className="max-h-[480px] space-y-2.5 overflow-y-auto pr-1">
-                  {clientActivities.map((act) => (
-                    <div key={act.id} className="log-card">
-                      <div className="mb-1 flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#002B49]">
-                          {act.type}
-                        </span>
-                        <span className="text-[10px] text-slate-400">
-                          {formatDate(act.executedAt)}
-                        </span>
-                      </div>
-                      <p className="mb-1 text-xs text-slate-600">
-                        {act.summary}
-                      </p>
-                      <div className="flex items-center gap-3 text-[10px] text-slate-400">
-                        <span>
-                          Resultado:{" "}
-                          <b className="text-slate-600">{act.result}</b>
-                        </span>
-                        <span>
-                          Calidad:{" "}
-                          <b className="text-slate-600">{act.quality}/5</b>
-                        </span>
-                        <span>
-                          Puntos: <b className="text-slate-600">{act.points}</b>
-                        </span>
-                      </div>
+          <section className="col-span-12 bg-background p-6">
+            <h2 className="text-base font-semibold">
+              Historial de actividad ({clientActivities.length})
+            </h2>
+            {clientActivities.length === 0 ? (
+              <EmptyState
+                title="Sin actividades registradas para este cliente"
+                description="Las actividades que registres con este cliente aparecerán aquí."
+              />
+            ) : (
+              <ul className="mt-4 max-h-[480px] divide-y overflow-y-auto">
+                {clientActivities.map((act) => (
+                  <li key={act.id} className="py-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium">{act.type}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {formatDate(act.executedAt)}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-          </div>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {act.summary}
+                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                      <span>
+                        Resultado:{" "}
+                        <b className="font-medium text-foreground">
+                          {act.result}
+                        </b>
+                      </span>
+                      <span>
+                        Calidad:{" "}
+                        <b className="font-medium text-foreground">
+                          {act.quality}/5
+                        </b>
+                      </span>
+                      <span>
+                        Puntos:{" "}
+                        <b className="font-medium text-foreground">
+                          {act.points}
+                        </b>
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
 
         {/* Edit modal */}
@@ -534,172 +549,231 @@ export function ClientesPage() {
     )
   }
 
-  // --- LIST VIEW ---
-  return (
-    <div className="space-y-5 p-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-xl font-black text-[#002B49]">
-            Clientes / Prospectos
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            {data ? `${data.total} registros` : "Cartera comercial"}
+  const columns: ColumnDef<Client>[] = [
+    {
+      accessorKey: "name",
+      header: "Cliente",
+      cell: ({ row }) => (
+        <div className="max-w-52 min-w-40">
+          <button
+            type="button"
+            onClick={() => goToDetail(row.original.id)}
+            className="block max-w-full truncate rounded-sm text-left font-medium outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            {row.original.name}
+          </button>
+          <p className="truncate text-muted-foreground">
+            {row.original.pain || "Sin pain registrado"}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar cliente..."
-            className="max-w-[360px]"
-          />
-          <Button
-            onClick={() => setCold((v) => !v)}
-            variant={cold ? "default" : "ghost"}
-            className="whitespace-nowrap"
-          >
-            Sin contacto
-          </Button>
-          <Button
-            onClick={() => setIncomplete((v) => !v)}
-            variant={incomplete ? "default" : "ghost"}
-            className="whitespace-nowrap"
-          >
-            Datos incompletos
-          </Button>
-          <Button onClick={openCreate} className="whitespace-nowrap">
-            + Nuevo cliente
-          </Button>
+      ),
+    },
+    {
+      id: "contact",
+      header: "Contacto",
+      cell: ({ row }) => {
+        const contact = row.original.contacts[0]
+        if (!contact)
+          return <span className="text-muted-foreground">Sin contactos</span>
+        return (
+          <div className="max-w-40 min-w-32">
+            <p className="truncate font-medium">{contact.name}</p>
+            {contact.phone && (
+              <p className="text-muted-foreground">{contact.phone}</p>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "stage",
+      header: "Etapa",
+      cell: ({ row }) => (
+        <div className="flex flex-wrap gap-1">
+          <StatusBadge status={row.original.stage} />
+          {row.original.isCold && <StatusBadge tone="danger">Fría</StatusBadge>}
         </div>
-      </div>
-
-      {isLoading && (
-        <p className="text-sm text-slate-400">Cargando clientes...</p>
-      )}
-      {isError && (
-        <p className="text-sm text-red-600">No se pudo cargar la cartera.</p>
-      )}
-
-      {/* Client grid */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
-        {clientList.map((client) => (
-          <Card
-            key={client.id}
-            className="flex flex-col gap-3 p-4 transition-shadow hover:shadow-md"
-          >
-            <div>
-              <div className="mb-1 flex items-center gap-2">
-                <Button
-                  variant="link"
-                  onClick={() => goToDetail(client.id)}
-                  className="h-auto p-0 text-sm font-bold text-tracker-blue"
-                >
-                  {client.name}
-                </Button>
-              </div>
-              <div className="mb-2 flex items-center gap-2">
-                <Badge variant="gray" className="text-[9px]">
-                  {client.type}
-                </Badge>
-                <Badge
-                  variant={stageBadgeVariant[client.stage]}
-                  className="text-[9px]"
-                >
-                  {client.stage}
-                </Badge>
-                {client.isCold && (
-                  <Badge variant="red" className="text-[9px]">
-                    Fría
-                  </Badge>
-                )}
-                <Badge
-                  variant={
-                    client.dataQuality === 100
-                      ? "green"
-                      : client.dataQuality < 60
-                        ? "red"
-                        : "amber"
-                  }
-                  className="text-[9px]"
-                >
-                  Datos {client.dataQuality}%
-                </Badge>
-              </div>
-              <p className="line-clamp-2 text-xs leading-relaxed text-slate-500">
-                {client.pain || "Sin pain registrado"}
-              </p>
-              {client.contacts.length > 0 && (
-                <p className="mt-1 text-[11px] text-tracker-text-secondary">
-                  {client.contacts[0].name}
-                  {client.contacts[0].phone
-                    ? ` · ${client.contacts[0].phone}`
-                    : ""}
-                </p>
-              )}
-            </div>
-
-            <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-2">
-              <div className="text-[11px] text-slate-400">
-                <span>
-                  {activeSellers.find((s) => s.id === client.sellerId)?.name ??
-                    client.sellerId.slice(0, 8)}
-                </span>
-                {client.nextDate && (
-                  <span> · {formatDate(client.nextDate)}</span>
-                )}
-                {client.nextStep && (
-                  <span>
-                    {" "}
-                    · {client.nextStep.slice(0, 40)}
-                    {client.nextStep.length > 40 ? "…" : ""}
-                  </span>
-                )}
-                <span className="mt-0.5 block">
-                  Última actividad:{" "}
-                  {client.lastActivityAt
-                    ? formatDate(client.lastActivityAt)
-                    : "Sin actividad"}
-                </span>
-              </div>
-              <DropdownMenu>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Acciones de ${client.name}`}
-                      >
-                        <MoreHorizontalIcon />
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>Acciones del cliente</TooltipContent>
-                </Tooltip>
-                <DropdownMenuContent align="end" className="min-w-44">
-                  <DropdownMenuItem onSelect={() => openEdit(client)}>
-                    Editar cliente
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onSelect={() => setDeleteTarget(client)}
+      ),
+    },
+    {
+      accessorKey: "type",
+      header: "Tipo",
+      // Tipo and Datos also show in the client detail; below 2xl they are
+      // hidden so the row (and its actions menu) fits without scrolling.
+      meta: { className: "hidden 2xl:table-cell" },
+      cell: ({ row }) => <StatusBadge status={row.original.type} />,
+    },
+    {
+      accessorKey: "dataQuality",
+      header: "Datos",
+      meta: { className: "hidden 2xl:table-cell" },
+      cell: ({ row }) => (
+        <StatusBadge tone={qualityTone(row.original.dataQuality)}>
+          {row.original.dataQuality}%
+        </StatusBadge>
+      ),
+    },
+    {
+      id: "seller",
+      header: "Vendedor",
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap text-muted-foreground">
+          {sellerName(row.original.sellerId)}
+        </span>
+      ),
+    },
+    {
+      id: "nextStep",
+      header: "Siguiente paso",
+      cell: ({ row }) => {
+        const { nextStep, nextDate } = row.original
+        if (!nextStep && !nextDate)
+          return <span className="text-muted-foreground">—</span>
+        return (
+          <div className="max-w-44 min-w-32">
+            {nextStep && <p className="truncate">{nextStep}</p>}
+            {nextDate && (
+              <p className="text-muted-foreground">{formatDate(nextDate)}</p>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "lastActivityAt",
+      header: "Última actividad",
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap text-muted-foreground">
+          {row.original.lastActivityAt
+            ? formatDate(row.original.lastActivityAt)
+            : "Sin actividad"}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: () => <span className="sr-only">Acciones</span>,
+      meta: { className: "w-12 text-right" },
+      cell: ({ row }) => {
+        const client = row.original
+        return (
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Acciones de ${client.name}`}
                   >
-                    Eliminar cliente
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </Card>
-        ))}
-      </div>
+                    <MoreHorizontalIcon />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Acciones del cliente</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="end" className="min-w-44">
+              <DropdownMenuItem onSelect={() => openEdit(client)}>
+                Editar cliente
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => setDeleteTarget(client)}
+              >
+                Eliminar cliente
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ]
 
-      {clientList.length === 0 && !isLoading && (
-        <div className="empty-state py-12">
-          No se encontraron clientes con los filtros seleccionados
-        </div>
-      )}
+  // --- LIST VIEW ---
+  return (
+    <div>
+      <PageHeader
+        title="Clientes"
+        description={data ? `${data.total} registros` : "Cartera comercial"}
+        actions={
+          <Button onClick={openCreate}>
+            <PlusIcon />
+            Nuevo cliente
+          </Button>
+        }
+      />
+
+      <div className="grid grid-cols-12 gap-px bg-border p-px">
+        <SectionCard
+          title="Cartera comercial"
+          icon={<BuildingIcon size={16} />}
+        >
+          <div className="flex flex-wrap items-center gap-2 border-b p-4">
+            <div className="relative w-full sm:max-w-xs">
+              <SearchIcon
+                size={16}
+                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                type="search"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Buscar cliente..."
+                aria-label="Buscar cliente"
+                className="pl-9"
+              />
+            </div>
+            <Button
+              onClick={() => setCold((v) => !v)}
+              variant={cold ? "default" : "outline"}
+              aria-pressed={cold}
+            >
+              Sin contacto
+            </Button>
+            <Button
+              onClick={() => setIncomplete((v) => !v)}
+              variant={incomplete ? "default" : "outline"}
+              aria-pressed={incomplete}
+            >
+              Datos incompletos
+            </Button>
+          </div>
+
+          {isLoading && (
+            <div
+              className="flex flex-col gap-3 p-4"
+              role="status"
+              aria-label="Cargando clientes"
+            >
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          )}
+          {isError && (
+            <p className="p-4 text-sm text-status-danger">
+              No se pudo cargar la cartera.
+            </p>
+          )}
+          {!isLoading &&
+            !isError &&
+            (clientList.length === 0 ? (
+              <EmptyState
+                icon={<BuildingIcon size={20} />}
+                title="No se encontraron clientes con los filtros seleccionados"
+                description="Cambia la búsqueda o quita los filtros para ver más clientes."
+              />
+            ) : (
+              <DataTable
+                columns={columns}
+                data={clientList}
+                getRowId={(c) => c.id}
+                onRowClick={(c) => goToDetail(c.id)}
+              />
+            ))}
+        </SectionCard>
+      </div>
 
       {/* Create modal */}
       {showModal && renderModal()}
@@ -720,7 +794,7 @@ export function ClientesPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteClient.isError && (
-            <p className="text-xs text-red-600">
+            <p className="text-xs text-status-danger">
               {deleteClient.error instanceof Error
                 ? deleteClient.error.message
                 : "No se pudo eliminar"}
@@ -748,6 +822,7 @@ export function ClientesPage() {
 
   // --- SHARED MODAL ---
   function renderModal() {
+    const isSaving = createClient.isPending || updateClient.isPending
     return (
       <Dialog
         open={showModal}
@@ -755,8 +830,8 @@ export function ClientesPage() {
           if (!open) setShowModal(false)
         }}
       >
-        <DialogContent className="max-h-[92vh] w-[min(calc(100vw-2rem),1120px)] max-w-none overflow-y-auto sm:max-w-none sm:p-7">
-          <DialogHeader>
+        <DialogContent className="max-h-[92vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-5xl">
+          <DialogHeader className="border-b p-4 md:p-6">
             <DialogTitle>
               {editingClient
                 ? "Editar cliente / prospecto"
@@ -768,323 +843,391 @@ export function ClientesPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <form
-            ref={formRef}
-            onSubmit={submitClient}
-            className="grid grid-cols-1 gap-3 md:grid-cols-2"
-          >
-            <FormErrorSummary error={saveError} className="md:col-span-2" />
-
-            {/* name - span 2 */}
-            <div className="md:col-span-2">
-              <Input
-                required
-                value={form.name}
-                onChange={(e) => updateForm("name", e.target.value)}
-                placeholder="Nombre de la cuenta"
-                {...fieldErrorProps("name", fieldErrors.name)}
-              />
-              <FieldError name="name" message={fieldErrors.name} />
-            </div>
-
-            {/* domain | type */}
-            <div>
-              <Input
-                value={form.domain}
-                onChange={(e) => updateForm("domain", e.target.value)}
-                placeholder="Dominio web. Ej: empresa.com"
-                {...fieldErrorProps("domain", fieldErrors.domain)}
-              />
-              <FieldError name="domain" message={fieldErrors.domain} />
-            </div>
-            <div>
-              <Select
-                value={form.type}
-                onValueChange={(v) => updateForm("type", v as ClientType)}
-              >
-                <SelectTrigger {...fieldErrorProps("type", fieldErrors.type)}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {clientTypes.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError name="type" message={fieldErrors.type} />
-            </div>
-
-            {/* person | seller */}
-            <div>
-              <Select
-                value={form.person}
-                onValueChange={(v) => updateForm("person", v as PersonType)}
-              >
-                <SelectTrigger
-                  {...fieldErrorProps("person", fieldErrors.person)}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {personTypes.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError name="person" message={fieldErrors.person} />
-            </div>
-            {canChooseSeller ? (
-              <div>
-                <Select
-                  value={form.sellerId}
-                  onValueChange={(v) => updateForm("sellerId", v)}
-                >
-                  <SelectTrigger
-                    {...fieldErrorProps("sellerId", fieldErrors.sellerId)}
-                  >
-                    <SelectValue placeholder="Seleccionar vendedor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeSellers.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError name="sellerId" message={fieldErrors.sellerId} />
+          <form ref={formRef} onSubmit={submitClient}>
+            {saveError && (
+              <div className="p-4 pb-0 md:px-6">
+                <FormErrorSummary error={saveError} />
               </div>
-            ) : (
-              <div className="hidden md:block" />
             )}
 
-            {/* source | provider */}
-            <div>
-              <Select
-                value={form.source}
-                onValueChange={(v) => updateForm("source", v as ClientSource)}
-              >
-                <SelectTrigger
-                  {...fieldErrorProps("source", fieldErrors.source)}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {clientSources.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError name="source" message={fieldErrors.source} />
-            </div>
-            <div>
-              <Input
-                value={form.provider}
-                onChange={(e) => updateForm("provider", e.target.value)}
-                placeholder="Proveedor actual"
-                {...fieldErrorProps("provider", fieldErrors.provider)}
-              />
-              <FieldError name="provider" message={fieldErrors.provider} />
-            </div>
-
-            {/* units | amount */}
-            <div>
-              <Input
-                type="number"
-                min="0"
-                value={form.units || ""}
-                onChange={(e) => updateForm("units", Number(e.target.value))}
-                placeholder="Unidades potenciales"
-                {...fieldErrorProps("units", fieldErrors.units)}
-              />
-              <FieldError name="units" message={fieldErrors.units} />
-            </div>
-            <div>
-              <Input
-                type="number"
-                min="0"
-                value={form.expectedAmount || ""}
-                onChange={(e) =>
-                  updateForm("expectedAmount", Number(e.target.value))
-                }
-                placeholder="Monto esperado"
-                {...fieldErrorProps(
-                  "expectedAmount",
-                  fieldErrors.expectedAmount
-                )}
-              />
-              <FieldError
-                name="expectedAmount"
-                message={fieldErrors.expectedAmount}
-              />
-            </div>
-
-            {/* stage - col 1 only */}
-            <div>
-              <Select
-                value={form.stage}
-                onValueChange={(v) => updateForm("stage", v as PipelineStage)}
-              >
-                <SelectTrigger {...fieldErrorProps("stage", fieldErrors.stage)}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {pipelineStages.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError name="stage" message={fieldErrors.stage} />
-            </div>
-            <div className="hidden md:block" />
-
-            {/* Contacts - span 2 */}
-            <div className="md:col-span-2">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="slabel">Contactos</p>
-                <Button
-                  type="button"
-                  variant="link"
-                  onClick={() =>
-                    updateForm("contacts", [
-                      ...(form.contacts ?? []),
-                      { ...emptyContact },
-                    ])
-                  }
-                  className="h-auto p-0 text-[11px] text-[#00A8E8]"
-                >
-                  + Agregar contacto
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {(form.contacts ?? []).map((contact, idx) => (
-                  <div
-                    key={idx}
-                    className="grid grid-cols-1 gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2.5 md:grid-cols-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.15fr)_auto] xl:items-center"
-                  >
+            <div className="grid gap-px bg-border xl:grid-cols-2">
+              <section className="bg-background p-4 md:p-6">
+                <h5 className="text-base font-semibold">Cuenta</h5>
+                <div className="mt-6 flex flex-col gap-6">
+                  <div>
+                    <Label htmlFor="client-name">Nombre de la cuenta</Label>
                     <Input
-                      className="min-w-0"
-                      value={contact.name}
-                      onChange={(e) => {
-                        const updated = [...(form.contacts ?? [])]
-                        updated[idx] = { ...updated[idx], name: e.target.value }
-                        updateForm("contacts", updated)
-                      }}
-                      placeholder="Nombre contacto"
+                      id="client-name"
+                      required
+                      className="mt-2"
+                      value={form.name}
+                      onChange={(e) => updateForm("name", e.target.value)}
+                      placeholder="Ej: Transportes del Norte"
+                      {...fieldErrorProps("name", fieldErrors.name)}
                     />
+                    <FieldError name="name" message={fieldErrors.name} />
+                  </div>
+                  <div>
+                    <Label htmlFor="client-domain">Dominio web</Label>
                     <Input
-                      className="min-w-0"
-                      value={contact.role}
-                      onChange={(e) => {
-                        const updated = [...(form.contacts ?? [])]
-                        updated[idx] = { ...updated[idx], role: e.target.value }
-                        updateForm("contacts", updated)
-                      }}
-                      placeholder="Rol: decisor, finanzas..."
+                      id="client-domain"
+                      className="mt-2"
+                      value={form.domain}
+                      onChange={(e) => updateForm("domain", e.target.value)}
+                      placeholder="Ej: empresa.com"
+                      {...fieldErrorProps("domain", fieldErrors.domain)}
                     />
-                    <Input
-                      className="min-w-0"
-                      value={contact.phone}
-                      onChange={(e) => {
-                        const updated = [...(form.contacts ?? [])]
-                        updated[idx] = {
-                          ...updated[idx],
-                          phone: e.target.value,
+                    <FieldError name="domain" message={fieldErrors.domain} />
+                  </div>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="client-type">Tipo</Label>
+                      <Select
+                        value={form.type}
+                        onValueChange={(v) =>
+                          updateForm("type", v as ClientType)
                         }
-                        updateForm("contacts", updated)
-                      }}
-                      placeholder="Teléfono"
-                    />
-                    <Input
-                      className="min-w-0"
-                      value={contact.email}
-                      onChange={(e) => {
-                        const updated = [...(form.contacts ?? [])]
-                        updated[idx] = {
-                          ...updated[idx],
-                          email: e.target.value,
-                        }
-                        updateForm("contacts", updated)
-                      }}
-                      placeholder="Correo"
-                    />
-                    <div className="flex flex-wrap items-center gap-2 md:col-span-2 xl:col-span-1 xl:min-w-[120px]">
-                      <label className="flex cursor-pointer items-center gap-1 text-[11px] font-semibold whitespace-nowrap text-slate-600">
-                        <Checkbox
-                          checked={contact.isDecisionMaker ?? false}
-                          onCheckedChange={(checked) => {
-                            const updated = [...(form.contacts ?? [])]
-                            updated[idx] = {
-                              ...updated[idx],
-                              isDecisionMaker: checked === true,
-                            }
-                            updateForm("contacts", updated)
-                          }}
-                        />
-                        Decisor
-                      </label>
-                      {(form.contacts?.length ?? 0) > 1 && (
-                        <Button
-                          type="button"
-                          variant="link"
-                          onClick={() => {
-                            const updated = (form.contacts ?? []).filter(
-                              (_, i) => i !== idx
-                            )
-                            updateForm("contacts", updated)
-                          }}
-                          className="h-auto p-0 text-[11px] text-red-600 hover:text-red-800"
+                      >
+                        <SelectTrigger
+                          id="client-type"
+                          className="mt-2 w-full"
+                          {...fieldErrorProps("type", fieldErrors.type)}
                         >
-                          Quitar
-                        </Button>
-                      )}
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clientTypes.map((t) => (
+                            <SelectItem key={t} value={t}>
+                              {t}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FieldError name="type" message={fieldErrors.type} />
+                    </div>
+                    <div>
+                      <Label htmlFor="client-person">Tipo de persona</Label>
+                      <Select
+                        value={form.person}
+                        onValueChange={(v) =>
+                          updateForm("person", v as PersonType)
+                        }
+                      >
+                        <SelectTrigger
+                          id="client-person"
+                          className="mt-2 w-full"
+                          {...fieldErrorProps("person", fieldErrors.person)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {personTypes.map((p) => (
+                            <SelectItem key={p} value={p}>
+                              {p}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FieldError name="person" message={fieldErrors.person} />
                     </div>
                   </div>
-                ))}
-              </div>
+                  <div>
+                    <Label htmlFor="client-provider">Proveedor actual</Label>
+                    <Input
+                      id="client-provider"
+                      className="mt-2"
+                      value={form.provider}
+                      onChange={(e) => updateForm("provider", e.target.value)}
+                      {...fieldErrorProps("provider", fieldErrors.provider)}
+                    />
+                    <FieldError
+                      name="provider"
+                      message={fieldErrors.provider}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section className="bg-background p-4 md:p-6">
+                <h5 className="text-base font-semibold">Oportunidad</h5>
+                <div className="mt-6 flex flex-col gap-6">
+                  {canChooseSeller && (
+                    <div>
+                      <Label htmlFor="client-seller">Vendedor</Label>
+                      <Select
+                        value={form.sellerId}
+                        onValueChange={(v) => updateForm("sellerId", v)}
+                      >
+                        <SelectTrigger
+                          id="client-seller"
+                          className="mt-2 w-full"
+                          {...fieldErrorProps("sellerId", fieldErrors.sellerId)}
+                        >
+                          <SelectValue placeholder="Seleccionar vendedor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {activeSellers.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FieldError
+                        name="sellerId"
+                        message={fieldErrors.sellerId}
+                      />
+                    </div>
+                  )}
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="client-source">Origen</Label>
+                      <Select
+                        value={form.source}
+                        onValueChange={(v) =>
+                          updateForm("source", v as ClientSource)
+                        }
+                      >
+                        <SelectTrigger
+                          id="client-source"
+                          className="mt-2 w-full"
+                          {...fieldErrorProps("source", fieldErrors.source)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clientSources.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FieldError name="source" message={fieldErrors.source} />
+                    </div>
+                    <div>
+                      <Label htmlFor="client-stage">Etapa</Label>
+                      <Select
+                        value={form.stage}
+                        onValueChange={(v) =>
+                          updateForm("stage", v as PipelineStage)
+                        }
+                      >
+                        <SelectTrigger
+                          id="client-stage"
+                          className="mt-2 w-full"
+                          {...fieldErrorProps("stage", fieldErrors.stage)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {pipelineStages.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FieldError name="stage" message={fieldErrors.stage} />
+                    </div>
+                  </div>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="client-units">Unidades potenciales</Label>
+                      <Input
+                        id="client-units"
+                        type="number"
+                        min="0"
+                        className="mt-2"
+                        value={form.units || ""}
+                        onChange={(e) =>
+                          updateForm("units", Number(e.target.value))
+                        }
+                        placeholder="0"
+                        {...fieldErrorProps("units", fieldErrors.units)}
+                      />
+                      <FieldError name="units" message={fieldErrors.units} />
+                    </div>
+                    <div>
+                      <Label htmlFor="client-amount">Monto esperado</Label>
+                      <Input
+                        id="client-amount"
+                        type="number"
+                        min="0"
+                        className="mt-2"
+                        value={form.expectedAmount || ""}
+                        onChange={(e) =>
+                          updateForm("expectedAmount", Number(e.target.value))
+                        }
+                        placeholder="0"
+                        {...fieldErrorProps(
+                          "expectedAmount",
+                          fieldErrors.expectedAmount
+                        )}
+                      />
+                      <FieldError
+                        name="expectedAmount"
+                        message={fieldErrors.expectedAmount}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="bg-background p-4 md:p-6 xl:col-span-2">
+                <div className="flex items-center justify-between gap-4">
+                  <h5 className="text-base font-semibold">Contactos</h5>
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={() =>
+                      updateForm("contacts", [
+                        ...(form.contacts ?? []),
+                        { ...emptyContact },
+                      ])
+                    }
+                    className="h-auto p-0 underline"
+                  >
+                    Agregar contacto
+                  </Button>
+                </div>
+                <div className="mt-6 flex flex-col gap-2">
+                  {(form.contacts ?? []).map((contact, idx) => (
+                    <div
+                      key={idx}
+                      className="grid grid-cols-1 gap-2 border bg-muted/30 p-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.15fr)_auto] xl:items-center"
+                    >
+                      <Input
+                        className="min-w-0"
+                        value={contact.name}
+                        onChange={(e) => {
+                          const updated = [...(form.contacts ?? [])]
+                          updated[idx] = {
+                            ...updated[idx],
+                            name: e.target.value,
+                          }
+                          updateForm("contacts", updated)
+                        }}
+                        placeholder="Nombre contacto"
+                        aria-label={`Nombre del contacto ${idx + 1}`}
+                      />
+                      <Input
+                        className="min-w-0"
+                        value={contact.role}
+                        onChange={(e) => {
+                          const updated = [...(form.contacts ?? [])]
+                          updated[idx] = {
+                            ...updated[idx],
+                            role: e.target.value,
+                          }
+                          updateForm("contacts", updated)
+                        }}
+                        placeholder="Rol: decisor, finanzas..."
+                        aria-label={`Rol del contacto ${idx + 1}`}
+                      />
+                      <Input
+                        className="min-w-0"
+                        value={contact.phone}
+                        onChange={(e) => {
+                          const updated = [...(form.contacts ?? [])]
+                          updated[idx] = {
+                            ...updated[idx],
+                            phone: e.target.value,
+                          }
+                          updateForm("contacts", updated)
+                        }}
+                        placeholder="Teléfono"
+                        aria-label={`Teléfono del contacto ${idx + 1}`}
+                      />
+                      <Input
+                        className="min-w-0"
+                        value={contact.email}
+                        onChange={(e) => {
+                          const updated = [...(form.contacts ?? [])]
+                          updated[idx] = {
+                            ...updated[idx],
+                            email: e.target.value,
+                          }
+                          updateForm("contacts", updated)
+                        }}
+                        placeholder="Correo"
+                        aria-label={`Correo del contacto ${idx + 1}`}
+                      />
+                      <div className="flex flex-wrap items-center gap-3 md:col-span-2 xl:col-span-1">
+                        <Label className="cursor-pointer whitespace-nowrap">
+                          <Checkbox
+                            checked={contact.isDecisionMaker ?? false}
+                            onCheckedChange={(checked) => {
+                              const updated = [...(form.contacts ?? [])]
+                              updated[idx] = {
+                                ...updated[idx],
+                                isDecisionMaker: checked === true,
+                              }
+                              updateForm("contacts", updated)
+                            }}
+                          />
+                          Decisor
+                        </Label>
+                        {(form.contacts?.length ?? 0) > 1 && (
+                          <Button
+                            type="button"
+                            variant="link"
+                            onClick={() => {
+                              const updated = (form.contacts ?? []).filter(
+                                (_, i) => i !== idx
+                              )
+                              updateForm("contacts", updated)
+                            }}
+                            className="h-auto p-0 text-status-danger"
+                            aria-label={`Quitar contacto ${idx + 1}`}
+                          >
+                            Quitar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="bg-background p-4 md:p-6 xl:col-span-2">
+                <h5 className="text-base font-semibold">Dolor / necesidad</h5>
+                <div className="mt-6 flex flex-col gap-6">
+                  <div>
+                    <Label htmlFor="client-pain">
+                      ¿Por qué crees que Tracker puede ayudarle?
+                    </Label>
+                    <Textarea
+                      id="client-pain"
+                      className="mt-2 resize-none"
+                      value={form.pain}
+                      onChange={(e) => updateForm("pain", e.target.value)}
+                      placeholder="Dolor / necesidad detectada"
+                      rows={4}
+                      {...fieldErrorProps("pain", fieldErrors.pain)}
+                    />
+                    <FieldError name="pain" message={fieldErrors.pain} />
+                  </div>
+                  <p className="border bg-muted/30 p-3 text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">
+                      Coach IA:
+                    </span>{" "}
+                    Un buen registro debe identificar empresa, contactos clave,
+                    decisor, teléfono, correo/dominio y razón comercial.
+                  </p>
+                </div>
+              </section>
             </div>
 
-            {/* Pain - span 2 */}
-            <div className="md:col-span-2">
-              <Textarea
-                value={form.pain}
-                onChange={(e) => updateForm("pain", e.target.value)}
-                placeholder="¿Por qué crees que Tracker puede ayudarle? Dolor / necesidad detectada"
-                rows={4}
-                className="resize-none"
-                {...fieldErrorProps("pain", fieldErrors.pain)}
-              />
-              <FieldError name="pain" message={fieldErrors.pain} />
+            <div className="flex justify-end border-t p-4 md:px-6">
+              <Button type="submit" size="lg" disabled={isSaving}>
+                {isSaving
+                  ? "Guardando..."
+                  : editingClient
+                    ? "Guardar cambios"
+                    : "Guardar cliente"}
+              </Button>
             </div>
-
-            {/* AI Coach hint - span 2 */}
-            <div className="ai-box md:col-span-2">
-              <strong>Coach IA:</strong> Un buen registro debe identificar
-              empresa, contactos clave, decisor, teléfono, correo/dominio y
-              razón comercial.
-            </div>
-
-            {/* Save button - span 2 */}
-            <Button
-              type="submit"
-              disabled={createClient.isPending || updateClient.isPending}
-              className="justify-center md:col-span-2"
-              size="lg"
-            >
-              {createClient.isPending || updateClient.isPending
-                ? "Guardando..."
-                : editingClient
-                  ? "Guardar cambios"
-                  : "Guardar cliente"}
-            </Button>
           </form>
         </DialogContent>
       </Dialog>

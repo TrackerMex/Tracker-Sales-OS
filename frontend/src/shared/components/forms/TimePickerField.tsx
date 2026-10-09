@@ -48,7 +48,7 @@ export function TimePickerField({
     <div
       {...ariaProps}
       className={cn(
-        "flex w-full min-w-0 items-center gap-0.5 rounded-lg border-[1.5px] border-[var(--tracker-border)] bg-[var(--tracker-surface-alt)] px-3 py-2 text-[13px] font-medium text-slate-900 transition-colors outline-none focus-within:border-[var(--tracker-green)] focus-within:bg-white aria-invalid:border-[var(--tracker-danger)]",
+        "flex h-8 w-full min-w-0 items-center gap-0.5 rounded-md border border-input bg-transparent px-2.5 py-1 text-xs transition-colors outline-none focus-within:border-primary aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
         disabled && "cursor-not-allowed opacity-50",
         className,
       )}

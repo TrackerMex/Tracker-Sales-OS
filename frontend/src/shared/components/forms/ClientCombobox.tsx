@@ -88,11 +88,7 @@ export function ClientCombobox({
           aria-expanded={open}
           aria-invalid={error}
           disabled={disabled}
-          className={cn(
-            "input flex items-center justify-between gap-2 text-left",
-            error && "input-error",
-            disabled && "opacity-50 cursor-not-allowed",
-          )}
+          className="flex h-8 w-full min-w-0 items-center justify-between gap-1.5 rounded-md border border-input bg-transparent px-2.5 py-1 text-left text-xs transition-colors outline-none focus-visible:border-primary disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
         >
           <span className={cn("truncate", !selectedLabel && "text-muted-foreground")}>
             {selectedLabel ?? placeholder}

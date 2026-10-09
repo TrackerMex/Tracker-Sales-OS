@@ -850,3 +850,22 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 **Reviewer 2026-07-20, ajuste final**: PASSED 7/7. El wordmark instalado es byte-identical al adjunto (1681×280 ARGB; SHA-256 `6F6A527898C54A019E0677514D9584DF61838A4CFEB053C019DF6A8704B1BAF3`). Login y sidebar expandido lo muestran sin soporte blanco directamente sobre navy; sidebar colapsado conserva el isotipo original. Typecheck, lint y build PASS. Smoke del Líder en localhost: Login y sidebar expandido/colapsado sin overflow, deformación ni recortes.
 
 **Ajuste de hover y alineación 2026-07-20**: encabezado de marca reducido de 56 a 48 px y de padding 8×12 a 4 px. Al ser no interactivo, dejó de usar `SidebarMenuButton`, eliminando el hover desde la estructura. El wordmark quedó anclado en `x=20`, la misma guía del primer icono de navegación. Typecheck y lint PASS; smoke expandido/colapsado PASS y el isotipo conserva 30×22 px centrado.
+
+---
+
+## 81-visual-redesign
+
+- [ ] Tokens, fuente (Geist), radios y sombras de `frontend/src/index.css` coinciden con la tabla "Color" de `DESIGN.md` (copiada de la plantilla shadcn-dashboard)
+- [ ] Modo claro y oscuro funcionan con toggle en el header y persisten al recargar
+- [ ] Shell como la plantilla: sidebar 256px / 52px con hover-expand y Sheet < 1025px, ítem activo en pastilla `bg-primary`, header sticky de 57px con búsqueda que abre la paleta, contenido enmarcado `m-2 outline`, footer con enlace de atribución
+- [ ] Cada página usa `PageHeader` y los patrones compartidos (`StatCard`, `DataTable`, `StatusBadge`, `EmptyState`); un solo mapa de colores de estado en `shared/lib/status.ts`
+- [ ] Sin hex fijos, clases `tracker-*`, `text-slate-*` ni `text-[Npx]` en módulos, salvo la lámina ejecutiva
+- [ ] La lámina ejecutiva (`/lamina`, popup de Reportes e impresión) se ve igual que antes del rediseño
+- [ ] Drag-and-drop del pipeline, peek de deal y Sheet de expediente funcionan
+- [ ] Flujos de crear/editar en Clientes, Agenda, Actividades y Ventas funcionan con Admin y Seller
+- [ ] Contraste WCAG AA en claro y oscuro; foco visible
+- [ ] `THIRD_PARTY_NOTICES.md` con la MIT de la plantilla
+- [ ] `pnpm run typecheck`, `pnpm run lint` y `pnpm run build` pasan en `frontend/`
+- [ ] Capturas antes/después en `progress/redesign/current/` y `progress/redesign/after/`
+- [ ] Resúmenes `progress/impl_81-*.md` y review independiente por fase
+- [ ] Sin push a `main` ni despliegue: el paso a producción lo decide el usuario

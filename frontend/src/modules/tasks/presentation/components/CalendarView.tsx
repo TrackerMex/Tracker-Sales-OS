@@ -4,9 +4,11 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
-import { Badge, type BadgeVariant } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { StatusBadge } from "@/shared/components/data/StatusBadge"
+import { ChevronLeftIcon, ChevronRightIcon } from "@/shared/components/Icon"
 import type { Task } from "../../domain/tasks.types"
 import { cn } from "@/lib/utils"
 
@@ -25,18 +27,16 @@ interface CalendarViewProps {
   onDayClick?: (date: Date) => void
 }
 
-const TYPE_TAG: Record<string, BadgeVariant> = {
-  Llamada: "navy",
-  Videoconf: "navy",
-  "Reunión virtual": "navy",
-  Visita: "green",
-  "Reunión presencial": "green",
-  Propuesta: "amber",
-  Seguimiento: "amber",
-  Cierre: "green",
-  Chat: "gray",
-  WA: "gray",
-  Correo: "gray",
+// Chip accent per task type (left border); text stays foreground for AA.
+const TYPE_ACCENT: Record<string, string> = {
+  Llamada: "border-l-primary",
+  Videoconf: "border-l-primary",
+  "Reunión virtual": "border-l-primary",
+  Visita: "border-l-chart-2",
+  "Reunión presencial": "border-l-chart-2",
+  Propuesta: "border-l-chart-4",
+  Seguimiento: "border-l-chart-4",
+  Cierre: "border-l-chart-2",
 }
 
 const DAY_NAMES = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
@@ -158,7 +158,7 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
     setupDragAndDrop()
   }, [task.id])
 
-  const tagVariant = task.type ? (TYPE_TAG[task.type] ?? "gray") : "gray"
+  const accent = (task.type && TYPE_ACCENT[task.type]) || "border-l-border"
   const chipLabel = [
     formatTime(task.scheduledAt),
     task.type ?? null,
@@ -171,70 +171,52 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
   return (
     <HoverCard openDelay={200} closeDelay={100}>
       <HoverCardTrigger asChild>
-        <Badge variant={tagVariant} asChild>
-          <Button
-            ref={taskRef}
-            variant="ghost"
-            size="xs"
-            onClick={() => onEdit?.(task)}
-            className={cn(
-              "h-auto w-full max-w-full cursor-grab justify-start truncate border-0 bg-transparent px-1 py-0.5 text-[11px] hover:bg-slate-100",
-              (internalDragging ||
-                isDragging ||
-                task.status === "Completado") &&
-                "opacity-50"
-            )}
-          >
-            {chipLabel}
-          </Button>
-        </Badge>
+        <Button
+          ref={taskRef}
+          variant="ghost"
+          size="xs"
+          onClick={() => onEdit?.(task)}
+          className={cn(
+            "block h-auto w-full max-w-full cursor-grab truncate rounded-none border-0 border-l-2 px-1 py-0.5 text-left text-xs font-normal text-foreground hover:bg-muted",
+            accent,
+            task.status === "Completado" &&
+              "text-muted-foreground line-through",
+            (internalDragging || isDragging) && "opacity-50"
+          )}
+        >
+          {chipLabel}
+        </Button>
       </HoverCardTrigger>
       <HoverCardContent
         side="right"
         align="start"
-        className="w-64 overflow-hidden p-0"
+        className="w-64"
       >
-        <div className="flex flex-col gap-2 px-3.5 py-3">
-          <div className="flex items-center justify-between gap-2">
-            {task.type && (
-              <Badge variant={tagVariant} className="text-[11px]">
-                {task.type}
-              </Badge>
-            )}
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {task.type && <Badge variant="outline">{task.type}</Badge>}
             {task.sellerName && (
-              <Badge variant="navy" className="text-[11px]">
-                {task.sellerName}
-              </Badge>
+              <Badge variant="secondary">{task.sellerName}</Badge>
             )}
-            <Badge
-              variant={
+            <StatusBadge
+              className="ml-auto"
+              status={
                 task.status === "Completado"
-                  ? "gray"
+                  ? "Completada"
                   : task.isOverdue
-                    ? "red"
-                    : "green"
+                    ? "Vencida"
+                    : "Pendiente"
               }
-              className="ml-auto text-[11px]"
-            >
-              {task.status === "Completado"
-                ? "Completada"
-                : task.isOverdue
-                  ? "Vencida"
-                  : "Pendiente"}
-            </Badge>
+            />
           </div>
-          <p className="m-0 text-[13px] leading-[1.3] font-semibold text-tracker-text">
-            {task.title}
-          </p>
+          <p className="text-sm font-medium text-foreground">{task.title}</p>
           {task.clientName && (
-            <p className="m-0 text-xs text-slate-700">{task.clientName}</p>
+            <p className="text-xs text-foreground">{task.clientName}</p>
           )}
           {task.description && (
-            <p className="m-0 text-[11.5px] leading-[1.4] text-tracker-text-secondary">
-              {task.description}
-            </p>
+            <p className="text-xs text-muted-foreground">{task.description}</p>
           )}
-          <p className="m-0 text-[11px] text-tracker-text-muted">
+          <p className="text-xs text-muted-foreground">
             {formatDateTime(task.scheduledAt)}
           </p>
         </div>
@@ -281,18 +263,18 @@ function MonthView({
 
   return (
     <>
-      <div className="mb-0.5 grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-7">
         {DAY_NAMES.map((name) => (
           <div
             key={name}
-            className="py-1 text-center text-[11px] font-bold tracking-[0.05em] text-tracker-text-muted uppercase"
+            className="py-1 text-center text-xs font-medium text-muted-foreground uppercase"
           >
             {name}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-7 gap-px border bg-border">
         {Array.from({ length: totalCells }, (_, i) => {
           const dayNum = i - leadingEmpty + 1
           const isValidDay = dayNum >= 1 && dayNum <= daysInMonth
@@ -401,15 +383,15 @@ function MonthDayCell({
       ref={cellRef}
       onClick={onDayClick}
       className={cn(
-        "min-h-[90px] overflow-hidden rounded-md p-1",
-        isToday ? "border-2 border-blue-500" : "border border-tracker-border",
+        "min-h-[90px] min-w-0 overflow-hidden p-1",
+        isToday && "ring-1 ring-primary ring-inset",
         isDragOver
-          ? "bg-[#F0F9FF]"
+          ? "bg-muted"
           : isToday
-            ? "bg-blue-50"
+            ? "bg-primary/5"
             : isValidDay
-              ? "bg-white"
-              : "bg-tracker-surface-alt",
+              ? "bg-background"
+              : "bg-muted/40",
         onDayClick ? "cursor-pointer" : "cursor-default"
       )}
     >
@@ -417,10 +399,10 @@ function MonthDayCell({
         <>
           <div
             className={cn(
-              "mb-[3px] text-xs leading-none",
+              "mb-1 text-xs leading-none",
               isToday
-                ? "font-bold text-blue-600"
-                : "font-medium text-tracker-text-dim"
+                ? "font-semibold text-primary"
+                : "font-medium text-muted-foreground"
             )}
           >
             {dayNum}
@@ -430,7 +412,7 @@ function MonthDayCell({
               <TaskChip key={task.id} task={task} onEdit={onEdit} />
             ))}
             {overflow > 0 && (
-              <span className="pl-0.5 text-[10px] text-tracker-text-muted">
+              <span className="pl-0.5 text-xs text-muted-foreground">
                 +{overflow} más
               </span>
             )}
@@ -478,9 +460,9 @@ function WeekView({
           onClick={onPrevWeek}
           aria-label="Semana anterior"
         >
-          ←
+          <ChevronLeftIcon />
         </Button>
-        <span className="min-w-[200px] text-center text-sm font-bold text-tracker-text">
+        <span className="min-w-0 text-center text-sm font-medium sm:min-w-[200px]">
           {weekLabel}
         </span>
         <Button
@@ -489,18 +471,18 @@ function WeekView({
           onClick={onNextWeek}
           aria-label="Semana siguiente"
         >
-          →
+          <ChevronRightIcon />
         </Button>
       </div>
 
-      <div className="mb-0.5 grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-7">
         {weekDates.map((date) => {
           const dayName = date.toLocaleDateString("es-MX", { weekday: "short" })
           const dayNum = date.getDate()
           return (
             <div
               key={date.toISOString()}
-              className="py-1 text-center text-[11px] font-bold tracking-[0.05em] text-tracker-text-muted uppercase"
+              className="py-1 text-center text-xs font-medium text-muted-foreground uppercase"
             >
               {dayName} {dayNum}
             </div>
@@ -508,7 +490,7 @@ function WeekView({
         })}
       </div>
 
-      <div className="grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-7 gap-px border bg-border">
         {weekDates.map((date) => (
           <WeekDayColumn
             key={date.toISOString()}
@@ -586,8 +568,8 @@ function WeekDayColumn({
     <div
       ref={colRef}
       className={cn(
-        "min-h-[150px] overflow-hidden rounded-md border border-tracker-border p-1",
-        isDragOver ? "bg-[#F0F9FF]" : "bg-white"
+        "min-h-[150px] min-w-0 overflow-hidden p-1",
+        isDragOver ? "bg-muted" : "bg-background"
       )}
     >
       <div className="flex flex-col gap-0.5">
@@ -632,9 +614,9 @@ function DayView({
           onClick={onPrevDay}
           aria-label="Día anterior"
         >
-          ←
+          <ChevronLeftIcon />
         </Button>
-        <span className="min-w-[300px] text-center text-sm font-bold text-tracker-text capitalize">
+        <span className="min-w-0 text-center text-sm font-medium capitalize sm:min-w-[300px]">
           {dayLabel}
         </span>
         <Button
@@ -643,11 +625,11 @@ function DayView({
           onClick={onNextDay}
           aria-label="Día siguiente"
         >
-          →
+          <ChevronRightIcon />
         </Button>
       </div>
 
-      <div className="grid grid-cols-[60px_1fr] gap-0.5">
+      <div className="grid grid-cols-[60px_1fr] gap-px border bg-border">
         {getHourSlots().map((hour) => {
           const hourTasks = getTasksForHour(hour, tasks)
           const timeLabel = `${String(hour).padStart(2, "0")}:00`
@@ -728,14 +710,14 @@ function DayHourRow({
 
   return (
     <>
-      <div className="border-r border-tracker-border px-2 py-1 text-right text-[11px] font-semibold text-tracker-text-muted">
+      <div className="bg-background px-2 py-1 text-right text-xs font-medium text-muted-foreground tabular-nums">
         {timeLabel}
       </div>
       <div
         ref={rowRef}
         className={cn(
-          "flex min-h-[50px] flex-col gap-0.5 rounded border border-tracker-border p-1",
-          isDragOver ? "bg-[#F0F9FF]" : "bg-white"
+          "flex min-h-[50px] min-w-0 flex-col gap-0.5 p-1",
+          isDragOver ? "bg-muted" : "bg-background"
         )}
       >
         {tasks.map((task) => (
@@ -822,9 +804,9 @@ export function CalendarView({
               onClick={onPrevMonth}
               aria-label="Mes anterior"
             >
-              ←
+              <ChevronLeftIcon />
             </Button>
-            <span className="min-w-40 text-center text-sm font-bold text-tracker-text capitalize">
+            <span className="min-w-40 text-center text-sm font-medium capitalize">
               {monthLabel}
             </span>
             <Button
@@ -833,7 +815,7 @@ export function CalendarView({
               onClick={onNextMonth}
               aria-label="Mes siguiente"
             >
-              →
+              <ChevronRightIcon />
             </Button>
           </div>
           <MonthView

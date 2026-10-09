@@ -21,7 +21,15 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PlusIcon } from "@/shared/components/Icon"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  CalendarIcon,
+  ChecklistIcon,
+  PlusIcon,
+} from "@/shared/components/Icon"
+import { PageHeader } from "@/shared/components/layout/PageHeader"
+import { SectionCard } from "@/shared/components/layout/SectionCard"
+import { EmptyState } from "@/shared/components/data/EmptyState"
 import { TaskCard } from "../components/TaskCard"
 import { CalendarView } from "../components/CalendarView"
 import { CreateTaskForm } from "../components/CreateTaskForm"
@@ -223,128 +231,145 @@ export function AgendaPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-sm font-bold text-tracker-text">
-          Compromisos comerciales
-        </h1>
-        <div className="flex items-center gap-2">
-          {viewMode === "calendar" && isAdminOrDirector && (
-            <Select
-              value={selectedSeller}
-              onValueChange={(value) => {
-                setSelectedSeller(value)
-                localStorage.setItem("tasks_team_seller_filter", value)
-              }}
+    <div>
+      <PageHeader
+        title="Agenda"
+        description="Compromisos comerciales"
+        actions={
+          <>
+            {viewMode === "calendar" && isAdminOrDirector && (
+              <Select
+                value={selectedSeller}
+                onValueChange={(value) => {
+                  setSelectedSeller(value)
+                  localStorage.setItem("tasks_team_seller_filter", value)
+                }}
+              >
+                <SelectTrigger
+                  className="w-48"
+                  aria-label="Filtrar por vendedor"
+                >
+                  <SelectValue placeholder="Todos los vendedores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los vendedores</SelectItem>
+                  {sellers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Tabs
+              value={viewMode}
+              onValueChange={(value) =>
+                handleToggleView(value as "list" | "calendar")
+              }
             >
-              <SelectTrigger className="h-8 w-[190px] rounded-md bg-white px-2 py-1 text-[13px]">
-                <SelectValue placeholder="Todos los vendedores" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los vendedores</SelectItem>
-                {sellers.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <Tabs
-            value={viewMode}
-            onValueChange={(value) =>
-              handleToggleView(value as "list" | "calendar")
-            }
-          >
-            <TabsList>
-              <TabsTrigger value="list">Lista</TabsTrigger>
-              <TabsTrigger value="calendar">Calendario</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <Button
-            onClick={() => {
-              resetCreateTask()
-              setShowCreateModal(true)
-            }}
-          >
-            <PlusIcon />
-            Crear tarea
-          </Button>
-        </div>
-      </div>
-
-      {viewMode === "list" ? (
-        isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-20 animate-pulse rounded-lg bg-slate-100"
-              />
-            ))}
-          </div>
-        ) : tasks.length === 0 ? (
-          <div className="empty-state">
-            <p>Sin tareas registradas</p>
+              <TabsList>
+                <TabsTrigger value="list">Lista</TabsTrigger>
+                <TabsTrigger value="calendar">Calendario</TabsTrigger>
+              </TabsList>
+            </Tabs>
             <Button
-              variant="link"
               onClick={() => {
                 resetCreateTask()
                 setShowCreateModal(true)
               }}
-              className="mt-2 h-auto px-0 py-0 text-xs text-[#002B49]"
             >
-              Crear una tarea
+              <PlusIcon />
+              Crear tarea
             </Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                clientName={task.clientName ?? null}
-                contactName={task.contactName ?? null}
-                onComplete={handleComplete}
-                onEdit={(t) => {
-                  resetUpdateTask()
-                  setEditingTask(t)
-                }}
-                onReactivate={handleReactivate}
-                onDelete={handleDelete}
+          </>
+        }
+      />
+
+      <div className="grid grid-cols-12 gap-px bg-border p-px">
+        {viewMode === "list" ? (
+          <SectionCard title="Tareas" icon={<ChecklistIcon size={16} />}>
+            {isLoading ? (
+              <div
+                className="flex flex-col gap-3 p-4"
+                role="status"
+                aria-label="Cargando tareas"
+              >
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 w-full" />
+                ))}
+              </div>
+            ) : tasks.length === 0 ? (
+              <EmptyState
+                icon={<ChecklistIcon size={20} />}
+                title="Sin tareas registradas"
+                action={
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      resetCreateTask()
+                      setShowCreateModal(true)
+                    }}
+                  >
+                    Crear una tarea
+                  </Button>
+                }
               />
-            ))}
-          </div>
-        )
-      ) : (
-        <CalendarView
-          year={calYear}
-          month={calMonth}
-          tasks={monthTasks}
-          onEdit={(t) => {
-            resetUpdateTask()
-            setEditingTask(t)
-          }}
-          onPrevMonth={() => {
-            if (calMonth === 1) {
-              setCalYear((y) => y - 1)
-              setCalMonth(12)
-            } else setCalMonth((m) => m - 1)
-          }}
-          onNextMonth={() => {
-            if (calMonth === 12) {
-              setCalYear((y) => y + 1)
-              setCalMonth(1)
-            } else setCalMonth((m) => m + 1)
-          }}
-          viewMode={calendarViewMode}
-          selectedDate={selectedDate}
-          onViewModeChange={handleCalendarViewModeChange}
-          onSelectedDateChange={handleSelectedDateChange}
-          onTaskReschedule={handleTaskReschedule}
-          onDayClick={handleDayClick}
-        />
-      )}
+            ) : (
+              <div className="divide-y">
+                {tasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    clientName={task.clientName ?? null}
+                    contactName={task.contactName ?? null}
+                    onComplete={handleComplete}
+                    onEdit={(t) => {
+                      resetUpdateTask()
+                      setEditingTask(t)
+                    }}
+                    onReactivate={handleReactivate}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            )}
+          </SectionCard>
+        ) : (
+          <SectionCard
+            title="Calendario"
+            icon={<CalendarIcon size={16} />}
+            contentClassName="p-4"
+          >
+            <CalendarView
+              year={calYear}
+              month={calMonth}
+              tasks={monthTasks}
+              onEdit={(t) => {
+                resetUpdateTask()
+                setEditingTask(t)
+              }}
+              onPrevMonth={() => {
+                if (calMonth === 1) {
+                  setCalYear((y) => y - 1)
+                  setCalMonth(12)
+                } else setCalMonth((m) => m - 1)
+              }}
+              onNextMonth={() => {
+                if (calMonth === 12) {
+                  setCalYear((y) => y + 1)
+                  setCalMonth(1)
+                } else setCalMonth((m) => m + 1)
+              }}
+              viewMode={calendarViewMode}
+              selectedDate={selectedDate}
+              onViewModeChange={handleCalendarViewModeChange}
+              onSelectedDateChange={handleSelectedDateChange}
+              onTaskReschedule={handleTaskReschedule}
+              onDayClick={handleDayClick}
+            />
+          </SectionCard>
+        )}
+      </div>
 
       {showCreateModal && (
         <CreateTaskForm

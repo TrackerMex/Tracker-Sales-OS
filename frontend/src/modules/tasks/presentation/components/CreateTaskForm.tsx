@@ -13,6 +13,7 @@ import { DatePickerField } from "@/shared/components/forms/DatePickerField"
 import { TimePickerField } from "@/shared/components/forms/TimePickerField"
 import { useAppStore } from "@/shared/store/app.store"
 import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -201,231 +202,268 @@ export function CreateTaskForm({
         if (!open) onClose()
       }}
     >
-      <DialogContent className="max-h-[92vh] w-[min(calc(100vw-2rem),780px)] max-w-none overflow-y-auto sm:max-w-none">
-        <DialogHeader>
+      <DialogContent className="max-h-[92vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-5xl">
+        <DialogHeader className="border-b p-4 md:p-6">
           <DialogTitle>Crear tarea con objetivo</DialogTitle>
           <DialogDescription>
             El comercial debe escribir qué hará, con quién y para qué.
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          ref={formRef}
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-[11px]"
-        >
-          <FormErrorSummary error={errorSummary} />
-
-          {/* cliente */}
-          <div>
-            <ClientCombobox
-              value={clientId}
-              onSelect={(client) => {
-                const changed = (client?.id ?? "") !== clientId
-                setClientId(client?.id ?? "")
-                setSelectedClient(client)
-                if (changed) setContactId("")
-                clearField("clientId")
-              }}
-              placeholder="Sin cliente / prospecto nuevo"
-              error={!!fieldErrors.clientId}
-            />
-            <FieldError name="clientId" message={fieldErrors.clientId} />
-          </div>
-
-          {/* tipo | contacto */}
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            <div>
-              <Select
-                value={type}
-                onValueChange={(v) => {
-                  setType(v)
-                  clearField("type")
-                }}
-              >
-                <SelectTrigger {...fieldErrorProps("type", fieldErrors.type)}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TASK_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError name="type" message={fieldErrors.type} />
+        <form ref={formRef} onSubmit={handleSubmit}>
+          {errorSummary && (
+            <div className="p-4 pb-0 md:px-6">
+              <FormErrorSummary error={errorSummary} />
             </div>
-            <div>
-              <Select
-                value={contactId}
-                onValueChange={(v) => {
-                  setContactId(v === "__none__" ? "" : v)
-                  clearField("contactId")
-                }}
-                disabled={!selectedClient}
-              >
-                <SelectTrigger
-                  {...fieldErrorProps("contactId", fieldErrors.contactId)}
-                >
-                  <SelectValue
-                    placeholder={
-                      selectedClient
-                        ? "Selecciona un contacto"
-                        : "Selecciona primero una empresa"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Sin contacto</SelectItem>
-                  {contacts.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                      {c.role ? ` · ${c.role}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError name="contactId" message={fieldErrors.contactId} />
-            </div>
-          </div>
+          )}
 
-          {/* objetivo */}
-          <div>
-            <Textarea
-              value={objective}
-              onChange={(e) => {
-                setObjective(e.target.value)
-                clearField("title")
-              }}
-              required
-              placeholder="¿Qué vas a hacer y para qué? Ej. Llamaré a Gerardo para validar si realizará la compra este mes..."
-              className="h-[110px] resize-none"
-              {...fieldErrorProps("title", fieldErrors.title)}
-            />
-            <FieldError name="title" message={fieldErrors.title} />
-          </div>
-
-          <div>
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              <DatePickerField
-                value={date}
-                onChange={(v) => {
-                  setDate(v)
-                  clearField("scheduledAt")
-                }}
-                {...fieldErrorProps("scheduledAt", fieldErrors.scheduledAt)}
-              />
-              <TimePickerField
-                value={time}
-                onChange={(v) => {
-                  setTime(v)
-                  clearField("scheduledAt")
-                }}
-                aria-invalid={!!fieldErrors.scheduledAt}
-              />
-            </div>
-            <FieldError name="scheduledAt" message={fieldErrors.scheduledAt} />
-          </div>
-
-          <Accordion
-            key={`${scheduledToday.length}-${showOutlookReminder}`}
-            type="multiple"
-            defaultValue={[
-              ...(scheduledToday.length > 0 ? ["busy"] : []),
-              "coach",
-              ...(showOutlookReminder ? ["outlook"] : []),
-            ]}
-          >
-            {scheduledToday.length > 0 && (
-              <AccordionItem value="busy">
-                <AccordionTrigger>
-                  Ocupado ese día ({scheduledToday.length})
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="flex flex-col gap-1">
-                    {scheduledToday.map((t) => {
-                      const clientName = t.clientName ?? null
-                      return (
-                        <div
-                          key={t.id}
-                          className="flex items-center gap-2 text-xs"
-                        >
-                          <span className="min-w-[42px] font-bold text-tracker-text">
-                            {formatScheduleTime(t.scheduledAt)}
-                          </span>
-                          {t.type && <Badge variant="gray">{t.type}</Badge>}
-                          {clientName && (
-                            <span className="truncate text-tracker-text-secondary">
-                              {clientName}
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
+          <div className="grid gap-px bg-border xl:grid-cols-2">
+            <section className="bg-background p-4 md:p-6">
+              <h5 className="text-base font-semibold">Tarea</h5>
+              <div className="mt-6 flex flex-col gap-6">
+                <div>
+                  <Label htmlFor="task-client">Cliente</Label>
+                  <div className="mt-2">
+                    <ClientCombobox
+                      id="task-client"
+                      value={clientId}
+                      onSelect={(client) => {
+                        const changed = (client?.id ?? "") !== clientId
+                        setClientId(client?.id ?? "")
+                        setSelectedClient(client)
+                        if (changed) setContactId("")
+                        clearField("clientId")
+                      }}
+                      placeholder="Sin cliente / prospecto nuevo"
+                      error={!!fieldErrors.clientId}
+                    />
                   </div>
-                </AccordionContent>
-              </AccordionItem>
-            )}
-
-            <AccordionItem value="coach">
-              <AccordionTrigger>Coach IA</AccordionTrigger>
-              <AccordionContent>
-                <div className="ai-box">
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-tracker-purple">
-                      Sugerencias IA
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="xs"
-                      onClick={fetchAiSuggestions}
-                      disabled={aiLoading}
-                      className="border-[#c4b5fd] text-tracker-purple"
-                    >
-                      {aiLoading ? "Cargando..." : "Obtener sugerencias"}
-                    </Button>
-                  </div>
-                  {aiTips.length > 0 ? (
-                    <ul className="flex flex-col gap-1 pl-4">
-                      {aiTips.map((tip, i) => (
-                        <li key={i} className="text-xs text-tracker-purple">
-                          {tip}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span className="text-xs text-tracker-purple">
-                      {aiComment}
-                    </span>
-                  )}
+                  <FieldError name="clientId" message={fieldErrors.clientId} />
                 </div>
-              </AccordionContent>
-            </AccordionItem>
 
-            {showOutlookReminder && (
-              <AccordionItem value="outlook">
-                <AccordionTrigger>Recordatorio Outlook</AccordionTrigger>
-                <AccordionContent>
-                  <div className="rounded-lg border border-[#BFDBFE] bg-blue-50 px-[13px] py-[11px] text-xs font-semibold text-[#1D4ED8]">
-                    Recordatorio: si es videoconferencia o cita, regístrala
-                    también en Outlook.
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div>
+                    <Label htmlFor="task-type">Tipo</Label>
+                    <Select
+                      value={type}
+                      onValueChange={(v) => {
+                        setType(v)
+                        clearField("type")
+                      }}
+                    >
+                      <SelectTrigger
+                        id="task-type"
+                        className="mt-2 w-full"
+                        {...fieldErrorProps("type", fieldErrors.type)}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TASK_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FieldError name="type" message={fieldErrors.type} />
                   </div>
-                </AccordionContent>
-              </AccordionItem>
-            )}
-          </Accordion>
+                  <div>
+                    <Label htmlFor="task-contact">Contacto</Label>
+                    <Select
+                      value={contactId}
+                      onValueChange={(v) => {
+                        setContactId(v === "__none__" ? "" : v)
+                        clearField("contactId")
+                      }}
+                      disabled={!selectedClient}
+                    >
+                      <SelectTrigger
+                        id="task-contact"
+                        className="mt-2 w-full"
+                        {...fieldErrorProps("contactId", fieldErrors.contactId)}
+                      >
+                        <SelectValue
+                          placeholder={
+                            selectedClient
+                              ? "Selecciona un contacto"
+                              : "Selecciona primero una empresa"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Sin contacto</SelectItem>
+                        {contacts.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                            {c.role ? ` · ${c.role}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FieldError
+                      name="contactId"
+                      message={fieldErrors.contactId}
+                    />
+                  </div>
+                </div>
 
-          <Button
-            type="submit"
-            disabled={isLoading || !objective.trim()}
-            variant="success"
-            size="lg"
-            className="justify-center"
-          >
-            {isLoading ? "Guardando..." : "Guardar tarea"}
-          </Button>
+                <div>
+                  <Label htmlFor="task-objective">Objetivo</Label>
+                  <Textarea
+                    id="task-objective"
+                    value={objective}
+                    onChange={(e) => {
+                      setObjective(e.target.value)
+                      clearField("title")
+                    }}
+                    required
+                    placeholder="¿Qué vas a hacer y para qué? Ej. Llamaré a Gerardo para validar si realizará la compra este mes..."
+                    className="mt-2 h-28 resize-none"
+                    {...fieldErrorProps("title", fieldErrors.title)}
+                  />
+                  <FieldError name="title" message={fieldErrors.title} />
+                </div>
+
+                <div>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <Label>Fecha</Label>
+                      <div className="mt-2">
+                        <DatePickerField
+                          value={date}
+                          onChange={(v) => {
+                            setDate(v)
+                            clearField("scheduledAt")
+                          }}
+                          {...fieldErrorProps(
+                            "scheduledAt",
+                            fieldErrors.scheduledAt
+                          )}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Hora</Label>
+                      <TimePickerField
+                        value={time}
+                        onChange={(v) => {
+                          setTime(v)
+                          clearField("scheduledAt")
+                        }}
+                        aria-invalid={!!fieldErrors.scheduledAt}
+                        className="mt-2"
+                      />
+                    </div>
+                  </div>
+                  <FieldError
+                    name="scheduledAt"
+                    message={fieldErrors.scheduledAt}
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-background p-4 md:p-6">
+              <h5 className="text-base font-semibold">Apoyo</h5>
+              <Accordion
+                key={`${scheduledToday.length}-${showOutlookReminder}`}
+                type="multiple"
+                className="mt-2"
+                defaultValue={[
+                  ...(scheduledToday.length > 0 ? ["busy"] : []),
+                  "coach",
+                  ...(showOutlookReminder ? ["outlook"] : []),
+                ]}
+              >
+                {scheduledToday.length > 0 && (
+                  <AccordionItem value="busy">
+                    <AccordionTrigger>
+                      Ocupado ese día ({scheduledToday.length})
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="flex flex-col gap-1">
+                        {scheduledToday.map((t) => {
+                          const clientName = t.clientName ?? null
+                          return (
+                            <div
+                              key={t.id}
+                              className="flex items-center gap-2 text-xs"
+                            >
+                              <span className="min-w-10 font-medium text-foreground tabular-nums">
+                                {formatScheduleTime(t.scheduledAt)}
+                              </span>
+                              {t.type && (
+                                <Badge variant="outline">{t.type}</Badge>
+                              )}
+                              {clientName && (
+                                <span className="truncate text-muted-foreground">
+                                  {clientName}
+                                </span>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+
+                <AccordionItem value="coach">
+                  <AccordionTrigger>Coach IA</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="border bg-muted/30 p-3 text-xs text-muted-foreground">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span className="font-medium text-foreground">
+                          Sugerencias IA
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="xs"
+                          onClick={fetchAiSuggestions}
+                          disabled={aiLoading}
+                        >
+                          {aiLoading ? "Cargando..." : "Obtener sugerencias"}
+                        </Button>
+                      </div>
+                      {aiTips.length > 0 ? (
+                        <ul className="flex flex-col gap-1 pl-4">
+                          {aiTips.map((tip, i) => (
+                            <li key={i}>{tip}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span>{aiComment}</span>
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {showOutlookReminder && (
+                  <AccordionItem value="outlook">
+                    <AccordionTrigger>Recordatorio Outlook</AccordionTrigger>
+                    <AccordionContent>
+                      <p className="border bg-muted/30 p-3 text-xs text-foreground">
+                        Recordatorio: si es videoconferencia o cita, regístrala
+                        también en Outlook.
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+              </Accordion>
+            </section>
+          </div>
+
+          <div className="flex justify-end border-t p-4 md:px-6">
+            <Button
+              type="submit"
+              disabled={isLoading || !objective.trim()}
+              size="lg"
+            >
+              {isLoading ? "Guardando..." : "Guardar tarea"}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

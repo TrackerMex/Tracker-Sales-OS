@@ -48,7 +48,7 @@ export function DatePickerField({
           type="button"
           disabled={disabled}
           {...ariaProps}
-          className="flex w-full items-center justify-between gap-1.5 rounded-lg border-[1.5px] border-[var(--tracker-border)] bg-[var(--tracker-surface-alt)] px-3 py-2 text-left text-[13px] font-medium text-slate-900 transition-colors outline-none focus:border-[var(--tracker-green)] focus:bg-white disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[var(--tracker-danger)]"
+          className="flex h-8 w-full min-w-0 items-center justify-between gap-1.5 rounded-md border border-input bg-transparent px-2.5 py-1 text-left text-xs transition-colors outline-none focus-visible:border-primary disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
         >
           <span className={cn('truncate', !selected && 'text-muted-foreground')}>
             {selected ? format(selected, 'dd/MM/yyyy') : placeholder}

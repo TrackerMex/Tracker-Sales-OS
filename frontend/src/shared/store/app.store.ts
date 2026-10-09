@@ -6,10 +6,8 @@ interface AppState {
   currentUser: AuthUser | null
   accessToken: string | null
   refreshToken: string | null
-  sidebarOpen: boolean
   setAuth: (user: AuthUser, accessToken: string, refreshToken: string) => void
   clearAuth: () => void
-  toggleSidebar: () => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -18,7 +16,6 @@ export const useAppStore = create<AppState>()(
       currentUser: null,
       accessToken: null,
       refreshToken: null,
-      sidebarOpen: true,
       setAuth: (user, accessToken, refreshToken) => {
         localStorage.setItem("accessToken", accessToken)
         localStorage.setItem("refreshToken", refreshToken)
@@ -29,7 +26,6 @@ export const useAppStore = create<AppState>()(
         localStorage.removeItem("refreshToken")
         set({ currentUser: null, accessToken: null, refreshToken: null })
       },
-      toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
     }),
     {
       name: "tracker-sales-app",

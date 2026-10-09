@@ -10,7 +10,6 @@ import {
   useUpdateActivityStatus,
 } from "../../application/hooks/useActivityHistory"
 import { toast } from "sonner"
-import { Badge, type BadgeVariant } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Accordion,
@@ -18,18 +17,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { StatusBadge } from "@/shared/components/data/StatusBadge"
 
 interface Props {
   activityId: string | null
   onClose: () => void
-}
-
-const STATUS_VARIANTS: Record<string, BadgeVariant> = {
-  Pendiente: "yellow",
-  "En curso": "blue",
-  Completada: "green",
-  Cancelada: "gray",
 }
 
 const NEXT_TRANSITIONS: Record<string, string[]> = {
@@ -68,8 +61,8 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
         if (!open) onClose()
       }}
     >
-      <DialogContent className="max-h-[90vh] w-[min(calc(100vw-2rem),760px)] max-w-none overflow-y-auto sm:max-w-none">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-2xl">
+        <DialogHeader className="border-b p-4 md:p-6">
           <DialogTitle>
             {isLoading ? "Cargando..." : `${activity?.type ?? ""} — Historial`}
           </DialogTitle>
@@ -79,21 +72,22 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
         </DialogHeader>
 
         {isLoading && (
-          <p className="text-[13px] text-tracker-text-muted">
-            Cargando actividad...
-          </p>
+          <div
+            className="flex flex-col gap-3 p-4 md:p-6"
+            role="status"
+            aria-label="Cargando actividad"
+          >
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="h-16 w-full" />
+          </div>
         )}
 
         {activity && (
-          <div className="space-y-4">
-            <Card size="sm">
-              <CardContent className="space-y-3">
-                <div>
-                  <p className="kl mb-1">Estado actual</p>
-                  <Badge variant={STATUS_VARIANTS[currentStatus] ?? "gray"}>
-                    {currentStatus}
-                  </Badge>
-                </div>
+          <div className="grid gap-px bg-border">
+            <section className="bg-background p-4 md:p-6">
+              <h5 className="text-base font-semibold">Estado actual</h5>
+              <div className="mt-4 flex flex-col gap-4">
+                <StatusBadge status={currentStatus} />
 
                 {nextTransitions.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -109,63 +103,63 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </section>
 
-            <Accordion
-              type="single"
-              collapsible
-              defaultValue={
-                activity.activityHistory?.length ? "history" : undefined
-              }
-            >
-              <AccordionItem value="history">
-                <AccordionTrigger>
-                  Historial de cambios ({activity.activityHistory?.length ?? 0})
-                </AccordionTrigger>
-                <AccordionContent>
-                  {!activity.activityHistory ||
-                  activity.activityHistory.length === 0 ? (
-                    <p className="text-[13px] text-tracker-text-muted">
-                      Sin actualizaciones aún
-                    </p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {activity.activityHistory.map((entry, i) => (
-                        <li key={i} className="text-xs text-tracker-text">
-                          <span className="text-tracker-text-muted">
-                            {new Date(entry.changedAt).toLocaleString("es-MX", {
-                              dateStyle: "short",
-                              timeStyle: "short",
-                            })}
-                          </span>{" "}
-                          <Badge
-                            variant={STATUS_VARIANTS[entry.oldStatus] ?? "gray"}
+            <section className="bg-background px-4 py-2 md:px-6">
+              <Accordion
+                type="single"
+                collapsible
+                defaultValue={
+                  activity.activityHistory?.length ? "history" : undefined
+                }
+              >
+                <AccordionItem value="history">
+                  <AccordionTrigger>
+                    Historial de cambios ({activity.activityHistory?.length ?? 0})
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    {!activity.activityHistory ||
+                    activity.activityHistory.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        Sin actualizaciones aún
+                      </p>
+                    ) : (
+                      <ul className="divide-y">
+                        {activity.activityHistory.map((entry, i) => (
+                          <li
+                            key={i}
+                            className="flex flex-wrap items-center gap-1.5 py-2 text-xs text-foreground"
                           >
-                            {entry.oldStatus}
-                          </Badge>
-                          {" → "}
-                          <Badge
-                            variant={STATUS_VARIANTS[entry.newStatus] ?? "gray"}
-                          >
-                            {entry.newStatus}
-                          </Badge>{" "}
-                          <span className="text-tracker-text-secondary">
-                            por: {entry.changedBy}
-                          </span>
-                          {entry.comment && (
-                            <span className="text-tracker-text-secondary">
-                              {" "}
-                              — {entry.comment}
+                            <span className="text-muted-foreground tabular-nums">
+                              {new Date(entry.changedAt).toLocaleString(
+                                "es-MX",
+                                {
+                                  dateStyle: "short",
+                                  timeStyle: "short",
+                                }
+                              )}
                             </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                            <StatusBadge status={entry.oldStatus} />
+                            <span aria-hidden="true">→</span>
+                            <span className="sr-only">a</span>
+                            <StatusBadge status={entry.newStatus} />
+                            <span className="text-muted-foreground">
+                              por: {entry.changedBy}
+                            </span>
+                            {entry.comment && (
+                              <span className="text-muted-foreground">
+                                — {entry.comment}
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </section>
           </div>
         )}
       </DialogContent>

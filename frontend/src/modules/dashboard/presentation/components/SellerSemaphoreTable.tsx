@@ -1,5 +1,10 @@
-import { useNavigate } from "@tanstack/react-router"
-import { Badge, type BadgeVariant } from "@/components/ui/badge"
+import { Link } from "@tanstack/react-router"
+import { Skeleton } from "@/components/ui/skeleton"
+import { EmptyState } from "@/shared/components/data/EmptyState"
+import { StatusBadge } from "@/shared/components/data/StatusBadge"
+import { TeamIcon } from "@/shared/components/Icon"
+import { STATUS_FILL_CLASS, type StatusTone } from "@/shared/lib/status"
+import { cn } from "@/lib/utils"
 import type { SellerScore } from "../../domain/dashboard.types"
 
 interface SellerSemaphoreTableProps {
@@ -7,36 +12,28 @@ interface SellerSemaphoreTableProps {
   isLoading: boolean
 }
 
-function getBarColor(score: number): string {
-  if (score >= 75) return "var(--tracker-green)"
-  if (score >= 45) return "var(--tracker-warning)"
-  return "var(--tracker-danger)"
-}
-
-function getSemaphoreVariant(score: number): BadgeVariant {
-  if (score >= 75) return "green"
-  if (score >= 45) return "amber"
-  return "red"
+function getSemaphoreTone(score: number): StatusTone {
+  if (score >= 75) return "success"
+  if (score >= 45) return "pending"
+  return "danger"
 }
 
 export function SellerSemaphoreTable({
   sellers,
   isLoading,
 }: SellerSemaphoreTableProps) {
-  const navigate = useNavigate()
-
   if (isLoading) {
     return (
-      <div
-        className="space-y-4 p-5"
-        role="status"
-        aria-label="Cargando desempeño del equipo"
-      >
+      <div role="status" aria-label="Cargando desempeño del equipo">
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-16 animate-pulse rounded-lg bg-slate-100 motion-reduce:animate-none"
-          />
+            className="flex flex-col gap-2 border-b border-border px-4 py-3 last:border-0"
+          >
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-1.5 w-full" />
+            <Skeleton className="h-5 w-56" />
+          </div>
         ))}
       </div>
     )
@@ -44,74 +41,74 @@ export function SellerSemaphoreTable({
 
   if (sellers.length === 0) {
     return (
-      <div className="p-5">
-        <div className="empty-state">
-          No hay vendedores activos. Los vendedores aparecerán aquí una vez que
-          tengan actividad registrada.
-        </div>
-      </div>
+      <EmptyState
+        icon={<TeamIcon size={20} />}
+        title="No hay vendedores activos"
+        description="Los vendedores aparecerán aquí una vez que tengan actividad registrada."
+      />
     )
   }
 
   return (
-    <div className="flex flex-col gap-3 p-5">
-      {sellers.map((seller) => (
-        <div
-          key={seller.sellerId}
-          className="seller-row"
-          role="article"
-          aria-label={`${seller.sellerName}: puntuación ${seller.score}, ${seller.overdueCount > 0 ? seller.overdueCount + " seguimientos vencidos" : "sin seguimientos vencidos"}`}
-          onClick={() => void navigate({ to: "/coaching" })}
-        >
-          <div className="flex min-w-0 items-center justify-between gap-2">
-            <span
-              className="truncate text-[13px] font-semibold text-tracker-text"
-              title={seller.sellerName}
-            >
-              {seller.sellerName}
-            </span>
-            <Badge
-              variant={getSemaphoreVariant(seller.score)}
-              className="flex-shrink-0"
-              aria-label={`Puntuación ${seller.score} de 100`}
-            >
-              {seller.score}
-            </Badge>
-          </div>
-          <div className="prog mt-2">
-            <div
-              className="prog-fill origin-left transition-transform! duration-400!"
-              style={{
-                transform: `scaleX(${Math.min(seller.score, 100) / 100})`,
-                backgroundColor: getBarColor(seller.score),
-              }}
-              role="progressbar"
-              aria-valuenow={seller.score}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label={`Progreso: ${seller.score}%`}
-            />
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-tracker-text-secondary">
-            <span className="flex-shrink-0">{seller.pointsToday} pts hoy</span>
-            <span className="flex-shrink-0">
-              {seller.avgQualityToday}% calidad
-            </span>
-            <span className="flex-shrink-0">
-              {seller.monthlyPoints} pts mes
-            </span>
-            {seller.overdueCount > 0 && (
+    <div className="flex flex-col">
+      {sellers.map((seller) => {
+        const tone = getSemaphoreTone(seller.score)
+        return (
+          <Link
+            key={seller.sellerId}
+            to="/coaching"
+            className="flex flex-col gap-2 border-b border-border px-4 py-3 transition-colors outline-none last:border-0 hover:bg-muted/30 focus-visible:bg-muted/30 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset"
+            aria-label={`${seller.sellerName}: puntuación ${seller.score}, ${seller.overdueCount > 0 ? seller.overdueCount + " seguimientos vencidos" : "sin seguimientos vencidos"}`}
+          >
+            <div className="flex min-w-0 items-center justify-between gap-2">
               <span
-                className="flex-shrink-0 font-semibold text-tracker-danger"
-                role="status"
+                className="truncate text-sm font-medium text-foreground"
+                title={seller.sellerName}
               >
-                {seller.overdueCount}{" "}
-                {seller.overdueCount === 1 ? "vencida" : "vencidas"}
+                {seller.sellerName}
               </span>
-            )}
-          </div>
-        </div>
-      ))}
+              <StatusBadge
+                tone={tone}
+                aria-label={`Puntuación ${seller.score} de 100`}
+              >
+                {seller.score}
+              </StatusBadge>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-foreground/10">
+              <div
+                className={cn(
+                  "h-full w-full origin-left rounded-full transition-transform duration-400 motion-reduce:transition-none",
+                  STATUS_FILL_CLASS[tone]
+                )}
+                style={{
+                  transform: `scaleX(${Math.min(seller.score, 100) / 100})`,
+                }}
+                role="progressbar"
+                aria-valuenow={seller.score}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Progreso: ${seller.score}%`}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <span className="shrink-0">{seller.pointsToday} pts hoy</span>
+              <span className="shrink-0">
+                {seller.avgQualityToday}% calidad
+              </span>
+              <span className="shrink-0">{seller.monthlyPoints} pts mes</span>
+              {seller.overdueCount > 0 && (
+                <span
+                  className="shrink-0 font-medium text-status-danger"
+                  role="status"
+                >
+                  {seller.overdueCount}{" "}
+                  {seller.overdueCount === 1 ? "vencida" : "vencidas"}
+                </span>
+              )}
+            </div>
+          </Link>
+        )
+      })}
     </div>
   )
 }

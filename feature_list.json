@@ -805,5 +805,15 @@
     "backend_modules": [],
     "frontend_modules": ["auth"],
     "notes": "Solicitada y completada 2026-07-20. Los PNG se guardaron localmente en frontend/public/brand. Ajuste final solicitado por el usuario: trackermexico.png fue reemplazado byte por byte con el wordmark blanco/verde adjunto (1681x280, ARGB, SHA-256 6F6A527898C54A019E0677514D9584DF61838A4CFEB053C019DF6A8704B1BAF3). Login y sidebar expandido lo muestran directamente sobre navy, sin soporte blanco; el estado colapsado conserva el isotipo tracker.png. El encabezado no interactivo del logo quedó compacto (48px, padding 4px), dejó de usar SidebarMenuButton para eliminar el hover estructuralmente y el wordmark se alineó en x=20 con los iconos del menú. Sin hotlink, dependencias ni cambios de lógica. Typecheck, lint y build PASS. Reviewer independiente PASSED 7/7. Smoke local PASS en Login y sidebar expandido/colapsado; sin overflow, deformación ni recortes. Resumen: progress/impl_76-brand-logos-login-navbar.md."
+  },
+  {
+    "id": "81-visual-redesign",
+    "name": "Rediseño visual del sistema con la plantilla shadcn-dashboard como referencia",
+    "description": "Copiar tal cual el aspecto de la plantilla https://github.com/shadcndashboard/next-shadcn-dashboard (estilo shadcn Lyra, paleta neutral oklch, Geist, radio 0.625rem, bento hairline, modo claro/oscuro) en el shell y todas las páginas del frontend. Se reproduce sobre el shadcn (Radix) + Tailwind v4 del proyecto, sin migrar a Next.js ni a Base UI. Fuente de verdad: DESIGN.md y PRODUCT.md (actualizados 2026-10-09). La marca Tracker queda solo en los logos; la lámina ejecutiva conserva navy/verde y Montserrat. Plan: plans/006 a plans/012 (tabla en plans/README.md).",
+    "status": "in_progress",
+    "priority": 81,
+    "backend_modules": [],
+    "frontend_modules": ["shared", "auth", "dashboard", "mi-dia", "clients", "pipeline", "tasks", "activities", "sales", "reports", "coaching", "equipo", "settings", "import-export"],
+    "notes": "Solicitada 2026-10-09. La feature 77 queda en pausa en su rama 77-jev-quality-backtest (sin mergear; 80 depende de ella). Rama de trabajo 81-visual-redesign desde origin/main 55b22e1. Contexto: progress/explore_crm_gap.md, progress/explore_redesign_template.md, progress/explore_redesign_current.md, progress/explore_redesign_runtime.md. Todo el trabajo es local: no se toca el Docker de producción ni se hace push a main (auto-deploy); el usuario decide el paso a producción."
   }
 ]

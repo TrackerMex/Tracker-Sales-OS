@@ -10,9 +10,7 @@ export function PeekHeader({
 }) {
   return (
     <div className="mb-2 flex items-start justify-between gap-2">
-      <p className="truncate text-[13px] font-bold text-tracker-blue">
-        {title}
-      </p>
+      <p className="truncate text-sm font-medium text-foreground">{title}</p>
       {badge}
     </div>
   )
@@ -34,10 +32,8 @@ export function PeekRow({
         className
       )}
     >
-      <span className="shrink-0 text-[11px] text-tracker-text-muted">
-        {label}
-      </span>
-      <span className="truncate text-right text-xs font-medium text-tracker-text">
+      <span className="shrink-0 text-xs text-muted-foreground">{label}</span>
+      <span className="truncate text-right text-sm text-foreground">
         {value}
       </span>
     </div>
@@ -46,7 +42,7 @@ export function PeekRow({
 
 export function PeekActions({ children }: { children: ReactNode }) {
   return (
-    <div className="mt-3 flex gap-2 border-t border-tracker-border pt-2.5">
+    <div className="mt-3 flex gap-2 border-t border-border pt-2.5">
       {children}
     </div>
   )

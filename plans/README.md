@@ -23,6 +23,28 @@ conditions y actualiza su fila al terminar.
 Los 5 planes están mergeados a `main` (fast-forward desde `review-ui`, 2026-07-16). Sin
 pendientes de smoke: ver "Smoke visual de cierre" abajo.
 
+## Feature 81: rediseño visual (2026-10-09)
+
+Planes escritos por el Líder a partir de `progress/explore_redesign_template.md`,
+`progress/explore_redesign_current.md` y `progress/explore_redesign_runtime.md`.
+Objetivo: copiar tal cual el aspecto de la plantilla shadcn-dashboard (ver
+`DESIGN.md`). Rama `81-visual-redesign`, base `55b22e1`. Todo local: sin commits,
+push ni despliegue hasta que el usuario lo decida. Gates con pnpm
+(`pnpm run typecheck && pnpm run lint && pnpm run build`).
+
+| Plan | Title | Priority | Effort | Depends on | Status |
+|------|-------|----------|--------|------------|--------|
+| 006 | Fundación: tokens, Geist, modo oscuro, primitivos ui | P1 | M | — | DONE (sin commit; review PASSED, `progress/review_81-006-foundation.md`; M1-M2 pasan a 007 R1-R2) |
+| 007 | Shell: sidebar, header, contenido, footer | P1 | M | 006 | DONE (sin commit; review PASSED, `progress/review_81-007-shell.md`; M1-M3 corregidos post-review) |
+| 008 | Patrones compartidos + Dashboard y Mi día | P1 | L | 006, 007 | DONE (sin commit; re-review PASSED, `progress/review_81-008-patterns-dashboard.md`; M4/N8 corregidos por el Líder) |
+| 009 | Clientes y Pipeline | P1 | L | 008 | DONE (sin commit; review PASSED, `progress/review_81-009-clients-pipeline.md`; smoke del Líder OK en `progress/redesign/phase-009/smoke-*`) |
+| 010 | Agenda, Actividades y Ventas | P1 | L | 008 | DONE (sin commit; review PASSED, `progress/review_81-010-agenda-activities-sales.md`; M1/M2 corregidos por el Líder, M3 y notas pasan a 012) |
+| 011 | Coaching, Reportes, Equipo, Configuración, Import/Export y Login | P1 | M | 008 | TODO |
+| 012 | Limpieza final y verificación | P1 | S | 006-011 | TODO |
+
+009, 010 y 011 tocan módulos disjuntos y podrían ir en paralelo, pero se
+ejecutan en serie (una feature a la vez y un solo árbol de trabajo).
+
 ## Smoke visual de cierre (2026-07-16)
 
 Ejecutado con Docker real (api + db + ui + nginx) y `admin/Admin123!` en Chrome 1440x900.

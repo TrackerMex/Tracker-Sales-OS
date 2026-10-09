@@ -11,17 +11,8 @@ import {
   PopoverContent,
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
+import { StatusBadge } from "@/shared/components/data/StatusBadge"
 import { DealPeek } from "./DealPeek"
-
-const STAGE_BADGE_COLORS: Record<string, string> = {
-  Prospecto: "#002B49",
-  Contactado: "#1E40AF",
-  Interesado: "#82bc00",
-  Propuesta: "#D97706",
-  Negociación: "#7C3AED",
-  Cierre: "#059669",
-  Perdido: "#DC2626",
-}
 
 const PAGE_LOADED_AT = Date.now()
 
@@ -46,7 +37,6 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
   const contactInfo = [deal.contactName, deal.contactRole]
     .filter(Boolean)
     .join(" · ")
-  const badgeColor = STAGE_BADGE_COLORS[deal.stage] || "#002B49"
   const { data: settings } = useSettings()
   const activityDate = deal.updatedAt ?? deal.createdAt
 
@@ -79,39 +69,30 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
       ref={ref}
       onClick={() => onClick(deal)}
       className={cn(
-        "card mb-2 p-3.5 transition-[box-shadow,opacity]",
+        "rounded-lg border bg-background p-3 transition-[background-color,opacity]",
         isDragging
           ? "cursor-grabbing opacity-50"
-          : "cursor-grab hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
+          : "cursor-grab hover:bg-muted/30"
       )}
     >
-      <div className="mb-1 flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] leading-[1.3] font-bold text-tracker-blue">
-            {deal.clientName}
-          </p>
+          <p className="truncate text-sm font-medium">{deal.clientName}</p>
           {deal.opportunityName && (
-            <p className="mt-px truncate text-[11px] font-semibold text-tracker-purple">
+            <p className="truncate text-xs text-muted-foreground">
               {deal.opportunityName}
             </p>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <span
-            style={{
-              background: badgeColor,
-            }}
-            className="rounded-[10px] px-2 py-0.5 text-[10px] font-bold text-white uppercase"
-          >
-            {deal.stage}
-          </span>
+          <StatusBadge status={deal.stage} />
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon-xs"
                 aria-label="Vista rápida"
-                className="bg-transparent text-tracker-text-muted hover:bg-slate-100"
+                className="text-muted-foreground"
                 onClick={(e) => e.stopPropagation()}
               >
                 <EyeIcon />
@@ -129,38 +110,38 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
       </div>
 
       {contactInfo && (
-        <p className="mb-0.5 text-[11px] text-tracker-text-secondary">
+        <p className="mt-1 truncate text-xs text-muted-foreground">
           {contactInfo}
         </p>
       )}
 
       {deal.painPoint && (
-        <p className="mb-1.5 line-clamp-2 text-[11px] leading-[1.4] text-tracker-text-dim">
+        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
           {deal.painPoint}
         </p>
       )}
 
-      <div className="mt-2 flex items-center justify-between">
+      <div className="mt-2 flex items-center justify-between gap-2">
         {deal.sellerName &&
           (teamMode ? (
-            <Badge variant="navy">{deal.sellerName}</Badge>
+            <Badge variant="secondary" className="max-w-full truncate">
+              {deal.sellerName}
+            </Badge>
           ) : (
-            <span className="text-[11px] text-tracker-text-muted">
+            <span className="truncate text-xs text-muted-foreground">
               {deal.sellerName}
             </span>
           ))}
-        <div className="flex items-center gap-1.5">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
           {(showRed || showAmber) && (
-            <span
-              className={cn(
-                "rounded-[10px] px-1.5 py-0.5 text-[10px] font-bold text-white",
-                showRed ? "bg-red-500" : "bg-amber-500"
-              )}
+            <StatusBadge
+              tone={showRed ? "danger" : "pending"}
+              title={`${daysStalled} días sin actividad`}
             >
               {daysStalled}d
-            </span>
+            </StatusBadge>
           )}
-          <span className="text-[11px] text-tracker-text-muted">
+          <span className="text-xs text-muted-foreground tabular-nums">
             {activityDate ? formatDate(activityDate) : ""}
           </span>
         </div>

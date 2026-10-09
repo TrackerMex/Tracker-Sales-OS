@@ -1,6 +1,21 @@
 import { useState, type FormEvent } from "react"
+import type { ColumnDef } from "@tanstack/react-table"
 import { toast } from "sonner"
-import { MoreHorizontalIcon } from "@/shared/components/Icon"
+import {
+  BarChartIcon,
+  ChecklistIcon,
+  DollarIcon,
+  MoreHorizontalIcon,
+  PlusIcon,
+  UsersIcon,
+} from "@/shared/components/Icon"
+import { formatCurrency } from "@/shared/lib/format"
+import { PageHeader } from "@/shared/components/layout/PageHeader"
+import { SectionCard } from "@/shared/components/layout/SectionCard"
+import { StatCard } from "@/shared/components/data/StatCard"
+import { StatusBadge } from "@/shared/components/data/StatusBadge"
+import { EmptyState } from "@/shared/components/data/EmptyState"
+import { DataTable } from "@/shared/components/data/DataTable"
 import { useAppStore } from "@/shared/store/app.store"
 import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
 import { useCreateSale } from "../../application/hooks/useCreateSale"
@@ -23,7 +38,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +60,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { EditSaleModal } from "../components/EditSaleModal"
-import { cn } from "@/lib/utils"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -76,13 +91,6 @@ const SALE_SOURCES: SaleSource[] = [
 
 function today() {
   return new Date().toISOString().split("T")[0]
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-  }).format(value)
 }
 
 export function SalesPage() {
@@ -254,608 +262,731 @@ export function SalesPage() {
 
   const summary = data?.summary
 
-  return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h2 className="text-xl font-black text-[#002B49]">Ventas</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Registro de cierres por tipo
-        </p>
-      </div>
-
-      {/* columnas según rol */}
-      <div
-        className={cn(
-          "grid gap-4",
-          isAdminOrDirector ? "grid-cols-2" : "grid-cols-1"
-        )}
-      >
-        {/* Columna vendedor — solo Seller */}
-        {!isAdminOrDirector && (
-          <Card className="p-5">
-            <h3 className="mb-4 text-sm font-black text-[#002B49]">
-              Registrar venta del día
-            </h3>
-            <form
-              ref={sellerFormRef}
-              onSubmit={handleSellerSubmit}
-              className="space-y-3"
-            >
-              <FormErrorSummary error={sellerErrors.summary} />
-
-              <div>
-                <label className="slabel mb-1">Cliente</label>
-                <ClientCombobox
-                  value={sellerClientId}
-                  onSelect={(client) => {
-                    setSellerClientId(client?.id ?? "")
-                    setSellerClientName(client?.name ?? "")
-                    setSellerClientType(
-                      client?.type === "Nuevo" ? "Nuevo" : "Existente"
-                    )
-                    sellerErrors.clearField("clientId")
-                  }}
-                  placeholder="Seleccionar cliente"
-                  error={!!sellerErrors.fieldErrors.clientId}
-                />
-                <FieldError
-                  name="clientId"
-                  message={sellerErrors.fieldErrors.clientId}
-                />
-              </div>
-
-              <div>
-                <label className="slabel mb-1">Producto</label>
-                <Input
-                  type="text"
-                  value={sellerProduct}
-                  onChange={(e) => {
-                    setSellerProduct(e.target.value)
-                    sellerErrors.clearField("product")
-                  }}
-                  placeholder="Nombre del producto"
-                  required
-                  {...fieldErrorProps(
-                    "product",
-                    sellerErrors.fieldErrors.product
-                  )}
-                />
-                <FieldError
-                  name="product"
-                  message={sellerErrors.fieldErrors.product}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="slabel mb-1">Unidades</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={sellerUnits}
-                    onChange={(e) => {
-                      setSellerUnits(
-                        e.target.value === "" ? "" : Number(e.target.value)
-                      )
-                      sellerErrors.clearField("units")
-                    }}
-                    required
-                    {...fieldErrorProps(
-                      "units",
-                      sellerErrors.fieldErrors.units
-                    )}
-                  />
-                  <FieldError
-                    name="units"
-                    message={sellerErrors.fieldErrors.units}
-                  />
-                </div>
-                <div>
-                  <label className="slabel mb-1">Monto factura</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={sellerAmount}
-                    onChange={(e) => {
-                      setSellerAmount(
-                        e.target.value === "" ? "" : Number(e.target.value)
-                      )
-                      sellerErrors.clearField("amount")
-                    }}
-                    required
-                    {...fieldErrorProps(
-                      "amount",
-                      sellerErrors.fieldErrors.amount
-                    )}
-                  />
-                  <FieldError
-                    name="amount"
-                    message={sellerErrors.fieldErrors.amount}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="slabel mb-1">Fecha</label>
-                  <DatePickerField
-                    value={sellerDate}
-                    onChange={(v) => {
-                      setSellerDate(v)
-                      sellerErrors.clearField("date")
-                    }}
-                    {...fieldErrorProps("date", sellerErrors.fieldErrors.date)}
-                  />
-                  <FieldError
-                    name="date"
-                    message={sellerErrors.fieldErrors.date}
-                  />
-                </div>
-                <div>
-                  <label className="slabel mb-1">Forma de pago</label>
-                  <Select
-                    value={sellerPay}
-                    onValueChange={(v) => {
-                      setSellerPay(v as PaymentMethod)
-                      sellerErrors.clearField("pay")
-                    }}
-                  >
-                    <SelectTrigger
-                      {...fieldErrorProps("pay", sellerErrors.fieldErrors.pay)}
+  const columns: ColumnDef<Sale>[] = [
+    {
+      accessorKey: "clientName",
+      header: "Cliente",
+      cell: ({ row }) => (
+        <div className="max-w-56 min-w-40">
+          <p className="truncate font-medium text-foreground">
+            {row.original.clientName}
+          </p>
+          <p className="truncate text-muted-foreground">
+            {row.original.product}
+            <span className="md:hidden">
+              {" "}
+              · {row.original.units} ud. · {row.original.date}
+            </span>
+          </p>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "date",
+      header: "Fecha",
+      // Below md, date and units move into the Cliente cell so Monto and the
+      // actions menu fit at 390px without scrolling the table.
+      meta: { className: "hidden md:table-cell" },
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap text-muted-foreground tabular-nums">
+          {row.original.date}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "units",
+      header: "Unidades",
+      meta: { className: "hidden text-right md:table-cell" },
+      cell: ({ row }) => (
+        <span className="tabular-nums">{row.original.units} ud.</span>
+      ),
+    },
+    {
+      id: "kind",
+      header: "Tipo",
+      meta: { className: "hidden lg:table-cell" },
+      cell: ({ row }) => (
+        <div className="flex flex-wrap gap-1">
+          <StatusBadge status={row.original.clientType} />
+          <Badge variant="outline">{row.original.type}</Badge>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "pay",
+      header: "Pago",
+      meta: { className: "hidden sm:table-cell" },
+      cell: ({ row }) => <StatusBadge status={row.original.pay} />,
+    },
+    {
+      accessorKey: "amount",
+      header: "Monto",
+      meta: { className: "text-right" },
+      cell: ({ row }) => (
+        <span className="font-medium whitespace-nowrap text-foreground tabular-nums">
+          {formatCurrency(row.original.amount)}
+        </span>
+      ),
+    },
+    ...(isAdminOrDirector
+      ? [
+          {
+            id: "actions",
+            header: () => <span className="sr-only">Acciones</span>,
+            meta: { className: "w-12 text-right" },
+            cell: ({ row }) => {
+              const sale = row.original
+              return (
+                <DropdownMenu>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Acciones de venta ${sale.clientName}`}
+                        >
+                          <MoreHorizontalIcon />
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>Acciones de venta</TooltipContent>
+                  </Tooltip>
+                  <DropdownMenuContent align="end" className="min-w-44">
+                    <DropdownMenuItem onSelect={() => setEditingSale(sale)}>
+                      Editar venta
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={() => setDeletingSale(sale)}
                     >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAYMENT_METHODS.map((m) => (
-                        <SelectItem key={m} value={m}>
-                          {m}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError
-                    name="pay"
-                    message={sellerErrors.fieldErrors.pay}
-                  />
+                      Eliminar venta
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )
+            },
+          } satisfies ColumnDef<Sale>,
+        ]
+      : []),
+  ]
+
+  return (
+    <div>
+      <PageHeader
+        title="Ventas"
+        description="Registro de cierres por tipo"
+        actions={
+          <Button
+            onClick={() =>
+              document
+                .getElementById(
+                  isAdminOrDirector ? "sale-dir-project" : "sale-client"
+                )
+                ?.focus()
+            }
+          >
+            <PlusIcon />
+            Registrar venta
+          </Button>
+        }
+      />
+
+      <div className="grid grid-cols-12 gap-px bg-border p-px">
+        {/* Formulario vendedor — solo Seller */}
+        {!isAdminOrDirector && (
+          <form
+            ref={sellerFormRef}
+            onSubmit={handleSellerSubmit}
+            className="col-span-12 bg-background"
+          >
+            <div className="border-b p-4 md:p-6">
+              <h2 className="text-base font-semibold">
+                Registrar venta del día
+              </h2>
+            </div>
+
+            {sellerErrors.summary && (
+              <div className="p-4 pb-0 md:px-6">
+                <FormErrorSummary error={sellerErrors.summary} />
+              </div>
+            )}
+
+            <div className="grid gap-px bg-border xl:grid-cols-2">
+              <section className="bg-background p-4 md:p-6">
+                <h5 className="text-base font-semibold">Venta</h5>
+                <div className="mt-6 flex flex-col gap-6">
+                  <div>
+                    <Label htmlFor="sale-client">Cliente</Label>
+                    <div className="mt-2">
+                      <ClientCombobox
+                        id="sale-client"
+                        value={sellerClientId}
+                        onSelect={(client) => {
+                          setSellerClientId(client?.id ?? "")
+                          setSellerClientName(client?.name ?? "")
+                          setSellerClientType(
+                            client?.type === "Nuevo" ? "Nuevo" : "Existente"
+                          )
+                          sellerErrors.clearField("clientId")
+                        }}
+                        placeholder="Seleccionar cliente"
+                        error={!!sellerErrors.fieldErrors.clientId}
+                      />
+                    </div>
+                    <FieldError
+                      name="clientId"
+                      message={sellerErrors.fieldErrors.clientId}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sale-product">Producto</Label>
+                    <Input
+                      id="sale-product"
+                      type="text"
+                      className="mt-2"
+                      value={sellerProduct}
+                      onChange={(e) => {
+                        setSellerProduct(e.target.value)
+                        sellerErrors.clearField("product")
+                      }}
+                      placeholder="Nombre del producto"
+                      required
+                      {...fieldErrorProps(
+                        "product",
+                        sellerErrors.fieldErrors.product
+                      )}
+                    />
+                    <FieldError
+                      name="product"
+                      message={sellerErrors.fieldErrors.product}
+                    />
+                  </div>
+
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="sale-units">Unidades</Label>
+                      <Input
+                        id="sale-units"
+                        type="number"
+                        min="1"
+                        className="mt-2"
+                        value={sellerUnits}
+                        onChange={(e) => {
+                          setSellerUnits(
+                            e.target.value === "" ? "" : Number(e.target.value)
+                          )
+                          sellerErrors.clearField("units")
+                        }}
+                        required
+                        {...fieldErrorProps(
+                          "units",
+                          sellerErrors.fieldErrors.units
+                        )}
+                      />
+                      <FieldError
+                        name="units"
+                        message={sellerErrors.fieldErrors.units}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="sale-amount">Monto factura</Label>
+                      <Input
+                        id="sale-amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="mt-2"
+                        value={sellerAmount}
+                        onChange={(e) => {
+                          setSellerAmount(
+                            e.target.value === "" ? "" : Number(e.target.value)
+                          )
+                          sellerErrors.clearField("amount")
+                        }}
+                        required
+                        {...fieldErrorProps(
+                          "amount",
+                          sellerErrors.fieldErrors.amount
+                        )}
+                      />
+                      <FieldError
+                        name="amount"
+                        message={sellerErrors.fieldErrors.amount}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </section>
 
-              <div>
-                <label className="slabel mb-1">Fuente</label>
-                <Select
-                  value={sellerSource}
-                  onValueChange={(v) => {
-                    setSellerSource(v as SaleSource)
-                    sellerErrors.clearField("source")
-                  }}
-                >
-                  <SelectTrigger
-                    {...fieldErrorProps(
-                      "source",
-                      sellerErrors.fieldErrors.source
-                    )}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SALE_SOURCES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError
-                  name="source"
-                  message={sellerErrors.fieldErrors.source}
-                />
-              </div>
+              <section className="bg-background p-4 md:p-6">
+                <h5 className="text-base font-semibold">Pago y origen</h5>
+                <div className="mt-6 flex flex-col gap-6">
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <Label>Fecha</Label>
+                      <div className="mt-2">
+                        <DatePickerField
+                          value={sellerDate}
+                          onChange={(v) => {
+                            setSellerDate(v)
+                            sellerErrors.clearField("date")
+                          }}
+                          {...fieldErrorProps(
+                            "date",
+                            sellerErrors.fieldErrors.date
+                          )}
+                        />
+                      </div>
+                      <FieldError
+                        name="date"
+                        message={sellerErrors.fieldErrors.date}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="sale-pay">Forma de pago</Label>
+                      <Select
+                        value={sellerPay}
+                        onValueChange={(v) => {
+                          setSellerPay(v as PaymentMethod)
+                          sellerErrors.clearField("pay")
+                        }}
+                      >
+                        <SelectTrigger
+                          id="sale-pay"
+                          className="mt-2 w-full"
+                          {...fieldErrorProps(
+                            "pay",
+                            sellerErrors.fieldErrors.pay
+                          )}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PAYMENT_METHODS.map((m) => (
+                            <SelectItem key={m} value={m}>
+                              {m}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FieldError
+                        name="pay"
+                        message={sellerErrors.fieldErrors.pay}
+                      />
+                    </div>
+                  </div>
 
-              <div>
-                <label className="slabel mb-1">Notas de venta</label>
-                <Textarea
-                  rows={2}
-                  value={sellerNotes}
-                  onChange={(e) => {
-                    setSellerNotes(e.target.value)
-                    sellerErrors.clearField("notes")
-                  }}
-                  placeholder="Observaciones adicionales"
-                  {...fieldErrorProps("notes", sellerErrors.fieldErrors.notes)}
-                />
-                <FieldError
-                  name="notes"
-                  message={sellerErrors.fieldErrors.notes}
-                />
-              </div>
+                  <div>
+                    <Label htmlFor="sale-source">Fuente</Label>
+                    <Select
+                      value={sellerSource}
+                      onValueChange={(v) => {
+                        setSellerSource(v as SaleSource)
+                        sellerErrors.clearField("source")
+                      }}
+                    >
+                      <SelectTrigger
+                        id="sale-source"
+                        className="mt-2 w-full"
+                        {...fieldErrorProps(
+                          "source",
+                          sellerErrors.fieldErrors.source
+                        )}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SALE_SOURCES.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FieldError
+                      name="source"
+                      message={sellerErrors.fieldErrors.source}
+                    />
+                  </div>
 
+                  <div>
+                    <Label htmlFor="sale-notes">Notas de venta</Label>
+                    <Textarea
+                      id="sale-notes"
+                      rows={2}
+                      className="mt-2"
+                      value={sellerNotes}
+                      onChange={(e) => {
+                        setSellerNotes(e.target.value)
+                        sellerErrors.clearField("notes")
+                      }}
+                      placeholder="Observaciones adicionales"
+                      {...fieldErrorProps(
+                        "notes",
+                        sellerErrors.fieldErrors.notes
+                      )}
+                    />
+                    <FieldError
+                      name="notes"
+                      message={sellerErrors.fieldErrors.notes}
+                    />
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div className="flex justify-end border-t p-4 md:px-6">
               <Button
                 type="submit"
-                variant="success"
-                className="w-full"
+                size="lg"
                 disabled={createSellerSale.isPending}
               >
                 {createSellerSale.isPending
                   ? "Guardando..."
                   : "Guardar venta vendedor"}
               </Button>
-            </form>
-          </Card>
+            </div>
+          </form>
         )}
 
-        {/* Columna central: Dirección — solo Admin/Director */}
+        {/* Dirección + ATC — solo Admin/Director */}
         {isAdminOrDirector && (
-          <div className="rounded-xl bg-tracker-dark p-5">
-            <h3 className="mb-1 text-sm font-black text-white">
-              Ventas Dirección
-            </h3>
-            <p className="mb-4 text-xs text-slate-400">
-              Cuentas cerradas directamente por Dirección Comercial
-            </p>
+          <div className="col-span-12 grid gap-px bg-border xl:grid-cols-2">
             <form
               ref={dirFormRef}
               onSubmit={handleDirSubmit}
-              className="space-y-3"
+              className="flex flex-col bg-background"
             >
-              <FormErrorSummary error={dirErrors.summary} />
+              <section className="flex-1 p-4 md:p-6">
+                <h2 className="text-base font-semibold">Ventas Dirección</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Cuentas cerradas directamente por Dirección Comercial
+                </p>
+                <div className="mt-6 flex flex-col gap-6">
+                  <FormErrorSummary error={dirErrors.summary} />
 
-              <div>
-                <label className="slabel mb-1 text-tracker-text-muted">
-                  Fecha
-                </label>
-                <DatePickerField
-                  value={dirDate}
-                  onChange={(v) => {
-                    setDirDate(v)
-                    dirErrors.clearField("date")
-                  }}
-                  {...fieldErrorProps("date", dirErrors.fieldErrors.date)}
-                />
-                <FieldError name="date" message={dirErrors.fieldErrors.date} />
+                  <div>
+                    <Label>Fecha</Label>
+                    <div className="mt-2">
+                      <DatePickerField
+                        value={dirDate}
+                        onChange={(v) => {
+                          setDirDate(v)
+                          dirErrors.clearField("date")
+                        }}
+                        {...fieldErrorProps("date", dirErrors.fieldErrors.date)}
+                      />
+                    </div>
+                    <FieldError
+                      name="date"
+                      message={dirErrors.fieldErrors.date}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sale-dir-project">Cuenta / Proyecto</Label>
+                    <Input
+                      id="sale-dir-project"
+                      type="text"
+                      className="mt-2"
+                      value={dirProject}
+                      onChange={(e) => {
+                        setDirProject(e.target.value)
+                        dirErrors.clearField("product")
+                        dirErrors.clearField("clientName")
+                      }}
+                      placeholder="Nombre de la cuenta o proyecto"
+                      required
+                      {...fieldErrorProps(
+                        "product",
+                        dirErrors.fieldErrors.product ??
+                          dirErrors.fieldErrors.clientName
+                      )}
+                    />
+                    <FieldError
+                      name="product"
+                      message={
+                        dirErrors.fieldErrors.product ??
+                        dirErrors.fieldErrors.clientName
+                      }
+                    />
+                  </div>
+
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="sale-dir-units">Unidades Dirección</Label>
+                      <Input
+                        id="sale-dir-units"
+                        type="number"
+                        min="1"
+                        className="mt-2"
+                        value={dirUnits}
+                        onChange={(e) => {
+                          setDirUnits(
+                            e.target.value === "" ? "" : Number(e.target.value)
+                          )
+                          dirErrors.clearField("units")
+                        }}
+                        required
+                        {...fieldErrorProps(
+                          "units",
+                          dirErrors.fieldErrors.units
+                        )}
+                      />
+                      <FieldError
+                        name="units"
+                        message={dirErrors.fieldErrors.units}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="sale-dir-amount">Monto Dirección</Label>
+                      <Input
+                        id="sale-dir-amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="mt-2"
+                        value={dirAmount}
+                        onChange={(e) => {
+                          setDirAmount(
+                            e.target.value === "" ? "" : Number(e.target.value)
+                          )
+                          dirErrors.clearField("amount")
+                        }}
+                        required
+                        {...fieldErrorProps(
+                          "amount",
+                          dirErrors.fieldErrors.amount
+                        )}
+                      />
+                      <FieldError
+                        name="amount"
+                        message={dirErrors.fieldErrors.amount}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sale-dir-notes">Notas Dirección</Label>
+                    <Textarea
+                      id="sale-dir-notes"
+                      rows={2}
+                      className="mt-2"
+                      value={dirNotes}
+                      onChange={(e) => {
+                        setDirNotes(e.target.value)
+                        dirErrors.clearField("notes")
+                      }}
+                      placeholder="Observaciones adicionales"
+                      {...fieldErrorProps("notes", dirErrors.fieldErrors.notes)}
+                    />
+                    <FieldError
+                      name="notes"
+                      message={dirErrors.fieldErrors.notes}
+                    />
+                  </div>
+                </div>
+              </section>
+              <div className="flex justify-end border-t p-4 md:px-6">
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={createDirSale.isPending}
+                >
+                  {createDirSale.isPending
+                    ? "Guardando..."
+                    : "Guardar Venta Dirección"}
+                </Button>
               </div>
-
-              <div>
-                <label className="slabel mb-1 text-tracker-text-muted">
-                  Cuenta / Proyecto
-                </label>
-                <Input
-                  type="text"
-                  value={dirProject}
-                  onChange={(e) => {
-                    setDirProject(e.target.value)
-                    dirErrors.clearField("product")
-                    dirErrors.clearField("clientName")
-                  }}
-                  placeholder="Nombre de la cuenta o proyecto"
-                  required
-                  {...fieldErrorProps(
-                    "product",
-                    dirErrors.fieldErrors.product ??
-                      dirErrors.fieldErrors.clientName
-                  )}
-                />
-                <FieldError
-                  name="product"
-                  message={
-                    dirErrors.fieldErrors.product ??
-                    dirErrors.fieldErrors.clientName
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="slabel mb-1 text-tracker-text-muted">
-                  Unidades Dirección
-                </label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={dirUnits}
-                  onChange={(e) => {
-                    setDirUnits(
-                      e.target.value === "" ? "" : Number(e.target.value)
-                    )
-                    dirErrors.clearField("units")
-                  }}
-                  required
-                  {...fieldErrorProps("units", dirErrors.fieldErrors.units)}
-                />
-                <FieldError
-                  name="units"
-                  message={dirErrors.fieldErrors.units}
-                />
-              </div>
-
-              <div>
-                <label className="slabel mb-1 text-tracker-text-muted">
-                  Monto Dirección
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={dirAmount}
-                  onChange={(e) => {
-                    setDirAmount(
-                      e.target.value === "" ? "" : Number(e.target.value)
-                    )
-                    dirErrors.clearField("amount")
-                  }}
-                  required
-                  {...fieldErrorProps("amount", dirErrors.fieldErrors.amount)}
-                />
-                <FieldError
-                  name="amount"
-                  message={dirErrors.fieldErrors.amount}
-                />
-              </div>
-
-              <div>
-                <label className="slabel mb-1 text-tracker-text-muted">
-                  Notas Dirección
-                </label>
-                <Textarea
-                  rows={2}
-                  value={dirNotes}
-                  onChange={(e) => {
-                    setDirNotes(e.target.value)
-                    dirErrors.clearField("notes")
-                  }}
-                  placeholder="Observaciones adicionales"
-                  {...fieldErrorProps("notes", dirErrors.fieldErrors.notes)}
-                />
-                <FieldError
-                  name="notes"
-                  message={dirErrors.fieldErrors.notes}
-                />
-              </div>
-
-              <Button
-                type="submit"
-                variant="success"
-                className="w-full"
-                disabled={createDirSale.isPending}
-              >
-                {createDirSale.isPending
-                  ? "Guardando..."
-                  : "Guardar Venta Dirección"}
-              </Button>
             </form>
-          </div>
-        )}
 
-        {/* Columna derecha: ATC — solo Admin/Director */}
-        {isAdminOrDirector && (
-          <Card className="p-5">
-            <h3 className="mb-1 text-sm font-black text-[#002B49]">
-              Registrar ATC
-            </h3>
-            <p className="mb-4 text-xs text-slate-500">
-              ATC solo registra clientes existentes
-            </p>
             <form
               ref={atcFormRef}
               onSubmit={handleAtcSubmit}
-              className="space-y-3"
+              className="flex flex-col bg-background"
             >
-              <FormErrorSummary error={atcErrors.summary} />
+              <section className="flex-1 p-4 md:p-6">
+                <h2 className="text-base font-semibold">Registrar ATC</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  ATC solo registra clientes existentes
+                </p>
+                <div className="mt-6 flex flex-col gap-6">
+                  <FormErrorSummary error={atcErrors.summary} />
 
-              <div>
-                <label className="slabel mb-1">Fecha</label>
-                <DatePickerField
-                  value={atcDate}
-                  onChange={(v) => {
-                    setAtcDate(v)
-                    atcErrors.clearField("date")
-                  }}
-                  {...fieldErrorProps("date", atcErrors.fieldErrors.date)}
-                />
-                <FieldError name="date" message={atcErrors.fieldErrors.date} />
+                  <div>
+                    <Label>Fecha</Label>
+                    <div className="mt-2">
+                      <DatePickerField
+                        value={atcDate}
+                        onChange={(v) => {
+                          setAtcDate(v)
+                          atcErrors.clearField("date")
+                        }}
+                        {...fieldErrorProps("date", atcErrors.fieldErrors.date)}
+                      />
+                    </div>
+                    <FieldError
+                      name="date"
+                      message={atcErrors.fieldErrors.date}
+                    />
+                  </div>
+
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="sale-atc-units">Unidades ATC</Label>
+                      <Input
+                        id="sale-atc-units"
+                        type="number"
+                        min="1"
+                        className="mt-2"
+                        value={atcUnits}
+                        onChange={(e) => {
+                          setAtcUnits(
+                            e.target.value === "" ? "" : Number(e.target.value)
+                          )
+                          atcErrors.clearField("units")
+                        }}
+                        required
+                        {...fieldErrorProps(
+                          "units",
+                          atcErrors.fieldErrors.units
+                        )}
+                      />
+                      <FieldError
+                        name="units"
+                        message={atcErrors.fieldErrors.units}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="sale-atc-amount">Monto pagado ATC</Label>
+                      <Input
+                        id="sale-atc-amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="mt-2"
+                        value={atcAmount}
+                        onChange={(e) => {
+                          setAtcAmount(
+                            e.target.value === "" ? "" : Number(e.target.value)
+                          )
+                          atcErrors.clearField("amount")
+                        }}
+                        required
+                        {...fieldErrorProps(
+                          "amount",
+                          atcErrors.fieldErrors.amount
+                        )}
+                      />
+                      <FieldError
+                        name="amount"
+                        message={atcErrors.fieldErrors.amount}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sale-atc-notes">Notas ATC</Label>
+                    <Textarea
+                      id="sale-atc-notes"
+                      rows={2}
+                      className="mt-2"
+                      value={atcNotes}
+                      onChange={(e) => {
+                        setAtcNotes(e.target.value)
+                        atcErrors.clearField("notes")
+                      }}
+                      placeholder="Observaciones adicionales"
+                      {...fieldErrorProps("notes", atcErrors.fieldErrors.notes)}
+                    />
+                    <FieldError
+                      name="notes"
+                      message={atcErrors.fieldErrors.notes}
+                    />
+                  </div>
+                </div>
+              </section>
+              <div className="flex justify-end border-t p-4 md:px-6">
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={createAtcSale.isPending}
+                >
+                  {createAtcSale.isPending ? "Guardando..." : "Guardar ATC"}
+                </Button>
               </div>
-
-              <div>
-                <label className="slabel mb-1">Unidades ATC</label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={atcUnits}
-                  onChange={(e) => {
-                    setAtcUnits(
-                      e.target.value === "" ? "" : Number(e.target.value)
-                    )
-                    atcErrors.clearField("units")
-                  }}
-                  required
-                  {...fieldErrorProps("units", atcErrors.fieldErrors.units)}
-                />
-                <FieldError
-                  name="units"
-                  message={atcErrors.fieldErrors.units}
-                />
-              </div>
-
-              <div>
-                <label className="slabel mb-1">Monto pagado ATC</label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={atcAmount}
-                  onChange={(e) => {
-                    setAtcAmount(
-                      e.target.value === "" ? "" : Number(e.target.value)
-                    )
-                    atcErrors.clearField("amount")
-                  }}
-                  required
-                  {...fieldErrorProps("amount", atcErrors.fieldErrors.amount)}
-                />
-                <FieldError
-                  name="amount"
-                  message={atcErrors.fieldErrors.amount}
-                />
-              </div>
-
-              <div>
-                <label className="slabel mb-1">Notas ATC</label>
-                <Textarea
-                  rows={2}
-                  value={atcNotes}
-                  onChange={(e) => {
-                    setAtcNotes(e.target.value)
-                    atcErrors.clearField("notes")
-                  }}
-                  placeholder="Observaciones adicionales"
-                  {...fieldErrorProps("notes", atcErrors.fieldErrors.notes)}
-                />
-                <FieldError
-                  name="notes"
-                  message={atcErrors.fieldErrors.notes}
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={createAtcSale.isPending}
-              >
-                {createAtcSale.isPending ? "Guardando..." : "Guardar ATC"}
-              </Button>
             </form>
-          </Card>
-        )}
-      </div>
-
-      {/* VENTAS REGISTRADAS */}
-      <div>
-        <p className="slabel mb-4">VENTAS REGISTRADAS</p>
-
-        {summary && (
-          <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <Card className="p-4">
-              <p className="slabel mb-1">Total ventas</p>
-              <p className="text-2xl font-black text-[#002B49]">
-                {summary.total}
-              </p>
-            </Card>
-            <Card className="p-4">
-              <p className="slabel mb-1">Unidades</p>
-              <p className="text-2xl font-black text-[#002B49]">
-                {summary.totalUnits}
-              </p>
-            </Card>
-            <Card className="p-4">
-              <p className="slabel mb-1">Monto total</p>
-              <p className="text-lg font-black text-[#82bc00]">
-                {formatCurrency(summary.totalAmount)}
-              </p>
-            </Card>
-            <Card className="p-4">
-              <p className="slabel mb-1">Nuevos / Existentes</p>
-              <p className="text-base font-bold text-[#002B49]">
-                {summary.unitsByClientType.Nuevo} /{" "}
-                {summary.unitsByClientType.Existente}
-              </p>
-              <p className="text-xs text-slate-400">unidades</p>
-            </Card>
           </div>
         )}
 
-        <Card>
+        {/* Ventas registradas */}
+        {summary && (
+          <>
+            <StatCard
+              className="col-span-12 sm:col-span-6 xl:col-span-3"
+              label="Total ventas"
+              value={summary.total}
+              icon={<BarChartIcon size={16} />}
+            />
+            <StatCard
+              className="col-span-12 sm:col-span-6 xl:col-span-3"
+              label="Unidades"
+              value={summary.totalUnits}
+              icon={<ChecklistIcon size={16} />}
+            />
+            <StatCard
+              className="col-span-12 sm:col-span-6 xl:col-span-3"
+              label="Monto total"
+              value={formatCurrency(summary.totalAmount)}
+              icon={<DollarIcon size={16} />}
+            />
+            <StatCard
+              className="col-span-12 sm:col-span-6 xl:col-span-3"
+              label="Nuevos / Existentes"
+              value={`${summary.unitsByClientType.Nuevo} / ${summary.unitsByClientType.Existente}`}
+              icon={<UsersIcon size={16} />}
+              description="unidades"
+            />
+          </>
+        )}
+
+        <SectionCard
+          title="Ventas registradas"
+          icon={<DollarIcon size={16} />}
+        >
           {loadingList && (
-            <div className="space-y-3 p-6">
+            <div
+              role="status"
+              aria-label="Cargando ventas"
+              className="flex flex-col gap-3 p-4"
+            >
               {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-12 animate-pulse rounded-md bg-slate-100"
-                />
+                <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
           )}
           {isError && (
-            <p className="p-6 text-sm text-red-600">
+            <p className="p-4 text-sm text-status-danger">
               No se pudo cargar el historial.
             </p>
           )}
           {!loadingList && !isError && data && data.data.length === 0 && (
-            <p className="p-6 text-sm text-slate-500">
-              No hay ventas registradas.
-            </p>
+            <EmptyState
+              icon={<DollarIcon size={20} />}
+              title="No hay ventas registradas."
+            />
           )}
           {!loadingList && !isError && data && data.data.length > 0 && (
-            <div className="divide-y divide-slate-100">
-              {data.data.map((sale) => (
-                <div
-                  key={sale.id}
-                  className="flex items-center justify-between px-6 py-4"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-slate-800">
-                      {sale.clientName}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {sale.product} · {sale.units} ud. · {sale.date}
-                    </p>
-                  </div>
-                  <div className="ml-4 flex items-center gap-3">
-                    <Badge
-                      variant={sale.clientType === "Nuevo" ? "blue" : "gray"}
-                    >
-                      {sale.clientType}
-                    </Badge>
-                    <Badge
-                      variant={
-                        sale.type === "seller"
-                          ? "navy"
-                          : sale.type === "atc"
-                            ? "amber"
-                            : "purple"
-                      }
-                    >
-                      {sale.type}
-                    </Badge>
-                    <span className="text-sm font-bold text-[#82bc00]">
-                      {formatCurrency(sale.amount)}
-                    </span>
-                    {isAdminOrDirector && (
-                      <DropdownMenu>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon-xs"
-                                aria-label={`Acciones de venta ${sale.clientName}`}
-                              >
-                                <MoreHorizontalIcon />
-                              </Button>
-                            </DropdownMenuTrigger>
-                          </TooltipTrigger>
-                          <TooltipContent>Acciones de venta</TooltipContent>
-                        </Tooltip>
-                        <DropdownMenuContent align="end" className="min-w-44">
-                          <DropdownMenuItem
-                            onSelect={() => setEditingSale(sale)}
-                          >
-                            Editar venta
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onSelect={() => setDeletingSale(sale)}
-                          >
-                            Eliminar venta
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <DataTable
+              columns={columns}
+              data={data.data}
+              getRowId={(s) => s.id}
+            />
           )}
-        </Card>
+        </SectionCard>
       </div>
 
       {editingSale && (

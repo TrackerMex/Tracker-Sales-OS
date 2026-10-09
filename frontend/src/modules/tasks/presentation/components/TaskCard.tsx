@@ -35,8 +35,7 @@ import {
   TrashIcon,
   MoreHorizontalIcon,
 } from "@/shared/components/Icon"
-import { TYPE_TAG } from "./task-card.constants"
-import { cn } from "@/lib/utils"
+import { StatusBadge } from "@/shared/components/data/StatusBadge"
 
 interface TaskCardProps {
   task: Task
@@ -83,66 +82,45 @@ export function TaskCard({
   const [deleteOpen, setDeleteOpen] = useState(false)
   const isOverdue = task.isOverdue && task.status === "Pendiente"
   const aiComment = getAiComment(task, clientName ?? null)
-  const typeTagVariant = task.type ? (TYPE_TAG[task.type] ?? "gray") : null
 
   return (
-    <div
-      className={cn(
-        "card flex items-start justify-between gap-3 p-3.5",
-        task.status === "Completado" && "opacity-50"
-      )}
-    >
+    <div className="flex items-start justify-between gap-3 p-4">
       <div className="min-w-0 flex-1">
-        {/* Row 1: time + type badge */}
-        <div className="mb-0.5 flex items-center gap-2">
-          <span className="text-xl leading-none font-bold text-tracker-text">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-base leading-none font-semibold text-foreground tabular-nums">
             {formatTime(task.scheduledAt)}
           </span>
-          {typeTagVariant && (
-            <Badge
-              variant={typeTagVariant}
-              className="inline-flex items-center gap-1"
-            >
+          {task.type && (
+            <Badge variant="outline">
               <ChecklistIcon />
               {task.type}
             </Badge>
           )}
+          {isOverdue && <StatusBadge status="Vencida" />}
         </div>
 
-        {/* Row 2: client name */}
         {clientName && (
-          <p className="mb-0.5 flex items-center gap-1 text-[13px] font-semibold text-slate-700">
-            <BuildingIcon color="#334155" />
+          <p className="mt-2 flex items-center gap-1 text-sm font-medium text-foreground">
+            <BuildingIcon size={14} className="text-muted-foreground" />
             {clientName}
           </p>
         )}
 
-        {/* Row 3: task title */}
-        <p className="mb-1 text-xs text-tracker-text-secondary">{task.title}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{task.title}</p>
 
-        {/* Row 4: date + contact + overdue badge */}
-        <div
-          className={cn(
-            "flex flex-wrap items-center gap-2.5",
-            aiComment && "mb-1"
-          )}
-        >
-          <span className="text-[11px] text-tracker-text-muted">
-            {formatDate(task.scheduledAt)}
-          </span>
+        <div className="mt-1 flex flex-wrap items-center gap-2.5 text-xs text-muted-foreground">
+          <span>{formatDate(task.scheduledAt)}</span>
           {contactName && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-tracker-text-muted">
-              <UserIcon color="#94A3B8" />
+            <span className="inline-flex items-center gap-1">
+              <UserIcon size={14} />
               {contactName}
             </span>
           )}
-          {isOverdue && <Badge variant="red">Vencida</Badge>}
         </div>
 
-        {/* AI comment */}
         {aiComment && (
-          <p className="text-[11.5px] font-medium text-tracker-purple">
-            IA: {aiComment}
+          <p className="mt-2 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">IA:</span> {aiComment}
           </p>
         )}
       </div>
@@ -151,7 +129,7 @@ export function TaskCard({
         {task.status === "Pendiente" ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="success" size="sm">
+              <Button size="sm">
                 <CheckCircleIcon />
                 Completar
               </Button>
@@ -173,7 +151,7 @@ export function TaskCard({
             </AlertDialogContent>
           </AlertDialog>
         ) : (
-          <Badge variant="gray">Completada</Badge>
+          <StatusBadge status="Completada" />
         )}
 
         <DropdownMenu>

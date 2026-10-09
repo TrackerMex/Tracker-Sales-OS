@@ -10,9 +10,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/shared/components/forms/DatePickerField';
@@ -83,135 +83,165 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="w-[min(calc(100vw-2rem),720px)] max-w-none max-h-[90vh] overflow-y-auto sm:max-w-none">
-        <DialogHeader>
+      <DialogContent className="max-h-[92vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-3xl">
+        <DialogHeader className="border-b p-4 md:p-6">
           <DialogTitle>Editar venta</DialogTitle>
           <DialogDescription>
             Actualiza los datos registrados para esta venta.
           </DialogDescription>
         </DialogHeader>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
-          <FormErrorSummary error={errors.summary} />
-
-          <div>
-            <label className="slabel mb-1">Fecha</label>
-            <DatePickerField
-              value={date}
-              onChange={setDate}
-            />
-          </div>
-
-          {(sale.type === 'direction' || sale.type === 'seller') && (
-            <div>
-              <label className="slabel mb-1">
-                {sale.type === 'direction' ? 'Proyecto / Cuenta' : 'Cliente'}
-              </label>
-              <Input
-                type="text"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                required
-              />
+        <form ref={formRef} onSubmit={handleSubmit}>
+          {errors.summary && (
+            <div className="p-4 pb-0 md:px-6">
+              <FormErrorSummary error={errors.summary} />
             </div>
           )}
 
-          {sale.type === 'seller' && (
-            <div>
-              <label className="slabel mb-1">Producto</label>
-              <Input
-                type="text"
-                value={product}
-                onChange={(e) => setProduct(e.target.value)}
-                required
-              />
-            </div>
-          )}
+          <div className="grid gap-px bg-border xl:grid-cols-2">
+            <section className="bg-background p-4 md:p-6">
+              <h5 className="text-base font-semibold">Venta</h5>
+              <div className="mt-6 flex flex-col gap-6">
+                <div>
+                  <Label>Fecha</Label>
+                  <div className="mt-2">
+                    <DatePickerField
+                      value={date}
+                      onChange={setDate}
+                    />
+                  </div>
+                </div>
 
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <div>
-              <label className="slabel mb-1">Unidades</label>
-              <Input
-                type="number"
-                min="1"
-                value={units}
-                onChange={(e) => setUnits(e.target.value === '' ? '' : Number(e.target.value))}
-                required
-              />
-            </div>
-            <div>
-              <label className="slabel mb-1">Monto</label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                required
-              />
-            </div>
-          </div>
+                {(sale.type === 'direction' || sale.type === 'seller') && (
+                  <div>
+                    <Label htmlFor="edit-sale-client">
+                      {sale.type === 'direction' ? 'Proyecto / Cuenta' : 'Cliente'}
+                    </Label>
+                    <Input
+                      id="edit-sale-client"
+                      type="text"
+                      className="mt-2"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
 
-          {sale.type === 'seller' && (
-            <>
-              <div>
-                <label className="slabel mb-1">Forma de pago</label>
-                <Select
-                  value={pay}
-                  onValueChange={(v) => setPay(v as PaymentMethod)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAYMENT_METHODS.map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {sale.type === 'seller' && (
+                  <div>
+                    <Label htmlFor="edit-sale-product">Producto</Label>
+                    <Input
+                      id="edit-sale-product"
+                      type="text"
+                      className="mt-2"
+                      value={product}
+                      onChange={(e) => setProduct(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div>
+                    <Label htmlFor="edit-sale-units">Unidades</Label>
+                    <Input
+                      id="edit-sale-units"
+                      type="number"
+                      min="1"
+                      className="mt-2"
+                      value={units}
+                      onChange={(e) => setUnits(e.target.value === '' ? '' : Number(e.target.value))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-sale-amount">Monto</Label>
+                    <Input
+                      id="edit-sale-amount"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="mt-2"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                      required
+                    />
+                  </div>
+                </div>
               </div>
+            </section>
 
-              <div>
-                <label className="slabel mb-1">Fuente</label>
-                <Select
-                  value={source}
-                  onValueChange={(v) => setSource(v as SaleSource)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SALE_SOURCES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <section className="bg-background p-4 md:p-6">
+              <h5 className="text-base font-semibold">
+                {sale.type === 'seller' ? 'Pago y origen' : 'Notas'}
+              </h5>
+              <div className="mt-6 flex flex-col gap-6">
+                {sale.type === 'seller' && (
+                  <>
+                    <div>
+                      <Label htmlFor="edit-sale-pay">Forma de pago</Label>
+                      <Select
+                        value={pay}
+                        onValueChange={(v) => setPay(v as PaymentMethod)}
+                      >
+                        <SelectTrigger id="edit-sale-pay" className="mt-2 w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PAYMENT_METHODS.map((m) => (
+                            <SelectItem key={m} value={m}>
+                              {m}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="edit-sale-source">Fuente</Label>
+                      <Select
+                        value={source}
+                        onValueChange={(v) => setSource(v as SaleSource)}
+                      >
+                        <SelectTrigger id="edit-sale-source" className="mt-2 w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SALE_SOURCES.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <Label htmlFor="edit-sale-notes">Notas</Label>
+                  <Textarea
+                    id="edit-sale-notes"
+                    rows={2}
+                    className="mt-2"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Observaciones adicionales"
+                  />
+                </div>
               </div>
-            </>
-          )}
-
-          <div>
-            <label className="slabel mb-1">Notas</label>
-            <Textarea
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Observaciones adicionales"
-            />
+            </section>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={onClose}>
+          <div className="flex justify-end gap-2 border-t p-4 md:px-6">
+            <Button type="button" variant="ghost" size="lg" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={updateSale.isPending}>
+            <Button type="submit" size="lg" disabled={updateSale.isPending}>
               {updateSale.isPending ? 'Guardando...' : 'Guardar cambios'}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

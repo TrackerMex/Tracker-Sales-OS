@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: 'Noto Sans Arabic Variable', sans-serif;
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -20,6 +20,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-status-success: var(--status-success);
+  --color-status-progress: var(--status-progress);
+  --color-status-danger: var(--status-danger);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -63,75 +66,87 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --shadow-md: 0 1px 4px rgba(133, 146, 173, 0.2);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
 }
 
 :root {
   --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0.008 326);
+  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0.008 326);
+  --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0.008 326);
-  --primary: oklch(0.508 0.118 165.612);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.96 0.003 325.6);
-  --muted-foreground: oklch(0.542 0.034 322.5);
-  --accent: oklch(0.96 0.003 325.6);
-  --accent-foreground: oklch(0.212 0.019 322.12);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0.005 325.62);
-  --input: oklch(0.922 0.005 325.62);
-  --ring: oklch(0.711 0.019 323.02);
-  --chart-1: oklch(0.808 0.114 19.571);
-  --chart-2: oklch(0.637 0.237 25.331);
-  --chart-3: oklch(0.577 0.245 27.325);
-  --chart-4: oklch(0.505 0.213 27.518);
-  --chart-5: oklch(0.444 0.177 26.899);
-  --radius: 0.45rem;
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  /* Status text/icons: darker step of chart-2 / chart-1 / destructive (AA on tints). */
+  --status-success: oklch(0.511 0.096 186.391);
+  --status-progress: oklch(0.47 0.157 37.304);
+  --status-danger: oklch(0.505 0.213 27.518);
+  --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0.008 326);
-  --sidebar-primary: oklch(0.596 0.145 163.225);
-  --sidebar-primary-foreground: oklch(0.979 0.021 166.113);
-  --sidebar-accent: oklch(0.96 0.003 325.6);
-  --sidebar-accent-foreground: oklch(0.212 0.019 322.12);
-  --sidebar-border: oklch(0.922 0.005 325.62);
-  --sidebar-ring: oklch(0.711 0.019 323.02);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 .dark {
-  --background: oklch(0.145 0.008 326);
+  color-scheme: dark;
+  --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.212 0.019 322.12);
+  --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.212 0.019 322.12);
+  --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.432 0.095 166.913);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.274 0.006 286.033);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.263 0.024 320.12);
-  --muted-foreground: oklch(0.711 0.019 323.02);
-  --accent: oklch(0.263 0.024 320.12);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.542 0.034 322.5);
-  --chart-1: oklch(0.808 0.114 19.571);
-  --chart-2: oklch(0.637 0.237 25.331);
-  --chart-3: oklch(0.577 0.245 27.325);
-  --chart-4: oklch(0.505 0.213 27.518);
-  --chart-5: oklch(0.444 0.177 26.899);
-  --sidebar: oklch(0.212 0.019 322.12);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  /* chart-2 lightened: 4.39 → 5.20 on card/popover (review 010 M1). */
+  --status-success: oklch(0.65 0.118 184.704);
+  --status-progress: var(--chart-1);
+  --status-danger: var(--destructive);
+  --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.696 0.17 162.48);
-  --sidebar-primary-foreground: oklch(0.262 0.051 172.552);
-  --sidebar-accent: oklch(0.263 0.024 320.12);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.542 0.034 322.5);
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {
@@ -149,14 +164,13 @@
     @apply font-sans;
     scroll-behavior: smooth;
   }
-
-  /* Keyboard focus styles */
-  button:focus-visible,
-  a:focus-visible,
-  input:focus-visible,
-  [role="button"]:focus-visible {
-    outline: 2px solid var(--tracker-green);
-    outline-offset: 2px;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold;
   }
 }
 
@@ -184,16 +198,6 @@
   --tracker-warning-dark: #b45309;
   --tracker-purple: #6d28d9;
 
-  /* shadcn sidebar — Tracker dark theme override */
-  --sidebar: #001524;
-  --sidebar-foreground: rgba(255, 255, 255, 0.85);
-  --sidebar-primary: #82bc00;
-  --sidebar-primary-foreground: #001524;
-  --sidebar-accent: rgba(130, 188, 0, 0.13);
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-ring: #82bc00;
-
   /* 4pt spacing scale */
   --sp-1: 4px;
   --sp-2: 8px;
@@ -210,6 +214,11 @@
   --page-gap: var(--sp-4);
 }
 
+/* =============================================
+   Legacy classes (pending removal in phase 012).
+   Inside a layer so Tailwind utilities win over them.
+   ============================================= */
+@layer components {
 /* Utility classes */
 .card {
   @apply rounded-xl border bg-white shadow-sm;
@@ -412,11 +421,6 @@
 .modal-blur {
   backdrop-filter: blur(8px);
   background-color: rgba(0, 21, 36, 0.55);
-}
-
-/* Body background */
-body {
-  background: var(--tracker-bg);
 }
 
 /* === SIDEBAR === */
@@ -709,15 +713,6 @@ body {
   color: rgba(255, 255, 255, 0.4);
 }
 
-/* === HARDENING: REDUCED MOTION === */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
 /* === HARDENING: TEXT OVERFLOW === */
 .kpi-cell .kl {
   overflow: hidden;
@@ -753,11 +748,6 @@ body {
 
 /* === MOBILE: RESPONSIVE OVERRIDES === */
 @media (max-width: 767px) {
-  /* Tighter page padding */
-  main {
-    padding: var(--sp-3) !important;
-  }
-
   /* KPI values smaller */
   .kpi-cell .kv {
     font-size: 18px;
@@ -791,4 +781,43 @@ body {
 .dt-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+}
+
+/* === HARDENING: REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =============================================
+   Sidebar mini (collapsed icon rail), ported from the shadcn-dashboard
+   template (`[data-sidebar-type="true"]` block of its globals.css).
+   `.sidebar-box` is the fixed sidebar-container (AppSidebar className).
+   Labels and the footer carry `hide-menu`; hovering the rail (or keyboard
+   focus inside it, via :focus-visible so a mouse click does not leave it
+   open) widens it to --sidebar-width as an overlay.
+   The footer (user row) opens on hover only: a control that renders only
+   while focus is inside the rail cannot be reached with Tab (Chrome drops
+   focus to <body>). Keyboard users log out from the header profile Sheet.
+   ============================================= */
+[data-slot="sidebar"][data-collapsible="icon"] {
+  .sidebar-box .hide-menu {
+    display: none;
+  }
+  .sidebar-box:is(:hover, :has(:focus-visible)) {
+    width: var(--sidebar-width);
+    transition: width 0.3s ease-in-out;
+
+    span.hide-menu {
+      display: inline-block;
+      white-space: nowrap;
+    }
+  }
+  .sidebar-box:hover div.hide-menu {
+    display: flex;
+  }
 }

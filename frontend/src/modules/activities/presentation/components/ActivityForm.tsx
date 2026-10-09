@@ -15,6 +15,8 @@ import type { Client } from "@/modules/clients/domain/clients.types"
 import { useAppStore } from "@/shared/store/app.store"
 import { coachingApi } from "@/modules/coaching/infrastructure/coaching.api"
 import { useApiFormErrors } from "@/shared/lib/api-errors"
+import { STATUS_FILL_CLASS, type StatusTone } from "@/shared/lib/status"
+import { cn } from "@/lib/utils"
 import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
 import { FieldError } from "@/shared/components/forms/FieldError"
 import { fieldErrorProps } from "@/shared/components/forms/field-error-props"
@@ -22,6 +24,7 @@ import { ClientCombobox } from "@/shared/components/forms/ClientCombobox"
 import { DatePickerField } from "@/shared/components/forms/DatePickerField"
 import { TimePickerField } from "@/shared/components/forms/TimePickerField"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import {
@@ -173,8 +176,8 @@ export function ActivityForm({
     nextDate,
     nextTime,
   })
-  const qualityColor =
-    quality >= 80 ? "#82bc00" : quality >= 40 ? "#F59E0B" : "#EF4444"
+  const qualityTone: StatusTone =
+    quality >= 80 ? "success" : quality >= 40 ? "pending" : "danger"
 
   function getCoachMessage(): string {
     if (needsNextStep) {
@@ -271,511 +274,557 @@ export function ActivityForm({
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="card space-y-4 p-6">
-      <div>
-        <h2 className="text-lg font-bold text-slate-900">
+    <form ref={formRef} onSubmit={handleSubmit} className="bg-background">
+      <div className="border-b p-4 md:p-6">
+        <h2 className="text-base font-semibold">
           Registrar actividad comercial
         </h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Llamadas, videoconferencias, visitas y propuestas requieren siguiente
           paso.
         </p>
       </div>
 
-      <FormErrorSummary error={errorSummary} />
-
-      {/* Sección 1 — Contexto */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Cliente */}
-        <div>
-          <label className="slabel">Cliente *</label>
-          <ClientCombobox
-            id="clientId"
-            value={clientId}
-            onSelect={(client) => {
-              const changed = (client?.id ?? "") !== clientId
-              setClientId(client?.id ?? "")
-              setSelectedClient(client)
-              if (changed) {
-                setContactId("")
-                setSelectedOpportunityId("")
-                setNewOpportunityName("")
-              }
-              setClientError("")
-              clearField("clientId")
-            }}
-            onResolve={(client) => setSelectedClient(client)}
-            initialLabel={initialClientLabel}
-            placeholder="Sin cliente"
-            error={!!fieldErrors.clientId}
-          />
-          {clientError && (
-            <p className="mt-1 text-xs text-red-500">{clientError}</p>
-          )}
-          <FieldError name="clientId" message={fieldErrors.clientId} />
-        </div>
-
-        {/* Contacto */}
-        <div>
-          <label className="slabel">Contacto</label>
-          <Select
-            value={contactId}
-            onValueChange={(v) => {
-              setContactId(v === "__none__" ? "" : v)
-              clearField("contactId")
-            }}
-            disabled={!clientId || contacts.length === 0}
-          >
-            <SelectTrigger
-              {...fieldErrorProps("contactId", fieldErrors.contactId)}
-            >
-              <SelectValue
-                placeholder={
-                  !clientId
-                    ? "Selecciona un cliente primero"
-                    : contacts.length === 0
-                      ? "Sin contactos"
-                      : "Seleccionar contacto..."
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">Sin contacto</SelectItem>
-              {contacts.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name} — {c.role}
-                  {c.isDecisionMaker ? " (Decisor)" : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FieldError name="contactId" message={fieldErrors.contactId} />
-        </div>
-
-        {/* Oportunidad (span 2 cols, solo si hay cliente y no es no-comercial) */}
-        {clientId && !isNonCommercial && (
-          <div className="col-span-full">
-            <label className="slabel">Oportunidad / Proyecto</label>
-            <Select
-              value={selectedOpportunityId}
-              onValueChange={(v) => {
-                const next = v === "__none__" ? "" : v
-                setSelectedOpportunityId(next)
-                const deal = clientDeals?.find((d) => d.id === next)
-                if (deal && !stage) setStage(deal.stage)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sin oportunidad vinculada (deal principal)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">
-                  Sin oportunidad vinculada (deal principal)
-                </SelectItem>
-                {(clientDeals ?? []).map((d) => (
-                  <SelectItem key={d.id} value={d.id}>
-                    {d.opportunityName ?? "Oportunidad principal"} — {d.stage}
-                  </SelectItem>
-                ))}
-                <SelectItem value="__new__">+ Nueva oportunidad...</SelectItem>
-              </SelectContent>
-            </Select>
-            {isNewOpportunity && (
-              <Input
-                type="text"
-                className="mt-2"
-                placeholder="Nombre de la nueva oportunidad (ej. Flotilla GPS, Proyecto Cámaras)"
-                value={newOpportunityName}
-                onChange={(e) => setNewOpportunityName(e.target.value)}
-                maxLength={200}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Tipo de actividad */}
-        <div>
-          <label className="slabel">Tipo de actividad</label>
-          <Select
-            value={type}
-            onValueChange={(v) => {
-              const t = v as ActivityType
-              setType(t)
-              if (NON_COMMERCIAL_TYPES.includes(t)) setClientError("")
-              clearField("type")
-            }}
-          >
-            <SelectTrigger {...fieldErrorProps("type", fieldErrors.type)}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ACTIVITY_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t} · {TASK_POINTS[t]}pts
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FieldError name="type" message={fieldErrors.type} />
-        </div>
-
-        {/* Resultado */}
-        <div>
-          <label className="slabel">Resultado</label>
-          <Select
-            value={result}
-            onValueChange={(v) => {
-              setResult(v as ActivityResult)
-              clearField("result")
-            }}
-          >
-            <SelectTrigger {...fieldErrorProps("result", fieldErrors.result)}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ACTIVITY_RESULTS.map((r) => (
-                <SelectItem key={r} value={r}>
-                  {r}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FieldError name="result" message={fieldErrors.result} />
-        </div>
-
-        {/* Fecha + hora ejecución */}
-        <div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="slabel">Fecha de ejecución</label>
-              <DatePickerField
-                value={execDate}
-                onChange={handleExecDateChange}
-                {...fieldErrorProps("executedAt", fieldErrors.executedAt)}
-              />
-            </div>
-            <div>
-              <label className="slabel">Hora</label>
-              <TimePickerField
-                value={execTime}
-                onChange={handleExecTimeChange}
-                aria-invalid={!!fieldErrors.executedAt}
-              />
-            </div>
-          </div>
-          <FieldError name="executedAt" message={fieldErrors.executedAt} />
-        </div>
-
-        {/* Etapa pipeline */}
-        <div>
-          <label className="slabel">Etapa del pipeline</label>
-          {currentDeal && !isNonCommercial && (
-            <p className="mb-1 text-[11px] text-tracker-text-secondary">
-              Actual:{" "}
-              <strong className="text-tracker-blue">{currentDeal.stage}</strong>
-            </p>
-          )}
-          <Select
-            value={stage}
-            onValueChange={(v) => setStage(v === "__none__" ? "" : v)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Sin cambio" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">Sin cambio</SelectItem>
-              {PIPELINE_STAGES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Tarea vinculada */}
-        <div>
-          <label className="slabel">Tarea vinculada</label>
-          {programmedTask ? (
-            <Input
-              type="text"
-              value={programmedTask}
-              readOnly
-              className="bg-tracker-surface-alt text-tracker-text-muted"
-            />
-          ) : (
-            <Select
-              value={internalTaskId}
-              onValueChange={(v) => {
-                const next = v === "__none__" ? "" : v
-                const task = pendingTasks.find((t) => t.id === next)
-                setInternalTaskId(next)
-                if (task?.scheduledAt) {
-                  setProgrammedAt(task.scheduledAt.slice(0, 16))
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sin tarea vinculada" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Sin tarea vinculada</SelectItem>
-                {pendingTasks.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-
-        {/* Fecha + hora de captura */}
-        <div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="slabel">Fecha de captura</label>
-              <DatePickerField
-                value={progDate}
-                onChange={handleProgDateChange}
-              />
-            </div>
-            <div>
-              <label className="slabel">Hora de captura</label>
-              <TimePickerField
-                value={progTime}
-                onChange={handleProgTimeChange}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Sección 2 — ¿Qué pasó? (siempre visible) */}
-      <div>
-        <label className="slabel">¿Qué pasó? *</label>
-        <Textarea
-          className="h-[100px]"
-          value={summary}
-          onChange={(e) => {
-            setSummary(e.target.value)
-            clearField("summary")
-          }}
-          required
-          {...fieldErrorProps("summary", fieldErrors.summary)}
-        />
-        <FieldError name="summary" message={fieldErrors.summary} />
-        <div className="prog mt-1.5">
-          <div
-            className="prog-fill origin-left transition-transform! duration-400!"
-            style={{
-              transform: `scaleX(${quality / 100})`,
-              backgroundColor: qualityColor,
-            }}
-          />
-        </div>
-        <p className="mt-0.5 text-[11px] text-tracker-text-muted">
-          Calidad estimada:{" "}
-          <span className="font-semibold" style={{ color: qualityColor }}>
-            {quality}%
-          </span>
-        </p>
-      </div>
-
-      {/* Sección 3 — Campos expandibles */}
-      <div className="flex flex-col gap-2">
-        {!showDiscovery ? (
-          <Button
-            type="button"
-            variant="link"
-            size="xs"
-            className="h-auto p-0 text-tracker-blue"
-            onClick={() => setShowDiscovery(true)}
-          >
-            + Agregar descubrimiento
-          </Button>
-        ) : (
-          <div>
-            <label className="slabel">¿Qué descubrí?</label>
-            <Textarea
-              className="h-20"
-              value={discovery}
-              onChange={(e) => {
-                setDiscovery(e.target.value)
-                if (e.target.value) setShowDiscovery(true)
-                clearField("discovery")
-              }}
-              {...fieldErrorProps("discovery", fieldErrors.discovery)}
-            />
-            <FieldError name="discovery" message={fieldErrors.discovery} />
-            <Button
-              type="button"
-              variant="link"
-              size="xs"
-              className="h-auto p-0 text-tracker-blue"
-              onClick={() => setShowDiscovery(false)}
-            >
-              - Ocultar
-            </Button>
-          </div>
-        )}
-
-        {!showAgreement ? (
-          <Button
-            type="button"
-            variant="link"
-            size="xs"
-            className="h-auto p-0 text-tracker-blue"
-            onClick={() => setShowAgreement(true)}
-          >
-            + Agregar acuerdo
-          </Button>
-        ) : (
-          <div>
-            <label className="slabel">¿Qué acordamos?</label>
-            <Textarea
-              className="h-20"
-              value={agreement}
-              onChange={(e) => {
-                setAgreement(e.target.value)
-                clearField("agreement")
-              }}
-              {...fieldErrorProps("agreement", fieldErrors.agreement)}
-            />
-            <FieldError name="agreement" message={fieldErrors.agreement} />
-            <Button
-              type="button"
-              variant="link"
-              size="xs"
-              className="h-auto p-0 text-tracker-blue"
-              onClick={() => setShowAgreement(false)}
-            >
-              - Ocultar
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Sección 4 — Siguiente paso (callout condicional) */}
-      {needsNextStep && (
-        <div className="rounded-lg border border-[#BFDBFE] bg-blue-50 p-4">
-          <p className="mb-3 text-xs font-bold text-[#1D4ED8]">
-            Siguiente paso requerido para {type}
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="slabel">Siguiente paso concreto *</label>
-              <Input
-                type="text"
-                value={nextStep}
-                onChange={(e) => {
-                  setNextStep(e.target.value)
-                  clearField("nextStep")
-                }}
-                placeholder="Siguiente paso concreto"
-                required
-                {...fieldErrorProps("nextStep", fieldErrors.nextStep)}
-              />
-              <FieldError name="nextStep" message={fieldErrors.nextStep} />
-            </div>
-            <div>
-              <label className="slabel">Objetivo del siguiente paso</label>
-              <Input
-                type="text"
-                value={nextObjective}
-                onChange={(e) => {
-                  setNextObjective(e.target.value)
-                  clearField("nextObjective")
-                }}
-                placeholder="Objetivo del siguiente paso"
-                {...fieldErrorProps("nextObjective", fieldErrors.nextObjective)}
-              />
-              <FieldError
-                name="nextObjective"
-                message={fieldErrors.nextObjective}
-              />
-            </div>
-            <div>
-              <label className="slabel">Fecha próxima *</label>
-              <DatePickerField
-                value={nextDate}
-                onChange={(v) => {
-                  setNextDate(v)
-                  clearField("nextDate")
-                }}
-                {...fieldErrorProps("nextDate", fieldErrors.nextDate)}
-              />
-              <FieldError name="nextDate" message={fieldErrors.nextDate} />
-            </div>
-            <div>
-              <label className="slabel">Hora próxima *</label>
-              <TimePickerField
-                value={nextTime}
-                onChange={(v) => {
-                  setNextTime(v)
-                  clearField("nextTime")
-                }}
-                aria-invalid={!!fieldErrors.nextTime}
-              />
-              <FieldError name="nextTime" message={fieldErrors.nextTime} />
-            </div>
-          </div>
+      {errorSummary && (
+        <div className="p-4 pb-0 md:px-6">
+          <FormErrorSummary error={errorSummary} />
         </div>
       )}
 
-      {/* Sección 5 — AI Coach (colapsado por defecto) */}
-      <Accordion
-        type="single"
-        collapsible
-        value={showAiCoach ? "coach" : ""}
-        onValueChange={(value) => setShowAiCoach(value === "coach")}
-      >
-        <AccordionItem value="coach">
-          <AccordionTrigger>Coach IA</AccordionTrigger>
-          <AccordionContent>
-            <div className="ai-box">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-purple-900">
-                  Sugerencias IA
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  onClick={fetchAiSuggestions}
-                  disabled={aiLoading}
-                  className="border-[#c4b5fd] text-tracker-purple"
-                >
-                  {aiLoading ? "Cargando..." : "Obtener sugerencias"}
-                </Button>
+      <div className="grid gap-px bg-border xl:grid-cols-2">
+        {/* Sección 1 — Contexto */}
+        <section className="bg-background p-4 md:p-6">
+          <h5 className="text-base font-semibold">Contexto</h5>
+          <div className="mt-6 flex flex-col gap-6">
+            <div>
+              <Label htmlFor="clientId">Cliente *</Label>
+              <div className="mt-2">
+                <ClientCombobox
+                  id="clientId"
+                  value={clientId}
+                  onSelect={(client) => {
+                    const changed = (client?.id ?? "") !== clientId
+                    setClientId(client?.id ?? "")
+                    setSelectedClient(client)
+                    if (changed) {
+                      setContactId("")
+                      setSelectedOpportunityId("")
+                      setNewOpportunityName("")
+                    }
+                    setClientError("")
+                    clearField("clientId")
+                  }}
+                  onResolve={(client) => setSelectedClient(client)}
+                  initialLabel={initialClientLabel}
+                  placeholder="Sin cliente"
+                  error={!!fieldErrors.clientId}
+                />
               </div>
-              {aiTips.length > 0 ? (
-                <ul className="mt-2 flex flex-col gap-1 pl-4">
-                  {aiTips.map((tip, i) => (
-                    <li key={i} className="text-xs text-tracker-purple">
-                      {tip}
-                    </li>
+              <FieldError
+                name="clientId"
+                message={clientError || fieldErrors.clientId}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="activity-contact">Contacto</Label>
+              <Select
+                value={contactId}
+                onValueChange={(v) => {
+                  setContactId(v === "__none__" ? "" : v)
+                  clearField("contactId")
+                }}
+                disabled={!clientId || contacts.length === 0}
+              >
+                <SelectTrigger
+                  id="activity-contact"
+                  className="mt-2 w-full"
+                  {...fieldErrorProps("contactId", fieldErrors.contactId)}
+                >
+                  <SelectValue
+                    placeholder={
+                      !clientId
+                        ? "Selecciona un cliente primero"
+                        : contacts.length === 0
+                          ? "Sin contactos"
+                          : "Seleccionar contacto..."
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin contacto</SelectItem>
+                  {contacts.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} — {c.role}
+                      {c.isDecisionMaker ? " (Decisor)" : ""}
+                    </SelectItem>
                   ))}
-                </ul>
-              ) : (
-                <p className="mt-1 text-sm text-purple-700">
-                  {getCoachMessage()}
+                </SelectContent>
+              </Select>
+              <FieldError name="contactId" message={fieldErrors.contactId} />
+            </div>
+
+            {/* Oportunidad (solo si hay cliente y no es no-comercial) */}
+            {clientId && !isNonCommercial && (
+              <div>
+                <Label htmlFor="activity-opportunity">
+                  Oportunidad / Proyecto
+                </Label>
+                <Select
+                  value={selectedOpportunityId}
+                  onValueChange={(v) => {
+                    const next = v === "__none__" ? "" : v
+                    setSelectedOpportunityId(next)
+                    const deal = clientDeals?.find((d) => d.id === next)
+                    if (deal && !stage) setStage(deal.stage)
+                  }}
+                >
+                  <SelectTrigger id="activity-opportunity" className="mt-2 w-full">
+                    <SelectValue placeholder="Sin oportunidad vinculada (deal principal)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">
+                      Sin oportunidad vinculada (deal principal)
+                    </SelectItem>
+                    {(clientDeals ?? []).map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.opportunityName ?? "Oportunidad principal"} —{" "}
+                        {d.stage}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="__new__">
+                      + Nueva oportunidad...
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                {isNewOpportunity && (
+                  <Input
+                    type="text"
+                    className="mt-2"
+                    aria-label="Nombre de la nueva oportunidad"
+                    placeholder="Nombre de la nueva oportunidad (ej. Flotilla GPS, Proyecto Cámaras)"
+                    value={newOpportunityName}
+                    onChange={(e) => setNewOpportunityName(e.target.value)}
+                    maxLength={200}
+                  />
+                )}
+              </div>
+            )}
+
+            <div>
+              <Label htmlFor="activity-stage">Etapa del pipeline</Label>
+              {currentDeal && !isNonCommercial && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Actual:{" "}
+                  <strong className="font-medium text-foreground">
+                    {currentDeal.stage}
+                  </strong>
                 </p>
               )}
+              <Select
+                value={stage}
+                onValueChange={(v) => setStage(v === "__none__" ? "" : v)}
+              >
+                <SelectTrigger id="activity-stage" className="mt-2 w-full">
+                  <SelectValue placeholder="Sin cambio" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin cambio</SelectItem>
+                  {PIPELINE_STAGES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+
+            <div>
+              <Label htmlFor="activity-task">Tarea vinculada</Label>
+              {programmedTask ? (
+                <Input
+                  id="activity-task"
+                  type="text"
+                  value={programmedTask}
+                  readOnly
+                  className="mt-2 bg-muted/50 text-muted-foreground"
+                />
+              ) : (
+                <Select
+                  value={internalTaskId}
+                  onValueChange={(v) => {
+                    const next = v === "__none__" ? "" : v
+                    const task = pendingTasks.find((t) => t.id === next)
+                    setInternalTaskId(next)
+                    if (task?.scheduledAt) {
+                      setProgrammedAt(task.scheduledAt.slice(0, 16))
+                    }
+                  }}
+                >
+                  <SelectTrigger id="activity-task" className="mt-2 w-full">
+                    <SelectValue placeholder="Sin tarea vinculada" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">
+                      Sin tarea vinculada
+                    </SelectItem>
+                    {pendingTasks.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Sección 2 — Actividad */}
+        <section className="bg-background p-4 md:p-6">
+          <h5 className="text-base font-semibold">Actividad</h5>
+          <div className="mt-6 flex flex-col gap-6">
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="activity-type">Tipo de actividad</Label>
+                <Select
+                  value={type}
+                  onValueChange={(v) => {
+                    const t = v as ActivityType
+                    setType(t)
+                    if (NON_COMMERCIAL_TYPES.includes(t)) setClientError("")
+                    clearField("type")
+                  }}
+                >
+                  <SelectTrigger
+                    id="activity-type"
+                    className="mt-2 w-full"
+                    {...fieldErrorProps("type", fieldErrors.type)}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ACTIVITY_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t} · {TASK_POINTS[t]}pts
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldError name="type" message={fieldErrors.type} />
+              </div>
+
+              <div>
+                <Label htmlFor="activity-result">Resultado</Label>
+                <Select
+                  value={result}
+                  onValueChange={(v) => {
+                    setResult(v as ActivityResult)
+                    clearField("result")
+                  }}
+                >
+                  <SelectTrigger
+                    id="activity-result"
+                    className="mt-2 w-full"
+                    {...fieldErrorProps("result", fieldErrors.result)}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ACTIVITY_RESULTS.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldError name="result" message={fieldErrors.result} />
+              </div>
+            </div>
+
+            <div>
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div>
+                  <Label>Fecha de ejecución</Label>
+                  <div className="mt-2">
+                    <DatePickerField
+                      value={execDate}
+                      onChange={handleExecDateChange}
+                      {...fieldErrorProps("executedAt", fieldErrors.executedAt)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Hora</Label>
+                  <TimePickerField
+                    value={execTime}
+                    onChange={handleExecTimeChange}
+                    aria-invalid={!!fieldErrors.executedAt}
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+              <FieldError name="executedAt" message={fieldErrors.executedAt} />
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div>
+                <Label>Fecha de captura</Label>
+                <div className="mt-2">
+                  <DatePickerField
+                    value={progDate}
+                    onChange={handleProgDateChange}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Hora de captura</Label>
+                <TimePickerField
+                  value={progTime}
+                  onChange={handleProgTimeChange}
+                  className="mt-2"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Sección 3 — ¿Qué pasó? (siempre visible) */}
+        <section className="bg-background p-4 md:p-6 xl:col-span-2">
+          <h5 className="text-base font-semibold">Resumen</h5>
+          <div className="mt-6 flex flex-col gap-6">
+            <div>
+              <Label htmlFor="activity-summary">¿Qué pasó? *</Label>
+              <Textarea
+                id="activity-summary"
+                className="mt-2 h-24"
+                value={summary}
+                onChange={(e) => {
+                  setSummary(e.target.value)
+                  clearField("summary")
+                }}
+                required
+                {...fieldErrorProps("summary", fieldErrors.summary)}
+              />
+              <FieldError name="summary" message={fieldErrors.summary} />
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-foreground/10">
+                <div
+                  className={cn(
+                    "h-full w-full origin-left rounded-full transition-transform duration-400 motion-reduce:transition-none",
+                    STATUS_FILL_CLASS[qualityTone]
+                  )}
+                  style={{ transform: `scaleX(${quality / 100})` }}
+                />
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Calidad estimada:{" "}
+                <span className="font-semibold text-foreground">
+                  {quality}%
+                </span>
+              </p>
+            </div>
+
+            {!showDiscovery ? (
+              <Button
+                type="button"
+                variant="link"
+                size="xs"
+                className="h-auto w-fit p-0"
+                onClick={() => setShowDiscovery(true)}
+              >
+                + Agregar descubrimiento
+              </Button>
+            ) : (
+              <div>
+                <Label htmlFor="activity-discovery">¿Qué descubrí?</Label>
+                <Textarea
+                  id="activity-discovery"
+                  className="mt-2 h-20"
+                  value={discovery}
+                  onChange={(e) => {
+                    setDiscovery(e.target.value)
+                    if (e.target.value) setShowDiscovery(true)
+                    clearField("discovery")
+                  }}
+                  {...fieldErrorProps("discovery", fieldErrors.discovery)}
+                />
+                <FieldError name="discovery" message={fieldErrors.discovery} />
+                <Button
+                  type="button"
+                  variant="link"
+                  size="xs"
+                  className="mt-1 h-auto w-fit p-0"
+                  onClick={() => setShowDiscovery(false)}
+                >
+                  - Ocultar
+                </Button>
+              </div>
+            )}
+
+            {!showAgreement ? (
+              <Button
+                type="button"
+                variant="link"
+                size="xs"
+                className="h-auto w-fit p-0"
+                onClick={() => setShowAgreement(true)}
+              >
+                + Agregar acuerdo
+              </Button>
+            ) : (
+              <div>
+                <Label htmlFor="activity-agreement">¿Qué acordamos?</Label>
+                <Textarea
+                  id="activity-agreement"
+                  className="mt-2 h-20"
+                  value={agreement}
+                  onChange={(e) => {
+                    setAgreement(e.target.value)
+                    clearField("agreement")
+                  }}
+                  {...fieldErrorProps("agreement", fieldErrors.agreement)}
+                />
+                <FieldError name="agreement" message={fieldErrors.agreement} />
+                <Button
+                  type="button"
+                  variant="link"
+                  size="xs"
+                  className="mt-1 h-auto w-fit p-0"
+                  onClick={() => setShowAgreement(false)}
+                >
+                  - Ocultar
+                </Button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Sección 4 — Siguiente paso (condicional) */}
+        {needsNextStep && (
+          <section className="bg-background p-4 md:p-6 xl:col-span-2">
+            <h5 className="text-base font-semibold">
+              Siguiente paso requerido para {type}
+            </h5>
+            <div className="mt-6 grid gap-6 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="activity-next-step">
+                  Siguiente paso concreto *
+                </Label>
+                <Input
+                  id="activity-next-step"
+                  type="text"
+                  className="mt-2"
+                  value={nextStep}
+                  onChange={(e) => {
+                    setNextStep(e.target.value)
+                    clearField("nextStep")
+                  }}
+                  placeholder="Siguiente paso concreto"
+                  required
+                  {...fieldErrorProps("nextStep", fieldErrors.nextStep)}
+                />
+                <FieldError name="nextStep" message={fieldErrors.nextStep} />
+              </div>
+              <div>
+                <Label htmlFor="activity-next-objective">
+                  Objetivo del siguiente paso
+                </Label>
+                <Input
+                  id="activity-next-objective"
+                  type="text"
+                  className="mt-2"
+                  value={nextObjective}
+                  onChange={(e) => {
+                    setNextObjective(e.target.value)
+                    clearField("nextObjective")
+                  }}
+                  placeholder="Objetivo del siguiente paso"
+                  {...fieldErrorProps("nextObjective", fieldErrors.nextObjective)}
+                />
+                <FieldError
+                  name="nextObjective"
+                  message={fieldErrors.nextObjective}
+                />
+              </div>
+              <div>
+                <Label>Fecha próxima *</Label>
+                <div className="mt-2">
+                  <DatePickerField
+                    value={nextDate}
+                    onChange={(v) => {
+                      setNextDate(v)
+                      clearField("nextDate")
+                    }}
+                    {...fieldErrorProps("nextDate", fieldErrors.nextDate)}
+                  />
+                </div>
+                <FieldError name="nextDate" message={fieldErrors.nextDate} />
+              </div>
+              <div>
+                <Label>Hora próxima *</Label>
+                <TimePickerField
+                  value={nextTime}
+                  onChange={(v) => {
+                    setNextTime(v)
+                    clearField("nextTime")
+                  }}
+                  aria-invalid={!!fieldErrors.nextTime}
+                  className="mt-2"
+                />
+                <FieldError name="nextTime" message={fieldErrors.nextTime} />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Sección 5 — AI Coach (colapsado por defecto) */}
+        <section className="bg-background px-4 py-2 md:px-6 xl:col-span-2">
+          <Accordion
+            type="single"
+            collapsible
+            value={showAiCoach ? "coach" : ""}
+            onValueChange={(value) => setShowAiCoach(value === "coach")}
+          >
+            <AccordionItem value="coach">
+              <AccordionTrigger>Coach IA</AccordionTrigger>
+              <AccordionContent>
+                <div className="border bg-muted/30 p-3 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-medium text-foreground">
+                      Sugerencias IA
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      onClick={fetchAiSuggestions}
+                      disabled={aiLoading}
+                    >
+                      {aiLoading ? "Cargando..." : "Obtener sugerencias"}
+                    </Button>
+                  </div>
+                  {aiTips.length > 0 ? (
+                    <ul className="mt-2 flex flex-col gap-1 pl-4">
+                      {aiTips.map((tip, i) => (
+                        <li key={i}>{tip}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-1">{getCoachMessage()}</p>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </section>
+      </div>
 
       {/* Sección 6 — Submit */}
-      <Button
-        type="submit"
-        disabled={isLoading}
-        variant="success"
-        className="w-full"
-      >
-        {isLoading ? "Guardando..." : `Registrar · +${TASK_POINTS[type]}pts`}
-      </Button>
+      <div className="flex justify-end border-t p-4 md:px-6">
+        <Button type="submit" size="lg" disabled={isLoading}>
+          {isLoading ? "Guardando..." : `Registrar · +${TASK_POINTS[type]}pts`}
+        </Button>
+      </div>
     </form>
   )
 }

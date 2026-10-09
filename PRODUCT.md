@@ -14,24 +14,25 @@ Tracker Sales OS es la plataforma de operación comercial para equipos de ventas
 
 ## Brand Personality
 
-Ejecutivo. Preciso. Autoritario.
+Claro. Moderno. Ordenado.
 
-Voz directa, sin adorno. Los datos hablan primero. La interfaz refuerza autoridad, no amabilidad. El color verde (#82bc00) es acción; el azul marino (#002B49) es autoridad institucional.
+Desde 2026-10-09 (feature 81) la identidad visual es la de la plantilla [shadcn-dashboard](https://github.com/shadcndashboard/next-shadcn-dashboard) (demo: https://shadcndashboard-demo.vercel.app/), copiada tal cual: colores, tipografía, radios, layout y patrones de página. La marca Tracker se mantiene en los logos oficiales. La voz sigue siendo directa y sin adorno: los datos hablan primero.
+
+Antes de esa fecha el sistema usaba la identidad navy (#002B49) y verde (#82bc00) de Tracker México; ese estilo queda retirado de la app.
 
 ## Anti-references
 
-- Monday / Notion: demasiado casual, colorido y genérico. No un gestor de tareas.
-- SaaS americano estilo HubSpot/Pipedrive: no azul-naranja-coral de startup.
-- SAP / Salesforce: no complejidad de ERP, pero sí seriedad ejecutiva.
+- Mezclar estilos: ninguna pantalla nueva o modificada conserva el estilo navy/verde anterior.
+- Inventar patrones propios cuando la plantilla ya resuelve el caso (cabecera de página, tarjeta de KPI, tabla, formulario, auth).
+- SAP / Salesforce: no complejidad de ERP.
 
 ## Design Principles
 
-1. **Datos primero** — la información domina el espacio; la chrome de UI queda en segundo plano.
-2. **Autoridad sin arrogancia** — marino profundo y verde limón transmiten liderazgo, no postura.
-3. **Densidad útil** — empaqueta métricas sin apretar; cada centímetro cuadrado justifica su existencia.
-4. **Cero decoración sin función** — sin gradientes ornamentales, sin ilustraciones, sin patrones de fondo.
-5. **Jerarquía clara de rol** — Admin ve todo, Director ve equipo, Vendedor ve su día.
+1. **La plantilla es la fuente de verdad visual** — ante la duda, se replica lo que hace la plantilla. Los detalles están en `DESIGN.md`.
+2. **Datos primero** — la información domina el espacio; la chrome de UI queda en segundo plano.
+3. **Un patrón por tipo de elemento** — una sola forma de cabecera de página, de tarjeta, de tabla y de formulario en todo el sistema.
+4. **Jerarquía clara de rol** — Admin ve todo, Director ve equipo, Vendedor ve su día.
 
 ## Accessibility & Inclusion
 
-WCAG 2.1 AA mínimo. Usuarios en pantallas medianas (laptops de 13-15"). Soporte para modo oscuro futuro (tokens OKLCH ya presentes). Reduced motion respetado (ya implementado).
+WCAG 2.1 AA mínimo. Usuarios en pantallas medianas (laptops de 13-15"). Modo claro y oscuro como en la plantilla. Reduced motion respetado (ya implementado).

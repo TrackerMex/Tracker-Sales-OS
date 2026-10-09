@@ -1,13 +1,11 @@
+import type { ColumnDef } from "@tanstack/react-table"
 import type { LeaderboardEntry } from "../../domain/dashboard.types"
-import { Badge, type BadgeVariant } from "@/components/ui/badge"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
+import { DataTable } from "@/shared/components/data/DataTable"
+import { EmptyState } from "@/shared/components/data/EmptyState"
+import { StatusBadge } from "@/shared/components/data/StatusBadge"
+import { BarChartIcon } from "@/shared/components/Icon"
+import type { StatusTone } from "@/shared/lib/status"
 import { cn } from "@/lib/utils"
 
 interface LeaderboardTableProps {
@@ -15,26 +13,88 @@ interface LeaderboardTableProps {
   isLoading: boolean
 }
 
-function rankBadgeVariant(rank: number): BadgeVariant | null {
-  if (rank === 1) return "amber"
-  if (rank === 2) return "gray"
-  if (rank === 3) return "navy"
-  return null
+// Podium: gold, silver, bronze.
+const RANK_TONE: Record<number, StatusTone> = {
+  1: "pending",
+  2: "neutral",
+  3: "progress",
 }
 
 function formatDelta(delta: number): { label: string; className: string } {
   if (delta > 0)
     return {
       label: `+${delta.toLocaleString("es-MX")}`,
-      className: "text-tracker-green",
+      className: "text-status-success",
     }
   if (delta < 0)
     return {
       label: delta.toLocaleString("es-MX"),
-      className: "text-tracker-danger",
+      className: "text-status-danger",
     }
-  return { label: "0", className: "text-tracker-text-secondary" }
+  return { label: "0", className: "text-muted-foreground" }
 }
+
+const columns: ColumnDef<LeaderboardEntry>[] = [
+  {
+    accessorKey: "rank",
+    header: "#",
+    meta: { className: "w-14" },
+    cell: ({ row }) => {
+      const { rank } = row.original
+      const tone = RANK_TONE[rank]
+      return tone ? (
+        <StatusBadge tone={tone} className="min-w-6 font-medium">
+          {rank}
+        </StatusBadge>
+      ) : (
+        <span className="text-muted-foreground">{rank}</span>
+      )
+    },
+  },
+  {
+    accessorKey: "sellerName",
+    header: "Vendedor",
+    cell: ({ row }) => (
+      <span className="font-medium text-foreground">
+        {row.original.sellerName}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "monthlyPoints",
+    header: "Puntos mes",
+    meta: { className: "text-right" },
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">
+        {row.original.monthlyPoints.toLocaleString("es-MX")}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "pointsDelta",
+    header: "Delta",
+    meta: { className: "text-right" },
+    cell: ({ row }) => {
+      const delta = formatDelta(row.original.pointsDelta)
+      return (
+        <span className={cn("font-medium", delta.className)}>
+          {delta.label}
+        </span>
+      )
+    },
+  },
+  {
+    accessorKey: "streakDays",
+    header: "Racha",
+    meta: { className: "text-right" },
+    cell: ({ row }) =>
+      row.original.streakDays > 0 ? (
+        <StatusBadge tone="success">{row.original.streakDays} d</StatusBadge>
+      ) : (
+        <span className="text-muted-foreground">0 d</span>
+      ),
+  },
+]
 
 export function LeaderboardTable({
   entries,
@@ -43,15 +103,12 @@ export function LeaderboardTable({
   if (isLoading) {
     return (
       <div
-        className="space-y-3 p-5"
+        className="flex flex-col gap-3 p-4"
         role="status"
         aria-label="Cargando leaderboard"
       >
         {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="h-10 animate-pulse rounded-lg bg-slate-100 motion-reduce:animate-none"
-          />
+          <Skeleton key={i} className="h-8 w-full" />
         ))}
       </div>
     )
@@ -59,62 +116,11 @@ export function LeaderboardTable({
 
   if (entries.length === 0) {
     return (
-      <div className="p-5">
-        <div className="empty-state">Sin datos del mes</div>
-      </div>
+      <EmptyState icon={<BarChartIcon size={20} />} title="Sin datos del mes" />
     )
   }
 
   return (
-    <div className="p-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-14">#</TableHead>
-            <TableHead>Vendedor</TableHead>
-            <TableHead className="text-right">Puntos mes</TableHead>
-            <TableHead className="text-right">Delta</TableHead>
-            <TableHead className="text-right">Racha</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {entries.map((entry) => {
-            const delta = formatDelta(entry.pointsDelta)
-            const badgeVariant = rankBadgeVariant(entry.rank)
-            return (
-              <TableRow key={entry.sellerId}>
-                <TableCell>
-                  {badgeVariant ? (
-                    <Badge variant={badgeVariant}>{entry.rank}</Badge>
-                  ) : (
-                    <span className="font-semibold text-tracker-text-secondary">
-                      {entry.rank}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="font-semibold text-tracker-blue">
-                  {entry.sellerName}
-                </TableCell>
-                <TableCell className="text-right text-tracker-text-dim">
-                  {entry.monthlyPoints.toLocaleString("es-MX")}
-                </TableCell>
-                <TableCell
-                  className={cn("text-right font-semibold", delta.className)}
-                >
-                  {delta.label}
-                </TableCell>
-                <TableCell className="text-right">
-                  {entry.streakDays > 0 ? (
-                    <Badge variant="green">{entry.streakDays} d</Badge>
-                  ) : (
-                    <span className="text-tracker-text-secondary">0 d</span>
-                  )}
-                </TableCell>
-              </TableRow>
-            )
-          })}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable columns={columns} data={entries} getRowId={(e) => e.sellerId} />
   )
 }

@@ -24,10 +24,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/shared/components/layout/PageHeader"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -51,12 +55,13 @@ const ALL_STAGES: PipelineStage[] = [
 
 function SkeletonColumns() {
   return (
-    <div className="flex gap-3">
+    <div
+      className="flex gap-3 overflow-hidden"
+      role="status"
+      aria-label="Cargando pipeline"
+    >
       {ALL_STAGES.map((stage) => (
-        <div
-          key={stage}
-          className="h-48 w-64 shrink-0 animate-pulse rounded-lg bg-slate-200"
-        />
+        <Skeleton key={stage} className="h-48 w-63 shrink-0" />
       ))}
     </div>
   )
@@ -84,7 +89,12 @@ function KanbanBoard({
   }, [])
 
   return (
-    <div ref={scrollRef} className="pipeline-scroll overflow-x-auto pb-4">
+    // `pipeline-scroll` is kept only as a selector hook (QA scripts); the
+    // scrollbar colors below override the legacy hex rule.
+    <div
+      ref={scrollRef}
+      className="pipeline-scroll [scrollbar-width:thin] [scrollbar-color:var(--border)_transparent] overflow-x-auto pb-4"
+    >
       <div className="flex min-w-max gap-3">
         {ALL_STAGES.map((stage) => (
           <KanbanColumn
@@ -208,58 +218,59 @@ export function PipelinePage() {
   )
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-lg font-bold text-tracker-blue">Pipeline</h1>
-          <p className="mt-0.5 text-xs text-tracker-text-muted">
-            Fases comerciales por oportunidad
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          {isAdminOrDirector && (
-            <Select value={selectedSeller} onValueChange={handleSellerChange}>
-              <SelectTrigger className="w-auto min-w-40 px-2.5 py-[5px] text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los vendedores</SelectItem>
-                {sellers.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          {activeGrouped && (
-            <div className="flex gap-6 text-right">
-              <div>
-                <div className="text-[11px] text-tracker-text-muted">
-                  Total bruto
+    <div>
+      <PageHeader
+        title="Pipeline"
+        description="Fases comerciales por oportunidad"
+        actions={
+          <>
+            {isAdminOrDirector && (
+              <Select value={selectedSeller} onValueChange={handleSellerChange}>
+                <SelectTrigger
+                  className="w-auto min-w-40"
+                  aria-label="Filtrar por vendedor"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los vendedores</SelectItem>
+                  {sellers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {activeGrouped && (
+              <dl className="flex gap-6">
+                <div>
+                  <dt className="text-xs text-muted-foreground">Total bruto</dt>
+                  <dd className="text-sm font-semibold tabular-nums">
+                    {formatCurrency(totalGross)}
+                  </dd>
                 </div>
-                <div className="text-base font-bold text-tracker-blue">
-                  {formatCurrency(totalGross)}
+                <div>
+                  <dt className="text-xs text-muted-foreground">
+                    Forecast ponderado
+                  </dt>
+                  <dd className="text-sm font-semibold tabular-nums">
+                    {formatCurrency(forecast)}
+                  </dd>
                 </div>
-              </div>
-              <div>
-                <div className="text-[11px] text-tracker-text-muted">
-                  Forecast ponderado
-                </div>
-                <div className="text-base font-bold text-tracker-blue">
-                  {formatCurrency(forecast)}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+              </dl>
+            )}
+          </>
+        }
+      />
 
       {activeLoading && <SkeletonColumns />}
       {activeError && (
-        <p className="text-[13px] text-red-500">
-          No se pudo cargar el pipeline.
-        </p>
+        <div className="border border-destructive/20 bg-destructive/10 px-4 py-3">
+          <p className="text-sm text-status-danger">
+            No se pudo cargar el pipeline.
+          </p>
+        </div>
       )}
 
       {!activeLoading && !activeError && activeGrouped && (
@@ -280,57 +291,55 @@ export function PipelinePage() {
           }
         }}
       >
-        <DialogContent className="w-[min(calc(100vw-2rem),460px)] max-w-none sm:max-w-none">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Motivo de pérdida</DialogTitle>
             <DialogDescription>
               Registra un motivo opcional antes de marcar el deal como perdido.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <label className="slabel mb-1 block">Motivo (opcional)</label>
-              <Select
-                value={lossReason}
-                onValueChange={(v) =>
-                  setLossReason(v === "__none__" ? "" : (v as LossReason))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un motivo..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Sin motivo</SelectItem>
-                  {LOSS_REASONS.map((r) => (
-                    <SelectItem key={r.value} value={r.value}>
-                      {r.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-2 pt-2">
-              <Button
-                type="button"
-                onClick={() => {
-                  setLossModal(null)
-                  setLossReason("")
-                }}
-                variant="ghost"
-                className="flex-1 justify-center"
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                onClick={handleConfirmLoss}
-                disabled={changeStage.isPending}
-                className="flex-1 justify-center"
-              >
-                {changeStage.isPending ? "Guardando..." : "Confirmar"}
-              </Button>
-            </div>
+          <div>
+            <Label htmlFor="loss-reason" className="text-xs font-medium">
+              Motivo (opcional)
+            </Label>
+            <Select
+              value={lossReason}
+              onValueChange={(v) =>
+                setLossReason(v === "__none__" ? "" : (v as LossReason))
+              }
+            >
+              <SelectTrigger id="loss-reason" className="mt-2 w-full">
+                <SelectValue placeholder="Selecciona un motivo..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Sin motivo</SelectItem>
+                {LOSS_REASONS.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              onClick={() => {
+                setLossModal(null)
+                setLossReason("")
+              }}
+              variant="outline"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmLoss}
+              disabled={changeStage.isPending}
+            >
+              {changeStage.isPending ? "Guardando..." : "Confirmar"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

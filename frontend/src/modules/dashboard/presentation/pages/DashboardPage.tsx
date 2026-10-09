@@ -1,12 +1,5 @@
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip,
-} from "chart.js"
+import { useEffect, useMemo, useState } from "react"
+import type { ColumnDef } from "@tanstack/react-table"
 import { Line } from "react-chartjs-2"
 import { useDashboardSummary } from "../../application/hooks/useDashboardSummary"
 import { useSellersSemaphore } from "../../application/hooks/useSellersSemaphore"
@@ -18,80 +11,129 @@ import { KPIStrip } from "../components/KPIStrip"
 import { SellerSemaphoreTable } from "../components/SellerSemaphoreTable"
 import { LeaderboardTable } from "../components/LeaderboardTable"
 import { AlertsPanel } from "../components/AlertsPanel"
-import type { ActivityTrendItem } from "../../domain/dashboard.types"
+import type {
+  ActivityTrendItem,
+  StalledDeal,
+} from "../../domain/dashboard.types"
 import { useSettings } from "@/modules/settings/application/hooks/useSettings"
 import { useAppStore } from "@/shared/store/app.store"
 import { UserRole } from "@/core/domain/types/common.types"
 import { formatCurrency } from "@/shared/lib/format"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { lineChartOptions, useChartColors } from "@/shared/lib/chart"
+import { PageHeader } from "@/shared/components/layout/PageHeader"
+import { SectionCard } from "@/shared/components/layout/SectionCard"
+import { DottedDivider } from "@/shared/components/layout/DottedDivider"
+import { DataTable } from "@/shared/components/data/DataTable"
+import { EmptyState } from "@/shared/components/data/EmptyState"
+import { StatusBadge } from "@/shared/components/data/StatusBadge"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { useEffect, useState } from "react"
+  AlertCircleIcon,
+  BarChartIcon,
+  CalendarIcon,
+  CheckCircleIcon,
+  KanbanIcon,
+  PulseIcon,
+  TeamIcon,
+  UsersIcon,
+} from "@/shared/components/Icon"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip
-)
-
-interface ActivityChartProps {
-  data: ActivityTrendItem[]
-}
-
-function ActivityChart({ data }: ActivityChartProps) {
-  const labels = data.map((d) => d.date.slice(5))
-  const counts = data.map((d) => d.count)
-
+function ErrorRow({
+  message,
+  onRetry,
+}: {
+  message: string
+  onRetry?: () => void
+}) {
   return (
-    <div className="relative h-[180px]">
-      <Line
-        data={{
-          labels,
-          datasets: [
-            {
-              data: counts,
-              borderColor: "#82bc00",
-              backgroundColor: "rgba(130,188,0,0.08)",
-              borderWidth: 2,
-              fill: true,
-              tension: 0.35,
-              pointRadius: 3.5,
-              pointBackgroundColor: "#82bc00",
-              pointBorderColor: "#fff",
-              pointBorderWidth: 1.5,
-            },
-          ],
-        }}
-        options={{
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: "#001524",
-              titleColor: "#82bc00",
-              bodyColor: "#fff",
-            },
-          },
-          scales: {
-            x: { grid: { display: false } },
-            y: { beginAtZero: true },
-          },
-        }}
-      />
+    <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
+      <p className="text-sm text-status-danger">{message}</p>
+      {onRetry && (
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          Reintentar
+        </Button>
+      )}
     </div>
   )
 }
+
+function ActivityChart({ data }: { data: ActivityTrendItem[] }) {
+  const colors = useChartColors()
+  const options = useMemo(() => lineChartOptions(colors), [colors])
+  const chartData = useMemo(
+    () => ({
+      labels: data.map((d) => d.date.slice(5)),
+      datasets: [
+        {
+          label: "Actividades",
+          data: data.map((d) => d.count),
+          borderColor: colors.primary,
+          backgroundColor: colors.primary,
+          pointHoverBackgroundColor: colors.primary,
+        },
+      ],
+    }),
+    [data, colors]
+  )
+
+  return (
+    <div className="relative h-[215px] w-full">
+      <Line data={chartData} options={options} />
+    </div>
+  )
+}
+
+const stalledDealColumns: ColumnDef<StalledDeal>[] = [
+  {
+    id: "clientName",
+    header: "Cliente",
+    cell: ({ row }) => (
+      <span className="font-medium text-foreground">
+        {row.original.clientName}
+      </span>
+    ),
+  },
+  {
+    id: "stage",
+    header: "Etapa",
+    cell: ({ row }) => <StatusBadge status={row.original.stage} />,
+  },
+  {
+    id: "sellerName",
+    header: "Vendedor",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">
+        {row.original.sellerName || "—"}
+      </span>
+    ),
+  },
+  {
+    id: "amount",
+    header: "Monto",
+    meta: { className: "text-right" },
+    cell: ({ row }) => formatCurrency(row.original.amount),
+  },
+  {
+    id: "daysStalled",
+    header: "Días estancado",
+    meta: { className: "text-right" },
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">{row.original.daysStalled}</span>
+    ),
+  },
+  {
+    id: "severity",
+    header: "Severidad",
+    meta: { className: "text-center" },
+    cell: ({ row }) =>
+      row.original.severity === "red" ? (
+        <StatusBadge tone="danger">Rojo</StatusBadge>
+      ) : (
+        <StatusBadge tone="pending">Ámbar</StatusBadge>
+      ),
+  },
+]
 
 export function DashboardPage() {
   const stalledDealsLimit = 10
@@ -131,6 +173,9 @@ export function DashboardPage() {
   const forecast = data?.pipelineForecast ?? 0
   const pct = goal > 0 ? Math.round((forecast / goal) * 100) : 0
 
+  const trendData = trend.data ?? []
+  const trendTotal = trendData.reduce((sum, d) => sum + d.count, 0)
+
   // Get current time for data freshness indicator
   const now = new Date()
   const timeString = now.toLocaleTimeString("es-MX", {
@@ -140,268 +185,195 @@ export function DashboardPage() {
 
   return (
     <div>
-      {/* Title */}
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <h1 className="page-title">Dashboard de ventas</h1>
-          <p className="page-subtitle">
-            Resumen del desempeño del equipo de hoy
-          </p>
-        </div>
-        <p className="page-timestamp">
-          Actualizado
-          <br />a las {timeString}
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard de ventas"
+        description={`Resumen del desempeño del equipo de hoy · Actualizado a las ${timeString}`}
+      />
 
       {summary.isError && (
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-[#FCA5A5] bg-red-50 p-3">
-          <p className="text-[13px] text-tracker-danger">
+        <div className="mb-4 flex items-center justify-between gap-3 border border-destructive/20 bg-destructive/10 px-4 py-3">
+          <p className="text-sm text-status-danger">
             No se pudo cargar el resumen. Verifica tu conexión e intenta de
             nuevo.
           </p>
           <Button
-            variant="ghost"
+            variant="outline"
+            size="sm"
             onClick={() => summary.refetch?.()}
-            className="ml-3"
           >
             Reintentar
           </Button>
         </div>
       )}
 
-      {/* KPI Strip */}
-      <KPIStrip
-        salesValue={
-          isLoading ? "..." : formatCurrency(data?.totalSalesAmount ?? 0)
-        }
-        salesCount={data?.totalSalesCount ?? 0}
-        unitsValue={data?.totalUnits ?? 0}
-        unitsGoal={150}
-        pointsValue={data?.totalPoints ?? 0}
-        qualityValue={data?.avgQuality ?? 0}
-        forecastValue={isLoading ? "..." : formatCurrency(forecast)}
-        forecastSubtitle={`${pct}% de meta ${formatCurrency(goal)}`}
-        isLoading={isLoading}
-        onRetry={() => summary.refetch?.()}
-      />
-
-      {/* 2-column: Activity + Alerts */}
-      <div className="page-grid mt-4">
-        {/* Activity chart */}
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-h3" id="activity-chart-title">
-              Actividad — últimos 14 días
-            </h3>
-            <p className="card-meta">
-              Muestra llamadas, emails y reuniones registradas
-            </p>
-          </div>
-          <div className="card-body" aria-labelledby="activity-chart-title">
-            <ActivityChart data={trend.data ?? []} />
-          </div>
-        </div>
-
-        {/* Alerts panel */}
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-h3">Alertas operativas</h3>
-          </div>
-          <div className="card-body">
-            <AlertsPanel
-              alerts={[
-                {
-                  label: "Seguimientos vencidos (acción requerida)",
-                  value: String(totalOverdue),
-                  color: "red",
-                },
-                {
-                  label: "Tareas programadas para mañana",
-                  value: "0",
-                  color: "amber",
-                },
-                {
-                  label: "Cumplimiento del equipo esta semana",
-                  value: `${data?.avgQuality?.toFixed(0) ?? 0}%`,
-                  color: "green",
-                },
-                {
-                  label: "Nuevos prospectos hoy",
-                  value: "0",
-                  color: "navy",
-                },
-              ]}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Team performance */}
-      <div className="card mt-4">
-        <div className="card-header">
-          <h3 className="card-h3">Desempeño del equipo</h3>
-        </div>
-        <SellerSemaphoreTable
-          sellers={sellers.data ?? []}
-          isLoading={sellers.isLoading}
+      <div className="grid grid-cols-12 gap-px bg-border p-px">
+        <KPIStrip
+          salesValue={formatCurrency(data?.totalSalesAmount ?? 0)}
+          salesCount={data?.totalSalesCount ?? 0}
+          unitsValue={data?.totalUnits ?? 0}
+          unitsGoal={150}
+          pointsValue={data?.totalPoints ?? 0}
+          qualityValue={data?.avgQuality ?? 0}
+          forecastValue={formatCurrency(forecast)}
+          forecastSubtitle={`${pct}% de meta ${formatCurrency(goal)}`}
+          isLoading={isLoading}
         />
-        {sellers.isError && (
-          <div className="flex items-center justify-between px-5 pb-4">
-            <p className="text-[13px] text-tracker-danger">
-              No se pudo cargar el desempeño del equipo.
-            </p>
-            <Button
-              variant="ghost"
-              onClick={() => sellers.refetch?.()}
-              className="ml-3"
-            >
-              Reintentar
-            </Button>
-          </div>
-        )}
-      </div>
 
-      {/* Leaderboard del mes — Admin/Director only */}
-      {isAdminOrDirector && (
-        <div className="card mt-4">
-          <div className="card-header">
-            <h3 className="card-h3">Leaderboard del mes</h3>
-            <p className="card-meta">Ranking por puntos acumulados este mes</p>
-          </div>
-          {leaderboard.isError ? (
-            <div className="flex items-center justify-between px-5 py-4">
-              <p className="text-[13px] text-tracker-danger">
-                No se pudo cargar el leaderboard.
-              </p>
-              <Button
-                variant="ghost"
-                onClick={() => leaderboard.refetch?.()}
-                className="ml-3"
-              >
-                Reintentar
-              </Button>
+        <DottedDivider />
+
+        <SectionCard
+          title="Actividad — últimos 14 días"
+          icon={<PulseIcon size={16} />}
+          titleId="activity-chart-title"
+          className="lg:col-span-7"
+          contentClassName="flex flex-col gap-6 p-5"
+        >
+          <div className="flex flex-col gap-1">
+            <span className="text-base text-foreground">
+              Actividades registradas
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {trend.isLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <span className="text-2xl font-semibold text-foreground">
+                  {trendTotal.toLocaleString("es-MX")}
+                </span>
+              )}
+              <span className="text-sm text-muted-foreground">
+                Muestra llamadas, emails y reuniones registradas
+              </span>
             </div>
-          ) : (
-            <LeaderboardTable
-              entries={leaderboard.data ?? []}
-              isLoading={leaderboard.isLoading}
+          </div>
+          <div role="figure" aria-labelledby="activity-chart-title">
+            <ActivityChart data={trendData} />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Alertas operativas"
+          icon={<AlertCircleIcon size={16} />}
+          className="lg:col-span-5"
+        >
+          <AlertsPanel
+            alerts={[
+              {
+                label: "Seguimientos vencidos (acción requerida)",
+                value: String(totalOverdue),
+                color: "red",
+                icon: <AlertCircleIcon size={16} />,
+              },
+              {
+                label: "Tareas programadas para mañana",
+                value: "0",
+                color: "amber",
+                icon: <CalendarIcon size={16} />,
+              },
+              {
+                label: "Cumplimiento del equipo esta semana",
+                value: `${data?.avgQuality?.toFixed(0) ?? 0}%`,
+                color: "green",
+                icon: <CheckCircleIcon size={16} />,
+              },
+              {
+                label: "Nuevos prospectos hoy",
+                value: "0",
+                color: "navy",
+                icon: <UsersIcon size={16} />,
+              },
+            ]}
+          />
+        </SectionCard>
+
+        <DottedDivider />
+
+        <SectionCard
+          title="Desempeño del equipo"
+          icon={<TeamIcon size={16} />}
+          className={isAdminOrDirector ? "lg:col-span-6" : undefined}
+        >
+          <SellerSemaphoreTable
+            sellers={sellers.data ?? []}
+            isLoading={sellers.isLoading}
+          />
+          {sellers.isError && (
+            <ErrorRow
+              message="No se pudo cargar el desempeño del equipo."
+              onRetry={() => sellers.refetch?.()}
             />
           )}
-        </div>
-      )}
+        </SectionCard>
 
-      {/* Stalled deals — Admin/Director only */}
-      {isAdminOrDirector && (
-        <div className="card mt-4">
-          <div className="card-header">
-            <h3 className="card-h3">Deals en riesgo</h3>
-            <p className="card-meta">Oportunidades sin movimiento de etapa</p>
-          </div>
-          <div className="card-body">
-            {stalledDeals.isLoading && (
-              <p className="text-[13px] text-tracker-text-secondary">
-                Cargando...
-              </p>
+        {/* Leaderboard del mes — Admin/Director only */}
+        {isAdminOrDirector && (
+          <SectionCard
+            title="Leaderboard del mes"
+            icon={<BarChartIcon size={16} />}
+            description="Ranking por puntos acumulados este mes"
+            className="lg:col-span-6"
+          >
+            {leaderboard.isError ? (
+              <ErrorRow
+                message="No se pudo cargar el leaderboard."
+                onRetry={() => leaderboard.refetch?.()}
+              />
+            ) : (
+              <LeaderboardTable
+                entries={leaderboard.data ?? []}
+                isLoading={leaderboard.isLoading}
+              />
             )}
-            {stalledDeals.isError && (
-              <p className="text-[13px] text-tracker-danger">
-                No se pudo cargar los deals estancados.
-              </p>
-            )}
-            {!stalledDeals.isLoading &&
-              !stalledDeals.isError &&
-              (stalledDeals.data?.data.length === 0 ? (
-                <div className="empty-state">No hay deals estancados</div>
-              ) : (
-                <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Cliente</TableHead>
-                        <TableHead>Stage</TableHead>
-                        <TableHead>Vendedor</TableHead>
-                        <TableHead className="text-right">Monto</TableHead>
-                        <TableHead className="text-right">
-                          Días estancado
-                        </TableHead>
-                        <TableHead className="text-center">Severidad</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {stalledDeals.data?.data.map((item) => (
-                        <TableRow key={item.dealId}>
-                          <TableCell className="font-medium text-tracker-blue">
-                            {item.clientName}
-                          </TableCell>
-                          <TableCell className="text-tracker-text-dim">
-                            {item.stage}
-                          </TableCell>
-                          <TableCell className="text-tracker-text-dim">
-                            {item.sellerName || "—"}
-                          </TableCell>
-                          <TableCell className="text-right text-tracker-text-dim">
-                            {formatCurrency(item.amount)}
-                          </TableCell>
-                          <TableCell className="text-right text-tracker-text-dim">
-                            {item.daysStalled}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge
-                              variant={
-                                item.severity === "red" ? "red" : "amber"
-                              }
-                            >
-                              {item.severity === "red" ? "Rojo" : "Ámbar"}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() =>
-                        setStalledDealsPage((current) =>
-                          Math.max(1, current - 1)
-                        )
-                      }
-                      disabled={
-                        stalledDealsPage <= 1 || stalledDeals.isFetching
-                      }
-                      aria-label="Ir a la página anterior de deals en riesgo"
-                    >
-                      Anterior
-                    </Button>
-                    <p
-                      className="text-[13px] text-tracker-text-secondary"
-                      aria-live="polite"
-                    >
-                      Página {stalledDealsPage} de{" "}
-                      {Math.max(stalledDeals.data?.totalPages ?? 0, 1)}
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() =>
-                        setStalledDealsPage((current) => current + 1)
-                      }
-                      disabled={
-                        stalledDeals.isFetching ||
-                        stalledDealsPage >= (stalledDeals.data?.totalPages ?? 0)
-                      }
-                      aria-label="Ir a la página siguiente de deals en riesgo"
-                    >
-                      Siguiente
-                    </Button>
-                  </div>
-                </>
-              ))}
-          </div>
-        </div>
-      )}
+          </SectionCard>
+        )}
+
+        {/* Stalled deals — Admin/Director only */}
+        {isAdminOrDirector && (
+          <>
+            <DottedDivider />
+            <SectionCard
+              title="Deals en riesgo"
+              icon={<KanbanIcon size={16} />}
+              description="Oportunidades sin movimiento de etapa"
+            >
+              {stalledDeals.isLoading && (
+                <div
+                  className="flex flex-col gap-3 p-4"
+                  role="status"
+                  aria-label="Cargando deals en riesgo"
+                >
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-8 w-full" />
+                  ))}
+                </div>
+              )}
+              {stalledDeals.isError && (
+                <ErrorRow message="No se pudo cargar los deals estancados." />
+              )}
+              {!stalledDeals.isLoading &&
+                !stalledDeals.isError &&
+                (stalledDeals.data?.data.length === 0 ? (
+                  <EmptyState
+                    icon={<KanbanIcon size={20} />}
+                    title="No hay deals estancados"
+                  />
+                ) : (
+                  <DataTable
+                    columns={stalledDealColumns}
+                    data={stalledDeals.data?.data ?? []}
+                    getRowId={(d) => d.dealId}
+                    pagination={{
+                      page: stalledDealsPage,
+                      pageCount: stalledDeals.data?.totalPages ?? 0,
+                      onPageChange: setStalledDealsPage,
+                      disabled: stalledDeals.isFetching,
+                      label: "deals en riesgo",
+                    }}
+                  />
+                ))}
+            </SectionCard>
+          </>
+        )}
+      </div>
     </div>
   )
 }
