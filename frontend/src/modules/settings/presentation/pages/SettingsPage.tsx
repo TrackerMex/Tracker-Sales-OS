@@ -8,15 +8,10 @@ import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
 import { FieldError } from "@/shared/components/forms/FieldError"
 import { fieldErrorProps } from "@/shared/components/forms/field-error-props"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
+import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/shared/components/layout/PageHeader"
 
 const FIELD_LABELS: Record<string, string> = {
   dailyMinPoints: "Puntos mínimos diarios",
@@ -88,90 +83,120 @@ export function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-[560px]">
-        <p className="text-[13px] text-tracker-text-muted">
-          Cargando configuración...
-        </p>
+      <div>
+        <PageHeader
+          title="Configuración"
+          description="Metas comerciales y umbrales de riesgo"
+        />
+        <div
+          className="grid gap-px border border-border bg-border md:grid-cols-3"
+          role="status"
+          aria-label="Cargando configuración"
+        >
+          {SETTINGS_GROUPS.map((group) => (
+            <div
+              key={group.value}
+              className="flex flex-col gap-4 bg-background p-4 md:p-6"
+            >
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-[560px] space-y-5">
-      <h1 className="text-lg font-bold text-tracker-blue">Configuración</h1>
+    <div>
+      <PageHeader
+        title="Configuración"
+        description="Metas comerciales y umbrales de riesgo"
+      />
 
-      <form ref={formRef} onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Metas del sistema</CardTitle>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            <FormErrorSummary error={errorSummary} />
-
-            <Accordion
-              type="multiple"
-              defaultValue={["daily", "monthly", "risk"]}
-            >
-              {SETTINGS_GROUPS.map((group) => (
-                <AccordionItem key={group.value} value={group.value}>
-                  <AccordionTrigger>{group.label}</AccordionTrigger>
-                  <AccordionContent className="grid gap-3">
-                    {group.fields.map((field) => (
-                      <div key={field}>
-                        <label className="slabel mb-1 block">
-                          {FIELD_LABELS[field]}
-                        </label>
-                        <Input
-                          type="number"
-                          value={form[field] || ""}
-                          onChange={(e) => handleChange(field, e.target.value)}
-                          disabled={!isAdmin}
-                          min={
-                            [
-                              "dailyMinPoints",
-                              "dailyCallsGoal",
-                              "stalledAmberDays",
-                              "stalledRedDays",
-                              "coldAccountDays",
-                            ].includes(field)
-                              ? 1
-                              : 0
-                          }
-                          className={cn(
-                            !isAdmin && "cursor-not-allowed opacity-60"
-                          )}
-                          {...fieldErrorProps(field, fieldErrors[field])}
-                        />
-                        <FieldError name={field} message={fieldErrors[field]} />
-                      </div>
-                    ))}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-
+      <div className="grid grid-cols-12 gap-px bg-border p-px">
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="col-span-12 bg-background"
+        >
+          <div className="border-b p-4 md:p-6">
+            <h2 className="text-base font-semibold">Metas del sistema</h2>
             {!isAdmin && (
-              <p className="text-xs text-tracker-text-muted">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Solo los administradores pueden modificar la configuración.
               </p>
             )}
+          </div>
 
-            {isAdmin && (
-              <div className="flex items-center gap-3 pt-2">
-                <Button type="submit" disabled={isPending}>
-                  {isPending ? "Guardando..." : "Guardar"}
-                </Button>
-                {isSuccess && (
-                  <span className="text-[13px] font-medium text-tracker-success">
-                    Configuración guardada
-                  </span>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </form>
+          {errorSummary && (
+            <div className="p-4 pb-0 md:px-6">
+              <FormErrorSummary error={errorSummary} />
+            </div>
+          )}
+
+          <div className="grid gap-px bg-border md:grid-cols-3">
+            {SETTINGS_GROUPS.map((group) => (
+              <section
+                key={group.value}
+                className="bg-background p-4 md:p-6"
+                aria-labelledby={`settings-${group.value}-title`}
+              >
+                <h3
+                  id={`settings-${group.value}-title`}
+                  className="text-base font-semibold"
+                >
+                  {group.label}
+                </h3>
+                <div className="mt-6 flex flex-col gap-6">
+                  {group.fields.map((field) => (
+                    <div key={field}>
+                      <Label htmlFor={`settings-${field}`}>
+                        {FIELD_LABELS[field]}
+                      </Label>
+                      <Input
+                        id={`settings-${field}`}
+                        type="number"
+                        className="mt-2"
+                        value={form[field] || ""}
+                        onChange={(e) => handleChange(field, e.target.value)}
+                        disabled={!isAdmin}
+                        min={
+                          [
+                            "dailyMinPoints",
+                            "dailyCallsGoal",
+                            "stalledAmberDays",
+                            "stalledRedDays",
+                            "coldAccountDays",
+                          ].includes(field)
+                            ? 1
+                            : 0
+                        }
+                        {...fieldErrorProps(field, fieldErrors[field])}
+                      />
+                      <FieldError name={field} message={fieldErrors[field]} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+
+          {isAdmin && (
+            <div className="flex flex-wrap items-center justify-end gap-3 border-t p-4 md:px-6">
+              {isSuccess && (
+                <span role="status" className="text-sm text-status-success">
+                  Configuración guardada
+                </span>
+              )}
+              <Button type="submit" size="lg" disabled={isPending}>
+                {isPending ? "Guardando..." : "Guardar"}
+              </Button>
+            </div>
+          )}
+        </form>
+      </div>
     </div>
   )
 }

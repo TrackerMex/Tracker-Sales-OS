@@ -39,7 +39,7 @@ push ni despliegue hasta que el usuario lo decida. Gates con pnpm
 | 008 | Patrones compartidos + Dashboard y Mi día | P1 | L | 006, 007 | DONE (sin commit; re-review PASSED, `progress/review_81-008-patterns-dashboard.md`; M4/N8 corregidos por el Líder) |
 | 009 | Clientes y Pipeline | P1 | L | 008 | DONE (sin commit; review PASSED, `progress/review_81-009-clients-pipeline.md`; smoke del Líder OK en `progress/redesign/phase-009/smoke-*`) |
 | 010 | Agenda, Actividades y Ventas | P1 | L | 008 | DONE (sin commit; review PASSED, `progress/review_81-010-agenda-activities-sales.md`; M1/M2 corregidos por el Líder, M3 y notas pasan a 012) |
-| 011 | Coaching, Reportes, Equipo, Configuración, Import/Export y Login | P1 | M | 008 | TODO |
+| 011 | Coaching, Reportes, Equipo, Configuración, Import/Export y Login | P1 | M | 008 | DONE (review PASSED, `progress/review_81-011-remaining-pages-login.md`; M1/N1/N2/N4 corregidos post-review; N5 y N7 pasan a 012) |
 | 012 | Limpieza final y verificación | P1 | S | 006-011 | TODO |
 
 009, 010 y 011 tocan módulos disjuntos y podrían ir en paralelo, pero se

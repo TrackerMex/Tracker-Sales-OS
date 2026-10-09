@@ -11,7 +11,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/shared/components/layout/PageHeader"
+import { SectionCard } from "@/shared/components/layout/SectionCard"
+import { StatCard } from "@/shared/components/data/StatCard"
+import { StatusBadge } from "@/shared/components/data/StatusBadge"
+import { EmptyState } from "@/shared/components/data/EmptyState"
+import {
+  ArrowRightIcon,
+  PulseIcon,
+  UserIcon,
+  UsersIcon,
+} from "@/shared/components/Icon"
+import { STATUS_FILL_CLASS, type StatusTone } from "@/shared/lib/status"
 import type { EquipoSeller } from "@/modules/equipo/domain/equipo.types"
 import type { ActivityMixItem } from "../../domain/coaching.types"
 import { cn } from "@/lib/utils"
@@ -32,79 +44,61 @@ function getRecommendedAction(
   return "Mantener ritmo de actividad"
 }
 
-interface StatCellProps {
-  value: string | number
-  label: string
-  valueClassName?: string
-  backgroundClassName?: string
-  children?: React.ReactNode
+// Seller cards: two per row on xl, one per row below. An odd last card spans
+// the full row so the hairline bento has no empty cell.
+function sellerSpan(index: number, total: number): string {
+  return total % 2 === 1 && index === total - 1
+    ? "col-span-12"
+    : "col-span-12 xl:col-span-6"
 }
 
-function StatCell({
-  value,
-  label,
-  valueClassName,
-  backgroundClassName,
-  children,
-}: StatCellProps) {
-  return (
-    <div
-      className={cn(
-        "rounded-[7px] bg-tracker-surface-alt px-2 py-[6px] text-center",
-        backgroundClassName
-      )}
-    >
-      <p className={valueClassName ?? "text-[22px] font-bold text-[#0F172A]"}>
-        {value}
-      </p>
-      {children}
-      <p className="slabel">{label}</p>
-    </div>
-  )
-}
-
-interface ProgressBarProps {
-  pct: number
-  colorClassName: string
-  className?: string
-}
-
-function ProgressBar({ pct, colorClassName, className }: ProgressBarProps) {
+function ProgressBar({ pct, tone }: { pct: number; tone: StatusTone }) {
   const clamped = Math.min(100, Math.max(0, pct))
   return (
-    <div className={cn("prog", className)}>
+    <div className="h-1.5 overflow-hidden rounded-full bg-foreground/10">
       <div
-        className={cn("prog-fill w-full origin-left", colorClassName)}
+        className={cn(
+          "h-full w-full origin-left rounded-full transition-transform duration-400 motion-reduce:transition-none",
+          STATUS_FILL_CLASS[tone]
+        )}
         style={{ transform: `scaleX(${clamped / 100})` }}
       />
     </div>
   )
 }
 
-function SkeletonCard() {
+function SkeletonCard({
+  className,
+  label,
+}: {
+  className?: string
+  label: string
+}) {
   return (
-    <div className="card animate-pulse p-5 motion-reduce:animate-none">
-      <div className="mb-4 flex items-start justify-between">
-        <div className="space-y-2">
-          <div className="h-4 w-32 rounded bg-slate-200" />
-          <div className="h-3 w-24 rounded bg-slate-100" />
+    <div
+      className={cn("flex flex-col gap-4 bg-background p-4", className)}
+      role="status"
+      aria-label={label}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-24" />
         </div>
-        <div className="h-5 w-16 rounded bg-slate-100" />
+        <Skeleton className="h-5 w-16" />
       </div>
-      <div className="mb-3 grid grid-cols-4 gap-2">
+      <Skeleton className="h-1.5 w-full" />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-14 rounded-[7px] bg-slate-100" />
+          <Skeleton key={i} className="h-20" />
         ))}
       </div>
-      <div className="mb-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-2.5">
+      <div className="grid grid-cols-3 gap-2">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-12 rounded-[7px] bg-slate-100" />
+          <Skeleton key={i} className="h-20" />
         ))}
       </div>
-      <div className="space-y-2 border-t border-slate-100 pt-2.5">
-        <div className="h-3 w-28 rounded bg-slate-100" />
-        <div className="h-10 rounded-lg bg-slate-100" />
-      </div>
+      <Skeleton className="h-16 w-full" />
     </div>
   )
 }
@@ -112,12 +106,23 @@ function SkeletonCard() {
 interface SellerCoachingCardProps {
   seller: EquipoSeller
   minDaily: number
+  className?: string
 }
 
-function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
+function SellerCoachingCard({
+  seller,
+  minDaily,
+  className,
+}: SellerCoachingCardProps) {
   const { data, isLoading } = useCoachingDaily(seller.id)
 
-  if (isLoading) return <SkeletonCard />
+  if (isLoading)
+    return (
+      <SkeletonCard
+        className={className}
+        label={`Cargando coaching de ${seller.name}`}
+      />
+    )
 
   const mix: ActivityMixItem[] = data?.activityMix ?? []
   const calls = getActivityCount(mix, ["Llamada"])
@@ -135,115 +140,92 @@ function SellerCoachingCard({ seller, minDaily }: SellerCoachingCardProps) {
   const totalActivities = data?.totalActivitiesToday ?? 0
   const mixInsights = data?.mixInsights ?? []
 
-  const qualityTextColorClass =
+  const qualityTextClass =
     quality >= 80
-      ? "text-tracker-success"
+      ? "text-status-success"
       : quality >= 50
-        ? "text-tracker-warning"
-        : "text-tracker-danger"
-  const qualityBarColorClass =
-    quality >= 75
-      ? "bg-tracker-green"
-      : quality >= 45
-        ? "bg-amber-500"
-        : "bg-red-500"
+        ? undefined
+        : "text-status-danger"
+  const qualityBarTone: StatusTone =
+    quality >= 75 ? "success" : quality >= 45 ? "pending" : "danger"
   const recommendedAction = getRecommendedAction(points, minDaily, overdue)
   const meetsMinimum = points >= minDaily
   const progressPct =
     data?.progressPct ??
     (minDaily > 0 ? Math.min(100, Math.round((points / minDaily) * 100)) : 100)
-  const progressBarColorClass = meetsMinimum
-    ? "bg-tracker-green"
+  const progressTone: StatusTone = meetsMinimum
+    ? "success"
     : progressPct >= 50
-      ? "bg-amber-500"
-      : "bg-red-500"
+      ? "pending"
+      : "danger"
 
   return (
-    <div className="card p-5">
-      <div className="mb-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[15px] font-bold text-[#0F172A]">
-              {seller.name}
-            </p>
-            <p className="text-[12px] text-[#94A3B8]">
-              {seller.profile ?? "Ejecutivo comercial"}
-            </p>
-          </div>
-          <div className="text-right">
-            <Badge variant={meetsMinimum ? "green" : "red"}>
-              {points}/{minDaily} pts
-            </Badge>
-            <p className="mt-1 text-[10px] text-[#94A3B8]">
-              {totalActivities} actividades hoy
-            </p>
-          </div>
-        </div>
-        <ProgressBar
-          pct={progressPct}
-          colorClassName={progressBarColorClass}
-          className="mt-2"
-        />
+    <SectionCard
+      title={seller.name}
+      icon={<UserIcon size={16} />}
+      description={seller.profile ?? "Ejecutivo comercial"}
+      actions={
+        <StatusBadge tone={meetsMinimum ? "success" : "danger"}>
+          {points}/{minDaily} pts
+        </StatusBadge>
+      }
+      className={className}
+    >
+      <div className="flex flex-col gap-2 p-4">
+        <p className="text-sm text-muted-foreground">
+          {totalActivities} actividades hoy
+        </p>
+        <ProgressBar pct={progressPct} tone={progressTone} />
       </div>
 
-      <div className="mb-3 grid grid-cols-4 gap-2">
-        <StatCell value={calls} label="Llamadas" />
-        <StatCell value={meetings} label="Reuniones" />
-        <StatCell value={proposals} label="Propuestas" />
-        <StatCell value={closes} label="Cierres" />
+      <div className="grid grid-cols-2 gap-px border-y border-border bg-border sm:grid-cols-4">
+        <StatCard label="Llamadas" value={calls} />
+        <StatCard label="Reuniones" value={meetings} />
+        <StatCard label="Propuestas" value={proposals} />
+        <StatCard label="Cierres" value={closes} />
       </div>
 
-      <div className="mb-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-2.5">
-        <StatCell
-          value={`${quality}%`}
+      <div className="grid grid-cols-2 gap-px border-b border-border bg-border sm:grid-cols-3">
+        <StatCard
+          className="col-span-2 sm:col-span-1"
           label="Calidad"
-          valueClassName={cn("text-[18px] font-bold", qualityTextColorClass)}
+          value={<span className={qualityTextClass}>{quality}%</span>}
         >
-          <ProgressBar
-            pct={quality}
-            colorClassName={qualityBarColorClass}
-            className="mt-1"
-          />
-        </StatCell>
-        <StatCell
-          value={overdue}
+          <ProgressBar pct={quality} tone={qualityBarTone} />
+        </StatCard>
+        <StatCard
           label="Vencidos"
-          valueClassName={`text-[18px] font-bold ${overdue > 0 ? "text-red-600" : "text-[#0F172A]"}`}
-          backgroundClassName={overdue > 0 ? "bg-red-50" : undefined}
+          value={
+            <span className={cn(overdue > 0 && "text-status-danger")}>
+              {overdue}
+            </span>
+          }
         />
-        <StatCell
-          value={tomorrow}
-          label="Mañana"
-          valueClassName={`text-[18px] font-bold ${tomorrow > 0 ? "text-[#002B49]" : "text-[#0F172A]"}`}
-        />
+        <StatCard label="Mañana" value={tomorrow} />
       </div>
 
-      <div className="border-t border-slate-100 pt-2.5">
-        {mixInsights.length > 0 ? (
-          <div className="ai-box">
-            <p className="slabel mb-2 text-tracker-purple">Coach IA</p>
-            <ul className="m-0 pl-4">
-              {mixInsights.map((tip, i) => (
-                <li
-                  key={i}
-                  className={cn(
-                    "text-[12.5px]",
-                    i < mixInsights.length - 1 && "mb-[5px]"
-                  )}
-                >
-                  {tip}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <>
-            <p className="slabel mb-1">Acción recomendada</p>
-            <div className="ai-box">{recommendedAction}</div>
-          </>
-        )}
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+        <span className="text-muted-foreground">
+          {mixInsights.length > 0 ? (
+            <PulseIcon size={16} />
+          ) : (
+            <ArrowRightIcon size={16} />
+          )}
+        </span>
+        <h3 className="text-sm font-medium">
+          {mixInsights.length > 0 ? "Coach IA" : "Acción recomendada"}
+        </h3>
       </div>
-    </div>
+      {mixInsights.length > 0 ? (
+        <ul className="flex list-disc flex-col gap-1.5 py-4 pr-4 pl-8 text-sm text-foreground">
+          {mixInsights.map((tip, i) => (
+            <li key={i}>{tip}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="p-4 text-sm text-foreground">{recommendedAction}</p>
+      )}
+    </SectionCard>
   )
 }
 
@@ -258,7 +240,7 @@ export function CoachingPage() {
   const minDaily =
     settingsData?.dailyMinPoints ?? ownDaily?.dailyPointsGoal ?? 30
 
-  const { data: sellers } = useSellers()
+  const { data: sellers, isLoading: sellersLoading } = useSellers()
   const currentSeller = sellers?.find((s) => s.id === currentSellerId)
 
   const sellerFallback: EquipoSeller | null = currentSellerId
@@ -278,37 +260,32 @@ export function CoachingPage() {
     ? activeSellers.filter((s) => s.id === selectedSellerId)
     : activeSellers
 
-  return (
-    <div className="mx-auto max-w-[1200px] p-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="page-title">Reporte diario de coaching</h1>
-          <p className="page-subtitle">
-            Termómetro exacto de actividad comercial por vendedor
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="slabel">Mínimo diario</span>
-          <span className="text-[18px] font-black text-[#002B49]">
-            {minDaily} pts
-          </span>
-        </div>
-      </div>
+  const ownSeller = currentSeller ?? sellerFallback
 
-      {isAdmin ? (
-        activeSellers.length > 0 ? (
+  return (
+    <div>
+      <PageHeader
+        title="Coaching"
+        description="Termómetro exacto de actividad comercial por vendedor"
+        actions={
           <>
-            <div className="mb-4 flex items-center gap-2.5">
-              <span className="text-[12px] font-semibold text-[#64748B]">
-                Vendedor:
+            <span className="text-sm text-muted-foreground">
+              Mínimo diario{" "}
+              <span className="font-semibold text-foreground">
+                {minDaily} pts
               </span>
+            </span>
+            {isAdmin && activeSellers.length > 0 && (
               <Select
                 value={selectedSellerId ?? "all"}
                 onValueChange={(value) =>
                   setSelectedSellerId(value === "all" ? null : value)
                 }
               >
-                <SelectTrigger className="w-[220px]">
+                <SelectTrigger
+                  className="w-auto min-w-40"
+                  aria-label="Filtrar por vendedor"
+                >
                   <SelectValue placeholder="Todos los vendedores" />
                 </SelectTrigger>
                 <SelectContent>
@@ -320,44 +297,53 @@ export function CoachingPage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div
-              className={
-                displayedSellers.length === 1
-                  ? "grid max-w-[480px] grid-cols-1"
-                  : "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-              }
-            >
-              {displayedSellers.map((seller) => (
-                <SellerCoachingCard
-                  key={seller.id}
-                  seller={seller}
-                  minDaily={minDaily}
-                />
-              ))}
-            </div>
+            )}
           </>
+        }
+      />
+
+      {isAdmin ? (
+        sellersLoading ? (
+          <div className="grid grid-cols-12 gap-px bg-border p-px">
+            <SkeletonCard
+              className="col-span-12 xl:col-span-6"
+              label="Cargando vendedores"
+            />
+            <SkeletonCard
+              className="col-span-12 xl:col-span-6"
+              label="Cargando vendedores"
+            />
+          </div>
+        ) : activeSellers.length > 0 ? (
+          <div className="grid grid-cols-12 gap-px bg-border p-px">
+            {displayedSellers.map((seller, i) => (
+              <SellerCoachingCard
+                key={seller.id}
+                seller={seller}
+                minDaily={minDaily}
+                className={sellerSpan(i, displayedSellers.length)}
+              />
+            ))}
+          </div>
         ) : (
-          <div className="card p-8 text-center">
-            <p className="mb-1 text-[14px] font-semibold text-[#0F172A]">
-              Sin vendedores activos
-            </p>
-            <p className="text-[12px] text-[#94A3B8]">
-              Registra vendedores en la sección Equipo para ver el reporte.
-            </p>
+          <div className="border border-border bg-background">
+            <EmptyState
+              icon={<UsersIcon size={20} />}
+              title="Sin vendedores activos"
+              description="Registra vendedores en la sección Equipo para ver el reporte."
+            />
           </div>
         )
       ) : (
-        (() => {
-          const seller = currentSeller ?? sellerFallback
-          if (!seller) return null
-          return (
-            <div className="max-w-[480px]">
-              <SellerCoachingCard seller={seller} minDaily={minDaily} />
-            </div>
-          )
-        })()
+        ownSeller && (
+          <div className="grid grid-cols-12 gap-px bg-border p-px">
+            <SellerCoachingCard
+              seller={ownSeller}
+              minDaily={minDaily}
+              className="col-span-12"
+            />
+          </div>
+        )
       )}
     </div>
   )

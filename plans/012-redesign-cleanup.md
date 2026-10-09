@@ -52,7 +52,8 @@ reporta: lo arregla la fase correspondiente).
    - **N3.** Ids únicos para los `FieldError` de Dirección y ATC en `SalesPage`.
    - **N4/N5.** `ClientCombobox` acepta `aria-describedby`, y ActivityForm le pasa `aria-invalid` con el error local.
    - **N7.** La columna Tipo de Ventas muestra etiqueta legible, no el valor crudo.
-   - **N11.** Contraste del contacto vencido en MiDia.
+   - Review 010, N11: contraste del contacto vencido en MiDia.
+   - Impl 011, Pendiente 1: mover `ROLE_LABELS` a shared (`shared/lib/constants.ts`) y usarlo en `components/nav-user.tsx` y `EquipoPage.tsx`, que hoy tiene una copia.
    - Scope extra: esos archivos, solo esos cambios.
 9. Gates: `pnpm run typecheck && pnpm run lint && pnpm run build`.
 

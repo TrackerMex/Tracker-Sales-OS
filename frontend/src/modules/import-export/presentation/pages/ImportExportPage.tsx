@@ -5,8 +5,23 @@ import { UserRole } from "@/core/domain/types/common.types"
 import { useExportData } from "../../application/hooks/useExportData"
 import { useImportData } from "../../application/hooks/useImportData"
 import type { ExportData } from "../../domain/import-export.types"
+import type { ColumnDef } from "@tanstack/react-table"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/shared/components/layout/PageHeader"
+import { SectionCard } from "@/shared/components/layout/SectionCard"
+import { DataTable } from "@/shared/components/data/DataTable"
+import { EmptyState } from "@/shared/components/data/EmptyState"
+import { FieldError } from "@/shared/components/forms/FieldError"
+import { fieldErrorProps } from "@/shared/components/forms/field-error-props"
+import {
+  AlertCircleIcon,
+  DownloadIcon,
+  FolderIcon,
+} from "@/shared/components/Icon"
+import { STATUS_TILE_CLASS } from "@/shared/lib/status"
+import { cn } from "@/lib/utils"
 
 const REQUIRED_KEYS: (keyof ExportData)[] = [
   "sellers",
@@ -18,6 +33,45 @@ const REQUIRED_KEYS: (keyof ExportData)[] = [
   "activities",
   "sales",
   "settings",
+]
+
+// Readable names for the backup sections (the JSON keys stay as they are).
+const SECTION_LABELS: Record<string, string> = {
+  sellers: "Vendedores",
+  users: "Usuarios",
+  clients: "Clientes",
+  contacts: "Contactos",
+  deals: "Oportunidades",
+  tasks: "Tareas",
+  activities: "Actividades",
+  sales: "Ventas",
+  settings: "Configuración",
+}
+
+interface PreviewRow {
+  key: string
+  label: string
+  records: string
+}
+
+const PREVIEW_COLUMNS: ColumnDef<PreviewRow>[] = [
+  {
+    accessorKey: "label",
+    header: "Sección",
+    cell: ({ row }) => (
+      <span className="font-medium text-foreground">{row.original.label}</span>
+    ),
+  },
+  {
+    accessorKey: "records",
+    header: "Contenido",
+    meta: { className: "text-right" },
+    cell: ({ row }) => (
+      <span className="text-muted-foreground tabular-nums">
+        {row.original.records}
+      </span>
+    ),
+  },
 ]
 
 export function ImportExportPage() {
@@ -38,13 +92,14 @@ export function ImportExportPage() {
 
   if (!isAdmin) {
     return (
-      <div className="max-w-[560px]">
-        <h1 className="mb-3 text-lg font-bold text-tracker-blue">
-          Import / Export
-        </h1>
-        <p className="text-[13px] text-tracker-text-muted">
-          Solo los administradores pueden acceder a esta sección.
-        </p>
+      <div>
+        <PageHeader title="Import / Export" />
+        <div className="border border-border bg-background">
+          <EmptyState
+            icon={<AlertCircleIcon size={20} />}
+            title="Solo los administradores pueden acceder a esta sección."
+          />
+        </div>
       </div>
     )
   }
@@ -67,7 +122,7 @@ export function ImportExportPage() {
         const json = JSON.parse(ev.target?.result as string)
         const missing = REQUIRED_KEYS.filter((k) => !(k in json))
         if (missing.length > 0) {
-          const msg = `Faltan las siguientes secciones: ${missing.join(", ")}`
+          const msg = `Faltan las siguientes secciones: ${missing.map((k) => SECTION_LABELS[k] ?? k).join(", ")}`
           setError(msg)
           toast.error(msg)
           return
@@ -99,84 +154,111 @@ export function ImportExportPage() {
     if (fileRef.current) fileRef.current.value = ""
   }
 
+  const previewRows: PreviewRow[] = preview
+    ? REQUIRED_KEYS.map((k) => ({
+        key: k,
+        label: SECTION_LABELS[k] ?? k,
+        records: Array.isArray(preview[k])
+          ? `${(preview[k] as unknown[]).length} registros`
+          : "objeto",
+      }))
+    : []
+
   return (
-    <div className="max-w-[560px] space-y-5">
-      <h1 className="text-lg font-bold text-tracker-blue">Import / Export</h1>
+    <div>
+      <PageHeader
+        title="Import / Export"
+        description="Respaldo y restauración de los datos del sistema"
+      />
 
-      {/* Export */}
-      <div className="card space-y-3 p-5">
-        <div className="slabel">Exportar datos</div>
-        <p className="text-[13px] text-tracker-text-secondary">
-          Descarga un archivo JSON con todos los datos del sistema.
-        </p>
-        <Button onClick={() => exportData()} disabled={isExporting}>
-          {isExporting ? "Descargando..." : "Descargar respaldo JSON"}
-        </Button>
-      </div>
-
-      {/* Import */}
-      <div className="card space-y-3 p-5">
-        <div className="slabel">Importar datos</div>
-        <p className="text-[13px] text-tracker-text-secondary">
-          Selecciona un archivo JSON de respaldo para importar.
-        </p>
-
-        <Input
-          ref={fileRef}
-          type="file"
-          accept=".json"
-          onChange={handleFileChange}
-          className="block w-full cursor-pointer text-sm text-slate-500 transition-colors file:mr-3 file:rounded-md file:border-0 file:bg-[#002B49] file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-[#001E35]"
-        />
-
-        {error && <p className="text-[13px] text-red-500">{error}</p>}
-
-        {preview && (
-          <div className="space-y-3">
-            <p className="text-[13px] font-medium text-tracker-text-dim">
-              Vista previa del archivo:
+      <div className="grid grid-cols-12 gap-px bg-border p-px">
+        <SectionCard
+          title="Exportar datos"
+          icon={<DownloadIcon size={16} />}
+          className="lg:col-span-5"
+        >
+          <div className="flex flex-col items-start gap-4 p-4">
+            <p className="text-sm text-muted-foreground">
+              Descarga un archivo JSON con todos los datos del sistema.
             </p>
-            <ul className="empty-state list-none px-4 py-3 text-left">
-              {REQUIRED_KEYS.map((k) => (
-                <li key={k} className="text-xs">
-                  <span className="font-semibold text-tracker-text-dim">
-                    {k}:
-                  </span>{" "}
-                  {Array.isArray(preview[k])
-                    ? `${(preview[k] as unknown[]).length} registros`
-                    : "objeto"}
-                </li>
-              ))}
-            </ul>
-            <div className="flex items-center gap-2 pt-1">
-              <Button onClick={handleConfirmImport} disabled={isImporting}>
-                {isImporting ? "Importando..." : "Importar datos"}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={handleCancel}
-                disabled={isImporting}
-              >
-                Cancelar
-              </Button>
+            <Button onClick={() => exportData()} disabled={isExporting}>
+              <DownloadIcon size={16} />
+              {isExporting ? "Descargando..." : "Descargar respaldo JSON"}
+            </Button>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Importar datos"
+          icon={<FolderIcon size={16} />}
+          className="lg:col-span-7"
+        >
+          <div className="flex flex-col gap-4 p-4">
+            <p className="text-sm text-muted-foreground">
+              Selecciona un archivo JSON de respaldo para importar.
+            </p>
+            <div>
+              <Label htmlFor="import-file">Archivo de respaldo</Label>
+              <Input
+                id="import-file"
+                ref={fileRef}
+                type="file"
+                accept=".json"
+                onChange={handleFileChange}
+                className="mt-2 cursor-pointer"
+                {...fieldErrorProps("import-file", error ?? undefined)}
+              />
+              <FieldError name="import-file" message={error ?? undefined} />
             </div>
           </div>
-        )}
 
-        {importSuccess && importResult && (
-          <div className="rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-[13px] text-tracker-success">
-            {importResult.message}
-            {importResult.counts && (
-              <ul className="mt-2 list-disc pl-4">
-                {Object.entries(importResult.counts).map(([key, val]) => (
-                  <li key={key}>
-                    {key}: {val}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
+          {preview && (
+            <>
+              <h3 className="border-t px-4 py-3 text-sm font-medium">
+                Vista previa del archivo
+              </h3>
+              <div className="border-t">
+                <DataTable
+                  columns={PREVIEW_COLUMNS}
+                  data={previewRows}
+                  getRowId={(r) => r.key}
+                />
+              </div>
+              <div className="flex justify-end gap-2 border-t p-4">
+                <Button
+                  variant="ghost"
+                  onClick={handleCancel}
+                  disabled={isImporting}
+                >
+                  Cancelar
+                </Button>
+                <Button onClick={handleConfirmImport} disabled={isImporting}>
+                  {isImporting ? "Importando..." : "Importar datos"}
+                </Button>
+              </div>
+            </>
+          )}
+
+          {importSuccess && importResult && (
+            <div className="border-t p-4">
+              <div
+                role="status"
+                className={cn("border p-4 text-sm", STATUS_TILE_CLASS.success)}
+              >
+                {importResult.message}
+                {importResult.counts && (
+                  <ul className="mt-2 list-disc pl-4">
+                    {Object.entries(importResult.counts).map(([key, val]) => (
+                      <li key={key}>
+                        {SECTION_LABELS[key] ?? key}: {val}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+        </SectionCard>
       </div>
     </div>
   )

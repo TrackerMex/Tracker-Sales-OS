@@ -1,20 +1,22 @@
 import { useState } from "react"
 import { useSearch } from "@tanstack/react-router"
-import { MoreHorizontalIcon } from "@/shared/components/Icon"
+import type { ColumnDef } from "@tanstack/react-table"
+import {
+  AlertCircleIcon,
+  DocumentTextIcon,
+  MoreHorizontalIcon,
+  UsersIcon,
+} from "@/shared/components/Icon"
 import { useMonthlyReport } from "../../application/hooks/useMonthlyReport"
 import { useWinLoss } from "../../application/hooks/useWinLoss"
+import type { SellerSalesReport } from "../../domain/reports.types"
 import { ExecutiveSlide } from "../components/ExecutiveSlide"
 import { buildAnalysis, money } from "../components/executive-slide.utils"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import { Card } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,17 +28,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { PageHeader } from "@/shared/components/layout/PageHeader"
+import { SectionCard } from "@/shared/components/layout/SectionCard"
+import { DataTable } from "@/shared/components/data/DataTable"
+import { EmptyState } from "@/shared/components/data/EmptyState"
+import { StatusBadge } from "@/shared/components/data/StatusBadge"
 
 const STORAGE_KEY = "tracker-report-goals"
-const LABEL_CLASS = "text-[9px] font-bold uppercase tracking-[0.13em]"
 
 function currentMonth(): string {
   return new Date().toISOString().slice(0, 7)
@@ -155,6 +153,56 @@ export function ReportsPage() {
       })
   }
 
+  const sellerColumns: ColumnDef<SellerSalesReport>[] = [
+    {
+      accessorKey: "sellerName",
+      header: "Vendedor",
+      cell: ({ row }) => (
+        <div>
+          <p className="font-medium text-foreground">
+            {row.original.sellerName}
+          </p>
+          <p className="text-muted-foreground tabular-nums sm:hidden">
+            {row.original.units} unidades · {money(row.original.amount)}
+          </p>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "units",
+      header: "Unidades",
+      meta: { className: "hidden text-right sm:table-cell" },
+      cell: ({ row }) => (
+        <span className="tabular-nums">{row.original.units}</span>
+      ),
+    },
+    {
+      accessorKey: "amount",
+      header: "Monto",
+      meta: { className: "hidden text-right sm:table-cell" },
+      cell: ({ row }) => (
+        <span className="font-medium whitespace-nowrap text-foreground tabular-nums">
+          {money(row.original.amount)}
+        </span>
+      ),
+    },
+    {
+      id: "metaPct",
+      header: "% Meta",
+      accessorFn: (r) =>
+        goalPerSeller > 0 ? (r.amount / goalPerSeller) * 100 : 0,
+      meta: { className: "text-right" },
+      cell: ({ getValue }) => {
+        const metaPct = getValue<number>()
+        return (
+          <StatusBadge tone={metaPct >= 100 ? "success" : "pending"}>
+            {metaPct.toFixed(1)}%
+          </StatusBadge>
+        )
+      },
+    },
+  ]
+
   function openLamina() {
     const node = document.getElementById("executive-slide")
     if (!node) {
@@ -191,285 +239,242 @@ export function ReportsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Config panel */}
-      <Card className="p-5">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className="text-[15px] font-bold text-tracker-text">
-              Informe Ejecutivo Mensual
-            </div>
-            <p className="mt-[3px] text-xs text-tracker-text-muted">
+    <div>
+      <PageHeader
+        title="Reportes"
+        description="Informe ejecutivo mensual"
+        actions={
+          <>
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      aria-label="Acciones del informe"
+                    >
+                      <MoreHorizontalIcon size={16} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Acciones del informe</TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end" className="min-w-48">
+                <DropdownMenuItem onSelect={saveGoals}>
+                  {savedMsg ? "Guardado" : "Guardar metas"}
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={!data} onSelect={copyReportText}>
+                  {copyMsg === "ok"
+                    ? "Copiado"
+                    : copyMsg === "fail"
+                      ? "Error al copiar"
+                      : "Copiar informe"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={shareLink}>
+                  {shareLinkMsg === "ok"
+                    ? "Enlace copiado"
+                    : shareLinkMsg === "fail"
+                      ? "Error al copiar"
+                      : "Compartir informe"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={openLamina}>
+              <DocumentTextIcon size={16} />
+              Abrir lámina
+            </Button>
+          </>
+        }
+      />
+
+      <div className="grid grid-cols-12 gap-px bg-border p-px">
+        <section
+          className="col-span-12 bg-background"
+          aria-labelledby="report-params-title"
+        >
+          <div className="border-b p-4 md:p-6">
+            <h2 id="report-params-title" className="text-base font-semibold">
+              Periodo y metas
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
               Separado por Dirección Comercial, ATC y Equipo de Vendedores.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2.5">
-            {[
-              {
-                label: "Mes",
-                className: "w-[150px]",
-                type: "month" as const,
-                value: month,
-                onChange: (v: string) => setMonth(v),
-              },
-            ].map((f) => (
-              <div key={f.label}>
-                <label
-                  className={cn(
-                    LABEL_CLASS,
-                    "mb-1 block text-tracker-text-muted"
-                  )}
-                >
-                  {f.label}
-                </label>
-                <Input
-                  type={f.type}
-                  value={f.value}
-                  onChange={(e) => f.onChange(e.target.value)}
-                  className={f.className}
-                />
-              </div>
-            ))}
+          <div className="grid gap-6 p-4 sm:grid-cols-2 md:p-6 xl:grid-cols-4">
             <div>
-              <label
-                className={cn(
-                  LABEL_CLASS,
-                  "mb-1 block text-tracker-text-muted"
-                )}
-              >
-                Meta $ equipo
-              </label>
+              <Label htmlFor="report-month">Mes</Label>
               <Input
+                id="report-month"
+                type="month"
+                className="mt-2"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="report-goal-amount">Meta $ equipo</Label>
+              <Input
+                id="report-goal-amount"
                 type="number"
-                className="w-[140px]"
+                className="mt-2"
                 min={1}
                 value={goalAmount || ""}
                 onChange={(e) => setGoalAmount(Number(e.target.value))}
               />
             </div>
             <div>
-              <label
-                className={cn(
-                  LABEL_CLASS,
-                  "mb-1 block text-tracker-text-muted"
-                )}
-              >
-                Meta unidades
-              </label>
+              <Label htmlFor="report-goal-units">Meta unidades</Label>
               <Input
+                id="report-goal-units"
                 type="number"
-                className="w-[120px]"
+                className="mt-2"
                 min={1}
                 value={goalUnits || ""}
                 onChange={(e) => setGoalUnits(Number(e.target.value))}
               />
             </div>
             <div>
-              <label
-                className={cn(
-                  LABEL_CLASS,
-                  "mb-1 block text-tracker-text-muted"
-                )}
-              >
-                Meta $ x vendedor
-              </label>
+              <Label htmlFor="report-goal-per-seller">Meta $ x vendedor</Label>
               <Input
+                id="report-goal-per-seller"
                 type="number"
-                className="w-[140px]"
+                className="mt-2"
                 min={1}
                 value={goalPerSeller || ""}
                 onChange={(e) => setGoalPerSeller(Number(e.target.value))}
               />
             </div>
-            <div className="flex items-end gap-[7px]">
-              <DropdownMenu>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Acciones del informe"
-                      >
-                        <MoreHorizontalIcon />
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>Acciones del informe</TooltipContent>
-                </Tooltip>
-                <DropdownMenuContent align="end" className="min-w-48">
-                  <DropdownMenuItem onSelect={saveGoals}>
-                    {savedMsg ? "Guardado" : "Guardar metas"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem disabled={!data} onSelect={copyReportText}>
-                    {copyMsg === "ok"
-                      ? "Copiado"
-                      : copyMsg === "fail"
-                        ? "Error al copiar"
-                        : "Copiar informe"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={shareLink}>
-                    {shareLinkMsg === "ok"
-                      ? "Enlace copiado"
-                      : shareLinkMsg === "fail"
-                        ? "Error al copiar"
-                        : "Compartir informe"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button onClick={openLamina}>Abrir lámina</Button>
-            </div>
           </div>
-        </div>
-      </Card>
+        </section>
+      </div>
 
       {isLoading && (
-        <p className="text-[13px] text-tracker-text-muted">
-          Cargando reporte...
-        </p>
+        <div className="mt-4" role="status" aria-label="Cargando reporte">
+          <Skeleton className="h-96 w-full" />
+        </div>
       )}
       {error && (
-        <div className="flex items-center gap-2">
-          <p className="text-[13px] text-red-500">
-            Error al cargar el reporte.
-          </p>
-          <Button variant="ghost" size="sm" onClick={() => refetch()}>
-            Reintentar
-          </Button>
+        <div className="mt-4 border border-border bg-background">
+          <EmptyState
+            icon={<AlertCircleIcon size={20} />}
+            title="Error al cargar el reporte."
+            action={
+              <Button variant="outline" onClick={() => refetch()}>
+                Reintentar
+              </Button>
+            }
+          />
         </div>
       )}
 
       {data &&
         (() => {
           const ai = buildAnalysis(data, goalAmount, goalUnits, goalPerSeller)
+          const hasSellers = data.sellers.length > 0
 
           return (
             <>
-              <ExecutiveSlide
-                data={data}
-                winLoss={winLoss}
-                winLossLoading={winLossLoading}
-                goalAmount={goalAmount}
-                goalUnits={goalUnits}
-                goalPerSeller={goalPerSeller}
-                month={month}
-                updatedAt={updatedAt}
-              />
+              <div className="mt-4">
+                <ExecutiveSlide
+                  data={data}
+                  winLoss={winLoss}
+                  winLossLoading={winLossLoading}
+                  goalAmount={goalAmount}
+                  goalUnits={goalUnits}
+                  goalPerSeller={goalPerSeller}
+                  month={month}
+                  updatedAt={updatedAt}
+                />
+              </div>
 
-              {/* Detalle Top Vendedores */}
-              {data.sellers.length > 0 && (
-                <Card className="p-5">
-                  <Accordion type="single" collapsible defaultValue="sellers">
-                    <AccordionItem value="sellers">
-                      <AccordionTrigger>
-                        Detalle Top Vendedores
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Vendedor</TableHead>
-                              <TableHead>Unidades</TableHead>
-                              <TableHead>Monto</TableHead>
-                              <TableHead>% Meta</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {data.sellers.map((r) => {
-                              const metaPct =
-                                goalPerSeller > 0
-                                  ? (r.amount / goalPerSeller) * 100
-                                  : 0
-                              const metaColorClass =
-                                metaPct >= 100
-                                  ? "text-tracker-success-dark"
-                                  : "text-tracker-warning-dark"
-                              return (
-                                <TableRow key={r.sellerId}>
-                                  <TableCell className="font-semibold text-tracker-text">
-                                    {r.sellerName}
-                                  </TableCell>
-                                  <TableCell>{r.units}</TableCell>
-                                  <TableCell className="font-semibold">
-                                    {money(r.amount)}
-                                  </TableCell>
-                                  <TableCell>
-                                    <span
-                                      className={cn(
-                                        "text-[11px] font-semibold",
-                                        metaColorClass
-                                      )}
-                                    >
-                                      {metaPct.toFixed(1)}%
-                                    </span>
-                                  </TableCell>
-                                </TableRow>
-                              )
-                            })}
-                          </TableBody>
-                        </Table>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </Card>
-              )}
+              <div className="mt-4 grid grid-cols-12 gap-px bg-border p-px">
+                {hasSellers && (
+                  <SectionCard
+                    title="Detalle top vendedores"
+                    icon={<UsersIcon size={16} />}
+                    className="xl:col-span-6"
+                  >
+                    <DataTable
+                      columns={sellerColumns}
+                      data={data.sellers}
+                      getRowId={(r) => r.sellerId}
+                    />
+                  </SectionCard>
+                )}
 
-              {/* Resumen para Dirección */}
-              <Card id="executive-report-text" className="p-5">
-                <Accordion type="single" collapsible defaultValue="summary">
-                  <AccordionItem value="summary">
-                    <AccordionTrigger>Resumen para Dirección</AccordionTrigger>
-                    <AccordionContent>
-                      <p className="text-[13px] leading-[1.7] text-tracker-text-dim">
-                        <b>Meta vs Logro {month}:</b> Ventas globales:{" "}
-                        {money(data.total.amount)} contra meta de{" "}
-                        {money(goalAmount)} (
-                        {((data.total.amount / goalAmount) * 100).toFixed(2)}%).
-                        Unidades: {data.total.units} contra meta de {goalUnits}{" "}
-                        ({((data.total.units / goalUnits) * 100).toFixed(2)}%).
-                        <br />
-                        <br />
-                        <b>Dirección Comercial:</b> {data.direction.units}{" "}
-                        unidades por {money(data.direction.amount)}.
-                        <br />
-                        <b>ATC:</b> {data.atc.existingUnits} unidades existentes
-                        por {money(data.atc.existingAmount)}.
-                        {data.sellers.length > 0 && (
-                          <>
-                            <br />
-                            <b>Equipo:</b>{" "}
-                            {data.sellers
-                              .slice(0, 5)
-                              .map(
-                                (r) =>
-                                  `${r.sellerName}: ${r.units} unidades, ${money(r.amount)}`
-                              )
-                              .join(" · ")}
-                            .
-                          </>
-                        )}
-                        {data.bySource.length > 0 && (
-                          <>
-                            <br />
-                            <b>Origen de cuentas:</b>{" "}
-                            {data.bySource
-                              .slice(0, 5)
-                              .map(
-                                (s) =>
-                                  `${s.source}: ${s.count} cuentas, ${money(s.amount)}`
-                              )
-                              .join(" · ")}
-                            .
-                          </>
-                        )}
-                        <br />
-                        <b>Análisis IA:</b> Salud comercial {ai.health}/100 —{" "}
-                        {ai.status}
-                      </p>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </Card>
+                <div
+                  id="executive-report-text"
+                  className={cn(
+                    "col-span-12 bg-background",
+                    hasSellers && "xl:col-span-6"
+                  )}
+                >
+                  <SectionCard
+                    title="Resumen para Dirección"
+                    icon={<DocumentTextIcon size={16} />}
+                  >
+                    <p className="p-4 text-sm/relaxed text-muted-foreground">
+                      <b className="font-semibold text-foreground">
+                        Meta vs Logro {month}:
+                      </b>{" "}
+                      Ventas globales: {money(data.total.amount)} contra meta de{" "}
+                      {money(goalAmount)} (
+                      {((data.total.amount / goalAmount) * 100).toFixed(2)}%).
+                      Unidades: {data.total.units} contra meta de {goalUnits} (
+                      {((data.total.units / goalUnits) * 100).toFixed(2)}%).
+                      <br />
+                      <br />
+                      <b className="font-semibold text-foreground">
+                        Dirección Comercial:
+                      </b>{" "}
+                      {data.direction.units} unidades por{" "}
+                      {money(data.direction.amount)}.
+                      <br />
+                      <b className="font-semibold text-foreground">ATC:</b>{" "}
+                      {data.atc.existingUnits} unidades existentes por{" "}
+                      {money(data.atc.existingAmount)}.
+                      {hasSellers && (
+                        <>
+                          <br />
+                          <b className="font-semibold text-foreground">
+                            Equipo:
+                          </b>{" "}
+                          {data.sellers
+                            .slice(0, 5)
+                            .map(
+                              (r) =>
+                                `${r.sellerName}: ${r.units} unidades, ${money(r.amount)}`
+                            )
+                            .join(" · ")}
+                          .
+                        </>
+                      )}
+                      {data.bySource.length > 0 && (
+                        <>
+                          <br />
+                          <b className="font-semibold text-foreground">
+                            Origen de cuentas:
+                          </b>{" "}
+                          {data.bySource
+                            .slice(0, 5)
+                            .map(
+                              (s) =>
+                                `${s.source}: ${s.count} cuentas, ${money(s.amount)}`
+                            )
+                            .join(" · ")}
+                          .
+                        </>
+                      )}
+                      <br />
+                      <b className="font-semibold text-foreground">
+                        Análisis IA:
+                      </b>{" "}
+                      Salud comercial {ai.health}/100 — {ai.status}
+                    </p>
+                  </SectionCard>
+                </div>
+              </div>
             </>
           )
         })()}
