@@ -16,6 +16,7 @@ import type {
   LossReason,
 } from "../../domain/pipeline.types"
 import { formatCurrency } from "@/shared/lib/format"
+import { PIPELINE_STAGES } from "@/shared/lib/constants"
 import {
   Select,
   SelectContent,
@@ -43,16 +44,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 
-const ALL_STAGES: PipelineStage[] = [
-  "Prospecto",
-  "Contactado",
-  "Interesado",
-  "Propuesta",
-  "Negociación",
-  "Cierre",
-  "Perdido",
-]
-
 function SkeletonColumns() {
   return (
     <div
@@ -60,7 +51,7 @@ function SkeletonColumns() {
       role="status"
       aria-label="Cargando pipeline"
     >
-      {ALL_STAGES.map((stage) => (
+      {PIPELINE_STAGES.map((stage) => (
         <Skeleton key={stage} className="h-48 w-63 shrink-0" />
       ))}
     </div>
@@ -89,14 +80,14 @@ function KanbanBoard({
   }, [])
 
   return (
-    // `pipeline-scroll` is kept only as a selector hook (QA scripts); the
-    // scrollbar colors below override the legacy hex rule.
+    // `pipeline-scroll` is kept only as a selector hook (QA scripts); it has
+    // no CSS rule, the scrollbar comes from the utilities below.
     <div
       ref={scrollRef}
       className="pipeline-scroll [scrollbar-width:thin] [scrollbar-color:var(--border)_transparent] overflow-x-auto pb-4"
     >
       <div className="flex min-w-max gap-3">
-        {ALL_STAGES.map((stage) => (
+        {PIPELINE_STAGES.map((stage) => (
           <KanbanColumn
             key={stage}
             stage={stage}

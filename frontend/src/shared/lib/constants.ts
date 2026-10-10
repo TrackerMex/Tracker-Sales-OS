@@ -46,6 +46,12 @@ export const PIPELINE_STAGES = [
 
 export type PipelineStage = (typeof PIPELINE_STAGES)[number];
 
+export const ROLE_LABELS: Record<string, string> = {
+  Admin: 'Administrador',
+  Director: 'Director',
+  Seller: 'Vendedor',
+};
+
 export const STAGE_PROBABILITY: Record<PipelineStage, number> = {
   Prospecto: 5,
   Contactado: 15,

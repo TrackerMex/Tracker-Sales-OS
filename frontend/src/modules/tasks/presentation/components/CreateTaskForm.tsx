@@ -236,6 +236,7 @@ export function CreateTaskForm({
                       }}
                       placeholder="Sin cliente / prospecto nuevo"
                       error={!!fieldErrors.clientId}
+                      aria-describedby={fieldErrors.clientId ? "clientId-error" : undefined}
                     />
                   </div>
                   <FieldError name="clientId" message={fieldErrors.clientId} />
@@ -328,9 +329,10 @@ export function CreateTaskForm({
                 <div>
                   <div className="grid gap-6 sm:grid-cols-2">
                     <div>
-                      <Label>Fecha</Label>
+                      <Label htmlFor="task-date" id="task-date-label">Fecha</Label>
                       <div className="mt-2">
                         <DatePickerField
+                          id="task-date"
                           value={date}
                           onChange={(v) => {
                             setDate(v)
@@ -344,8 +346,9 @@ export function CreateTaskForm({
                       </div>
                     </div>
                     <div>
-                      <Label>Hora</Label>
+                      <Label htmlFor="task-time" id="task-time-label">Hora</Label>
                       <TimePickerField
+                        id="task-time"
                         value={time}
                         onChange={(v) => {
                           setTime(v)

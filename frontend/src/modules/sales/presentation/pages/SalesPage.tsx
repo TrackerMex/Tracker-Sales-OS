@@ -25,6 +25,7 @@ import type {
   CreateSaleInput,
   PaymentMethod,
   SaleSource,
+  SaleType,
   Sale,
 } from "../../domain/sales.types"
 import { UserRole } from "@/core/domain/types/common.types"
@@ -78,6 +79,11 @@ const PAYMENT_METHODS: PaymentMethod[] = [
   "Pendiente",
 ]
 const DIRECTION_SELLER_NAME: SaleSource = "Dirección Comercial"
+const SALE_TYPE_LABELS: Record<SaleType, string> = {
+  seller: "Vendedor",
+  atc: "ATC",
+  direction: "Dirección",
+}
 const SALE_SOURCES: SaleSource[] = [
   "Prospección propia",
   "Cliente existente",
@@ -308,7 +314,9 @@ export function SalesPage() {
       cell: ({ row }) => (
         <div className="flex flex-wrap gap-1">
           <StatusBadge status={row.original.clientType} />
-          <Badge variant="outline">{row.original.type}</Badge>
+          <Badge variant="outline">
+            {SALE_TYPE_LABELS[row.original.type] ?? row.original.type}
+          </Badge>
         </div>
       ),
     },
@@ -433,6 +441,9 @@ export function SalesPage() {
                         }}
                         placeholder="Seleccionar cliente"
                         error={!!sellerErrors.fieldErrors.clientId}
+                        aria-describedby={
+                          sellerErrors.fieldErrors.clientId ? "clientId-error" : undefined
+                        }
                       />
                     </div>
                     <FieldError
@@ -526,9 +537,10 @@ export function SalesPage() {
                 <div className="mt-6 flex flex-col gap-6">
                   <div className="grid gap-6 sm:grid-cols-2">
                     <div>
-                      <Label>Fecha</Label>
+                      <Label htmlFor="sale-date" id="sale-date-label">Fecha</Label>
                       <div className="mt-2">
                         <DatePickerField
+                          id="sale-date"
                           value={sellerDate}
                           onChange={(v) => {
                             setSellerDate(v)
@@ -669,9 +681,10 @@ export function SalesPage() {
                   <FormErrorSummary error={dirErrors.summary} />
 
                   <div>
-                    <Label>Fecha</Label>
+                    <Label htmlFor="sale-dir-date" id="sale-dir-date-label">Fecha</Label>
                     <div className="mt-2">
                       <DatePickerField
+                        id="sale-dir-date"
                         value={dirDate}
                         onChange={(v) => {
                           setDirDate(v)
@@ -817,19 +830,20 @@ export function SalesPage() {
                   <FormErrorSummary error={atcErrors.summary} />
 
                   <div>
-                    <Label>Fecha</Label>
+                    <Label htmlFor="sale-atc-date" id="sale-atc-date-label">Fecha</Label>
                     <div className="mt-2">
                       <DatePickerField
+                        id="sale-atc-date"
                         value={atcDate}
                         onChange={(v) => {
                           setAtcDate(v)
                           atcErrors.clearField("date")
                         }}
-                        {...fieldErrorProps("date", atcErrors.fieldErrors.date)}
+                        {...fieldErrorProps("atc-date", atcErrors.fieldErrors.date)}
                       />
                     </div>
                     <FieldError
-                      name="date"
+                      name="atc-date"
                       message={atcErrors.fieldErrors.date}
                     />
                   </div>
@@ -851,12 +865,12 @@ export function SalesPage() {
                         }}
                         required
                         {...fieldErrorProps(
-                          "units",
+                          "atc-units",
                           atcErrors.fieldErrors.units
                         )}
                       />
                       <FieldError
-                        name="units"
+                        name="atc-units"
                         message={atcErrors.fieldErrors.units}
                       />
                     </div>
@@ -877,12 +891,12 @@ export function SalesPage() {
                         }}
                         required
                         {...fieldErrorProps(
-                          "amount",
+                          "atc-amount",
                           atcErrors.fieldErrors.amount
                         )}
                       />
                       <FieldError
-                        name="amount"
+                        name="atc-amount"
                         message={atcErrors.fieldErrors.amount}
                       />
                     </div>
@@ -900,10 +914,10 @@ export function SalesPage() {
                         atcErrors.clearField("notes")
                       }}
                       placeholder="Observaciones adicionales"
-                      {...fieldErrorProps("notes", atcErrors.fieldErrors.notes)}
+                      {...fieldErrorProps("atc-notes", atcErrors.fieldErrors.notes)}
                     />
                     <FieldError
-                      name="notes"
+                      name="atc-notes"
                       message={atcErrors.fieldErrors.notes}
                     />
                   </div>

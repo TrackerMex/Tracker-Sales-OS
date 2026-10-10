@@ -623,8 +623,11 @@ export function MiDiaPage() {
                             </span>
                           )}
                           {contactName && (
-                            <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
-                              <UserIcon size={14} />
+                            <span className="inline-flex items-center gap-1 text-sm text-foreground">
+                              <UserIcon
+                                size={14}
+                                className="text-muted-foreground"
+                              />
                               {contactName}
                             </span>
                           )}

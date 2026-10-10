@@ -103,9 +103,10 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
               <h5 className="text-base font-semibold">Venta</h5>
               <div className="mt-6 flex flex-col gap-6">
                 <div>
-                  <Label>Fecha</Label>
+                  <Label htmlFor="edit-sale-date" id="edit-sale-date-label">Fecha</Label>
                   <div className="mt-2">
                     <DatePickerField
+                      id="edit-sale-date"
                       value={date}
                       onChange={setDate}
                     />

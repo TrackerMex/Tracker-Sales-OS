@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider } from 'next-themes';
 
 import '@fontsource-variable/geist';
+// Montserrat: only the executive slide (/lamina, ExecutiveSlide) uses it.
 import '@fontsource-variable/montserrat';
 import './index.css';
 import App from './App.tsx';

@@ -30,9 +30,9 @@ interface CalendarViewProps {
 // Chip accent per task type (left border); text stays foreground for AA.
 const TYPE_ACCENT: Record<string, string> = {
   Llamada: "border-l-primary",
-  Videoconf: "border-l-primary",
+  Videoconferencia: "border-l-primary",
   "Reunión virtual": "border-l-primary",
-  Visita: "border-l-chart-2",
+  "Visita física": "border-l-chart-2",
   "Reunión presencial": "border-l-chart-2",
   Propuesta: "border-l-chart-4",
   Seguimiento: "border-l-chart-4",

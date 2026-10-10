@@ -57,13 +57,7 @@ import { DottedDivider } from "@/shared/components/layout/DottedDivider"
 import { DataTable } from "@/shared/components/data/DataTable"
 import { EmptyState } from "@/shared/components/data/EmptyState"
 import { StatusBadge } from "@/shared/components/data/StatusBadge"
-
-// Same labels as the user menu (components/nav-user.tsx), which does not export them.
-const ROLE_LABELS: Record<string, string> = {
-  Admin: "Administrador",
-  Director: "Director",
-  Seller: "Vendedor",
-}
+import { ROLE_LABELS } from "@/shared/lib/constants"
 
 function ListSkeleton({ label }: { label: string }) {
   return (

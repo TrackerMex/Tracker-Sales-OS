@@ -842,3 +842,13 @@ Batch 2:
 - **Smoke del Líder**: requirió rebuild del contenedor `frontend` (monta sólo `./frontend/src`, así que `node_modules` no tenía reicon). Verificado en navegador con sesión admin: 0 errores de consola en 12 rutas, y con `getComputedStyle` los dos fallos silenciosos descartados — **0 svgs con `style` inline de color** y **0 iconos con tamaño 0**.
 - **Riesgos aceptados**: grosores mezclados 2.0 (stroke) / ~1.5 (fill), sin arreglo posible por ser geometría del path; tick del checkbox de 3 → ~1.5. Los 4 mapeos dudosos se cambian con una línea en `Icon.tsx`.
 - **Hallazgo lateral preexistente** (no de esta feature): `dropdown-menu.tsx:46` anula con `!important` el `text-destructive` de los items, por eso "Eliminar cliente" no se ve rojo.
+
+## 2026-10-10 — Feature 81: rediseño visual con la plantilla shadcn-dashboard
+
+- Objetivo: copiar tal cual el aspecto de https://github.com/shadcndashboard/next-shadcn-dashboard (Lyra, paleta neutral oklch, Geist, bento hairline, claro/oscuro) en el shell y todas las páginas, sobre el shadcn (Radix) + Tailwind v4 del proyecto. Fuente de verdad: `DESIGN.md` y `PRODUCT.md`. La feature 77 queda en pausa en su rama.
+- Ejecución en 7 planes (`plans/006` a `plans/012`), cada uno con Implementer, Reviewer independiente y smoke del Líder. Todos con review PASSED (`progress/review_81-*.md`).
+- 012 dejó `index.css` de 823 a 252 líneas (68 clases legacy y 18 tokens fuera). La lámina ejecutiva conserva su bloque de tokens y Montserrat; capturas de `/lamina` antes y después idénticas por sha256.
+- Accesibilidad: tokens `--status-success/progress/danger` para texto AA en claro y oscuro; `htmlFor`/`id` en DatePicker y TimePicker; `aria-describedby` en ClientCombobox; ids únicos de `FieldError` en Ventas.
+- QA de escrituras reales en el stack local (Postgres 5434, API 3005, Vite 3001; 0 peticiones a producción): 22/24 flujos PASS con Admin y Seller, claro 1440 y oscuro 390. Los 2 fallos (admin crea tarea o actividad, HTTP 500 por no tener `seller_id`) son preexistentes, igual en `55b22e1`. Detalle y otros 7 hallazgos preexistentes en `progress/qa_81-write-smoke.md`.
+- Capturas antes/después en `progress/redesign/` (locales, no versionadas por tamaño).
+- Sin tocar el Docker de producción. Publicada en la rama `dev` de origin para que el usuario la valide; el merge a `main` (auto-deploy por Dokploy) lo decide el usuario.

@@ -232,7 +232,7 @@ cifras `tabular-nums`. Alto 215px en dashboard.
   por sección salvo pares cortos.
 - Input / Select / Textarea: `h-8 rounded-md border-input bg-transparent px-2.5
   text-xs`; foco = `border-primary` sin ring.
-- Error: label y borde en `destructive`, mensaje `text-xs text-destructive`.
+- Error: label y borde en `destructive`, mensaje `text-xs text-status-danger`.
 - Checkbox `size-4 rounded-none`; radio `size-4 rounded-full`; switch 32×18.
 
 ### Botones

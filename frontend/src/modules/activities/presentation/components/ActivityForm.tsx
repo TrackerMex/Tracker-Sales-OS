@@ -317,7 +317,10 @@ export function ActivityForm({
                   onResolve={(client) => setSelectedClient(client)}
                   initialLabel={initialClientLabel}
                   placeholder="Sin cliente"
-                  error={!!fieldErrors.clientId}
+                  error={!!(clientError || fieldErrors.clientId)}
+                  aria-describedby={
+                    clientError || fieldErrors.clientId ? "clientId-error" : undefined
+                  }
                 />
               </div>
               <FieldError
@@ -545,9 +548,10 @@ export function ActivityForm({
             <div>
               <div className="grid gap-6 sm:grid-cols-2">
                 <div>
-                  <Label>Fecha de ejecución</Label>
+                  <Label htmlFor="activity-exec-date" id="activity-exec-date-label">Fecha de ejecución</Label>
                   <div className="mt-2">
                     <DatePickerField
+                      id="activity-exec-date"
                       value={execDate}
                       onChange={handleExecDateChange}
                       {...fieldErrorProps("executedAt", fieldErrors.executedAt)}
@@ -555,8 +559,9 @@ export function ActivityForm({
                   </div>
                 </div>
                 <div>
-                  <Label>Hora</Label>
+                  <Label htmlFor="activity-exec-time" id="activity-exec-time-label">Hora</Label>
                   <TimePickerField
+                    id="activity-exec-time"
                     value={execTime}
                     onChange={handleExecTimeChange}
                     aria-invalid={!!fieldErrors.executedAt}
@@ -569,17 +574,19 @@ export function ActivityForm({
 
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <Label>Fecha de captura</Label>
+                <Label htmlFor="activity-capture-date" id="activity-capture-date-label">Fecha de captura</Label>
                 <div className="mt-2">
                   <DatePickerField
+                    id="activity-capture-date"
                     value={progDate}
                     onChange={handleProgDateChange}
                   />
                 </div>
               </div>
               <div>
-                <Label>Hora de captura</Label>
+                <Label htmlFor="activity-capture-time" id="activity-capture-time-label">Hora de captura</Label>
                 <TimePickerField
+                  id="activity-capture-time"
                   value={progTime}
                   onChange={handleProgTimeChange}
                   className="mt-2"
@@ -747,9 +754,10 @@ export function ActivityForm({
                 />
               </div>
               <div>
-                <Label>Fecha próxima *</Label>
+                <Label htmlFor="activity-next-date" id="activity-next-date-label">Fecha próxima *</Label>
                 <div className="mt-2">
                   <DatePickerField
+                    id="activity-next-date"
                     value={nextDate}
                     onChange={(v) => {
                       setNextDate(v)
@@ -761,14 +769,16 @@ export function ActivityForm({
                 <FieldError name="nextDate" message={fieldErrors.nextDate} />
               </div>
               <div>
-                <Label>Hora próxima *</Label>
+                <Label htmlFor="activity-next-time" id="activity-next-time-label">Hora próxima *</Label>
                 <TimePickerField
+                  id="activity-next-time"
                   value={nextTime}
                   onChange={(v) => {
                     setNextTime(v)
                     clearField("nextTime")
                   }}
                   aria-invalid={!!fieldErrors.nextTime}
+                  aria-describedby={fieldErrors.nextTime ? "nextTime-error" : undefined}
                   className="mt-2"
                 />
                 <FieldError name="nextTime" message={fieldErrors.nextTime} />

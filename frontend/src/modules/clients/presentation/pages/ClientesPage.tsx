@@ -12,6 +12,7 @@ import {
   SearchIcon,
 } from "@/shared/components/Icon"
 import { UserRole } from "@/core/domain/types/common.types"
+import { PIPELINE_STAGES } from "@/shared/lib/constants"
 import { useAppStore } from "@/shared/store/app.store"
 import { activitiesApi } from "@/modules/activities/infrastructure/activities.api"
 import type { Activity } from "@/modules/activities/domain/activities.types"
@@ -87,15 +88,6 @@ import type {
 
 const clientTypes: ClientType[] = ["Prospecto", "Nuevo", "Existente"]
 const personTypes: PersonType[] = ["Moral", "Física"]
-const pipelineStages: PipelineStage[] = [
-  "Prospecto",
-  "Contactado",
-  "Interesado",
-  "Propuesta",
-  "Negociación",
-  "Cierre",
-  "Perdido",
-]
 const clientSources: ClientSource[] = [
   "Prospección propia",
   "Cliente existente",
@@ -468,7 +460,7 @@ export function ClientesPage() {
           <section className="col-span-12 bg-background p-6">
             <h2 className="text-base font-semibold">Actualizar etapa</h2>
             <div className="mt-4 flex flex-wrap gap-2">
-              {pipelineStages.map((s) => {
+              {PIPELINE_STAGES.map((s) => {
                 // With a deal, the deal stage is the pipeline source of truth
                 const isActive = activeDeal
                   ? activeDeal.stage === s
@@ -1021,7 +1013,7 @@ export function ClientesPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {pipelineStages.map((s) => (
+                          {PIPELINE_STAGES.map((s) => (
                             <SelectItem key={s} value={s}>
                               {s}
                             </SelectItem>

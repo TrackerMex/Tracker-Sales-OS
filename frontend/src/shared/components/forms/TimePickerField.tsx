@@ -3,6 +3,9 @@ import { TimePickerInput, TimePeriodToggle } from "@/components/ui/time-picker"
 import { cn } from "@/lib/utils"
 
 interface TimePickerFieldProps {
+  // Id of the hour input. The field's <Label> uses htmlFor={id} and
+  // id={`${id}-label`}; that label names the group.
+  id?: string
   value: string
   onChange: (value: string) => void
   disabled?: boolean
@@ -16,6 +19,7 @@ function pad(n: number): string {
 }
 
 export function TimePickerField({
+  id,
   value,
   onChange,
   disabled,
@@ -46,6 +50,8 @@ export function TimePickerField({
 
   return (
     <div
+      role="group"
+      aria-labelledby={id ? `${id}-label` : undefined}
       {...ariaProps}
       className={cn(
         "flex h-8 w-full min-w-0 items-center gap-0.5 rounded-md border border-input bg-transparent px-2.5 py-1 text-xs transition-colors outline-none focus-within:border-primary aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
@@ -55,6 +61,8 @@ export function TimePickerField({
     >
       <TimePickerInput
         ref={hourRef}
+        id={id}
+        aria-label="Hora"
         picker="hours12"
         value={hour12 ?? 12}
         displayValue={hour12 === undefined ? "" : pad(hour12)}
@@ -65,6 +73,7 @@ export function TimePickerField({
       <span className="text-muted-foreground">:</span>
       <TimePickerInput
         ref={minuteRef}
+        aria-label="Minutos"
         picker="minutes"
         value={minutes ?? 0}
         displayValue={minutes === undefined ? "" : pad(minutes)}

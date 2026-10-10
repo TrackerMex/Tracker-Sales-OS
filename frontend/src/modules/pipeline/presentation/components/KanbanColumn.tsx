@@ -39,7 +39,7 @@ export function KanbanColumn({
   }, [stage, onChangeStage])
 
   // `pipe-col` is kept only as a selector hook (QA scripts); every visual
-  // property comes from utilities so the legacy rule can be deleted in 012.
+  // property comes from utilities.
   return (
     <div
       ref={columnRef}

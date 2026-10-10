@@ -12,12 +12,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { CloseIcon, LogoutIcon } from "@/shared/components/Icon"
-
-const ROLE_LABELS: Record<string, string> = {
-  Admin: "Administrador",
-  Director: "Director",
-  Seller: "Vendedor",
-}
+import { ROLE_LABELS } from "@/shared/lib/constants"
 
 function useCurrentUserMenu() {
   const currentUser = useAppStore((s) => s.currentUser)

@@ -74,5 +74,5 @@ Capturas "después" de todas las rutas en `progress/redesign/after/`
 (1440 claro, 1440 oscuro, 390 claro; Admin, Director y Seller), comparadas
 con `progress/redesign/current/` y `progress/redesign/template/`. Smoke
 funcional de los planes 009-011. CHECKPOINT de la feature 81 en
-`CHECKPOINTS.md`. El merge a `main` y el despliegue los decide el usuario:
-nada de push.
+`CHECKPOINTS.md`. El merge a `main` y el despliegue los decide el usuario. El Líder
+solo hace push a `dev`, para que el usuario lo pruebe.

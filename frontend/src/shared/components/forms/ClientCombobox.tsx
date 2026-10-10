@@ -22,6 +22,7 @@ export interface ClientComboboxProps {
   disabled?: boolean
   error?: boolean
   id?: string
+  "aria-describedby"?: string
 }
 
 export function ClientCombobox({
@@ -33,6 +34,7 @@ export function ClientCombobox({
   disabled,
   error,
   id,
+  "aria-describedby": ariaDescribedBy,
 }: ClientComboboxProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
@@ -87,6 +89,7 @@ export function ClientCombobox({
           role="combobox"
           aria-expanded={open}
           aria-invalid={error}
+          aria-describedby={ariaDescribedBy}
           disabled={disabled}
           className="flex h-8 w-full min-w-0 items-center justify-between gap-1.5 rounded-md border border-input bg-transparent px-2.5 py-1 text-left text-xs transition-colors outline-none focus-visible:border-primary disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
         >

@@ -810,10 +810,10 @@
     "id": "81-visual-redesign",
     "name": "Rediseño visual del sistema con la plantilla shadcn-dashboard como referencia",
     "description": "Copiar tal cual el aspecto de la plantilla https://github.com/shadcndashboard/next-shadcn-dashboard (estilo shadcn Lyra, paleta neutral oklch, Geist, radio 0.625rem, bento hairline, modo claro/oscuro) en el shell y todas las páginas del frontend. Se reproduce sobre el shadcn (Radix) + Tailwind v4 del proyecto, sin migrar a Next.js ni a Base UI. Fuente de verdad: DESIGN.md y PRODUCT.md (actualizados 2026-10-09). La marca Tracker queda solo en los logos; la lámina ejecutiva conserva navy/verde y Montserrat. Plan: plans/006 a plans/012 (tabla en plans/README.md).",
-    "status": "in_progress",
+    "status": "done",
     "priority": 81,
     "backend_modules": [],
     "frontend_modules": ["shared", "auth", "dashboard", "mi-dia", "clients", "pipeline", "tasks", "activities", "sales", "reports", "coaching", "equipo", "settings", "import-export"],
-    "notes": "Solicitada 2026-10-09. La feature 77 queda en pausa en su rama 77-jev-quality-backtest (sin mergear; 80 depende de ella). Rama de trabajo 81-visual-redesign desde origin/main 55b22e1. Contexto: progress/explore_crm_gap.md, progress/explore_redesign_template.md, progress/explore_redesign_current.md, progress/explore_redesign_runtime.md. Todo el trabajo es local: no se toca el Docker de producción ni se hace push a main (auto-deploy); el usuario decide el paso a producción."
+    "notes": "Solicitada 2026-10-09. La feature 77 queda en pausa en su rama 77-jev-quality-backtest (sin mergear; 80 depende de ella). Rama de trabajo 81-visual-redesign desde origin/main 55b22e1. Contexto: progress/explore_crm_gap.md, progress/explore_redesign_template.md, progress/explore_redesign_current.md, progress/explore_redesign_runtime.md. Todo el trabajo es local: no se toca el Docker de producción ni se hace push a main (auto-deploy); el usuario decide el paso a producción. Cerrada 2026-10-10: planes 006-012 con review PASSED, QA de escrituras reales 22/24 (los 2 fallos son preexistentes, progress/qa_81-write-smoke.md). Publicada en la rama dev para validación del usuario; sin merge a main."
   }
 ]

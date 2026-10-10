@@ -6,6 +6,7 @@ import { clientsApi } from "@/modules/clients/infrastructure/clients.api"
 import { activitiesApi } from "@/modules/activities/infrastructure/activities.api"
 import { ActivityHistoryModal } from "@/modules/activities/presentation/components/ActivityHistoryModal"
 import { useAppStore } from "@/shared/store/app.store"
+import { PIPELINE_STAGES } from "@/shared/lib/constants"
 import { useChangeStage } from "../../application/hooks/useChangeStage"
 import type { Deal, PipelineStage } from "../../domain/pipeline.types"
 import type { Activity } from "@/modules/activities/domain/activities.types"
@@ -42,14 +43,7 @@ interface Props {
   onBack: () => void
 }
 
-const STAGE_ORDER: PipelineStage[] = [
-  "Prospecto",
-  "Contactado",
-  "Interesado",
-  "Propuesta",
-  "Negociación",
-  "Cierre",
-]
+const STAGE_ORDER: PipelineStage[] = PIPELINE_STAGES.filter((s) => s !== "Perdido")
 
 export function ClientDetailPage({ deal, onBack }: Props) {
   const navigate = useNavigate()

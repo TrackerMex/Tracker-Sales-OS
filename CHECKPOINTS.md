@@ -855,17 +855,17 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ## 81-visual-redesign
 
-- [ ] Tokens, fuente (Geist), radios y sombras de `frontend/src/index.css` coinciden con la tabla "Color" de `DESIGN.md` (copiada de la plantilla shadcn-dashboard)
-- [ ] Modo claro y oscuro funcionan con toggle en el header y persisten al recargar
-- [ ] Shell como la plantilla: sidebar 256px / 52px con hover-expand y Sheet < 1025px, ítem activo en pastilla `bg-primary`, header sticky de 57px con búsqueda que abre la paleta, contenido enmarcado `m-2 outline`, footer con enlace de atribución
-- [ ] Cada página usa `PageHeader` y los patrones compartidos (`StatCard`, `DataTable`, `StatusBadge`, `EmptyState`); un solo mapa de colores de estado en `shared/lib/status.ts`
-- [ ] Sin hex fijos, clases `tracker-*`, `text-slate-*` ni `text-[Npx]` en módulos, salvo la lámina ejecutiva
-- [ ] La lámina ejecutiva (`/lamina`, popup de Reportes e impresión) se ve igual que antes del rediseño
-- [ ] Drag-and-drop del pipeline, peek de deal y Sheet de expediente funcionan
-- [ ] Flujos de crear/editar en Clientes, Agenda, Actividades y Ventas funcionan con Admin y Seller
-- [ ] Contraste WCAG AA en claro y oscuro; foco visible
-- [ ] `THIRD_PARTY_NOTICES.md` con la MIT de la plantilla
-- [ ] `pnpm run typecheck`, `pnpm run lint` y `pnpm run build` pasan en `frontend/`
-- [ ] Capturas antes/después en `progress/redesign/current/` y `progress/redesign/after/`
-- [ ] Resúmenes `progress/impl_81-*.md` y review independiente por fase
-- [ ] Sin push a `main` ni despliegue: el paso a producción lo decide el usuario
+- [x] Tokens, fuente (Geist), radios y sombras de `frontend/src/index.css` coinciden con la tabla "Color" de `DESIGN.md` (copiada de la plantilla shadcn-dashboard)
+- [x] Modo claro y oscuro funcionan con toggle en el header y persisten al recargar
+- [x] Shell como la plantilla: sidebar 256px / 52px con hover-expand y Sheet < 1025px, ítem activo en pastilla `bg-primary`, header sticky de 57px con búsqueda que abre la paleta, contenido enmarcado `m-2 outline`, footer con enlace de atribución
+- [x] Cada página usa `PageHeader` y los patrones compartidos (`StatCard`, `DataTable`, `StatusBadge`, `EmptyState`); un solo mapa de colores de estado en `shared/lib/status.ts`
+- [x] Sin hex fijos, clases `tracker-*`, `text-slate-*` ni `text-[Npx]` en módulos, salvo la lámina ejecutiva
+- [x] La lámina ejecutiva (`/lamina`, popup de Reportes e impresión) se ve igual que antes del rediseño
+- [x] Drag-and-drop del pipeline, peek de deal y Sheet de expediente funcionan
+- [x] Flujos de crear/editar en Clientes, Agenda, Actividades y Ventas funcionan con Admin y Seller (QA real en `progress/qa_81-write-smoke.md`: 22/24; los 2 fallos son el 500 preexistente de admin sin `seller_id` al crear tarea o actividad, igual en 55b22e1)
+- [x] Contraste WCAG AA en claro y oscuro; foco visible
+- [x] `THIRD_PARTY_NOTICES.md` con la MIT de la plantilla
+- [x] `pnpm run typecheck`, `pnpm run lint` y `pnpm run build` pasan en `frontend/`
+- [x] Capturas antes/después en `progress/redesign/current/` y `progress/redesign/after/`
+- [x] Resúmenes `progress/impl_81-*.md` y review independiente por fase
+- [x] Sin push a `main` ni despliegue; push solo a la rama `dev` para que el usuario valide. El paso a producción lo decide el usuario

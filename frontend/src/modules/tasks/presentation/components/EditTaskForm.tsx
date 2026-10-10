@@ -155,6 +155,7 @@ export function EditTaskForm({
                       initialLabel={task.clientName}
                       placeholder="Sin cliente / prospecto nuevo"
                       error={!!fieldErrors.clientId}
+                      aria-describedby={fieldErrors.clientId ? "clientId-error" : undefined}
                     />
                   </div>
                   <FieldError name="clientId" message={fieldErrors.clientId} />
@@ -247,9 +248,10 @@ export function EditTaskForm({
                 <div>
                   <div className="grid gap-6 sm:grid-cols-2">
                     <div>
-                      <Label>Fecha</Label>
+                      <Label htmlFor="edit-task-date" id="edit-task-date-label">Fecha</Label>
                       <div className="mt-2">
                         <DatePickerField
+                          id="edit-task-date"
                           value={date}
                           onChange={(v) => {
                             setDate(v)
@@ -263,8 +265,9 @@ export function EditTaskForm({
                       </div>
                     </div>
                     <div>
-                      <Label>Hora</Label>
+                      <Label htmlFor="edit-task-time" id="edit-task-time-label">Hora</Label>
                       <TimePickerField
+                        id="edit-task-time"
                         value={time}
                         onChange={(v) => {
                           setTime(v)

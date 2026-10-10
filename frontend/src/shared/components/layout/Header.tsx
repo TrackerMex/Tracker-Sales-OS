@@ -34,7 +34,7 @@ export function Header() {
           >
             <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2" />
             <span className="flex-1">Buscar…</span>
-            <kbd className="rounded-sm border border-border bg-muted px-1.5 font-sans text-xs">
+            <kbd className="rounded-sm border border-border bg-muted px-1.5 font-sans text-xs text-foreground">
               Ctrl K
             </kbd>
           </button>
