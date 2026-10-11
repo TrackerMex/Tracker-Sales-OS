@@ -2,7 +2,7 @@
 
 **Objetivo**: corregir bugs 1–14 y aplicar el ciclo registrado en docs/bugfix-execution.md.
 **Rama**: fix/bugs-pendientes
-**Siguiente feature**: 88-executive-slide-responsive
+**Feature en progreso**: ninguna — lotes 82–88 completados
 **Iniciada**: 2026-10-11
 
 Lotes secuenciales 82–88; implementación delegada y review independiente.
@@ -18,3 +18,5 @@ Lotes secuenciales 82–88; implementación delegada y review independiente.
 86 completada: review independiente PASSED (7/7), 21 suites/129 tests backend y siete gates PASS; QA final 81/81 cubre roles/caché, feedback lento/fallido y baja/reactivación de cuentas normales y legacy, sin cambiar cuentas ajenas o borradas. Se conserva la evidencia del caso detectado antes de corregirlo.
 
 87 completada: review independiente PASSED (6/6), gates frontend PASS y QA funcional completa. 460 comprobaciones válidas acumuladas (sin contar escenarios únicos); dos fallos de foco detectados durante QA corregidos y repetidos. Calendar/nav, roles y Equipo preservados; Ventas acciones visibles a390px. Evidencia final en impl/review/qa.
+
+88 completada: review independiente PASSED (5/5), gates frontend PASS y QA128/128 + impresión33/33. Ocho capturas1440/390 claro/oscuro de ruta/popup, sin recorte, contraste AA y fuente local; datos/scoring/permisos preservados. Publicación autorizada en dev; main/producción siguen separados.

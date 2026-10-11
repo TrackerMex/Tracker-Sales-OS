@@ -940,8 +940,8 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ## 88-executive-slide-responsive
 
-- [ ] Lámina y popup de Reportes legibles a 390px sin recorte de contenido esencial ni overflow del documento.
-- [ ] Navy/verde y Montserrat se conservan; escritorio mantiene composición funcional y datos.
-- [ ] Textos cumplen contraste AA (4.5:1 normal y 3:1 grande) sobre fondos reales; información no depende solo del color.
-- [ ] Tablas, gráficas, KPIs y análisis mantienen valores y labels; sin cambios backend/scoring.
-- [ ] Capturas antes/después 1440/390 y claro/oscuro de ruta y popup; frontend gates PASS.
+- [x] Lámina y popup de Reportes legibles a 390px sin recorte de contenido esencial ni overflow del documento.
+- [x] Navy/verde y Montserrat se conservan; escritorio mantiene composición funcional y datos.
+- [x] Textos cumplen contraste AA (4.5:1 normal y 3:1 grande) sobre fondos reales; información no depende solo del color.
+- [x] Tablas, gráficas, KPIs y análisis mantienen valores y labels; sin cambios backend/scoring.
+- [x] Capturas antes/después 1440/390 y claro/oscuro de ruta y popup; frontend gates PASS.

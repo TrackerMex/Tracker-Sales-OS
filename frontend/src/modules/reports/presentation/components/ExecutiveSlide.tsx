@@ -90,16 +90,16 @@ export function ExecutiveSlide({
   return (
     <div
       id="executive-slide"
-      className="overflow-hidden rounded-[14px] border border-tracker-border bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+      className="min-w-0 overflow-hidden rounded-[14px] border border-tracker-border bg-white text-tracker-text shadow-[0_2px_12px_rgba(0,0,0,0.06)] [overflow-wrap:anywhere]"
       style={{
         fontFamily: "'Montserrat Variable','Montserrat','Inter',sans-serif",
       }}
     >
       {/* ── HEADER BAND ── */}
-      <div className="flex items-center justify-between gap-4 bg-tracker-dark px-7 py-[22px]">
-        <div className="flex items-center gap-3.5">
+      <div className="flex flex-col items-start justify-between gap-4 bg-tracker-dark px-4 py-[22px] sm:flex-row sm:items-center sm:px-7 print:flex-row print:items-center">
+        <div className="flex min-w-0 items-center gap-3.5">
           <div className="h-[46px] w-[3px] shrink-0 rounded-[2px] bg-tracker-green" />
-          <div>
+          <div className="min-w-0">
             <div
               className={cn(
                 LABEL_CLASS,
@@ -111,16 +111,16 @@ export function ExecutiveSlide({
             <div className="text-[21px] leading-[1.1] font-extrabold tracking-[-0.025em] text-white">
               Reporte Ejecutivo
             </div>
-            <div className="mt-[3px] text-xs font-medium tracking-[0.07em] text-white/38 uppercase">
+            <div className="mt-[3px] text-xs font-medium tracking-[0.07em] text-white/70 uppercase">
               {month}
             </div>
           </div>
         </div>
-        <div className="text-right">
+        <div className="min-w-0 text-left sm:text-right print:text-right">
           <div
             className={cn(
               LABEL_CLASS,
-              "mb-[5px] tracking-[0.12em] text-white/28"
+              "mb-[5px] tracking-[0.12em] text-white/70"
             )}
           >
             Venta Global
@@ -132,7 +132,7 @@ export function ExecutiveSlide({
             {data.total.units} unidades
           </div>
           {updatedAt && (
-            <div className="mt-1.5 text-[10px] text-white/20">
+            <div className="mt-1.5 text-[10px] text-white/70">
               Datos al {updatedAt}
             </div>
           )}
@@ -140,9 +140,9 @@ export function ExecutiveSlide({
       </div>
 
       {/* ── BODY ── */}
-      <div className="flex flex-col gap-[18px] px-7 py-[22px]">
+      <div className="flex min-w-0 flex-col gap-[18px] px-4 py-[22px] sm:px-7">
         {/* KPI ROW */}
-        <div className="grid grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-4">
           {/* Primary: Ventas $ — navy */}
           <div className="rounded-[10px] bg-tracker-dark px-[18px] py-4">
             <div className={cn(LABEL_CLASS, "mb-[9px] text-tracker-green")}>
@@ -152,7 +152,7 @@ export function ExecutiveSlide({
               {money(data.total.amount)}
             </div>
             <Bar pctVal={amtFill} dark />
-            <div className="text-[10px] font-semibold text-white/38">
+            <div className="text-[10px] font-semibold text-white/70">
               {pct(data.total.amount, goalAmount)}% · Meta {money(goalAmount)}
             </div>
           </div>
@@ -211,14 +211,14 @@ export function ExecutiveSlide({
         </div>
 
         {/* DIRECCIÓN + EQUIPO */}
-        <div className="grid grid-cols-[190px_1fr] gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[190px_minmax(0,1fr)] print:grid-cols-[190px_minmax(0,1fr)]">
           {/* Dirección */}
           <div className="rounded-[10px] border border-violet-200 bg-violet-50 p-4">
             <div className={cn(LABEL_CLASS, "mb-3 text-tracker-purple")}>
               Dirección Comercial
             </div>
             {data.direction.count === 0 ? (
-              <p className="m-0 text-xs text-violet-400">
+              <p className="m-0 text-xs text-tracker-purple">
                 Sin registros este mes.
               </p>
             ) : (
@@ -247,65 +247,72 @@ export function ExecutiveSlide({
                 Sin ventas del equipo este mes.
               </p>
             ) : (
-              <table className="w-full border-collapse text-xs">
-                <thead>
-                  <tr>
-                    {[
-                      "Vendedor",
-                      "Unidades",
-                      "Monto",
-                      ...(goalPerSeller > 0 ? ["% Meta"] : []),
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="pt-0 pr-3 pb-2 pl-0 text-left text-[9px] font-bold tracking-[0.09em] text-tracker-text-muted uppercase"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.sellers.map((r, i) => {
-                    const mp =
-                      goalPerSeller > 0 ? (r.amount / goalPerSeller) * 100 : 0
-                    return (
-                      <tr
-                        key={r.sellerId}
-                        className={cn(i > 0 && "border-t border-slate-100")}
-                      >
-                        <td className="py-[7px] pr-3 pl-0 font-semibold text-tracker-text">
-                          {r.sellerName}
-                        </td>
-                        <td className="py-[7px] pr-3 pl-0 text-tracker-text-dim">
-                          {r.units}
-                        </td>
-                        <td className="py-[7px] pr-3 pl-0 font-bold text-tracker-dark">
-                          {money(r.amount)}
-                        </td>
-                        {goalPerSeller > 0 && (
-                          <td
-                            className={cn(
-                              "py-[7px] text-[11px] font-bold",
-                              mp >= 100
-                                ? "text-tracker-success-dark"
-                                : "text-tracker-warning-dark"
-                            )}
-                          >
-                            {mp.toFixed(1)}%
+              <div
+                className="min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tracker-dark"
+                role="region"
+                aria-label="Tabla de ventas del equipo"
+                tabIndex={0}
+              >
+                <table className="w-full min-w-[420px] border-collapse text-xs">
+                  <thead>
+                    <tr>
+                      {[
+                        "Vendedor",
+                        "Unidades",
+                        "Monto",
+                        ...(goalPerSeller > 0 ? ["% Meta"] : []),
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          className="pt-0 pr-3 pb-2 pl-0 text-left text-[9px] font-bold tracking-[0.09em] text-tracker-text-muted uppercase"
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.sellers.map((r, i) => {
+                      const mp =
+                        goalPerSeller > 0 ? (r.amount / goalPerSeller) * 100 : 0
+                      return (
+                        <tr
+                          key={r.sellerId}
+                          className={cn(i > 0 && "border-t border-slate-100")}
+                        >
+                          <td className="py-[7px] pr-3 pl-0 font-semibold text-tracker-text">
+                            {r.sellerName}
                           </td>
-                        )}
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                          <td className="py-[7px] pr-3 pl-0 text-tracker-text-dim">
+                            {r.units}
+                          </td>
+                          <td className="py-[7px] pr-3 pl-0 font-bold text-tracker-dark">
+                            {money(r.amount)}
+                          </td>
+                          {goalPerSeller > 0 && (
+                            <td
+                              className={cn(
+                                "py-[7px] text-[11px] font-bold",
+                                mp >= 100
+                                  ? "text-tracker-success-dark"
+                                  : "text-tracker-warning-dark"
+                              )}
+                            >
+                              {mp.toFixed(1)}%
+                            </td>
+                          )}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
 
         {/* ATC + ORIGEN */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 print:grid-cols-2">
           <div className="rounded-[10px] border border-emerald-100 bg-green-50 p-4">
             <div className={cn(LABEL_CLASS, "mb-2.5 text-green-700")}>
               ATC — Atención a Clientes
@@ -355,7 +362,7 @@ export function ExecutiveSlide({
             >
               Win / Loss — Conversión por Etapa
             </div>
-            <div className="mb-3.5 grid grid-cols-4 gap-2">
+            <div className="mb-3.5 grid grid-cols-2 gap-2 sm:grid-cols-4 print:grid-cols-4">
               <div className="rounded-[9px] bg-tracker-dark px-[14px] py-3">
                 <div className={cn(LABEL_CLASS, "mb-1.5 text-tracker-green")}>
                   Win Rate
@@ -363,7 +370,7 @@ export function ExecutiveSlide({
                 <div className="text-2xl font-black tracking-[-0.03em] text-white">
                   {winLoss.winRate}%
                 </div>
-                <div className="mt-[3px] text-[10px] text-white/32">
+                <div className="mt-[3px] text-[10px] text-white/70">
                   {winLoss.totalDeals} oportunidades
                 </div>
               </div>
@@ -392,13 +399,18 @@ export function ExecutiveSlide({
             </div>
 
             {winLoss.funnel.length > 0 && (
-              <div className="mb-3.5 overflow-x-auto">
+              <div
+                className="mb-3.5 min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tracker-dark"
+                role="region"
+                aria-label="Embudo de conversión"
+                tabIndex={0}
+              >
                 <div
                   className={cn(LABEL_CLASS, "mb-2 text-tracker-text-muted")}
                 >
                   Embudo de Conversión
                 </div>
-                <table className="w-full border-collapse text-xs">
+                <table className="w-full min-w-[380px] border-collapse text-xs">
                   <thead>
                     <tr>
                       {[
@@ -440,7 +452,7 @@ export function ExecutiveSlide({
 
             {(winLoss.lossesByOrigin.length > 0 ||
               winLoss.lossReasons.length > 0) && (
-              <div className="grid grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 print:grid-cols-2">
                 <div>
                   <div
                     className={cn(LABEL_CLASS, "mb-2 text-tracker-text-muted")}
@@ -452,38 +464,45 @@ export function ExecutiveSlide({
                       Sin pérdidas registradas.
                     </p>
                   ) : (
-                    <table className="w-full border-collapse text-xs">
-                      <thead>
-                        <tr>
-                          {["Etapa", "Pérdidas", "%"].map((h) => (
-                            <th
-                              key={h}
-                              className="pt-0 pr-2.5 pb-[7px] pl-0 text-left text-[9px] font-bold tracking-[0.08em] text-tracker-text-muted uppercase"
-                            >
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {winLoss.lossesByOrigin.map((l, i) => (
-                          <tr
-                            key={l.originStage}
-                            className={cn(i > 0 && "border-t border-slate-100")}
-                          >
-                            <td className="py-[7px] pr-2.5 pl-0 font-semibold text-tracker-text">
-                              {l.originStage}
-                            </td>
-                            <td className="py-[7px] pr-2.5 pl-0 text-tracker-text-dim">
-                              {l.count}
-                            </td>
-                            <td className="py-[7px] text-tracker-text-dim">
-                              {l.percentage}%
-                            </td>
+                    <div
+                      className="min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tracker-dark"
+                      role="region"
+                      aria-label="Pérdidas por etapa de origen"
+                      tabIndex={0}
+                    >
+                      <table className="w-full min-w-[280px] border-collapse text-xs">
+                        <thead>
+                          <tr>
+                            {["Etapa", "Pérdidas", "%"].map((h) => (
+                              <th
+                                key={h}
+                                className="pt-0 pr-2.5 pb-[7px] pl-0 text-left text-[9px] font-bold tracking-[0.08em] text-tracker-text-muted uppercase"
+                              >
+                                {h}
+                              </th>
+                            ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {winLoss.lossesByOrigin.map((l, i) => (
+                            <tr
+                              key={l.originStage}
+                              className={cn(i > 0 && "border-t border-slate-100")}
+                            >
+                              <td className="py-[7px] pr-2.5 pl-0 font-semibold text-tracker-text">
+                                {l.originStage}
+                              </td>
+                              <td className="py-[7px] pr-2.5 pl-0 text-tracker-text-dim">
+                                {l.count}
+                              </td>
+                              <td className="py-[7px] text-tracker-text-dim">
+                                {l.percentage}%
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
                 <div>
@@ -497,35 +516,42 @@ export function ExecutiveSlide({
                       Sin pérdidas registradas.
                     </p>
                   ) : (
-                    <table className="w-full border-collapse text-xs">
-                      <thead>
-                        <tr>
-                          {["Motivo", "Pérdidas"].map((h) => (
-                            <th
-                              key={h}
-                              className="pt-0 pr-2.5 pb-[7px] pl-0 text-left text-[9px] font-bold tracking-[0.08em] text-tracker-text-muted uppercase"
-                            >
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {winLoss.lossReasons.map((r, i) => (
-                          <tr
-                            key={r.reason}
-                            className={cn(i > 0 && "border-t border-slate-100")}
-                          >
-                            <td className="py-[7px] pr-2.5 pl-0 font-semibold text-tracker-text">
-                              {LOSS_REASON_LABELS[r.reason] ?? r.reason}
-                            </td>
-                            <td className="py-[7px] text-tracker-text-dim">
-                              {r.count}
-                            </td>
+                    <div
+                      className="min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tracker-dark"
+                      role="region"
+                      aria-label="Motivos de pérdida"
+                      tabIndex={0}
+                    >
+                      <table className="w-full min-w-[260px] border-collapse text-xs">
+                        <thead>
+                          <tr>
+                            {["Motivo", "Pérdidas"].map((h) => (
+                              <th
+                                key={h}
+                                className="pt-0 pr-2.5 pb-[7px] pl-0 text-left text-[9px] font-bold tracking-[0.08em] text-tracker-text-muted uppercase"
+                              >
+                                {h}
+                              </th>
+                            ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {winLoss.lossReasons.map((r, i) => (
+                            <tr
+                              key={r.reason}
+                              className={cn(i > 0 && "border-t border-slate-100")}
+                            >
+                              <td className="py-[7px] pr-2.5 pl-0 font-semibold text-tracker-text">
+                                {LOSS_REASON_LABELS[r.reason] ?? r.reason}
+                              </td>
+                              <td className="py-[7px] text-tracker-text-dim">
+                                {r.count}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
               </div>
@@ -540,7 +566,7 @@ export function ExecutiveSlide({
           >
             Análisis Ejecutivo IA
           </div>
-          <div className="mb-2.5 grid grid-cols-2 gap-2.5">
+          <div className="mb-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2 print:grid-cols-2">
             <div className="rounded-[9px] border border-emerald-100 bg-green-50 p-3.5">
               <div className="mb-2 text-[10px] font-bold text-green-700">
                 Fortalezas
@@ -576,28 +602,28 @@ export function ExecutiveSlide({
           </div>
 
           {/* HEALTH SCORE */}
-          <div className="flex items-center justify-between gap-4 rounded-[10px] bg-tracker-dark px-6 py-[18px]">
-            <div>
+          <div className="flex flex-col items-start justify-between gap-4 rounded-[10px] bg-tracker-dark px-4 py-[18px] sm:flex-row sm:items-center sm:px-6 print:flex-row print:items-center">
+            <div className="min-w-0">
               <div
                 className={cn(
                   LABEL_CLASS,
-                  "mb-[7px] tracking-[0.15em] text-white/28"
+                  "mb-[7px] tracking-[0.15em] text-white/70"
                 )}
               >
                 Salud Comercial General
               </div>
-              <div className="max-w-[380px] text-sm leading-[1.5] font-medium text-white/58">
+              <div className="max-w-[380px] text-sm leading-[1.5] font-medium text-white/70">
                 {ai.status}
               </div>
             </div>
-            <div className="shrink-0 text-right">
+            <div className="shrink-0 text-left sm:text-right print:text-right">
               <div
                 className="text-[54px] leading-none font-black tracking-[-0.04em]"
                 style={{ color: healthColor(ai.health) }}
               >
                 {ai.health}
               </div>
-              <div className="mt-0.5 text-xs font-semibold text-white/22">
+              <div className="mt-0.5 text-xs font-semibold text-white/70">
                 / 100
               </div>
             </div>

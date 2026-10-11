@@ -913,7 +913,7 @@
     "id": "88-executive-slide-responsive",
     "name": "Lámina ejecutiva móvil y contraste",
     "description": "Bug 13: adaptar lámina a móvil y corregir contraste manteniendo branding navy/verde y Montserrat.",
-    "status": "pending",
+    "status": "done",
     "priority": 88,
     "backend_modules": [],
     "frontend_modules": [

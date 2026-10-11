@@ -48,7 +48,7 @@ export function LaminaPage() {
 
   return (
     <div
-      className="min-h-screen bg-tracker-bg p-8"
+      className="min-h-screen min-w-0 bg-tracker-bg p-4 sm:p-8 print:p-0"
       style={{ fontFamily: "'Montserrat Variable','Montserrat','Inter',sans-serif" }}
     >
       <div className="mx-auto max-w-[1080px]">
@@ -58,7 +58,7 @@ export function LaminaPage() {
           </p>
         )}
         {error && (
-          <p className="pt-[60px] text-center text-[13px] text-red-500">
+          <p className="pt-[60px] text-center text-[13px] text-tracker-danger-dark">
             Error al cargar el reporte. Verifica que tengas acceso.
           </p>
         )}

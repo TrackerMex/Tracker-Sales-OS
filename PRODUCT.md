@@ -18,11 +18,11 @@ Claro. Moderno. Ordenado.
 
 Desde 2026-10-09 (feature 81) la identidad visual es la de la plantilla [shadcn-dashboard](https://github.com/shadcndashboard/next-shadcn-dashboard) (demo: https://shadcndashboard-demo.vercel.app/), copiada tal cual: colores, tipografía, radios, layout y patrones de página. La marca Tracker se mantiene en los logos oficiales. La voz sigue siendo directa y sin adorno: los datos hablan primero.
 
-Antes de esa fecha el sistema usaba la identidad navy (#002B49) y verde (#82bc00) de Tracker México; ese estilo queda retirado de la app.
+Antes de esa fecha el sistema usaba la identidad navy (#002B49) y verde (#82bc00) de Tracker México; ese estilo queda retirado de la app. La lámina ejecutiva conserva navy/verde y Montserrat como excepción documental definida en `DESIGN.md`; el usuario autorizó corregir su adaptación móvil y contraste el 2026-10-11.
 
 ## Anti-references
 
-- Mezclar estilos: ninguna pantalla nueva o modificada conserva el estilo navy/verde anterior.
+- Mezclar estilos: las pantallas de la app siguen la plantilla; la lámina ejecutiva mantiene la excepción documental de `DESIGN.md`.
 - Inventar patrones propios cuando la plantilla ya resuelve el caso (cabecera de página, tarjeta de KPI, tabla, formulario, auth).
 - SAP / Salesforce: no complejidad de ERP.
 

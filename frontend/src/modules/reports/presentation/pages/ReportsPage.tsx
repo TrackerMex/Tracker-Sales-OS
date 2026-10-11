@@ -225,17 +225,17 @@ export function ReportsPage() {
       .map((el) => el.outerHTML)
       .join("")
     win.document.write(
-      `<html><head><title>Reporte Ejecutivo — Tracker Sales OS</title>` +
-        `<link rel="preconnect" href="https://fonts.googleapis.com">` +
-        `<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">` +
+      `<!doctype html><html lang="es"><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Reporte Ejecutivo — Tracker Sales OS</title>` +
+        `<base href="${window.location.origin}/">` +
         appStyles +
         `<style>
-        body{font-family:'Montserrat','Inter',sans-serif;background:#EEF2F7;padding:32px;color:#0F172A;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-        #executive-slide{max-width:1080px;margin:0 auto}
+        body{font-family:'Montserrat Variable','Montserrat','Inter',sans-serif;background:#EEF2F7;margin:0;padding:16px;color:#0F172A;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+        #executive-slide{width:100%;max-width:1080px;margin:0 auto}
+        @media(min-width:640px){body{padding:32px}}
         @media print{body{background:#fff;padding:0}#executive-slide{border-radius:0!important;border:none!important;box-shadow:none!important}}
       </style>` +
         `</head><body>${node.outerHTML}` +
-        `<p style="font-size:11px;color:#94A3B8;margin-top:16px;text-align:center;font-family:sans-serif">Tip: imprime como PDF (Ctrl+P) para compartir o pegar en PowerPoint.</p>` +
+        `<p style="font-size:11px;color:#475569;margin-top:16px;text-align:center">Tip: imprime como PDF (Ctrl+P) para compartir o pegar en PowerPoint.</p>` +
         `</body></html>`
     )
     win.document.close()

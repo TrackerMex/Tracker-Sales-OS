@@ -11,7 +11,7 @@ El usuario autorizó corregir los bugs y aplicar el ciclo de implementación, re
 | 3 | `85-client-pipeline-integrity` | [4, 5, 8, 10] | DONE — review PASSED |
 | 4 | `86-role-queries-team-feedback` | [6, 7] | DONE — review PASSED |
 | 5 | `87-dialog-mobile-copy` | [9, 11, 12] | DONE — review PASSED |
-| 6 | `88-executive-slide-responsive` | 13 | TODO |
+| 6 | `88-executive-slide-responsive` | 13 | DONE — review PASSED |
 
 ## Protocolo
 
