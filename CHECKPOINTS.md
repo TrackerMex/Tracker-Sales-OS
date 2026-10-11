@@ -917,19 +917,20 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ## 86-role-queries-team-feedback
 
-- [ ] useUsers solo consulta como Admin; reportes monthly/win-loss solo consultan como Admin/Director.
-- [ ] Seller entrando por URL a Reportes/Lámina ve acceso no disponible sin consultas prohibidas; Director conserva gestión de sellers permitida.
-- [ ] Settings, Coaching propio y consultas autorizadas conservan comportamiento; no se bloquean hooks por suposición del backlog.
-- [ ] Confirmación de baja/bloqueo de Equipo permanece abierta al procesar, impide doble envío y muestra error con posibilidad de reintentar.
-- [ ] Éxito muestra feedback y cierra; cancelación/foco respetan shadcn/Radix.
-- [ ] Regresión con respuesta lenta/fallida y tres roles; frontend gates PASS.
+- [x] useUsers solo consulta como Admin; reportes monthly/win-loss solo consultan como Admin/Director.
+- [x] Seller entrando por URL a Reportes/Lámina ve acceso no disponible sin consultas prohibidas; Director conserva gestión de sellers permitida.
+- [x] Settings, Coaching propio y consultas autorizadas conservan comportamiento; no se bloquean hooks por suposición del backlog.
+- [x] Confirmación de baja/bloqueo de Equipo permanece abierta al procesar, impide doble envío y muestra error con posibilidad de reintentar.
+- [x] Éxito muestra feedback y cierra; cancelación/foco respetan shadcn/Radix.
+- [x] Regresión con respuesta lenta/fallida y tres roles; frontend gates PASS.
+- [x] Baja y reactivación cambian realmente vendedor y cuentas vinculadas creadas por POST /users con sellerId (sin fabricar el vínculo inverso), conservando compatibilidad legacy y sin cambiar cuentas ajenas/borradas; Equipo Admin ve inactivos por lectura exclusiva de gestión, GET /sellers normal conserva sólo activos y Director/Seller no acceden a GET /sellers/all; tests backend y gates PASS.
 
 ---
 
 ## 87-dialog-mobile-copy
 
 - [ ] Diálogos afectados devuelven foco al control de apertura en Escape/Cancelar/éxito; al eliminar el control, usan destino estable.
-- [ ] Se verifica tareas crear/editar/eliminar, clientes, expediente pipeline, ventas e historial de actividades; diálogos ya correctos no pierden foco.
+- [ ] Se verifica tareas crear/editar/eliminar, clientes, expediente pipeline, ventas, historial de actividades y paleta de búsqueda; diálogos ya correctos no pierden foco.
 - [ ] A 390px en Ventas admin las acciones son alcanzables y el scroll horizontal queda dentro de tabla; se mide overflow antes/después.
 - [ ] Los selectores de rol usan ROLE_LABELS sin alterar valores de dominio; Configuración usa oportunidades en lugar de deals.
 - [ ] No overlays custom ni alert/confirm; sin abstraer globalmente el foco sin necesidad.

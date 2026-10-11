@@ -180,6 +180,7 @@ const makeMockSellerRepo = (): MockedMethods<ISellerRepository> => ({
   update: jest.fn(),
   softDelete: jest.fn(),
   findAllActive: jest.fn(),
+  findAllIncludingInactive: jest.fn(),
 });
 
 const makeMockTaskRepo = (): MockedMethods<ITaskRepository> => ({

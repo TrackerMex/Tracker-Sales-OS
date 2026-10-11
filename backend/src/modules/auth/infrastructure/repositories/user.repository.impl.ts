@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { UserEntity } from '../../domain/entities/user.entity';
 import { UserTypeormEntity } from '../entities/user.typeorm.entity';
@@ -20,6 +20,10 @@ export class UserRepositoryImpl implements IUserRepository {
   async findByUsername(username: string): Promise<UserEntity | null> {
     const entity = await this.repo.findOne({ where: { username } });
     return entity ? this.toDomain(entity) : null;
+  }
+
+  async setActiveBySellerId(sellerId: string, active: boolean): Promise<void> {
+    await this.repo.update({ sellerId, deletedAt: IsNull() }, { active });
   }
 
   async findAll(options?: { page?: number; limit?: number }) {

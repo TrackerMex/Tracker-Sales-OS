@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { ISellerRepository } from '../../domain/repositories/seller.repository.interface';
 import { SellerEntity } from '../../domain/entities/seller.entity';
 import { SellerTypeormEntity } from '../entities/seller.typeorm.entity';
@@ -32,6 +32,14 @@ export class SellerRepositoryImpl implements ISellerRepository {
   async findAllActive(): Promise<SellerEntity[]> {
     const [data] = await this.repo.findAndCount({
       where: { active: true },
+      order: { createdAt: 'DESC' },
+    });
+    return data.map((e) => this.toDomain(e));
+  }
+
+  async findAllIncludingInactive(): Promise<SellerEntity[]> {
+    const data = await this.repo.find({
+      where: { deletedAt: IsNull() },
       order: { createdAt: 'DESC' },
     });
     return data.map((e) => this.toDomain(e));

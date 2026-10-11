@@ -1,5 +1,7 @@
 import { useState } from "react"
 import { useSearch } from "@tanstack/react-router"
+import { UserRole } from "@/core/domain/types/common.types"
+import { useAppStore } from "@/shared/store/app.store"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
   AlertCircleIcon,
@@ -56,6 +58,7 @@ function loadGoals() {
 }
 
 export function ReportsPage() {
+  const role = useAppStore((s) => s.currentUser?.role)
   const search = useSearch({ strict: false }) as {
     month?: string
     goalAmount?: number
@@ -236,6 +239,15 @@ export function ReportsPage() {
         `</body></html>`
     )
     win.document.close()
+  }
+
+  if (role !== UserRole.Admin && role !== UserRole.Director) {
+    return (
+      <div>
+        <PageHeader title="Reportes" />
+        <EmptyState icon={<AlertCircleIcon size={20} />} title="Acceso no disponible" />
+      </div>
+    )
   }
 
   return (

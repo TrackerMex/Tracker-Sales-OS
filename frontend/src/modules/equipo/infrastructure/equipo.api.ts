@@ -25,6 +25,9 @@ export const equipoApi = {
   getSellers: (): Promise<EquipoSeller[]> =>
     api.get("/sellers").then((r) => r.data),
 
+  getAllSellers: (): Promise<EquipoSeller[]> =>
+    api.get("/sellers/all").then((r) => r.data),
+
   blockUser: (id: string): Promise<EquipoUser> =>
     api.patch(`/users/${id}/block`).then((r) => r.data),
 

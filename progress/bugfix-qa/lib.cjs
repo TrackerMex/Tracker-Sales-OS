@@ -7,6 +7,11 @@ const env = Object.fromEntries(fs.readFileSync(`${tmp}/qa.env`, 'utf8').trim().s
 const fixtures = JSON.parse(fs.readFileSync(`${tmp}/fixtures.json`, 'utf8'));
 const base = 'http://127.0.0.1:3001';
 const api = 'http://127.0.0.1:3005/api';
+async function uiLogin(page, role) {
+  await page.fill('input[name=username]', fixtures.users[role].username);
+  await page.fill('input[name=password]', env.QA_PASSWORD);
+  await Promise.all([page.waitForURL(u => !u.pathname.startsWith('/login')), page.click('button[type=submit]')]);
+}
 async function request(role, method, pathname, data) {
   assert(pathname.startsWith('/') && !pathname.startsWith('//'));
   const auth = await fetch(`${api}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: fixtures.users[role].username, password: env.QA_PASSWORD }) });
@@ -40,9 +45,7 @@ async function setup({ role = 'admin', theme = 'light', width = 1440, out = `${t
   };
   track(page); ctx.on('page', p => { if (p !== page) track(p); });
   await page.goto(`${base}/login`, { waitUntil: 'networkidle' });
-  await page.fill('input[name=username]', fixtures.users[role].username);
-  await page.fill('input[name=password]', env.QA_PASSWORD);
-  await Promise.all([page.waitForURL(u => !u.pathname.startsWith('/login')), page.click('button[type=submit]')]);
+  await uiLogin(page, role);
   return {
     page, ctx, state, out, base, fixtures,
     step(name) { step = name; },
@@ -55,4 +58,4 @@ async function setup({ role = 'admin', theme = 'light', width = 1440, out = `${t
     async finish() { fs.writeFileSync(`${out}/result.json`, JSON.stringify(state, null, 2)); await browser.close(); },
   };
 }
-module.exports = { setup, request, fixtures, tmp, base, api };
+module.exports = { setup, request, uiLogin, fixtures, tmp, base, api };

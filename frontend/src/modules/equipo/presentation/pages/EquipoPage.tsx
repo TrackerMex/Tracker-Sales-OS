@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import type { FormEvent } from "react"
+import type { FormEvent, MouseEvent } from "react"
 import { toast } from "sonner"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
@@ -75,12 +75,13 @@ type EquipoConfirmAction =
 
 export function EquipoPage() {
   const currentUser = useAppStore((s) => s.currentUser)
+  const isAdmin = currentUser?.role === UserRole.Admin
   const {
     data: usersData,
     isLoading: loadingUsers,
     isError: usersError,
   } = useUsers()
-  const { data: sellers, isLoading: loadingSellers } = useSellers()
+  const { data: sellers, isLoading: loadingSellers } = useSellers(isAdmin)
   const blockUser = useBlockUser()
   const createSeller = useCreateSeller()
   const createUser = useCreateUser()
@@ -117,22 +118,31 @@ export function EquipoPage() {
     ? "destructive"
     : "default"
 
-  function handleConfirmAction() {
-    if (!confirmAction || isConfirmPending) return
+  function handleConfirmAction(e: MouseEvent<HTMLButtonElement>) {
+    e.preventDefault()
+    if (!confirmAction || isConfirmPending || !isAdmin) return
 
     if (confirmAction.kind === "user") {
       blockUser.mutate(confirmAction.target.id, {
-        onSettled: () => setConfirmAction(null),
+        onSuccess: () => {
+          toast.success(confirmAction.target.active ? "Usuario bloqueado" : "Usuario activado")
+          setConfirmAction(null)
+        },
+        onError: () => toast.error("No se pudo actualizar el usuario. Reintenta."),
       })
       return
     }
 
     deactivateSeller.mutate(confirmAction.target.id, {
-      onSettled: () => setConfirmAction(null),
+      onSuccess: () => {
+        toast.success(confirmAction.target.active ? "Vendedor dado de baja" : "Vendedor reactivado")
+        setConfirmAction(null)
+      },
+      onError: () => toast.error("No se pudo actualizar el vendedor. Reintenta."),
     })
   }
 
-  if (currentUser?.role === UserRole.Seller) {
+  if (!isAdmin && currentUser?.role !== UserRole.Director) {
     return (
       <div>
         <PageHeader title="Equipo" />
@@ -304,6 +314,7 @@ export function EquipoPage() {
           </form>
         </SectionCard>
 
+        {isAdmin && <>
         <SectionCard
           title="Crear usuario"
           icon={<PlusIcon size={16} />}
@@ -461,6 +472,8 @@ export function EquipoPage() {
           )}
         </SectionCard>
 
+        </>}
+
         <DottedDivider />
 
         <SectionCard title="Equipo comercial" icon={<TeamIcon size={16} />}>
@@ -468,7 +481,7 @@ export function EquipoPage() {
             <ListSkeleton label="Cargando vendedores" />
           ) : sellers && sellers.length > 0 ? (
             <DataTable
-              columns={sellerColumns}
+              columns={isAdmin ? sellerColumns : sellerColumns.filter((column) => column.id !== "actions")}
               data={sellers}
               getRowId={(s) => s.id}
             />
@@ -489,9 +502,10 @@ export function EquipoPage() {
       >
         <AlertDialogContent
           onCloseAutoFocus={(e) => {
-            const trigger =
+            const trigger = (
               returnFocusId.current &&
               document.getElementById(returnFocusId.current)
+            ) || document.getElementById("seller-name")
             if (trigger) {
               e.preventDefault()
               trigger.focus()

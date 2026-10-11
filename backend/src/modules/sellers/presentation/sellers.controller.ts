@@ -34,6 +34,13 @@ export class SellersController {
     return this.getSellersUseCase.execute();
   }
 
+  @Get('all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.Admin)
+  findAllIncludingInactive() {
+    return this.getSellersUseCase.execute({ includeInactive: true });
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.Admin, UserRole.Director)

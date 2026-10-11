@@ -68,6 +68,7 @@ const makeSellerRepo = (): jest.Mocked<ISellerRepository> => ({
   update: jest.fn(),
   softDelete: jest.fn(),
   findAllActive: jest.fn(),
+  findAllIncludingInactive: jest.fn(),
 });
 
 const makeClientRepo = (): jest.Mocked<IClientRepository> => ({

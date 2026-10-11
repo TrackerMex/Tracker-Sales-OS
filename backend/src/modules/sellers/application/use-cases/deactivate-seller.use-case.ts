@@ -22,14 +22,20 @@ export class DeactivateSellerUseCase implements IUseCase<string, SellerDto> {
 
   async execute(id: string): Promise<SellerDto> {
     const seller = await this.sellerRepo.findById(id);
-    if (!seller) {
+    if (!seller || seller.deletedAt) {
       throw new NotFoundException(`Seller with id ${id} not found`);
     }
 
-    const updated = await this.sellerRepo.update(id, { active: false });
+    const active = !seller.active;
+    const updated = await this.sellerRepo.update(id, { active });
+
+    await this.userRepo.setActiveBySellerId(id, active);
 
     if (seller.userId) {
-      await this.userRepo.update(seller.userId, { active: false });
+      const user = await this.userRepo.findById(seller.userId);
+      if (user && !user.deletedAt && (!user.sellerId || user.sellerId === id)) {
+        await this.userRepo.update(seller.userId, { active });
+      }
     }
 
     return this.toDto(updated);

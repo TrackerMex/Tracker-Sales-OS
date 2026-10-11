@@ -7,15 +7,24 @@ import {
 import { SellerDto } from '../dtos/seller.dto';
 import { SellerEntity } from '../../domain/entities/seller.entity';
 
+export interface GetSellersInput {
+  includeInactive?: boolean;
+}
+
 @Injectable()
-export class GetSellersUseCase implements IUseCase<void, SellerDto[]> {
+export class GetSellersUseCase implements IUseCase<
+  GetSellersInput | undefined,
+  SellerDto[]
+> {
   constructor(
     @Inject(SELLER_REPOSITORY)
     private readonly sellerRepo: ISellerRepository,
   ) {}
 
-  async execute(): Promise<SellerDto[]> {
-    const sellers = await this.sellerRepo.findAllActive();
+  async execute(input?: GetSellersInput): Promise<SellerDto[]> {
+    const sellers = input?.includeInactive
+      ? await this.sellerRepo.findAllIncludingInactive()
+      : await this.sellerRepo.findAllActive();
     return sellers.map((s) => this.toDto(s));
   }
 

@@ -5,4 +5,5 @@ export const USER_REPOSITORY = 'USER_REPOSITORY';
 
 export interface IUserRepository extends IRepository<UserEntity> {
   findByUsername(username: string): Promise<UserEntity | null>;
+  setActiveBySellerId(sellerId: string, active: boolean): Promise<void>;
 }

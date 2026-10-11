@@ -9,7 +9,7 @@ El usuario autorizó corregir los bugs y aplicar el ciclo de implementación, re
 | 1 | `83-timepicker-calendar` | [1, 3] | DONE — review PASSED |
 | 2 | `84-admin-seller-assignment` | 2 | DONE — review PASSED |
 | 3 | `85-client-pipeline-integrity` | [4, 5, 8, 10] | DONE — review PASSED |
-| 4 | `86-role-queries-team-feedback` | [6, 7] | IN PROGRESS |
+| 4 | `86-role-queries-team-feedback` | [6, 7] | DONE — review PASSED |
 | 5 | `87-dialog-mobile-copy` | [9, 11, 12] | TODO |
 | 6 | `88-executive-slide-responsive` | 13 | TODO |
 
@@ -27,3 +27,7 @@ El usuario autorizó corregir los bugs y aplicar el ciclo de implementación, re
 Usar Postgres aislado en 127.0.0.1:5434, API local en 127.0.0.1:3005 y Vite en 127.0.0.1:3001 con `VITE_API_URL=http://127.0.0.1:3005`.
 Los contenedores tracker-sales-api/ui/nginx corresponden a producción; no se reinician ni usan para escrituras de pruebas.
 Los archivos previos no versionados en progress/ se conservan y no se incluyen en commits de correcciones.
+
+Hallazgo relacionado incluido en 86: Reactivar vendedor reutilizaba una operación que siempre guardaba active=false y Equipo sólo recibía vendedores activos. Se corrige el estado real y se agrega lectura de gestión exclusiva de Admin, conservando el listado activo para los formularios. En 87 se incluye también el foco de la paleta de búsqueda (baseline Escape devuelve BODY).
+
+La review de 86 reprodujo otro caso del mismo flujo: Crear acceso guarda users.seller_id sin sellers.user_id. Se requiere sincronizar cuentas por la relación real; el primer fixture inverso no basta para aprobarlo. El tail fallido y su corrección quedan registrados en QA/impl/review.

@@ -1,4 +1,9 @@
 import { useSearch } from "@tanstack/react-router"
+import { UserRole } from "@/core/domain/types/common.types"
+import { useAppStore } from "@/shared/store/app.store"
+import { AlertCircleIcon } from "@/shared/components/Icon"
+import { EmptyState } from "@/shared/components/data/EmptyState"
+import { PageHeader } from "@/shared/components/layout/PageHeader"
 import { useMonthlyReport } from "../../application/hooks/useMonthlyReport"
 import { useWinLoss } from "../../application/hooks/useWinLoss"
 import { ExecutiveSlide } from "../components/ExecutiveSlide"
@@ -8,6 +13,7 @@ function currentMonth(): string {
 }
 
 export function LaminaPage() {
+  const role = useAppStore((s) => s.currentUser?.role)
   const search = useSearch({ strict: false }) as {
     month?: string
     goalAmount?: number
@@ -30,6 +36,15 @@ export function LaminaPage() {
           minute: "2-digit",
         })
       : null
+
+  if (role !== UserRole.Admin && role !== UserRole.Director) {
+    return (
+      <div>
+        <PageHeader title="Lámina" />
+        <EmptyState icon={<AlertCircleIcon size={20} />} title="Acceso no disponible" />
+      </div>
+    )
+  }
 
   return (
     <div

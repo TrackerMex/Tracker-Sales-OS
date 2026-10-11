@@ -5,4 +5,5 @@ export const SELLER_REPOSITORY = 'SELLER_REPOSITORY';
 
 export interface ISellerRepository extends IRepository<SellerEntity> {
   findAllActive(): Promise<SellerEntity[]>;
+  findAllIncludingInactive(): Promise<SellerEntity[]>;
 }

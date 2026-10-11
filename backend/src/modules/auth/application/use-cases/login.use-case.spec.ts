@@ -34,6 +34,7 @@ const makeMockUserRepo = (): MockedMethods<IUserRepository> => ({
   update: jest.fn(),
   softDelete: jest.fn(),
   findByUsername: jest.fn(),
+  setActiveBySellerId: jest.fn(),
 });
 
 const makeMockRefreshTokenRepo =

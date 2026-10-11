@@ -5,6 +5,9 @@ export function useDeactivateSeller() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => equipoApi.deactivateSeller(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["sellers"] }),
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["sellers"] }),
+      queryClient.invalidateQueries({ queryKey: ["users"] }),
+    ]),
   })
 }
