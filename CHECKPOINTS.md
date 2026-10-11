@@ -929,12 +929,12 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ## 87-dialog-mobile-copy
 
-- [ ] Diálogos afectados devuelven foco al control de apertura en Escape/Cancelar/éxito; al eliminar el control, usan destino estable.
-- [ ] Se verifica tareas crear/editar/eliminar, clientes, expediente pipeline, ventas, historial de actividades y paleta de búsqueda; diálogos ya correctos no pierden foco.
-- [ ] A 390px en Ventas admin las acciones son alcanzables y el scroll horizontal queda dentro de tabla; se mide overflow antes/después.
-- [ ] Los selectores de rol usan ROLE_LABELS sin alterar valores de dominio; Configuración usa oportunidades en lugar de deals.
-- [ ] No overlays custom ni alert/confirm; sin abstraer globalmente el foco sin necesidad.
-- [ ] QA claro/oscuro, teclado y escritorio/móvil; typecheck/lint/build PASS.
+- [x] Diálogos afectados devuelven foco al control de apertura en Escape/Cancelar/éxito; al eliminar el control, usan destino estable.
+- [x] Se verifica tareas crear/editar/eliminar, clientes, expediente pipeline, ventas, historial de actividades y paleta de búsqueda; diálogos ya correctos no pierden foco.
+- [x] A 390px en Ventas admin las acciones son alcanzables y el scroll horizontal queda dentro de tabla; se mide overflow antes/después.
+- [x] Los selectores de rol usan ROLE_LABELS sin alterar valores de dominio; Configuración usa oportunidades en lugar de deals.
+- [x] No overlays custom ni alert/confirm; sin abstraer globalmente el foco sin necesidad.
+- [x] QA claro/oscuro, teclado y escritorio/móvil; typecheck/lint/build PASS.
 
 ---
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { useAppStore } from "@/shared/store/app.store"
 import { NAV_SECTIONS } from "@/shared/navigation/nav-items"
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/command"
 
 export function CommandPalette() {
+  const openerRef = useRef<HTMLElement | null>(null)
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   const { currentUser } = useAppStore()
@@ -29,18 +30,30 @@ export function CommandPalette() {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
-        setOpen((o) => !o)
+        if (!open) {
+          openerRef.current = document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null
+        }
+        setOpen(!open)
       }
     }
     document.addEventListener("keydown", down)
     return () => document.removeEventListener("keydown", down)
-  }, [])
+  }, [open])
 
   useEffect(() => {
-    const openPalette = () => setOpen(true)
+    const openPalette = () => {
+      if (!open) {
+        openerRef.current = document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null
+      }
+      setOpen(true)
+    }
     window.addEventListener("open-command-palette", openPalette)
     return () => window.removeEventListener("open-command-palette", openPalette)
-  }, [])
+  }, [open])
 
   const run = (to: string) => {
     setOpen(false)
@@ -59,7 +72,17 @@ export function CommandPalette() {
     // Same markup as CommandDialog (components/ui/command.tsx), which does not
     // forward className to DialogContent; sm:max-w-md keeps the 448px width.
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="overflow-hidden p-0 sm:max-w-md">
+      <DialogContent
+        className="overflow-hidden p-0 sm:max-w-md"
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          const opener = openerRef.current
+          const target = opener?.isConnected && opener !== document.body
+            ? opener
+            : document.querySelector<HTMLButtonElement>('header [data-slot="sidebar-trigger"]')
+          target?.focus()
+        }}
+      >
         <DialogHeader className="sr-only">
           <DialogTitle>Paleta de comandos</DialogTitle>
           <DialogDescription>Busca un comando o navega...</DialogDescription>

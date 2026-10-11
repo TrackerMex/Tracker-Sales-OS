@@ -70,6 +70,7 @@ interface EditTaskFormProps {
   task: Task
   onSubmit: (input: UpdateTaskInput) => void
   onClose: () => void
+  onReturnFocus?: () => void
   isLoading?: boolean
   error?: unknown
 }
@@ -78,6 +79,7 @@ export function EditTaskForm({
   task,
   onSubmit,
   onClose,
+  onReturnFocus,
   isLoading = false,
   error,
 }: EditTaskFormProps) {
@@ -121,7 +123,15 @@ export function EditTaskForm({
         if (!open) onClose()
       }}
     >
-      <DialogContent className="max-h-[92vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-5xl">
+      <DialogContent
+        className="max-h-[92vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-5xl"
+        onCloseAutoFocus={(event) => {
+          if (onReturnFocus) {
+            event.preventDefault()
+            onReturnFocus()
+          }
+        }}
+      >
         <DialogHeader className="border-b p-4 md:p-6">
           <DialogTitle>Editar tarea</DialogTitle>
           <DialogDescription>Modifica los datos de la tarea.</DialogDescription>

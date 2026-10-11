@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 import { useTodayTasks } from "../../application/hooks/useTodayTasks"
@@ -41,6 +41,8 @@ import type {
 } from "../../domain/tasks.types"
 
 export function AgendaPage() {
+  const returnFocusId = useRef("agenda-create-task")
+  const pendingFocusId = useRef<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [viewMode, setViewMode] = useState<"list" | "calendar">(() => {
@@ -85,7 +87,7 @@ export function AgendaPage() {
 
   const { data: sellers = [] } = useSellers()
 
-  const { data: todayTasks = [], isLoading } = useTodayTasks(isAdminOrDirector ? selectedSeller === "all" ? null : selectedSeller : undefined)
+  const { data: todayTasks = [], isLoading, isFetching: fetchingToday } = useTodayTasks(isAdminOrDirector ? selectedSeller === "all" ? null : selectedSeller : undefined)
   const {
     mutate: createTask,
     isPending: isCreating,
@@ -103,12 +105,22 @@ export function AgendaPage() {
   const { mutate: deleteTask } = useDeleteTask()
   const navigate = useNavigate()
 
-  const { data: monthTasksRaw = [] } = useMonthTasks(calYear, calMonth)
-  const { data: teamMonthTasksRaw = [] } = useTeamMonthTasks(
+  const { data: monthTasksRaw = [], isFetching: fetchingMonth } = useMonthTasks(calYear, calMonth)
+  const { data: teamMonthTasksRaw = [], isFetching: fetchingTeam } = useTeamMonthTasks(
     viewMode === "list" ? todayInit.getFullYear() : calYear,
     viewMode === "list" ? todayInit.getMonth() + 1 : calMonth,
     isAdminOrDirector
   )
+
+  useEffect(() => {
+    const id = pendingFocusId.current
+    if (!id || editingTask || fetchingToday || fetchingMonth || fetchingTeam) return
+    if (document.activeElement === document.body || document.activeElement?.id === id) {
+      const target = document.getElementById(id) ?? document.getElementById("agenda-create-task")
+      target?.focus()
+    }
+    pendingFocusId.current = null
+  }, [todayTasks, monthTasksRaw, teamMonthTasksRaw, editingTask, fetchingToday, fetchingMonth, fetchingTeam])
 
   const sellerMap = Object.fromEntries(sellers.map((s) => [s.id, s.name]))
 
@@ -167,7 +179,20 @@ export function AgendaPage() {
     )
   }
 
-  function handleDayClick(date: Date) {
+  function restoreFocus() {
+    const target = document.getElementById(returnFocusId.current) ??
+      document.getElementById("agenda-create-task")
+    target?.focus()
+  }
+
+  function handleEditTask(task: Task, opener?: HTMLElement) {
+    returnFocusId.current = opener?.id || `task-actions-${task.id}`
+    resetUpdateTask()
+    setEditingTask(task)
+  }
+
+  function handleDayClick(date: Date, opener?: HTMLElement) {
+    returnFocusId.current = opener?.id || "agenda-create-task"
     setPrefilledDate(date)
     setShowCreateModal(true)
     resetCreateTask()
@@ -202,6 +227,7 @@ export function AgendaPage() {
   function handleCreateTask(input: CreateTaskInput) {
     createTask(input, {
       onSuccess: () => {
+        pendingFocusId.current = returnFocusId.current
         setShowCreateModal(false)
         if (isAdminOrDirector && input.sellerId) {
           setSelectedSeller(input.sellerId)
@@ -219,6 +245,7 @@ export function AgendaPage() {
       { taskId: editingTask.id, input },
       {
         onSuccess: () => {
+          pendingFocusId.current = returnFocusId.current
           setEditingTask(null)
           toast.success("Tarea actualizada")
         },
@@ -236,7 +263,11 @@ export function AgendaPage() {
 
   function handleDelete(taskId: string) {
     deleteTask(taskId, {
-      onSuccess: () => toast.success("Tarea eliminada"),
+      onSuccess: () => {
+        pendingFocusId.current = "agenda-create-task"
+        toast.success("Tarea eliminada")
+        document.getElementById("agenda-create-task")?.focus()
+      },
       onError: () => toast.error("No se pudo eliminar la tarea"),
     })
   }
@@ -284,7 +315,9 @@ export function AgendaPage() {
               </TabsList>
             </Tabs>
             <Button
-              onClick={() => {
+              id="agenda-create-task"
+              onClick={(event) => {
+                returnFocusId.current = event.currentTarget.id
                 resetCreateTask()
                 setShowCreateModal(true)
               }}
@@ -315,8 +348,10 @@ export function AgendaPage() {
                 title="Sin tareas registradas"
                 action={
                   <Button
+                    id="agenda-create-empty"
                     variant="outline"
-                    onClick={() => {
+                    onClick={(event) => {
+                      returnFocusId.current = event.currentTarget.id
                       resetCreateTask()
                       setShowCreateModal(true)
                     }}
@@ -334,12 +369,10 @@ export function AgendaPage() {
                     clientName={task.clientName ?? null}
                     contactName={task.contactName ?? null}
                     onComplete={handleComplete}
-                    onEdit={(t) => {
-                      resetUpdateTask()
-                      setEditingTask(t)
-                    }}
+                    onEdit={handleEditTask}
                     onReactivate={handleReactivate}
                     onDelete={handleDelete}
+                    onReturnFocus={() => document.getElementById("agenda-create-task")?.focus()}
                   />
                 ))}
               </div>
@@ -355,10 +388,7 @@ export function AgendaPage() {
               year={calYear}
               month={calMonth}
               tasks={monthTasks}
-              onEdit={(t) => {
-                resetUpdateTask()
-                setEditingTask(t)
-              }}
+              onEdit={handleEditTask}
               onPrevMonth={() => {
                 if (calMonth === 1) {
                   setCalYear((y) => y - 1)
@@ -393,6 +423,7 @@ export function AgendaPage() {
           isLoading={isCreating}
           error={createError}
           initialDate={prefilledDate}
+          onReturnFocus={restoreFocus}
         />
       )}
 
@@ -406,6 +437,7 @@ export function AgendaPage() {
           }}
           isLoading={isUpdating}
           error={updateError}
+          onReturnFocus={restoreFocus}
         />
       )}
     </div>

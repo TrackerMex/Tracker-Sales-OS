@@ -95,6 +95,7 @@ function getAiComment(
 interface CreateTaskFormProps {
   onSubmit: (input: CreateTaskInput) => void
   onClose: () => void
+  onReturnFocus?: () => void
   isLoading?: boolean
   error?: unknown
   initialDate?: Date
@@ -103,6 +104,7 @@ interface CreateTaskFormProps {
 export function CreateTaskForm({
   onSubmit,
   onClose,
+  onReturnFocus,
   isLoading = false,
   error,
   initialDate,
@@ -210,7 +212,15 @@ export function CreateTaskForm({
         if (!open) onClose()
       }}
     >
-      <DialogContent className="max-h-[92vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-5xl">
+      <DialogContent
+        className="max-h-[92vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-5xl"
+        onCloseAutoFocus={(event) => {
+          if (onReturnFocus) {
+            event.preventDefault()
+            onReturnFocus()
+          }
+        }}
+      >
         <DialogHeader className="border-b p-4 md:p-6">
           <DialogTitle>Crear tarea con objetivo</DialogTitle>
           <DialogDescription>

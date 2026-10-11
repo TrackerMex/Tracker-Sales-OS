@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,9 +40,10 @@ import { StatusBadge } from "@/shared/components/data/StatusBadge"
 interface TaskCardProps {
   task: Task
   onComplete: (id: string) => void
-  onEdit: (task: Task) => void
+  onEdit: (task: Task, opener?: HTMLElement) => void
   onReactivate: (id: string) => void
   onDelete: (id: string) => void
+  onReturnFocus?: () => void
   clientName?: string | null
   contactName?: string | null
 }
@@ -75,13 +76,23 @@ export function TaskCard({
   onEdit,
   onReactivate,
   onDelete,
+  onReturnFocus,
   clientName,
   contactName,
 }: TaskCardProps) {
+  const actionsRef = useRef<HTMLButtonElement>(null)
+  const deleteConfirmed = useRef(false)
   const [reactivateOpen, setReactivateOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const isOverdue = task.isOverdue && task.status === "Pendiente"
   const aiComment = getAiComment(task, clientName ?? null)
+
+  function restoreFocus(event: Event) {
+    event.preventDefault()
+    const target = document.getElementById(`task-actions-${task.id}`)
+    if (target) target.focus()
+    else onReturnFocus?.()
+  }
 
   return (
     <div className="flex items-start justify-between gap-3 p-4">
@@ -159,6 +170,8 @@ export function TaskCard({
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
                 <Button
+                  ref={actionsRef}
+                  id={`task-actions-${task.id}`}
                   variant="ghost"
                   size="icon-sm"
                   aria-label="Acciones de tarea"
@@ -171,7 +184,7 @@ export function TaskCard({
           </Tooltip>
           <DropdownMenuContent align="end" className="min-w-44">
             {task.status === "Pendiente" ? (
-              <DropdownMenuItem onSelect={() => onEdit(task)}>
+              <DropdownMenuItem onSelect={() => onEdit(task, actionsRef.current ?? undefined)}>
                 <EditIcon />
                 Editar tarea
               </DropdownMenuItem>
@@ -184,7 +197,10 @@ export function TaskCard({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"
-              onSelect={() => setDeleteOpen(true)}
+              onSelect={() => {
+                deleteConfirmed.current = false
+                setDeleteOpen(true)
+              }}
             >
               <TrashIcon />
               Eliminar tarea
@@ -193,7 +209,7 @@ export function TaskCard({
         </DropdownMenu>
 
         <AlertDialog open={reactivateOpen} onOpenChange={setReactivateOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent onCloseAutoFocus={restoreFocus}>
             <AlertDialogHeader>
               <AlertDialogTitle>¿Reactivar esta tarea?</AlertDialogTitle>
               <AlertDialogDescription>
@@ -210,7 +226,16 @@ export function TaskCard({
         </AlertDialog>
 
         <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent
+            onCloseAutoFocus={(event) => {
+              if (deleteConfirmed.current && onReturnFocus) {
+                event.preventDefault()
+                onReturnFocus()
+              } else {
+                restoreFocus(event)
+              }
+            }}
+          >
             <AlertDialogHeader>
               <AlertDialogTitle>¿Eliminar esta tarea?</AlertDialogTitle>
               <AlertDialogDescription>
@@ -220,7 +245,10 @@ export function TaskCard({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onDelete(task.id)}>
+              <AlertDialogAction onClick={() => {
+                deleteConfirmed.current = true
+                onDelete(task.id)
+              }}>
                 Sí, eliminar
               </AlertDialogAction>
             </AlertDialogFooter>

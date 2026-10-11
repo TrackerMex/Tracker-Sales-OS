@@ -40,9 +40,10 @@ interface Props {
   sale: Sale;
   isOpen: boolean;
   onClose: () => void;
+  onReturnFocus?: () => void;
 }
 
-export function EditSaleModal({ sale, isOpen, onClose }: Props) {
+export function EditSaleModal({ sale, isOpen, onClose, onReturnFocus }: Props) {
   const updateSale = useUpdateSale();
   const { formRef, ...errors } = useApiFormErrors(updateSale.error);
 
@@ -83,7 +84,15 @@ export function EditSaleModal({ sale, isOpen, onClose }: Props) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-h-[92vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-3xl">
+      <DialogContent
+        className="max-h-[92vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-3xl"
+        onCloseAutoFocus={(event) => {
+          if (onReturnFocus) {
+            event.preventDefault();
+            onReturnFocus();
+          }
+        }}
+      >
         <DialogHeader className="border-b p-4 md:p-6">
           <DialogTitle>Editar venta</DialogTitle>
           <DialogDescription>

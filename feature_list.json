@@ -894,7 +894,7 @@
     "id": "87-dialog-mobile-copy",
     "name": "Foco de diálogos, Ventas móvil y textos",
     "description": "Bugs 9, 11 y 12: restauración de foco, acciones accesibles a 390px y terminología consistente.",
-    "status": "pending",
+    "status": "done",
     "priority": 87,
     "backend_modules": [],
     "frontend_modules": [
@@ -904,7 +904,8 @@
       "pipeline",
       "sales",
       "settings",
-      "equipo"
+      "equipo",
+      "shared"
     ],
     "notes": "Solicitada 2026-10-11. Rama fix/bugs-pendientes desde origin/dev 1e77c4e. Bugs originales: [9, 11, 12]. Ciclo: Implementer, Reviewer independiente, regresión y QA local antes de publicar en dev. Criterios en CHECKPOINTS.md; coordinación en docs/bugfix-execution.md."
   },

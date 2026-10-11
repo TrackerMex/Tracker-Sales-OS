@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react"
+import { useEffect, useRef, useState, type FormEvent } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { toast } from "sonner"
 import {
@@ -100,6 +100,14 @@ function today() {
 }
 
 export function SalesPage() {
+  const returnFocusId = useRef("sales-create")
+  const pendingFocusId = useRef<string | null>(null)
+
+  function restoreFocus() {
+    const target = document.getElementById(returnFocusId.current) ??
+      document.getElementById("sales-create")
+    target?.focus()
+  }
   const currentUser = useAppStore((s) => s.currentUser)
   const sellerId = currentUser?.sellerId ?? ""
   const isAdminOrDirector =
@@ -163,7 +171,18 @@ export function SalesPage() {
     data,
     isLoading: loadingList,
     isError,
+    isFetching,
   } = useSales(!isAdminOrDirector ? { sellerId } : {})
+
+  useEffect(() => {
+    const id = pendingFocusId.current
+    if (!id || isFetching || editingSale) return
+    if (document.activeElement === document.body || document.activeElement?.id === id) {
+      const target = document.getElementById(id) ?? document.getElementById("sales-create")
+      target?.focus()
+    }
+    pendingFocusId.current = null
+  }, [data, isFetching, editingSale])
 
   function handleSellerSubmit(e: FormEvent) {
     e.preventDefault()
@@ -341,7 +360,7 @@ export function SalesPage() {
           {
             id: "actions",
             header: () => <span className="sr-only">Acciones</span>,
-            meta: { className: "w-12 text-right" },
+            meta: { className: "sticky right-0 z-10 w-12 bg-background text-right" },
             cell: ({ row }) => {
               const sale = row.original
               return (
@@ -352,6 +371,7 @@ export function SalesPage() {
                         <Button
                           variant="ghost"
                           size="icon-sm"
+                          id={`sale-actions-${sale.id}`}
                           aria-label={`Acciones de venta ${sale.clientName}`}
                         >
                           <MoreHorizontalIcon />
@@ -361,13 +381,19 @@ export function SalesPage() {
                     <TooltipContent>Acciones de venta</TooltipContent>
                   </Tooltip>
                   <DropdownMenuContent align="end" className="min-w-44">
-                    <DropdownMenuItem onSelect={() => setEditingSale(sale)}>
+                    <DropdownMenuItem onSelect={() => {
+                      returnFocusId.current = `sale-actions-${sale.id}`
+                      setEditingSale(sale)
+                    }}>
                       Editar venta
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       variant="destructive"
-                      onSelect={() => setDeletingSale(sale)}
+                      onSelect={() => {
+                        returnFocusId.current = `sale-actions-${sale.id}`
+                        setDeletingSale(sale)
+                      }}
                     >
                       Eliminar venta
                     </DropdownMenuItem>
@@ -387,6 +413,7 @@ export function SalesPage() {
         description="Registro de cierres por tipo"
         actions={
           <Button
+            id="sales-create"
             onClick={() =>
               document
                 .getElementById(
@@ -1007,7 +1034,11 @@ export function SalesPage() {
         <EditSaleModal
           sale={editingSale}
           isOpen={!!editingSale}
-          onClose={() => setEditingSale(null)}
+          onClose={() => {
+            pendingFocusId.current = returnFocusId.current
+            setEditingSale(null)
+          }}
+          onReturnFocus={restoreFocus}
         />
       )}
 
@@ -1017,7 +1048,10 @@ export function SalesPage() {
           if (!open) setDeletingSale(null)
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          restoreFocus()
+        }}>
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar venta</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1032,7 +1066,8 @@ export function SalesPage() {
               onClick={(event) => {
                 event.preventDefault()
                 if (deletingSale) {
-                  deleteSale(deletingSale.id)
+                  returnFocusId.current = "sales-create"
+                  deleteSale(deletingSale.id, { onSuccess: restoreFocus })
                   setDeletingSale(null)
                 }
               }}

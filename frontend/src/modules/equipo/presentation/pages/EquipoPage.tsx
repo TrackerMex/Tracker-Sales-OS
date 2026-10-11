@@ -364,8 +364,8 @@ export function EquipoPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Seller">Comercial</SelectItem>
-                    <SelectItem value="Admin">Dirección / Admin</SelectItem>
+                    <SelectItem value="Seller">{ROLE_LABELS[UserRole.Seller]}</SelectItem>
+                    <SelectItem value="Admin">{ROLE_LABELS[UserRole.Admin]}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

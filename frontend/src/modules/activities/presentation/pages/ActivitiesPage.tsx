@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useSearch } from "@tanstack/react-router"
 import { toast } from "sonner"
 import {
@@ -46,6 +46,7 @@ function getPointsTone(pct: number): StatusTone {
 }
 
 export function ActivitiesPage() {
+  const historyFocusId = useRef("")
   const search = useSearch({ strict: false })
   const clientId = (search as { clientId?: string }).clientId
   const clientName = (search as { clientName?: string }).clientName
@@ -100,6 +101,7 @@ export function ActivitiesPage() {
               </Button>
             )}
             <Button
+              id="activities-register"
               onClick={() => {
                 resetCreate()
                 setShowForm((v) => !v)
@@ -239,6 +241,7 @@ export function ActivitiesPage() {
                             <Button
                               variant="ghost"
                               size="icon-xs"
+                              id={`activity-actions-${activity.id}`}
                               aria-label="Acciones de actividad"
                             >
                               <MoreHorizontalIcon />
@@ -249,7 +252,10 @@ export function ActivitiesPage() {
                       </Tooltip>
                       <DropdownMenuContent align="end" className="min-w-44">
                         <DropdownMenuItem
-                          onSelect={() => setSelectedActivityId(activity.id)}
+                          onSelect={() => {
+                            historyFocusId.current = `activity-actions-${activity.id}`
+                            setSelectedActivityId(activity.id)
+                          }}
                         >
                           Ver historial
                         </DropdownMenuItem>
@@ -266,6 +272,11 @@ export function ActivitiesPage() {
       <ActivityHistoryModal
         activityId={selectedActivityId}
         onClose={() => setSelectedActivityId(null)}
+        onReturnFocus={() => {
+          const target = document.getElementById(historyFocusId.current) ??
+            document.getElementById("activities-register")
+          target?.focus()
+        }}
       />
     </div>
   )

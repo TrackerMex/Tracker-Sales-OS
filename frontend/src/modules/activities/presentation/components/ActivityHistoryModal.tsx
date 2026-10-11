@@ -23,6 +23,7 @@ import { StatusBadge } from "@/shared/components/data/StatusBadge"
 interface Props {
   activityId: string | null
   onClose: () => void
+  onReturnFocus?: () => void
 }
 
 const NEXT_TRANSITIONS: Record<string, string[]> = {
@@ -36,7 +37,7 @@ const TRANSITION_LABELS: Record<string, string> = {
   Cancelada: "Cancelar actividad",
 }
 
-export function ActivityHistoryModal({ activityId, onClose }: Props) {
+export function ActivityHistoryModal({ activityId, onClose, onReturnFocus }: Props) {
   const { data: activity, isLoading } = useActivityById(activityId)
   const { mutate, isPending } = useUpdateActivityStatus(activityId ?? "")
 
@@ -61,7 +62,15 @@ export function ActivityHistoryModal({ activityId, onClose }: Props) {
         if (!open) onClose()
       }}
     >
-      <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-2xl">
+      <DialogContent
+        className="max-h-[90vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-2xl"
+        onCloseAutoFocus={(event) => {
+          if (onReturnFocus) {
+            event.preventDefault()
+            onReturnFocus()
+          }
+        }}
+      >
         <DialogHeader className="border-b p-4 md:p-6">
           <DialogTitle>
             {isLoading ? "Cargando..." : `${activity?.type ?? ""} — Historial`}

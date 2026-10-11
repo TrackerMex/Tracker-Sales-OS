@@ -84,6 +84,8 @@ function KanbanBoard({
     // no CSS rule, the scrollbar comes from the utilities below.
     <div
       ref={scrollRef}
+      id="pipeline-board"
+      tabIndex={-1}
       className="pipeline-scroll [scrollbar-width:thin] [scrollbar-color:var(--border)_transparent] overflow-x-auto pb-4"
     >
       <div className="flex min-w-max gap-3">
@@ -111,6 +113,10 @@ const LOSS_REASONS: { value: LossReason; label: string }[] = [
 ]
 
 export function PipelinePage() {
+  const sheetOpener = useRef<HTMLElement | null>(null)
+  const sheetDealId = useRef("")
+  const lossDealId = useRef("")
+  const pendingLossFocusId = useRef<string | null>(null)
   const currentUser = useAppStore((s) => s.currentUser)
   const username = currentUser?.username ?? ""
 
@@ -156,6 +162,16 @@ export function PipelinePage() {
   const [lossModal, setLossModal] = useState<{ dealId: string } | null>(null)
   const [lossReason, setLossReason] = useState<LossReason | "">("")
 
+  useEffect(() => {
+    const id = pendingLossFocusId.current
+    if (id && activeGrouped?.Perdido?.some((deal) => deal.id === id)) {
+      const target = document.getElementById(`deal-card-${id}`) ??
+        document.getElementById("pipeline-board")
+      target?.focus()
+      pendingLossFocusId.current = null
+    }
+  }, [activeGrouped])
+
   function handleSellerChange(value: string) {
     setSelectedSeller(value)
     localStorage.setItem("pipeline_seller_filter", value)
@@ -165,6 +181,7 @@ export function PipelinePage() {
     const deal = activeGrouped && Object.values(activeGrouped).flat().find((item) => item.id === dealId)
     if (!deal || deal.stage === newStage) return
     if (newStage === "Perdido") {
+      lossDealId.current = dealId
       setLossReason("")
       setLossModal({ dealId })
       return
@@ -180,6 +197,7 @@ export function PipelinePage() {
 
   function handleConfirmLoss() {
     if (!lossModal) return
+    pendingLossFocusId.current = lossModal.dealId
     changeStage.mutate(
       {
         dealId: lossModal.dealId,
@@ -191,7 +209,10 @@ export function PipelinePage() {
       },
       {
         onSuccess: () => toast.success("Deal marcado como perdido"),
-        onError: () => toast.error("No se pudo cambiar la etapa"),
+        onError: () => {
+          pendingLossFocusId.current = null
+          toast.error("No se pudo cambiar la etapa")
+        },
       }
     )
     setLossModal(null)
@@ -199,6 +220,10 @@ export function PipelinePage() {
   }
 
   function handleDealClick(deal: Deal) {
+    sheetOpener.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null
+    sheetDealId.current = deal.id
     setSelectedDeal(deal)
   }
 
@@ -284,7 +309,15 @@ export function PipelinePage() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className="sm:max-w-md"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault()
+            const target = document.getElementById(`deal-card-${lossDealId.current}`) ??
+              document.getElementById("pipeline-board")
+            target?.focus()
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Motivo de pérdida</DialogTitle>
             <DialogDescription>
@@ -347,6 +380,15 @@ export function PipelinePage() {
           side="right"
           showCloseButton={false}
           className="overflow-y-auto p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[640px] data-[side=right]:lg:max-w-[720px]"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault()
+            const opener = sheetOpener.current
+            const target = (opener?.isConnected && opener !== document.body
+              ? opener.id ? document.getElementById(opener.id) : opener
+              : null) ?? document.getElementById(`deal-card-${sheetDealId.current}`) ??
+              document.getElementById("pipeline-board")
+            target?.focus()
+          }}
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Detalle de oportunidad</SheetTitle>

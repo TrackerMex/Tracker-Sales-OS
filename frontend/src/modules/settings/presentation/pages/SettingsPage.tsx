@@ -19,8 +19,8 @@ const FIELD_LABELS: Record<string, string> = {
   monthlyAmountGoal: "Meta mensual de monto ($)",
   monthlyUnitGoal: "Meta mensual de unidades",
   sellerMonthlyAmountGoal: "Meta mensual por vendedor ($)",
-  stalledAmberDays: "Días ámbar (deals estancados)",
-  stalledRedDays: "Días rojo (deals estancados)",
+  stalledAmberDays: "Días ámbar (oportunidades estancadas)",
+  stalledRedDays: "Días rojo (oportunidades estancadas)",
   coldAccountDays: "Días sin contacto para cuenta fría",
 }
 

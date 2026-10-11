@@ -1,4 +1,4 @@
-import { useState, Fragment } from "react"
+import { useRef, useState, Fragment } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { CloseIcon, MoreHorizontalIcon } from "@/shared/components/Icon"
 import { ActivityHistoryModal } from "@/modules/activities/presentation/components/ActivityHistoryModal"
@@ -45,6 +45,7 @@ interface Props {
 const STAGE_ORDER: PipelineStage[] = PIPELINE_STAGES.filter((s) => s !== "Perdido")
 
 export function ClientDetailPage({ deal, onBack }: Props) {
+  const historyFocusId = useRef("")
   const navigate = useNavigate()
   const currentUser = useAppStore((s) => s.currentUser)
   const username = currentUser?.username ?? ""
@@ -91,6 +92,7 @@ export function ClientDetailPage({ deal, onBack }: Props) {
           variant="ghost"
           size="icon"
           onClick={onBack}
+          id={`client-detail-close-${deal.id}`}
           aria-label="Cerrar"
         >
           <CloseIcon />
@@ -321,6 +323,7 @@ export function ClientDetailPage({ deal, onBack }: Props) {
                               <Button
                                 variant="ghost"
                                 size="icon-xs"
+                                id={`client-activity-actions-${activity.id}`}
                                 aria-label="Acciones de actividad"
                               >
                                 <MoreHorizontalIcon />
@@ -331,7 +334,10 @@ export function ClientDetailPage({ deal, onBack }: Props) {
                         </Tooltip>
                         <DropdownMenuContent align="end" className="min-w-44">
                           <DropdownMenuItem
-                            onSelect={() => setSelectedActivityId(activity.id)}
+                            onSelect={() => {
+                              historyFocusId.current = `client-activity-actions-${activity.id}`
+                              setSelectedActivityId(activity.id)
+                            }}
                           >
                             Ver detalle
                           </DropdownMenuItem>
@@ -364,6 +370,11 @@ export function ClientDetailPage({ deal, onBack }: Props) {
       <ActivityHistoryModal
         activityId={selectedActivityId}
         onClose={() => setSelectedActivityId(null)}
+        onReturnFocus={() => {
+          const target = document.getElementById(historyFocusId.current) ??
+            document.getElementById(`client-detail-close-${deal.id}`)
+          target?.focus()
+        }}
       />
     </div>
   )

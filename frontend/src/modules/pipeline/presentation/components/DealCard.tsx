@@ -67,7 +67,19 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
   return (
     <div
       ref={ref}
-      onClick={() => onClick(deal)}
+      id={`deal-card-${deal.id}`}
+      tabIndex={0}
+      onClick={(event) => {
+        event.currentTarget.focus()
+        onClick(deal)
+      }}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault()
+          onClick(deal)
+        }
+      }}
       className={cn(
         "rounded-lg border bg-background p-3 transition-[background-color,opacity]",
         isDragging
@@ -89,6 +101,7 @@ export function DealCard({ deal, onClick, teamMode }: DealCardProps) {
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                id={`deal-peek-${deal.id}`}
                 variant="ghost"
                 size="icon-xs"
                 aria-label="Vista rápida"

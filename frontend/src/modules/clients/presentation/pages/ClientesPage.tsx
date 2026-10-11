@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { FormEvent, ReactNode } from "react"
 import { toast } from "sonner"
 import { useQuery } from "@tanstack/react-query"
@@ -171,6 +171,8 @@ function InfoItem({
 }
 
 export function ClientesPage() {
+  const returnFocusId = useRef("clients-create")
+  const pendingFocusId = useRef<string | null>(null)
   const currentUser = useAppStore((s) => s.currentUser)
   const [view, setView] = useState<View>({ mode: "list" })
   const [q, setQ] = useState("")
@@ -199,7 +201,17 @@ export function ClientesPage() {
     [q, cold, incomplete]
   )
 
-  const { data, isLoading, isError } = useClients(filters)
+  const { data, isLoading, isError, isFetching } = useClients(filters)
+  useEffect(() => {
+    const id = pendingFocusId.current
+    if (!id || isFetching || showModal || deleteTarget) return
+    if (document.activeElement === document.body || document.activeElement?.id === id) {
+      const target = document.getElementById(id) ?? document.getElementById("clients-create")
+      target?.focus()
+    }
+    pendingFocusId.current = null
+  }, [data, isFetching, showModal, deleteTarget])
+
   const createClient = useCreateClient()
   const updateClient = useUpdateClient()
   const deleteClient = useDeleteClient()
@@ -255,14 +267,23 @@ export function ClientesPage() {
     updateClient.reset()
   }
 
-  function openCreate() {
+  function restoreFocus(event: Event) {
+    event.preventDefault()
+    const target = document.getElementById(returnFocusId.current) ??
+      document.getElementById("clients-create")
+    target?.focus()
+  }
+
+  function openCreate(opener: HTMLElement) {
+    returnFocusId.current = opener.id
     setEditingClient(null)
     setForm(emptyClientForm(currentUser?.sellerId))
     resetSaveErrors()
     setShowModal(true)
   }
 
-  function openEdit(client: Client) {
+  function openEdit(client: Client, openerId = `client-actions-${client.id}`) {
+    returnFocusId.current = openerId
     setEditingClient(client)
     resetSaveErrors()
     setForm({
@@ -313,6 +334,7 @@ export function ClientesPage() {
         { id: editingClient.id, payload },
         {
           onSuccess: () => {
+            pendingFocusId.current = returnFocusId.current
             setShowModal(false)
             toast.success("Cliente actualizado")
           },
@@ -322,6 +344,7 @@ export function ClientesPage() {
     } else {
       createClient.mutate(payload, {
         onSuccess: () => {
+          pendingFocusId.current = returnFocusId.current
           setShowModal(false)
           toast.success("Cliente creado")
         },
@@ -334,6 +357,7 @@ export function ClientesPage() {
     if (!deleteTarget) return
     deleteClient.mutate(deleteTarget.id, {
       onSuccess: () => {
+        returnFocusId.current = "clients-create"
         setDeleteTarget(null)
         toast.success("Cliente eliminado")
         if (view.mode === "detail" && view.clientId === deleteTarget.id) {
@@ -402,7 +426,7 @@ export function ClientesPage() {
             </span>
           }
           actions={
-            <Button onClick={() => openEdit(selectedClient)}>
+            <Button id="client-detail-edit" onClick={() => openEdit(selectedClient, "client-detail-edit")}>
               <EditIcon />
               Editar cliente
             </Button>
@@ -656,6 +680,7 @@ export function ClientesPage() {
                   <Button
                     variant="ghost"
                     size="icon-sm"
+                    id={`client-actions-${client.id}`}
                     aria-label={`Acciones de ${client.name}`}
                   >
                     <MoreHorizontalIcon />
@@ -671,7 +696,10 @@ export function ClientesPage() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
-                onSelect={() => setDeleteTarget(client)}
+                onSelect={() => {
+                  returnFocusId.current = `client-actions-${client.id}`
+                  setDeleteTarget(client)
+                }}
               >
                 Eliminar cliente
               </DropdownMenuItem>
@@ -689,7 +717,7 @@ export function ClientesPage() {
         title="Clientes"
         description={data ? `${data.total} registros` : "Cartera comercial"}
         actions={
-          <Button onClick={openCreate}>
+          <Button id="clients-create" onClick={(event) => openCreate(event.currentTarget)}>
             <PlusIcon />
             Nuevo cliente
           </Button>
@@ -777,7 +805,7 @@ export function ClientesPage() {
           if (!open) setDeleteTarget(null)
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent onCloseAutoFocus={restoreFocus}>
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar cliente</AlertDialogTitle>
             <AlertDialogDescription>
@@ -822,7 +850,10 @@ export function ClientesPage() {
           if (!open) setShowModal(false)
         }}
       >
-        <DialogContent className="max-h-[92vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-5xl">
+        <DialogContent
+          className="max-h-[92vh] gap-0 overflow-y-auto bg-background p-0 sm:max-w-5xl"
+          onCloseAutoFocus={restoreFocus}
+        >
           <DialogHeader className="border-b p-4 md:p-6">
             <DialogTitle>
               {editingClient

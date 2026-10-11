@@ -2,7 +2,7 @@
 
 **Objetivo**: corregir bugs 1–14 y aplicar el ciclo registrado en docs/bugfix-execution.md.
 **Rama**: fix/bugs-pendientes
-**Feature en progreso**: ninguna; siguiente 87-dialog-mobile-copy
+**Siguiente feature**: 88-executive-slide-responsive
 **Iniciada**: 2026-10-11
 
 Lotes secuenciales 82–88; implementación delegada y review independiente.
@@ -16,3 +16,5 @@ Lotes secuenciales 82–88; implementación delegada y review independiente.
 85 completada: review independiente PASSED (7/7), 18 suites/113 tests backend y siete gates PASS; 42 comprobaciones API/UI cubren ID/owner/soft-delete, arrastres reales, invalidación, errores propios y respaldo del cliente al completar.
 
 86 completada: review independiente PASSED (7/7), 21 suites/129 tests backend y siete gates PASS; QA final 81/81 cubre roles/caché, feedback lento/fallido y baja/reactivación de cuentas normales y legacy, sin cambiar cuentas ajenas o borradas. Se conserva la evidencia del caso detectado antes de corregirlo.
+
+87 completada: review independiente PASSED (6/6), gates frontend PASS y QA funcional completa. 460 comprobaciones válidas acumuladas (sin contar escenarios únicos); dos fallos de foco detectados durante QA corregidos y repetidos. Calendar/nav, roles y Equipo preservados; Ventas acciones visibles a390px. Evidencia final en impl/review/qa.

@@ -16,7 +16,7 @@ interface CalendarViewProps {
   year: number
   month: number
   tasks: Task[]
-  onEdit: (task: Task) => void
+  onEdit: (task: Task, opener?: HTMLElement) => void
   onPrevMonth: () => void
   onNextMonth: () => void
   viewMode?: "month" | "week" | "day"
@@ -24,7 +24,7 @@ interface CalendarViewProps {
   onViewModeChange?: (mode: "month" | "week" | "day") => void
   onSelectedDateChange?: (date: Date) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
-  onDayClick?: (date: Date) => void
+  onDayClick?: (date: Date, opener?: HTMLElement) => void
 }
 
 // Chip accent per task type (left border); text stays foreground for AA.
@@ -126,7 +126,7 @@ function CalendarViewToggle({
 interface TaskChipProps {
   task: Task
   isDragging?: boolean
-  onEdit?: (task: Task) => void
+  onEdit?: (task: Task, opener?: HTMLElement) => void
 }
 
 function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
@@ -173,11 +173,12 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
       <HoverCardTrigger asChild>
         <Button
           ref={taskRef}
+          id={`calendar-task-${task.id}`}
           variant="ghost"
           size="xs"
           onClick={(event) => {
             event.stopPropagation()
-            onEdit?.(task)
+            onEdit?.(task, event.currentTarget)
           }}
           className={cn(
             "block h-auto w-full max-w-full cursor-grab truncate rounded-none border-0 border-l-2 px-1 py-0.5 text-left text-xs font-normal text-foreground hover:bg-muted",
@@ -232,9 +233,9 @@ interface MonthViewProps {
   year: number
   month: number
   tasks: Task[]
-  onEdit: (task: Task) => void
+  onEdit: (task: Task, opener?: HTMLElement) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
-  onDayClick?: (date: Date) => void
+  onDayClick?: (date: Date, opener?: HTMLElement) => void
 }
 
 function MonthView({
@@ -306,7 +307,7 @@ function MonthView({
               overflow={overflow}
               onEdit={onEdit}
               onTaskReschedule={onTaskReschedule}
-              onDayClick={cellDate ? () => onDayClick?.(cellDate) : undefined}
+              onDayClick={cellDate ? (opener) => onDayClick?.(cellDate, opener) : undefined}
             />
           )
         })}
@@ -323,9 +324,9 @@ interface MonthDayCellProps {
   isToday: boolean
   visibleTasks: Task[]
   overflow: number
-  onEdit: (task: Task) => void
+  onEdit: (task: Task, opener?: HTMLElement) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
-  onDayClick?: () => void
+  onDayClick?: (opener: HTMLElement) => void
 }
 
 function MonthDayCell({
@@ -384,7 +385,9 @@ function MonthDayCell({
   return (
     <div
       ref={cellRef}
-      onClick={onDayClick}
+      id={`calendar-day-${year}-${month}-${dayNum}`}
+      tabIndex={isValidDay ? -1 : undefined}
+      onClick={(event) => onDayClick?.(event.currentTarget)}
       className={cn(
         "min-h-[90px] min-w-0 overflow-hidden p-1",
         isToday && "ring-1 ring-primary ring-inset",
@@ -429,7 +432,7 @@ function MonthDayCell({
 interface WeekViewProps {
   selectedDate: Date
   tasks: Task[]
-  onEdit: (task: Task) => void
+  onEdit: (task: Task, opener?: HTMLElement) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
   onPrevWeek: () => void
   onNextWeek: () => void
@@ -518,7 +521,7 @@ function WeekView({
 interface WeekDayColumnProps {
   date: Date
   tasks: Task[]
-  onEdit: (task: Task) => void
+  onEdit: (task: Task, opener?: HTMLElement) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
 }
 
@@ -587,7 +590,7 @@ function WeekDayColumn({
 interface DayViewProps {
   selectedDate: Date
   tasks: Task[]
-  onEdit: (task: Task) => void
+  onEdit: (task: Task, opener?: HTMLElement) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
   onPrevDay: () => void
   onNextDay: () => void
@@ -658,7 +661,7 @@ interface DayHourRowProps {
   timeLabel: string
   tasks: Task[]
   date: Date
-  onEdit: (task: Task) => void
+  onEdit: (task: Task, opener?: HTMLElement) => void
   onTaskReschedule?: (taskId: string, newDate: string) => void
 }
 
@@ -827,9 +830,9 @@ export function CalendarView({
             tasks={tasks}
             onEdit={onEdit}
             onTaskReschedule={onTaskReschedule}
-            onDayClick={(date) => {
+            onDayClick={(date, opener) => {
               setCurrentSelectedDate(date)
-              onDayClick?.(date)
+              onDayClick?.(date, opener)
               onSelectedDateChange?.(date)
             }}
           />
