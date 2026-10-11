@@ -1,15 +1,14 @@
 import { useState, Fragment } from "react"
 import { useNavigate } from "@tanstack/react-router"
-import { useQuery } from "@tanstack/react-query"
 import { CloseIcon, MoreHorizontalIcon } from "@/shared/components/Icon"
-import { clientsApi } from "@/modules/clients/infrastructure/clients.api"
-import { activitiesApi } from "@/modules/activities/infrastructure/activities.api"
 import { ActivityHistoryModal } from "@/modules/activities/presentation/components/ActivityHistoryModal"
 import { useAppStore } from "@/shared/store/app.store"
 import { PIPELINE_STAGES } from "@/shared/lib/constants"
 import { useChangeStage } from "../../application/hooks/useChangeStage"
+import { useClientDetail } from "../../application/hooks/useClientDetail"
 import type { Deal, PipelineStage } from "../../domain/pipeline.types"
-import type { Activity } from "@/modules/activities/domain/activities.types"
+import { parseApiError } from "@/shared/lib/api-errors"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -64,24 +63,8 @@ export function ClientDetailPage({ deal, onBack }: Props) {
     })
   }
 
-  const { data: client } = useQuery({
-    queryKey: ["clients", deal.clientId],
-    queryFn: () =>
-      clientsApi
-        .getClients({ limit: 100 })
-        .then((r) => r.data.find((c) => c.id === deal.clientId)),
-    enabled: !!deal.clientId,
-  })
-
-  const { data: dealActivities } = useQuery({
-    queryKey: ["activities", "client", deal.clientId, deal.sellerId],
-    queryFn: () => activitiesApi.getClientActivities(deal.clientId!),
-    enabled: !!deal.clientId,
-  })
-
-  const clientActivities: Activity[] = (dealActivities ?? []).filter(
-    (a) => a.sellerId === deal.sellerId
-  )
+  const { clientQuery, activities: clientActivities } = useClientDetail(deal)
+  const { data: client } = clientQuery
 
   const currentIdx = STAGE_ORDER.indexOf(deal.stage as PipelineStage)
 
@@ -218,7 +201,16 @@ export function ClientDetailPage({ deal, onBack }: Props) {
 
       <section className="border-b px-6 py-4">
         <h3 className="text-sm font-semibold">Información del cliente</h3>
-        <Accordion type="multiple" defaultValue={["contacts"]}>
+        {clientQuery.isLoading ? (
+          <Skeleton className="mt-3 h-24 w-full" aria-label="Cargando cliente" />
+        ) : clientQuery.isError ? (
+          <div role="alert" className="mt-3 text-sm text-status-danger">
+            <p>{parseApiError(clientQuery.error).message}</p>
+            <Button variant="outline" size="sm" className="mt-2" onClick={() => void clientQuery.refetch()}>
+              Reintentar
+            </Button>
+          </div>
+        ) : <Accordion type="multiple" defaultValue={["contacts"]}>
           <AccordionItem value="contacts">
             <AccordionTrigger>Contactos</AccordionTrigger>
             <AccordionContent className="space-y-3">
@@ -252,7 +244,7 @@ export function ClientDetailPage({ deal, onBack }: Props) {
               <p className="text-sm">{client?.provider ?? "-"}</p>
             </AccordionContent>
           </AccordionItem>
-        </Accordion>
+        </Accordion>}
       </section>
 
       <section className="flex-1 px-6 py-4">

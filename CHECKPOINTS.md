@@ -905,13 +905,13 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ## 85-client-pipeline-integrity
 
-- [ ] Soltar deal en su propia etapa hace cero mutaciones y no muestra toast de error ni confirmación de pérdida.
-- [ ] Completar tarea conserva clientId, clientName y taskId visibles en actividad; el nombre usa respaldo de tarea cargada si respuesta no lo trae.
-- [ ] GET /api/clients/:id resuelve cliente por id con JWT y autorización por propietario; inexistente/borrado da 404 y ajeno 403.
-- [ ] Expediente de cliente fuera de los primeros 100 funciona; queries no retornan undefined y 404 tiene estado visible.
-- [ ] Pipeline personal/equipo excluye clientes borrados conservando datos históricos; borrar cliente invalida las queries necesarias.
-- [ ] Actividad vacía muestra errores propios, preserva inputs y no envía; cliente, resumen y siguiente paso se validan.
-- [ ] Tests de nuevo use-case y soft-delete/accesso pasan; gates de ambos proyectos PASS.
+- [x] Soltar deal en su propia etapa hace cero mutaciones y no muestra toast de error ni confirmación de pérdida.
+- [x] Completar tarea conserva clientId, clientName y taskId visibles en actividad; el nombre usa respaldo de tarea cargada si respuesta no lo trae.
+- [x] GET /api/clients/:id resuelve cliente por id con JWT y autorización por propietario; inexistente/borrado da 404 y ajeno 403.
+- [x] Expediente de cliente fuera de los primeros 100 funciona; queries no retornan undefined y 404 tiene estado visible.
+- [x] Pipeline personal/equipo excluye clientes borrados conservando datos históricos; borrar cliente invalida las queries necesarias.
+- [x] Actividad vacía muestra errores propios, preserva inputs y no envía; cliente, resumen y siguiente paso se validan.
+- [x] Tests de nuevo use-case y soft-delete/accesso pasan; gates de ambos proyectos PASS.
 
 ---
 

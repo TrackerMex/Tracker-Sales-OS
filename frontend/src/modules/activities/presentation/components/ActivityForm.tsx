@@ -99,10 +99,28 @@ export function ActivityForm({
 }: Props) {
   const {
     summary: errorSummary,
-    fieldErrors,
-    clearField,
+    fieldErrors: apiFieldErrors,
+    clearField: clearApiField,
     formRef,
   } = useApiFormErrors(submitError)
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const fieldErrors = { ...apiFieldErrors, ...validationErrors }
+  const formError = Object.keys(validationErrors).length > 0
+    ? {
+        kind: "validation" as const,
+        message: "Revisa los campos marcados.",
+        fieldErrors: validationErrors,
+        details: Object.values(validationErrors),
+      }
+    : errorSummary
+
+  function clearField(name: string) {
+    setValidationErrors((current) => Object.fromEntries(
+      Object.entries(current).filter(([field]) => field !== name)
+    ))
+    clearApiField(name)
+  }
+
   const now = new Date()
   const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
     .toISOString()
@@ -111,7 +129,6 @@ export function ActivityForm({
   const currentUser = useAppStore((s) => s.currentUser)
   const isManager = currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Director
   const [selectedSellerId, setSelectedSellerId] = useState(initialSellerId ?? "")
-  const [sellerError, setSellerError] = useState("")
   const { data: sellers = [] } = useSellers()
   const activeSellers = sellers.filter((seller) => seller.active)
   const sellerId = isManager ? selectedSellerId : currentUser?.sellerId ?? ""
@@ -142,7 +159,6 @@ export function ActivityForm({
   const [showDiscovery, setShowDiscovery] = useState(false)
   const [showAgreement, setShowAgreement] = useState(false)
   const [showAiCoach, setShowAiCoach] = useState(false)
-  const [clientError, setClientError] = useState("")
 
   const { data: pipelineGrouped } = usePipeline(sellerId || null)
   const { data: todayTasks } = useTodayTasks(sellerId || null)
@@ -226,17 +242,29 @@ export function ActivityForm({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const errors: Record<string, string> = {}
     if (!sellerId || (isManager && !activeSellers.some((seller) => seller.id === sellerId))) {
-      setSellerError("Selecciona un vendedor activo.")
-      e.currentTarget.querySelector<HTMLElement>("#activity-seller")?.focus()
-      return
+      errors.sellerId = "Selecciona un vendedor activo."
     }
-    setSellerError("")
     if (!isNonCommercial && !clientId) {
-      setClientError("Selecciona un cliente para actividades comerciales.")
+      errors.clientId = "Selecciona un cliente para actividades comerciales."
+    }
+    if (!summary.trim()) errors.summary = "Escribe un resumen de la actividad."
+    if (needsNextStep) {
+      if (!nextStep.trim()) errors.nextStep = "Describe el siguiente paso."
+      if (!nextDate) errors.nextDate = "Selecciona la fecha próxima."
+      if (!nextTime) errors.nextTime = "Selecciona la hora próxima."
+    }
+    setValidationErrors(errors)
+    if (Object.keys(errors).length > 0) {
+      const form = e.currentTarget
+      requestAnimationFrame(() => {
+        const invalid = form.querySelector<HTMLElement>('[aria-invalid="true"]')
+        const focusTarget = invalid?.querySelector<HTMLElement>("input,button") ?? invalid
+        focusTarget?.focus()
+      })
       return
     }
-    setClientError("")
     const input: CreateActivityInput = {
       sellerId,
       ...(clientId ? { clientId } : {}),
@@ -291,7 +319,7 @@ export function ActivityForm({
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="bg-background">
+    <form ref={formRef} noValidate onSubmit={handleSubmit} className="bg-background">
       <div className="border-b p-4 md:p-6">
         <h2 className="text-base font-semibold">
           Registrar actividad comercial
@@ -302,9 +330,9 @@ export function ActivityForm({
         </p>
       </div>
 
-      {errorSummary && (
+      {formError && (
         <div className="p-4 pb-0 md:px-6">
-          <FormErrorSummary error={errorSummary} />
+          <FormErrorSummary error={formError} />
         </div>
       )}
 
@@ -322,7 +350,6 @@ export function ActivityForm({
                   onValueChange={(owner) => {
                     setSelectedSellerId(owner)
                     onSellerChange?.(owner)
-                    setSellerError("")
                     clearField("sellerId")
                     setClientId("")
                     setSelectedClient(null)
@@ -332,17 +359,17 @@ export function ActivityForm({
                     setNewOpportunityName("")
                     setStage("")
                     setAiTips([])
-                    setClientError("")
+                    clearField("clientId")
                   }}
                 >
-                  <SelectTrigger id="activity-seller" className="mt-2 w-full" {...fieldErrorProps("sellerId", sellerError || fieldErrors.sellerId)}>
+                  <SelectTrigger id="activity-seller" className="mt-2 w-full" {...fieldErrorProps("sellerId", fieldErrors.sellerId)}>
                     <SelectValue placeholder="Selecciona un vendedor" />
                   </SelectTrigger>
                   <SelectContent>
                     {activeSellers.map((seller) => <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <FieldError name="sellerId" message={sellerError || fieldErrors.sellerId} />
+                <FieldError name="sellerId" message={fieldErrors.sellerId} />
               </div>
             )}
             <div>
@@ -362,21 +389,20 @@ export function ActivityForm({
                       setSelectedOpportunityId("")
                       setNewOpportunityName("")
                     }
-                    setClientError("")
                     clearField("clientId")
                   }}
                   onResolve={(client) => setSelectedClient(client)}
                   initialLabel={initialClientLabel}
                   placeholder="Sin cliente"
-                  error={!!(clientError || fieldErrors.clientId)}
+                  error={!!(fieldErrors.clientId)}
                   aria-describedby={
-                    clientError || fieldErrors.clientId ? "clientId-error" : undefined
+                    fieldErrors.clientId ? "clientId-error" : undefined
                   }
                 />
               </div>
               <FieldError
                 name="clientId"
-                message={clientError || fieldErrors.clientId}
+                message={fieldErrors.clientId}
               />
             </div>
 
@@ -546,7 +572,12 @@ export function ActivityForm({
                   onValueChange={(v) => {
                     const t = v as ActivityType
                     setType(t)
-                    if (NON_COMMERCIAL_TYPES.includes(t)) setClientError("")
+                    if (NON_COMMERCIAL_TYPES.includes(t)) clearField("clientId")
+                    if (!REQUIRES_NEXT_STEP.includes(t)) {
+                      clearField("nextStep")
+                      clearField("nextDate")
+                      clearField("nextTime")
+                    }
                     clearField("type")
                   }}
                 >

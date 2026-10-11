@@ -26,6 +26,7 @@ import { AddContactUseCase } from '../application/use-cases/add-contact.use-case
 import { CreateClientUseCase } from '../application/use-cases/create-client.use-case';
 import { DeleteClientUseCase } from '../application/use-cases/delete-client.use-case';
 import { GetClientsUseCase } from '../application/use-cases/get-clients.use-case';
+import { GetClientUseCase } from '../application/use-cases/get-client.use-case';
 import { UpdateClientUseCase } from '../application/use-cases/update-client.use-case';
 
 @ApiTags('clients')
@@ -40,6 +41,7 @@ export class ClientsController {
     private readonly updateClientUseCase: UpdateClientUseCase,
     private readonly addContactUseCase: AddContactUseCase,
     private readonly deleteClientUseCase: DeleteClientUseCase,
+    private readonly getClientUseCase: GetClientUseCase,
   ) {}
 
   @Get()
@@ -59,6 +61,11 @@ export class ClientsController {
   @Post()
   create(@Body() dto: CreateClientDto, @Req() req: { user: RequestUserDto }) {
     return this.createClientUseCase.execute({ dto, user: req.user });
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string, @Req() req: { user: RequestUserDto }) {
+    return this.getClientUseCase.execute({ id, user: req.user });
   }
 
   @Patch(':id')

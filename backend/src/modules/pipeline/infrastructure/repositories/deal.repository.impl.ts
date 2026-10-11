@@ -139,7 +139,10 @@ export class DealRepositoryImpl implements IDealsRepository {
     }[]
   > {
     const deals = await this.repo.find({
-      where: { sellerId } as FindOptionsWhere<DealTypeormEntity>,
+      where: {
+        sellerId,
+        deletedAt: IsNull(),
+      } as FindOptionsWhere<DealTypeormEntity>,
       order: { createdAt: 'DESC' },
     });
 
@@ -148,7 +151,10 @@ export class DealRepositoryImpl implements IDealsRepository {
 
     const clients =
       clientIds.length > 0
-        ? await this.clientRepo.findBy({ id: In(clientIds) })
+        ? await this.clientRepo.findBy({
+            id: In(clientIds),
+            deletedAt: IsNull(),
+          })
         : [];
     const clientMap = new Map(clients.map((c) => [c.id, c]));
 
@@ -168,22 +174,24 @@ export class DealRepositoryImpl implements IDealsRepository {
         : [];
     const sellerMap = new Map(sellers.map((s) => [s.id, s]));
 
-    return deals.map((deal) => {
-      const client = clientMap.get(deal.clientId);
-      const contact = contactMap.get(deal.clientId);
-      const seller = sellerMap.get(deal.sellerId);
-      return {
-        deal: this.toDomain(deal),
-        clientName: client?.name ?? deal.clientName,
-        contactName: contact?.name ?? null,
-        contactRole: contact?.role ?? null,
-        painPoint: client?.pain ?? null,
-        sellerName: seller?.name ?? null,
-        clientNextStep: client?.nextStep ?? null,
-        clientNextDate: client?.nextDate ?? null,
-        clientNextTime: client?.nextTime ?? null,
-      };
-    });
+    return deals
+      .filter((deal) => clientMap.has(deal.clientId))
+      .map((deal) => {
+        const client = clientMap.get(deal.clientId);
+        const contact = contactMap.get(deal.clientId);
+        const seller = sellerMap.get(deal.sellerId);
+        return {
+          deal: this.toDomain(deal),
+          clientName: client?.name ?? deal.clientName,
+          contactName: contact?.name ?? null,
+          contactRole: contact?.role ?? null,
+          painPoint: client?.pain ?? null,
+          sellerName: seller?.name ?? null,
+          clientNextStep: client?.nextStep ?? null,
+          clientNextDate: client?.nextDate ?? null,
+          clientNextTime: client?.nextTime ?? null,
+        };
+      });
   }
 
   async findDetailedAllSellers(): Promise<
@@ -209,7 +217,10 @@ export class DealRepositoryImpl implements IDealsRepository {
 
     const clients =
       clientIds.length > 0
-        ? await this.clientRepo.findBy({ id: In(clientIds) })
+        ? await this.clientRepo.findBy({
+            id: In(clientIds),
+            deletedAt: IsNull(),
+          })
         : [];
     const clientMap = new Map(clients.map((c) => [c.id, c]));
 
@@ -229,22 +240,24 @@ export class DealRepositoryImpl implements IDealsRepository {
         : [];
     const sellerMap = new Map(sellers.map((s) => [s.id, s]));
 
-    return deals.map((deal) => {
-      const client = clientMap.get(deal.clientId);
-      const contact = contactMap.get(deal.clientId);
-      const seller = sellerMap.get(deal.sellerId);
-      return {
-        deal: this.toDomain(deal),
-        clientName: client?.name ?? deal.clientName,
-        contactName: contact?.name ?? null,
-        contactRole: contact?.role ?? null,
-        painPoint: client?.pain ?? null,
-        sellerName: seller?.name ?? null,
-        clientNextStep: client?.nextStep ?? null,
-        clientNextDate: client?.nextDate ?? null,
-        clientNextTime: client?.nextTime ?? null,
-      };
-    });
+    return deals
+      .filter((deal) => clientMap.has(deal.clientId))
+      .map((deal) => {
+        const client = clientMap.get(deal.clientId);
+        const contact = contactMap.get(deal.clientId);
+        const seller = sellerMap.get(deal.sellerId);
+        return {
+          deal: this.toDomain(deal),
+          clientName: client?.name ?? deal.clientName,
+          contactName: contact?.name ?? null,
+          contactRole: contact?.role ?? null,
+          painPoint: client?.pain ?? null,
+          sellerName: seller?.name ?? null,
+          clientNextStep: client?.nextStep ?? null,
+          clientNextDate: client?.nextDate ?? null,
+          clientNextTime: client?.nextTime ?? null,
+        };
+      });
   }
 
   async getWeightedForecast(): Promise<number> {

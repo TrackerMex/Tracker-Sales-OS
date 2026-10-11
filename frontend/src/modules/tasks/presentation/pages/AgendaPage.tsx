@@ -178,14 +178,16 @@ export function AgendaPage() {
     completeTask(taskId, {
       onSuccess: (completedTask) => {
         toast.success("Tarea completada")
+        const clientId = completedTask.clientId ?? task?.clientId
+        const clientName = completedTask.clientName?.trim() || task?.clientName
         void navigate({
           to: "/actividades/nueva",
           search: {
-            ...(completedTask.clientId
-              ? { clientId: completedTask.clientId }
+            ...(clientId
+              ? { clientId }
               : {}),
-            ...(completedTask.clientName
-              ? { clientName: completedTask.clientName }
+            ...(clientName
+              ? { clientName }
               : {}),
             ...(task?.title ? { taskTitle: task.title } : {}),
             taskId: taskId,

@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { PipelineStage } from '../../../clients/domain/entities/client.entity';
 import { ClientTypeormEntity } from '../../../clients/infrastructure/entities/client.typeorm.entity';
 import { ContactTypeormEntity } from '../../../clients/infrastructure/entities/contact.typeorm.entity';
@@ -92,4 +92,75 @@ describe('DealRepositoryImpl.findStalledDeals', () => {
     expect(dataParams).toEqual([7, 40, 10]);
     expect(result).toEqual({ data: [], total: 11 });
   });
+});
+
+describe('DealRepositoryImpl detailed pipeline', () => {
+  it.each(['personal', 'team'])(
+    'excludes deleted or missing clients in %s without modifying deal history',
+    async (mode) => {
+      const history = [{ oldStage: 'Prospecto', newStage: 'Contactado' }];
+      const deals = [
+        { id: 'active-deal', clientId: 'active-client', stageHistory: history },
+        { id: 'deleted-client-deal', clientId: 'deleted-client' },
+        { id: 'missing-client-deal', clientId: 'missing-client' },
+      ].map((deal) =>
+        Object.assign(new DealTypeormEntity(), {
+          ...deal,
+          sellerId: 'seller-1',
+          amount: 100,
+          probability: 20,
+        }),
+      );
+      const find = jest.fn().mockResolvedValue(deals);
+      const softDelete = jest.fn();
+      const findBy = jest
+        .fn()
+        .mockResolvedValue([
+          { id: 'active-client', name: 'Cliente activo', nextStep: 'Llamar' },
+        ]);
+      const contactsQuery = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+      const repository = new DealRepositoryImpl(
+        { find, softDelete } as unknown as Repository<DealTypeormEntity>,
+        { findBy } as unknown as Repository<ClientTypeormEntity>,
+        {
+          createQueryBuilder: jest.fn().mockReturnValue(contactsQuery),
+        } as unknown as Repository<ContactTypeormEntity>,
+        {
+          findBy: jest
+            .fn()
+            .mockResolvedValue([{ id: 'seller-1', name: 'Dueño' }]),
+        } as unknown as Repository<SellerTypeormEntity>,
+      );
+
+      const result =
+        mode === 'personal'
+          ? await repository.findDetailedBySellerId('seller-1')
+          : await repository.findDetailedAllSellers();
+
+      expect(find).toHaveBeenCalledWith({
+        where: {
+          ...(mode === 'personal' ? { sellerId: 'seller-1' } : {}),
+          deletedAt: IsNull(),
+        },
+        order: { createdAt: 'DESC' },
+      });
+      expect(findBy).toHaveBeenCalledWith({
+        id: In(['active-client', 'deleted-client', 'missing-client']),
+        deletedAt: IsNull(),
+      });
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        deal: { id: 'active-deal', stageHistory: history },
+        clientName: 'Cliente activo',
+        clientNextStep: 'Llamar',
+      });
+      expect(deals).toHaveLength(3);
+      expect(deals[0].stageHistory).toBe(history);
+      expect(softDelete).not.toHaveBeenCalled();
+    },
+  );
 });

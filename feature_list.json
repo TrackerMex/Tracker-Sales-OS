@@ -863,7 +863,7 @@
     "id": "85-client-pipeline-integrity",
     "name": "Integridad de cliente, pipeline y actividad",
     "description": "Bugs 4, 5, 8 y 10: misma etapa, contexto al completar, consulta cliente por id, soft-delete y errores propios.",
-    "status": "in_progress",
+    "status": "done",
     "priority": 85,
     "backend_modules": [
       "clients",
@@ -881,7 +881,7 @@
     "id": "86-role-queries-team-feedback",
     "name": "Consultas por permiso y confirmaciones de Equipo",
     "description": "Bugs 6 y 7: impedir consultas realmente prohibidas y mostrar pendiente/errores. ",
-    "status": "pending",
+    "status": "in_progress",
     "priority": 86,
     "backend_modules": [],
     "frontend_modules": [

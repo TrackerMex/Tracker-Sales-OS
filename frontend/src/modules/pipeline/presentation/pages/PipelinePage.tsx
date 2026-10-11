@@ -162,6 +162,8 @@ export function PipelinePage() {
   }
 
   function handleChangeStage(dealId: string, newStage: PipelineStage) {
+    const deal = activeGrouped && Object.values(activeGrouped).flat().find((item) => item.id === dealId)
+    if (!deal || deal.stage === newStage) return
     if (newStage === "Perdido") {
       setLossReason("")
       setLossModal({ dealId })

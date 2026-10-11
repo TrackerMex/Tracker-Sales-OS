@@ -54,6 +54,8 @@ export interface Client {
   dataQuality: number
 }
 
+export type ClientDetail = Omit<Client, "lastActivityAt" | "isCold" | "dataQuality">
+
 export interface PaginatedClients {
   data: Client[]
   total: number

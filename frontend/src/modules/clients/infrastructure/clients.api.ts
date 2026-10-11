@@ -1,6 +1,7 @@
 import { api } from "../../../shared/lib/axios"
 import type {
   Client,
+  ClientDetail,
   ClientFilters,
   CreateClientInput,
   CreateContactInput,
@@ -17,6 +18,9 @@ function cleanParams(filters: ClientFilters) {
 export const clientsApi = {
   getClients: (filters: ClientFilters = {}): Promise<PaginatedClients> =>
     api.get("/clients", { params: cleanParams(filters) }).then((r) => r.data),
+
+  getClient: (id: string): Promise<ClientDetail> =>
+    api.get(`/clients/${id}`).then((r) => r.data),
 
   createClient: (payload: CreateClientInput): Promise<Client> =>
     api.post("/clients", payload).then((r) => r.data),

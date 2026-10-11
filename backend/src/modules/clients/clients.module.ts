@@ -8,6 +8,7 @@ import { AddContactUseCase } from './application/use-cases/add-contact.use-case'
 import { CreateClientUseCase } from './application/use-cases/create-client.use-case';
 import { DeleteClientUseCase } from './application/use-cases/delete-client.use-case';
 import { GetClientsUseCase } from './application/use-cases/get-clients.use-case';
+import { GetClientUseCase } from './application/use-cases/get-client.use-case';
 import { UpdateClientUseCase } from './application/use-cases/update-client.use-case';
 import { ClientTypeormEntity } from './infrastructure/entities/client.typeorm.entity';
 import { ContactTypeormEntity } from './infrastructure/entities/contact.typeorm.entity';
@@ -28,6 +29,7 @@ import { ClientsController } from './presentation/clients.controller';
   providers: [
     { provide: CLIENT_REPOSITORY, useClass: ClientRepositoryImpl },
     GetClientsUseCase,
+    GetClientUseCase,
     CreateClientUseCase,
     UpdateClientUseCase,
     AddContactUseCase,

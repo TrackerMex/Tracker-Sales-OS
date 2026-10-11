@@ -5,6 +5,10 @@ export function useDeleteClient() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => clientsApi.deleteClient(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] })
+      queryClient.invalidateQueries({ queryKey: ["pipeline"] })
+      queryClient.invalidateQueries({ queryKey: ["client-deals"] })
+    },
   })
 }

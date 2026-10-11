@@ -8,8 +8,8 @@ El usuario autorizó corregir los bugs y aplicar el ciclo de implementación, re
 | 0 | `82-frontend-typecheck` | 14 | DONE — review PASSED |
 | 1 | `83-timepicker-calendar` | [1, 3] | DONE — review PASSED |
 | 2 | `84-admin-seller-assignment` | 2 | DONE — review PASSED |
-| 3 | `85-client-pipeline-integrity` | [4, 5, 8, 10] | IN PROGRESS |
-| 4 | `86-role-queries-team-feedback` | [6, 7] | TODO |
+| 3 | `85-client-pipeline-integrity` | [4, 5, 8, 10] | DONE — review PASSED |
+| 4 | `86-role-queries-team-feedback` | [6, 7] | IN PROGRESS |
 | 5 | `87-dialog-mobile-copy` | [9, 11, 12] | TODO |
 | 6 | `88-executive-slide-responsive` | 13 | TODO |
 
