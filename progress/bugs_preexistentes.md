@@ -101,3 +101,7 @@ Están ordenados por prioridad.
 | 13 | 88-executive-slide-responsive | Corregido; review PASSED |
 
 El bug 6 se acotó contra los permisos reales: Settings permite lectura a los tres roles, Coaching permite el flujo propio y los hooks Import/Export son mutaciones sin consulta automática. Se corrigieron Users y Reportes, conservando esas operaciones autorizadas. La review de 86 también detectó y corrigió la reactivación y sincronización de cuentas mediante la asociación real `users.seller_id`, con compatibilidad legacy y protección de cuentas ajenas/borradas.
+
+## Seguimiento del reporte de actividad — 2026-10-11
+
+El usuario detectó un caso manual adicional en Actividades: elegir una tarea mantenía el cliente anterior y el servidor respondía «La actividad debe conservar el cliente de la tarea». Corregido en `89-activity-task-client-sync`: tarea/cliente y nombre sincronizados, limpieza de contacto/oportunidad, desvinculación visible al cambiar cliente y contexto fijo desde Agenda/Mi Día. La validación backend permanece. Review PASSED 5/5; baseline 16/16 y QA after 158/158, con gates frontend PASS. Evidencia en `progress/qa_89-activity-task-client-sync.md`. Destino dev; producción pendiente del paso de despliegue.

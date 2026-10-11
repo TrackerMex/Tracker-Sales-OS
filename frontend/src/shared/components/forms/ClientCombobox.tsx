@@ -19,6 +19,7 @@ export interface ClientComboboxProps {
   onSelect: (client: Client | null) => void
   onResolve?: (client: Client) => void
   initialLabel?: string | null
+  valueLabel?: string | null
   placeholder?: string
   disabled?: boolean
   error?: boolean
@@ -32,6 +33,7 @@ export function ClientCombobox({
   onSelect,
   onResolve,
   initialLabel,
+  valueLabel,
   placeholder = "Buscar cliente...",
   disabled,
   error,
@@ -50,6 +52,7 @@ export function ClientCombobox({
     setPrevValue(value)
     if (!value) setSelectedLabel(null)
   }
+  const label = valueLabel !== undefined ? valueLabel : selectedLabel
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search), 300)
@@ -96,8 +99,8 @@ export function ClientCombobox({
           disabled={disabled}
           className="flex h-8 w-full min-w-0 items-center justify-between gap-1.5 rounded-md border border-input bg-transparent px-2.5 py-1 text-left text-xs transition-colors outline-none focus-visible:border-primary disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
         >
-          <span className={cn("truncate", !selectedLabel && "text-muted-foreground")}>
-            {selectedLabel ?? placeholder}
+          <span className={cn("truncate", !label && "text-muted-foreground")}>
+            {label ?? placeholder}
           </span>
           <UnfoldMoreIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground" />
         </button>

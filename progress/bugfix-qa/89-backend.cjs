@@ -1,0 +1,9 @@
+const fs=require('fs'),crypto=require('crypto');const{request,fixture,dbOpen,snapshot,tmp,fixtures}=require('./89-lib.cjs');const phase=process.argv[2]||'after';
+(async()=>{const f=fixture(),db=await dbOpen(),out=`${tmp}/89-backend-${phase}`;fs.mkdirSync(out,{recursive:true});const tests=[];let failures=0;const check=(name,pass,actual)=>{tests.push({name,pass,actual});console.log(JSON.stringify({name,pass,actual}));if(!pass)failures++;};try{
+ for(const role of ['seller','admin','director']){
+  const base={sellerId:f.owner.id,clientId:f.clients.A.id,taskId:f.tasks.A.id,type:'Chat',result:'Interesado',summary:`${f.prefix} backend ${role} invalid prewrites`,executedAt:new Date().toISOString(),stage:'Contactado'};
+  const cases=[['mismatch client',{clientId:f.clients.B.id}],['foreign task owner',{taskId:f.tasks.foreign.id}],['deleted task',{taskId:f.tasks.deleted.id}],['missing task',{taskId:crypto.randomUUID()}],['foreign client',{taskId:f.tasks.none.id,clientId:f.clients.foreign.id}],['missing client',{taskId:f.tasks.none.id,clientId:crypto.randomUUID()}]];
+  if(role!=='seller')cases.push(['inactive owner',{sellerId:fixtures.sellers.inactive.id}],['invalid owner',{sellerId:crypto.randomUUID()}]);
+  for(const[name,change]of cases){const before=await snapshot(db,f),payload={...base,...change},r=await request(role,'POST','/activities',payload),after=await snapshot(db,f);check(`${role} ${name}400 before activity/pipeline writes`,r.status===400&&JSON.stringify(before)===JSON.stringify(after),{status:r.status,message:r.body?.message,payload:{sellerId:payload.sellerId,clientId:payload.clientId,taskId:payload.taskId,stage:payload.stage},before,after});}
+ }
+}catch(e){check('backend runner completed',false,{error:e.message});}finally{await db.end();fs.writeFileSync(`${out}/result.json`,JSON.stringify({tests,failures},null,2));}process.exitCode=failures?1:0;})().catch(e=>{console.error(e.message);process.exitCode=1;});

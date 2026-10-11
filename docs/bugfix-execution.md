@@ -37,3 +37,11 @@ La review de 86 reprodujo otro caso del mismo flujo: Crear acceso guarda users.s
 Los bugs 1–14 están corregidos. Los lotes 82–88 están done, con siete reviews independientes PASSED y CHECKPOINTS completos. La suite backend final pasó 21 suites y 129 tests; frontend tsc, typecheck, lint y build también pasaron. El QA de API/UI cubre tres roles y escritorio/móvil en claro/oscuro. La lámina pasó 128/128 comprobaciones y 33/33 de impresión. Las fallas iniciales y los límites de los runners se conservan en `progress/qa_82-88-bugfixes.md`.
 
 Entrega mediante commits enfocados en dev; main y despliegue de producción quedan fuera de este ciclo. Los archivos previos no versionados de progress/ se conservan.
+
+## Seguimiento: actividad vinculada a tarea — feature 89
+
+El usuario reportó «La actividad debe conservar el cliente de la tarea» y confirmó que ocurre desde Actividades al elegir una tarea. La base publicada es dev `47595dc`. Este caso manual no quedó cubierto en el ciclo anterior: el selector modifica la tarea sin actualizar el cliente ni limpiar sus vínculos derivados.
+
+Se aplica el mismo protocolo: reproducción previa en cuatro perfiles → implementación delegada → review independiente → QA real → commit y publicación en dev. Se conservan las validaciones backend y los flujos de Agenda/Mi Día; elegir/cambiar tarea debe sincronizar cliente y nombre, y cambiar cliente manualmente debe quitar la vinculación incompatible. CHECKPOINT en `CHECKPOINTS.md`; evidencia en `progress/qa_89-activity-task-client-sync.md`. Main y producción siguen fuera de este paso.
+
+La feature 89 quedó done, con review PASSED 5/5 y gates frontend PASS. QA: baseline 16/16 y after 158/158 (96 matriz, 22 negativos API, 10 respuesta tardía, 22 Agenda/Mi Día y 8 EditTaskForm), con 33 guardados 201 reales. Sólo ActivityForm y ClientCombobox cambian; 389 fuentes protegidas permanecen intactas. Los cortes de fixture/selector del runner se conservan y quedan fuera de los positivos. Informes finales en `progress/impl_89-activity-task-client-sync.md`, `progress/review_89-activity-task-client-sync.md` y `progress/qa_89-activity-task-client-sync.md`. Destino dev; main y producción siguen separados.

@@ -863,3 +863,11 @@ Batch 2:
 - 88: lámina y popup responsive y con contraste AA, Montserrat local y tablas accesibles por teclado. Branding navy/verde, cálculos, datos y permisos conservados. Matriz 128/128 e impresión 33/33 PASS; ocho capturas antes/después y baseline intacto.
 - Siete reviews independientes PASSED: 82 (5/5), 83 (5/5), 84 (6/6), 85 (7/7), 86 (7/7), 87 (6/6), 88 (5/5). Backend final: 21 suites/129 tests PASS; frontend tsc/typecheck/lint/build PASS. Evidencia y comandos en progress/qa_82-88-bugfixes.md, con fallos iniciales y límites del harness documentados.
 - Rama de trabajo fix/bugs-pendientes desde origin/dev 1e77c4e; commits enfocados por lote, destino dev. Main/producción pendientes del paso de despliegue. QA exclusivo en DB5434/API3005/UI3001; archivos previos no versionados de progress/ conservados.
+
+## 2026-10-11 — Feature 89: sincronizar tarea y cliente desde Actividades
+
+- El usuario reportó «La actividad debe conservar el cliente de la tarea» y confirmó el flujo manual desde Actividades. La base dev 47595dc conservaba el cliente/contacto/oportunidad anterior al elegir una tarea; este caso no quedó cubierto en el ciclo 82–88.
+- ActivityForm aplica el cliente de la tarea, resuelve nombre/contactos por ID y limpia vínculos incompatibles. ClientCombobox admite una etiqueta controlada opcional, preservando los demás callers. Cambiar cliente manualmente desvincula la tarea incompatible con aviso visible; quitar sólo la tarea conserva el cliente. Las tareas completadas desde Agenda/Mi Día mantienen dueño y cliente, incluso fuera del listado pendiente.
+- Implementación delegada, review independiente PASSED 5/5 y frontend tsc/typecheck/lint/build PASS. Baseline 16/16; QA after 158/158, con 33 guardados reales y 22 rechazos sin escrituras. Respuesta tardía, tarea sin cliente, actividad sin tarea y EditTaskForm verificados. Guard backend intacto y 389 archivos protegidos sin cambios.
+- Evidencia en progress/impl_89-activity-task-client-sync.md, progress/review_89-activity-task-client-sync.md y progress/qa_89-activity-task-client-sync.md. Los cortes iniciales de fixture/selector se conservan sin atribuirlos a producto. QA sólo en UI 3001/API 3005/DB 5434; no se repite la suite 82–88 ni se llama IA.
+- Destino dev, sin main ni despliegue de producción. Se conservan los archivos previos no versionados de progress/.

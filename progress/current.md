@@ -1,25 +1,11 @@
-# Último ciclo completado
+# Sesión cerrada — corrección de registro de actividades
 
-**Objetivo completado**: corregir bugs 1–14 y aplicar el ciclo registrado en docs/bugfix-execution.md.
-**Rama**: fix/bugs-pendientes
-**Feature en progreso**: ninguna — lotes 82–88 completados
-**Iniciada y finalizada**: 2026-10-11
-**Destino de entrega**: dev; producción pendiente de despliegue.
+**Fecha**: 2026-10-11.
+**Rama**: fix/bugs-pendientes, base dev 47595dc; destino dev.
+**Feature completada**: 89-activity-task-client-sync.
 
-Lotes secuenciales 82–88; implementación delegada y review independiente.
+El usuario confirmó el error «La actividad debe conservar el cliente de la tarea» desde Actividades al elegir una tarea. El formulario conservaba el cliente anterior. Ahora elegir/cambiar tarea sincroniza su cliente y nombre, limpia contacto/oportunidad incompatibles y resuelve contactos por ID exacto. Cambiar manualmente a otro cliente desvincula la tarea incompatible con un aviso visible; quitar sólo la tarea conserva el cliente. Agenda/Mi Día mantienen dueño y cliente de la tarea completada. La validación backend permanece intacta.
 
-82 completada y revisión independiente PASSED; typecheck negativo/limpieza y gates verificados. Backend baseline 15 suites/78 tests PASS; lint preexistente corregido por formato.
+Ciclo completo: reproducción previa 16/16 → implementación delegada → review independiente PASSED 5/5 → QA final 158/158. Se verificaron 33 guardados reales, respuestas tardías, tareas sin cliente, actividad sin tarea, EditTaskForm y 22 rechazos sin escrituras. Frontend tsc/typecheck/lint/build y diff-check PASS. Sólo dos archivos de producto cambiaron; 389 fuentes protegidas permanecen intactas. Evidencia en progress/impl_89-activity-task-client-sync.md, progress/review_89-activity-task-client-sync.md y progress/qa_89-activity-task-client-sync.md.
 
-83 completada: review independiente PASSED (5/5), gates frontend PASS y QA real de teclado/persistencia/calendario. Evidencia acumulada y límites de runners documentados en impl/review/qa.
-
-84 completada: review independiente PASSED (6/6), 17 suites/104 tests backend y siete gates PASS; 63 comprobaciones API/UI con Admin, Director y Seller. Evidencia final en impl/review/qa.
-
-85 completada: review independiente PASSED (7/7), 18 suites/113 tests backend y siete gates PASS; 42 comprobaciones API/UI cubren ID/owner/soft-delete, arrastres reales, invalidación, errores propios y respaldo del cliente al completar.
-
-86 completada: review independiente PASSED (7/7), 21 suites/129 tests backend y siete gates PASS; QA final 81/81 cubre roles/caché, feedback lento/fallido y baja/reactivación de cuentas normales y legacy, sin cambiar cuentas ajenas o borradas. Se conserva la evidencia del caso detectado antes de corregirlo.
-
-87 completada: review independiente PASSED (6/6), gates frontend PASS y QA funcional completa. 460 comprobaciones válidas acumuladas (sin contar escenarios únicos); dos fallos de foco detectados durante QA corregidos y repetidos. Calendar/nav, roles y Equipo preservados; Ventas acciones visibles a390px. Evidencia final en impl/review/qa.
-
-88 completada: review independiente PASSED (5/5), gates frontend PASS y QA128/128 + impresión33/33. Ocho capturas1440/390 claro/oscuro de ruta/popup, sin recorte, contraste AA y fuente local; datos/scoring/permisos preservados. Publicación autorizada en dev; main/producción siguen separados.
-
-Los siete lotes están done en feature_list.json y tienen todos sus CHECKPOINTS verificados. Backlog original, historial, implementación, reviews y QA reflejan el cierre. La rama conserva los archivos previos no versionados de progress/.
+Los lotes 82–88 siguen completados y verificados; su evidencia permanece en progress/qa_82-88-bugfixes.md. QA exclusivo en UI 3001/API 3005/DB 5434. Main y despliegue de producción quedan pendientes de su paso separado. Los archivos previos no versionados de progress/ se conservan.

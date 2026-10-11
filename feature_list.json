@@ -920,5 +920,18 @@
       "reports"
     ],
     "notes": "Solicitada 2026-10-11. Rama fix/bugs-pendientes desde origin/dev 1e77c4e. Bugs originales: 13. Ciclo: Implementer, Reviewer independiente, regresión y QA local antes de publicar en dev. Criterios en CHECKPOINTS.md; coordinación en docs/bugfix-execution.md."
+  },
+  {
+    "id": "89-activity-task-client-sync",
+    "name": "Sincronizar tarea y cliente al registrar una actividad",
+    "description": "Evitar el error de cliente al elegir una tarea desde Actividades: mantener contexto de cliente/tarea y mostrar el cliente correcto.",
+    "status": "done",
+    "priority": 89,
+    "backend_modules": [],
+    "frontend_modules": [
+      "activities",
+      "shared"
+    ],
+    "notes": "Reportado 2026-10-11 después del ciclo 82–88; usuario confirma Actividades eligiendo una tarea. Base dev 47595dc. Implementación delegada y review independiente PASSED 5/5. Baseline 16/16 y QA final 158/158; frontend gates PASS. Evidencia en progress/impl_89-activity-task-client-sync.md, progress/review_89-activity-task-client-sync.md y progress/qa_89-activity-task-client-sync.md. Destino dev; sin main ni producción."
   }
 ]

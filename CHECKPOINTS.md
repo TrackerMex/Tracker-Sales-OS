@@ -945,3 +945,13 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] Textos cumplen contraste AA (4.5:1 normal y 3:1 grande) sobre fondos reales; información no depende solo del color.
 - [x] Tablas, gráficas, KPIs y análisis mantienen valores y labels; sin cambios backend/scoring.
 - [x] Capturas antes/después 1440/390 y claro/oscuro de ruta y popup; frontend gates PASS.
+
+---
+
+## 89-activity-task-client-sync
+
+- [x] QA reproduce en la base el error al elegir tarea con un cliente diferente; conserva evidencia antes/después y payloads sin secretos.
+- [x] Elegir o cambiar una tarea con cliente sincroniza el ID y el nombre visible del cliente y limpia contacto/oportunidad incompatibles; la actividad guarda con respuesta 201 y tarea, cliente y vendedor correctos.
+- [x] Cambiar o quitar la vinculación no deja combinaciones inválidas: tarea sin cliente y actividad sin tarea siguen funcionando; desde Agenda/Mi Día se conserva el contexto de la tarea completada.
+- [x] Las validaciones backend de dueño/cliente/tarea borrada permanecen; el payload inválido sigue rechazado sin guardar actividad ni modificar pipeline.
+- [x] QA real Seller y managers, escritorio/móvil y claro/oscuro; typecheck/lint/build y review independiente PASS. Sin dependencias, core ni cambios de permisos/scoring.

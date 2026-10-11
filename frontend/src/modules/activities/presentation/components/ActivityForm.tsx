@@ -12,6 +12,7 @@ import type {
   CreateActivityInput,
 } from "../../domain/activities.types"
 import type { Client } from "@/modules/clients/domain/clients.types"
+import { useClient } from "@/modules/clients/application/hooks/useClient"
 import { useAppStore } from "@/shared/store/app.store"
 import { useCoachingSuggestion } from "@/modules/coaching/application/hooks/useCoachingSuggestion"
 import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
@@ -152,6 +153,7 @@ export function ActivityForm({
   const [executedAt, setExecutedAt] = useState(localNow)
   const [programmedAt, setProgrammedAt] = useState(localNow)
   const [internalTaskId, setInternalTaskId] = useState(taskId ?? "")
+  const [taskClearedByClient, setTaskClearedByClient] = useState(false)
   const [selectedOpportunityId, setSelectedOpportunityId] = useState("")
   const [newOpportunityName, setNewOpportunityName] = useState("")
 
@@ -165,6 +167,17 @@ export function ActivityForm({
   const pendingTasks = (todayTasks ?? []).filter(
     (t) => t.status === "Pendiente"
   )
+  const linkedTask = pendingTasks.find((task) => task.id === internalTaskId)
+  const { data: clientDetail } = useClient(clientId || null)
+  const resolvedClient = selectedClient?.id === clientId ? selectedClient : clientDetail
+  const currentClient = resolvedClient?.id === clientId && resolvedClient.sellerId === sellerId
+    ? resolvedClient
+    : null
+  const clientLabel = clientId
+    ? currentClient?.name
+      ?? (linkedTask?.clientId === clientId ? linkedTask.clientName : null)
+      ?? (clientId === initialClientId ? initialClientLabel : null)
+    : null
   const { data: clientDeals } = useClientDeals(
     clientId || null,
     sellerId || null
@@ -180,7 +193,7 @@ export function ActivityForm({
           .find((d) => d.clientId === clientId) ?? null)
       : null
 
-  const contacts = selectedClient?.contacts ?? []
+  const contacts = currentClient?.contacts ?? []
   const needsNextStep = REQUIRES_NEXT_STEP.includes(type)
   const isNonCommercial = NON_COMMERCIAL_TYPES.includes(type)
 
@@ -230,7 +243,7 @@ export function ActivityForm({
         sellerId,
         type,
         objective: summary || undefined,
-        client: selectedClient?.name,
+        client: currentClient?.name,
         dealStage: stage || undefined,
         clientId: clientId || undefined,
       })
@@ -355,6 +368,7 @@ export function ActivityForm({
                     setSelectedClient(null)
                     setContactId("")
                     setInternalTaskId("")
+                    setTaskClearedByClient(false)
                     setSelectedOpportunityId("")
                     setNewOpportunityName("")
                     setStage("")
@@ -378,21 +392,27 @@ export function ActivityForm({
                 <ClientCombobox
                   id="clientId"
                   sellerId={sellerId}
-                  disabled={!sellerId || isLoading}
+                  disabled={!sellerId || isLoading || aiLoading || (!!taskId && !!initialClientId)}
                   value={clientId}
                   onSelect={(client) => {
-                    const changed = (client?.id ?? "") !== clientId
-                    setClientId(client?.id ?? "")
+                    const nextClientId = client?.id ?? ""
+                    const changed = nextClientId !== clientId
+                    setClientId(nextClientId)
                     setSelectedClient(client)
                     if (changed) {
                       setContactId("")
                       setSelectedOpportunityId("")
                       setNewOpportunityName("")
+                      setStage("")
+                      setAiTips([])
+                      if (!taskId && linkedTask?.clientId && linkedTask.clientId !== nextClientId) {
+                        setInternalTaskId("")
+                        setTaskClearedByClient(true)
+                      }
                     }
                     clearField("clientId")
                   }}
-                  onResolve={(client) => setSelectedClient(client)}
-                  initialLabel={initialClientLabel}
+                  valueLabel={clientLabel ?? null}
                   placeholder="Sin cliente"
                   error={!!(fieldErrors.clientId)}
                   aria-describedby={
@@ -404,6 +424,11 @@ export function ActivityForm({
                 name="clientId"
                 message={fieldErrors.clientId}
               />
+              {taskId && initialClientId && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Se conserva el cliente de la tarea vinculada.
+                </p>
+              )}
             </div>
 
             <div>
@@ -532,10 +557,23 @@ export function ActivityForm({
               ) : (
                 <Select
                   value={internalTaskId}
+                  disabled={!!taskId || !sellerId || isLoading || aiLoading}
                   onValueChange={(v) => {
                     const next = v === "__none__" ? "" : v
                     const task = pendingTasks.find((t) => t.id === next)
                     setInternalTaskId(next)
+                    setTaskClearedByClient(false)
+                    clearField("taskId")
+                    if (task) {
+                      setClientId(task.clientId ?? "")
+                      setSelectedClient(null)
+                      setContactId("")
+                      setSelectedOpportunityId("")
+                      setNewOpportunityName("")
+                      setStage("")
+                      setAiTips([])
+                      clearField("clientId")
+                    }
                     if (task?.scheduledAt) {
                       setProgrammedAt(task.scheduledAt.slice(0, 16))
                     }
@@ -555,6 +593,11 @@ export function ActivityForm({
                     ))}
                   </SelectContent>
                 </Select>
+              )}
+              {taskClearedByClient && (
+                <p role="status" className="mt-2 text-xs text-muted-foreground">
+                  Se quitó la tarea vinculada al cambiar de cliente.
+                </p>
               )}
             </div>
           </div>
