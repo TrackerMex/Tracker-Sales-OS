@@ -869,3 +869,77 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 - [x] Capturas antes/después en `progress/redesign/current/` y `progress/redesign/after/`
 - [x] Resúmenes `progress/impl_81-*.md` y review independiente por fase
 - [x] Sin push a `main` ni despliegue; push solo a la rama `dev` para que el usuario valide. El paso a producción lo decide el usuario
+
+---
+
+## 82-frontend-typecheck
+
+- [ ] pnpm run typecheck comprueba frontend/src y vite.config.ts, sin files: [] vacío efectivo.
+- [ ] Una prueba negativa de un tipo inválido en un archivo temporal del frontend falla; se elimina el archivo al terminar.
+- [ ] pnpm run typecheck, pnpm run lint y pnpm run build terminan con exit 0.
+- [ ] No se añaden dependencias ni se modifica core; resumen y review desde disco.
+
+---
+
+## 83-timepicker-calendar
+
+- [ ] Teclear 01 a 09 conserva la hora; 08:15 AM y PM, 12 AM/PM y minutos 00/59 se convierten correctamente.
+- [ ] Flechas, Tab, reinicio al cambiar el foco, edición de tareas y actividades conservan el comportamiento esperado.
+- [ ] Clic y Enter sobre un chip abren solo Editar; clic en celda vacía abre solo Crear con fecha correcta.
+- [ ] Arrastrar tareas y navegación mes/semana/día siguen funcionando.
+- [ ] Regresión reproducible sin nuevas dependencias; typecheck, lint y build frontend PASS.
+
+---
+
+## 84-admin-seller-assignment
+
+- [ ] Admin/Director eligen un vendedor activo para crear tarea o actividad; falta selección muestra error propio sin petición inválida.
+- [ ] Creación y consultas auxiliares (ocupación, pipeline, sugerencias) usan el mismo vendedor seleccionado; no se usa el id del usuario como fallback.
+- [ ] Seller usa su identidad JWT; el backend ignora identidad seller enviada por Seller o rechaza ausencia de identidad.
+- [ ] Vendedor inexistente/inactivo produce 400 claro antes de escribir; validación usa repositorios existentes y DI.
+- [ ] Actividad desde una tarea mantiene la asignación de su dueño y el contexto de cliente; no atribuye puntos al usuario admin.
+- [ ] Tests backend relevantes cubren validación/identidad y pasan; frontend typecheck/lint/build y backend tsc/lint de comprobación PASS.
+
+---
+
+## 85-client-pipeline-integrity
+
+- [ ] Soltar deal en su propia etapa hace cero mutaciones y no muestra toast de error ni confirmación de pérdida.
+- [ ] Completar tarea conserva clientId, clientName y taskId visibles en actividad; el nombre usa respaldo de tarea cargada si respuesta no lo trae.
+- [ ] GET /api/clients/:id resuelve cliente por id con JWT y autorización por propietario; inexistente/borrado da 404 y ajeno 403.
+- [ ] Expediente de cliente fuera de los primeros 100 funciona; queries no retornan undefined y 404 tiene estado visible.
+- [ ] Pipeline personal/equipo excluye clientes borrados conservando datos históricos; borrar cliente invalida las queries necesarias.
+- [ ] Actividad vacía muestra errores propios, preserva inputs y no envía; cliente, resumen y siguiente paso se validan.
+- [ ] Tests de nuevo use-case y soft-delete/accesso pasan; gates de ambos proyectos PASS.
+
+---
+
+## 86-role-queries-team-feedback
+
+- [ ] useUsers solo consulta como Admin; reportes monthly/win-loss solo consultan como Admin/Director.
+- [ ] Seller entrando por URL a Reportes/Lámina ve acceso no disponible sin consultas prohibidas; Director conserva gestión de sellers permitida.
+- [ ] Settings, Coaching propio y consultas autorizadas conservan comportamiento; no se bloquean hooks por suposición del backlog.
+- [ ] Confirmación de baja/bloqueo de Equipo permanece abierta al procesar, impide doble envío y muestra error con posibilidad de reintentar.
+- [ ] Éxito muestra feedback y cierra; cancelación/foco respetan shadcn/Radix.
+- [ ] Regresión con respuesta lenta/fallida y tres roles; frontend gates PASS.
+
+---
+
+## 87-dialog-mobile-copy
+
+- [ ] Diálogos afectados devuelven foco al control de apertura en Escape/Cancelar/éxito; al eliminar el control, usan destino estable.
+- [ ] Se verifica tareas crear/editar/eliminar, clientes, expediente pipeline, ventas e historial de actividades; diálogos ya correctos no pierden foco.
+- [ ] A 390px en Ventas admin las acciones son alcanzables y el scroll horizontal queda dentro de tabla; se mide overflow antes/después.
+- [ ] Los selectores de rol usan ROLE_LABELS sin alterar valores de dominio; Configuración usa oportunidades en lugar de deals.
+- [ ] No overlays custom ni alert/confirm; sin abstraer globalmente el foco sin necesidad.
+- [ ] QA claro/oscuro, teclado y escritorio/móvil; typecheck/lint/build PASS.
+
+---
+
+## 88-executive-slide-responsive
+
+- [ ] Lámina y popup de Reportes legibles a 390px sin recorte de contenido esencial ni overflow del documento.
+- [ ] Navy/verde y Montserrat se conservan; escritorio mantiene composición funcional y datos.
+- [ ] Textos cumplen contraste AA (4.5:1 normal y 3:1 grande) sobre fondos reales; información no depende solo del color.
+- [ ] Tablas, gráficas, KPIs y análisis mantienen valores y labels; sin cambios backend/scoring.
+- [ ] Capturas antes/después 1440/390 y claro/oscuro de ruta y popup; frontend gates PASS.

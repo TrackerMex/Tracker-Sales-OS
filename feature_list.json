@@ -815,5 +815,109 @@
     "backend_modules": [],
     "frontend_modules": ["shared", "auth", "dashboard", "mi-dia", "clients", "pipeline", "tasks", "activities", "sales", "reports", "coaching", "equipo", "settings", "import-export"],
     "notes": "Solicitada 2026-10-09. La feature 77 queda en pausa en su rama 77-jev-quality-backtest (sin mergear; 80 depende de ella). Rama de trabajo 81-visual-redesign desde origin/main 55b22e1. Contexto: progress/explore_crm_gap.md, progress/explore_redesign_template.md, progress/explore_redesign_current.md, progress/explore_redesign_runtime.md. Todo el trabajo es local: no se toca el Docker de producción ni se hace push a main (auto-deploy); el usuario decide el paso a producción. Cerrada 2026-10-10: planes 006-012 con review PASSED, QA de escrituras reales 22/24 (los 2 fallos son preexistentes, progress/qa_81-write-smoke.md). Publicada en la rama dev para validación del usuario; sin merge a main."
+  },
+  {
+    "id": "82-frontend-typecheck",
+    "name": "Comprobación real de tipos del frontend",
+    "description": "Bug 14: el script typecheck debe comprobar los proyectos app y node.",
+    "status": "pending",
+    "priority": 82,
+    "backend_modules": [],
+    "frontend_modules": [
+      "shared"
+    ],
+    "notes": "Solicitada 2026-10-11. Rama fix/bugs-pendientes desde origin/dev 1e77c4e. Bugs originales: 14. Ciclo: Implementer, Reviewer independiente, regresión y QA local antes de publicar en dev. Criterios en CHECKPOINTS.md; coordinación en docs/bugfix-execution.md."
+  },
+  {
+    "id": "83-timepicker-calendar",
+    "name": "Horas correctas y diálogo único en calendario",
+    "description": "Bugs 1 y 3: entrada de horas con ceros y propagación de clic del calendario.",
+    "status": "pending",
+    "priority": 83,
+    "backend_modules": [],
+    "frontend_modules": [
+      "tasks",
+      "activities"
+    ],
+    "notes": "Solicitada 2026-10-11. Rama fix/bugs-pendientes desde origin/dev 1e77c4e. Bugs originales: [1, 3]. Ciclo: Implementer, Reviewer independiente, regresión y QA local antes de publicar en dev. Criterios en CHECKPOINTS.md; coordinación en docs/bugfix-execution.md."
+  },
+  {
+    "id": "84-admin-seller-assignment",
+    "name": "Asignación explícita de vendedor para Admin y Director",
+    "description": "Bug 2: creación de tareas/actividades con vendedor elegido y validación backend.",
+    "status": "pending",
+    "priority": 84,
+    "backend_modules": [
+      "tasks",
+      "activities",
+      "sellers"
+    ],
+    "frontend_modules": [
+      "tasks",
+      "activities",
+      "equipo"
+    ],
+    "notes": "Solicitada 2026-10-11. Rama fix/bugs-pendientes desde origin/dev 1e77c4e. Bugs originales: 2. Ciclo: Implementer, Reviewer independiente, regresión y QA local antes de publicar en dev. Criterios en CHECKPOINTS.md; coordinación en docs/bugfix-execution.md."
+  },
+  {
+    "id": "85-client-pipeline-integrity",
+    "name": "Integridad de cliente, pipeline y actividad",
+    "description": "Bugs 4, 5, 8 y 10: misma etapa, contexto al completar, consulta cliente por id, soft-delete y errores propios.",
+    "status": "pending",
+    "priority": 85,
+    "backend_modules": [
+      "clients",
+      "pipeline"
+    ],
+    "frontend_modules": [
+      "clients",
+      "pipeline",
+      "tasks",
+      "activities"
+    ],
+    "notes": "Solicitada 2026-10-11. Rama fix/bugs-pendientes desde origin/dev 1e77c4e. Bugs originales: [4, 5, 8, 10]. Ciclo: Implementer, Reviewer independiente, regresión y QA local antes de publicar en dev. Criterios en CHECKPOINTS.md; coordinación en docs/bugfix-execution.md."
+  },
+  {
+    "id": "86-role-queries-team-feedback",
+    "name": "Consultas por permiso y confirmaciones de Equipo",
+    "description": "Bugs 6 y 7: impedir consultas realmente prohibidas y mostrar pendiente/errores. ",
+    "status": "pending",
+    "priority": 86,
+    "backend_modules": [],
+    "frontend_modules": [
+      "reports",
+      "equipo"
+    ],
+    "notes": "Solicitada 2026-10-11. Rama fix/bugs-pendientes desde origin/dev 1e77c4e. Bugs originales: [6, 7]. Ciclo: Implementer, Reviewer independiente, regresión y QA local antes de publicar en dev. Criterios en CHECKPOINTS.md; coordinación en docs/bugfix-execution.md."
+  },
+  {
+    "id": "87-dialog-mobile-copy",
+    "name": "Foco de diálogos, Ventas móvil y textos",
+    "description": "Bugs 9, 11 y 12: restauración de foco, acciones accesibles a 390px y terminología consistente.",
+    "status": "pending",
+    "priority": 87,
+    "backend_modules": [],
+    "frontend_modules": [
+      "tasks",
+      "activities",
+      "clients",
+      "pipeline",
+      "sales",
+      "settings",
+      "equipo"
+    ],
+    "notes": "Solicitada 2026-10-11. Rama fix/bugs-pendientes desde origin/dev 1e77c4e. Bugs originales: [9, 11, 12]. Ciclo: Implementer, Reviewer independiente, regresión y QA local antes de publicar en dev. Criterios en CHECKPOINTS.md; coordinación en docs/bugfix-execution.md."
+  },
+  {
+    "id": "88-executive-slide-responsive",
+    "name": "Lámina ejecutiva móvil y contraste",
+    "description": "Bug 13: adaptar lámina a móvil y corregir contraste manteniendo branding navy/verde y Montserrat.",
+    "status": "pending",
+    "priority": 88,
+    "backend_modules": [],
+    "frontend_modules": [
+      "reports"
+    ],
+    "notes": "Solicitada 2026-10-11. Rama fix/bugs-pendientes desde origin/dev 1e77c4e. Bugs originales: 13. Ciclo: Implementer, Reviewer independiente, regresión y QA local antes de publicar en dev. Criterios en CHECKPOINTS.md; coordinación en docs/bugfix-execution.md."
   }
 ]
