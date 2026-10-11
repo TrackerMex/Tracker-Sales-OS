@@ -874,10 +874,11 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ## 82-frontend-typecheck
 
-- [ ] pnpm run typecheck comprueba frontend/src y vite.config.ts, sin files: [] vacío efectivo.
-- [ ] Una prueba negativa de un tipo inválido en un archivo temporal del frontend falla; se elimina el archivo al terminar.
-- [ ] pnpm run typecheck, pnpm run lint y pnpm run build terminan con exit 0.
-- [ ] No se añaden dependencias ni se modifica core; resumen y review desde disco.
+- [x] pnpm run typecheck comprueba frontend/src y vite.config.ts, sin files: [] vacío efectivo.
+- [x] Una prueba negativa de un tipo inválido en un archivo temporal del frontend falla; se elimina el archivo al terminar.
+- [x] pnpm run typecheck, pnpm run lint y pnpm run build terminan con exit 0.
+- [x] No se añaden dependencias ni se modifica core; resumen y review desde disco.
+- [x] El fallo de formato preexistente en backend/src/main.ts queda corregido sin cambio semántico y eslint backend sin --fix termina con exit 0.
 
 ---
 

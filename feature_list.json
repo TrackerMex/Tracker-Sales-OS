@@ -820,7 +820,7 @@
     "id": "82-frontend-typecheck",
     "name": "Comprobación real de tipos del frontend",
     "description": "Bug 14: el script typecheck debe comprobar los proyectos app y node.",
-    "status": "pending",
+    "status": "done",
     "priority": 82,
     "backend_modules": [],
     "frontend_modules": [
@@ -832,7 +832,7 @@
     "id": "83-timepicker-calendar",
     "name": "Horas correctas y diálogo único en calendario",
     "description": "Bugs 1 y 3: entrada de horas con ceros y propagación de clic del calendario.",
-    "status": "pending",
+    "status": "in_progress",
     "priority": 83,
     "backend_modules": [],
     "frontend_modules": [

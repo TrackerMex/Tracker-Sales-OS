@@ -5,8 +5,8 @@ El usuario autorizó corregir los bugs y aplicar el ciclo de implementación, re
 
 | Lote | Feature | Bugs | Estado |
 |---|---|---|---|
-| 0 | `82-frontend-typecheck` | 14 | TODO |
-| 1 | `83-timepicker-calendar` | [1, 3] | TODO |
+| 0 | `82-frontend-typecheck` | 14 | DONE — review PASSED |
+| 1 | `83-timepicker-calendar` | [1, 3] | IN PROGRESS |
 | 2 | `84-admin-seller-assignment` | 2 | TODO |
 | 3 | `85-client-pipeline-integrity` | [4, 5, 8, 10] | TODO |
 | 4 | `86-role-queries-team-feedback` | [6, 7] | TODO |
