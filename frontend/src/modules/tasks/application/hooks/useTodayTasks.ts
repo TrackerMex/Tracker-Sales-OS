@@ -10,12 +10,14 @@ function localDateISO(): string {
 
 export const useTodayTasks = (sellerIdOverride?: string | null, date?: string) => {
   const currentUser = useAppStore((s) => s.currentUser)
-  const sellerId = sellerIdOverride ?? currentUser?.sellerId ?? currentUser?.id ?? ''
+  const sellerId = sellerIdOverride !== undefined
+    ? sellerIdOverride
+    : currentUser?.sellerId
   const localDate = date ?? localDateISO()
 
   return useQuery({
     queryKey: ['tasks', 'today', sellerId, localDate],
-    queryFn: () => tasksApi.getTodayTasks(sellerId, localDate),
+    queryFn: () => tasksApi.getTodayTasks(sellerId!, localDate),
     enabled: !!sellerId,
   })
 }

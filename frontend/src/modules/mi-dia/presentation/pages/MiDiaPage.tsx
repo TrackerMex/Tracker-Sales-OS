@@ -336,6 +336,7 @@ export function MiDiaPage() {
               : {}),
             ...(task.title ? { taskTitle: task.title } : {}),
             taskId: task.id,
+            sellerId: completedTask.sellerId,
           },
         })
       },

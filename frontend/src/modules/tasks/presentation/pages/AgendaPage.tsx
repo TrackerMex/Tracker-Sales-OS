@@ -85,7 +85,7 @@ export function AgendaPage() {
 
   const { data: sellers = [] } = useSellers()
 
-  const { data: tasks = [], isLoading } = useTodayTasks()
+  const { data: todayTasks = [], isLoading } = useTodayTasks(isAdminOrDirector ? selectedSeller === "all" ? null : selectedSeller : undefined)
   const {
     mutate: createTask,
     isPending: isCreating,
@@ -105,8 +105,8 @@ export function AgendaPage() {
 
   const { data: monthTasksRaw = [] } = useMonthTasks(calYear, calMonth)
   const { data: teamMonthTasksRaw = [] } = useTeamMonthTasks(
-    calYear,
-    calMonth,
+    viewMode === "list" ? todayInit.getFullYear() : calYear,
+    viewMode === "list" ? todayInit.getMonth() + 1 : calMonth,
     isAdminOrDirector
   )
 
@@ -116,6 +116,10 @@ export function AgendaPage() {
     ...t,
     sellerName: sellerMap[t.sellerId] ?? undefined,
   }))
+
+  const tasks = isAdminOrDirector && selectedSeller === "all"
+    ? enrichedTeamTasks.filter((task) => new Date(task.scheduledAt).toDateString() === todayInit.toDateString())
+    : todayTasks
 
   const monthTasks = isAdminOrDirector
     ? selectedSeller === "all"
@@ -185,6 +189,7 @@ export function AgendaPage() {
               : {}),
             ...(task?.title ? { taskTitle: task.title } : {}),
             taskId: taskId,
+            sellerId: completedTask.sellerId,
           },
         })
       },
@@ -196,6 +201,10 @@ export function AgendaPage() {
     createTask(input, {
       onSuccess: () => {
         setShowCreateModal(false)
+        if (isAdminOrDirector && input.sellerId) {
+          setSelectedSeller(input.sellerId)
+          localStorage.setItem("tasks_team_seller_filter", input.sellerId)
+        }
         toast.success("Tarea creada")
       },
       onError: () => toast.error("No se pudo crear la tarea"),
@@ -237,7 +246,7 @@ export function AgendaPage() {
         description="Compromisos comerciales"
         actions={
           <>
-            {viewMode === "calendar" && isAdminOrDirector && (
+            {isAdminOrDirector && (
               <Select
                 value={selectedSeller}
                 onValueChange={(value) => {

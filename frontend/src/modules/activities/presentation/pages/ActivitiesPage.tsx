@@ -36,6 +36,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import type { CreateActivityInput } from "../../domain/activities.types"
+import { useAppStore } from "@/shared/store/app.store"
+import { UserRole } from "@/core/domain/types/common.types"
 
 function getPointsTone(pct: number): StatusTone {
   if (pct >= 100) return "success"
@@ -49,11 +51,15 @@ export function ActivitiesPage() {
   const clientName = (search as { clientName?: string }).clientName
   const taskTitle = (search as { taskTitle?: string }).taskTitle
   const taskId = (search as { taskId?: string }).taskId
+  const sellerId = (search as { sellerId?: string }).sellerId
+  const currentUser = useAppStore((s) => s.currentUser)
+  const isManager = currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Director
+  const [selectedSellerId, setSelectedSellerId] = useState(sellerId ?? "")
   const [showForm, setShowForm] = useState(() => !!(clientId || taskId))
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(
     null
   )
-  const { data, isLoading } = useDailyActivities()
+  const { data, isLoading } = useDailyActivities(undefined, isManager ? selectedSellerId || null : undefined)
   const {
     mutate,
     isPending,
@@ -142,6 +148,8 @@ export function ActivitiesPage() {
               initialClientId={clientId}
               initialClientLabel={clientName}
               taskId={taskId}
+              initialSellerId={selectedSellerId}
+              onSellerChange={setSelectedSellerId}
             />
           </div>
         )}

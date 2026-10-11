@@ -28,6 +28,14 @@ import {
   CLIENT_REPOSITORY,
   IClientRepository,
 } from '../../../clients/domain/repositories/client.repository.interface';
+import {
+  SELLER_REPOSITORY,
+  ISellerRepository,
+} from '../../../sellers/domain/repositories/seller.repository.interface';
+import {
+  TASK_REPOSITORY,
+  ITaskRepository,
+} from '../../../tasks/domain/repositories/task.repository.interface';
 
 @Injectable()
 export class CreateActivityUseCase implements IUseCase<
@@ -41,9 +49,42 @@ export class CreateActivityUseCase implements IUseCase<
     private readonly dealRepo: IDealsRepository,
     @Inject(CLIENT_REPOSITORY)
     private readonly clientRepo: IClientRepository,
+    @Inject(SELLER_REPOSITORY)
+    private readonly sellerRepo: ISellerRepository,
+    @Inject(TASK_REPOSITORY)
+    private readonly taskRepo: ITaskRepository,
   ) {}
 
   async execute(input: CreateActivityDto): Promise<ActivityDto> {
+    const seller = await this.sellerRepo.findById(input.sellerId);
+    if (!seller || !seller.active || seller.deletedAt) {
+      throw new BadRequestException('Selecciona un vendedor activo.');
+    }
+    if (input.taskId) {
+      const task = await this.taskRepo.findById(input.taskId);
+      if (!task || task.deletedAt) {
+        throw new BadRequestException('La tarea vinculada no está disponible.');
+      }
+      if (task.sellerId !== input.sellerId) {
+        throw new BadRequestException(
+          'La actividad debe conservar el vendedor de la tarea.',
+        );
+      }
+      if (task.clientId && task.clientId !== input.clientId) {
+        throw new BadRequestException(
+          'La actividad debe conservar el cliente de la tarea.',
+        );
+      }
+    }
+    let client: ClientEntity | null = null;
+    if (input.clientId) {
+      client = await this.clientRepo.findById(input.clientId);
+      if (!client || client.deletedAt || client.sellerId !== input.sellerId) {
+        throw new BadRequestException(
+          'Selecciona un cliente del vendedor asignado.',
+        );
+      }
+    }
     if (REQUIRES_NEXT_STEP.has(input.type)) {
       if (!input.nextStep || !input.nextDate || !input.nextTime) {
         throw new BadRequestException(
@@ -83,8 +124,7 @@ export class CreateActivityUseCase implements IUseCase<
       }
 
       if (!existingDeal) {
-        const client = await this.clientRepo.findById(input.clientId);
-        if (client && client.sellerId === input.sellerId) {
+        if (client) {
           clientForNewDeal = client;
           resolvedStage = input.stage ?? client.stage;
         }

@@ -91,7 +91,11 @@ export class GenerateSuggestionUseCase {
     if (dto.clientId) {
       try {
         const recent = await this.activityRepo.find({
-          where: { clientId: dto.clientId, deletedAt: IsNull() },
+          where: {
+            clientId: dto.clientId,
+            ...(dto.sellerId ? { sellerId: dto.sellerId } : {}),
+            deletedAt: IsNull(),
+          },
           order: { executedAt: 'DESC' },
           take: 3,
         });

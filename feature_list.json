@@ -845,7 +845,7 @@
     "id": "84-admin-seller-assignment",
     "name": "Asignación explícita de vendedor para Admin y Director",
     "description": "Bug 2: creación de tareas/actividades con vendedor elegido y validación backend.",
-    "status": "in_progress",
+    "status": "done",
     "priority": 84,
     "backend_modules": [
       "tasks",
@@ -863,7 +863,7 @@
     "id": "85-client-pipeline-integrity",
     "name": "Integridad de cliente, pipeline y actividad",
     "description": "Bugs 4, 5, 8 y 10: misma etapa, contexto al completar, consulta cliente por id, soft-delete y errores propios.",
-    "status": "pending",
+    "status": "in_progress",
     "priority": 85,
     "backend_modules": [
       "clients",

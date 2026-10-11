@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAppStore } from '@/shared/store/app.store'
 import { tasksApi } from '../../infrastructure/tasks.api'
 import type { CreateTaskInput } from '../../domain/tasks.types'
+import { UserRole } from '@/core/domain/types/common.types'
 
 export const useCreateTask = () => {
   const queryClient = useQueryClient()
@@ -9,8 +10,10 @@ export const useCreateTask = () => {
 
   return useMutation({
     mutationFn: (input: CreateTaskInput) => {
-      const sellerId = currentUser?.sellerId ?? currentUser?.id ?? ''
-      if (!sellerId) throw new Error('Sin sesión de vendedor activa')
+      const sellerId = currentUser?.role === UserRole.Seller
+        ? currentUser.sellerId
+        : input.sellerId
+      if (!sellerId) throw new Error('Selecciona un vendedor activo.')
       return tasksApi.createTask(sellerId, input)
     },
     onSuccess: () => {

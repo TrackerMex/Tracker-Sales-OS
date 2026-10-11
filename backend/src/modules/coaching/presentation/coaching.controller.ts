@@ -39,11 +39,17 @@ export class CoachingController {
   @Post('suggestion')
   getSuggestion(
     @Body() dto: SuggestionRequestDto,
-    @Request() req: { user: { sellerId: string | null } },
+    @Request() req: { user: { role: UserRole; sellerId: string | null } },
   ) {
+    if (req.user.role === UserRole.Seller && !req.user.sellerId) {
+      throw new ForbiddenException();
+    }
     return this.generateSuggestion.execute({
       ...dto,
-      sellerId: dto.sellerId ?? req.user.sellerId ?? undefined,
+      sellerId:
+        req.user.role === UserRole.Seller
+          ? req.user.sellerId!
+          : (dto.sellerId ?? undefined),
     });
   }
 }

@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { EntityManager, Repository } from 'typeorm';
 import { CreateActivityDto } from '../dtos/create-activity.dto';
 import { CreateActivityUseCase } from './create-activity.use-case';
@@ -20,6 +20,15 @@ import {
 import { IClientRepository } from '../../../clients/domain/repositories/client.repository.interface';
 import { DealEntity } from '../../../pipeline/domain/entities/deal.entity';
 import { IDealsRepository } from '../../../pipeline/domain/repositories/deal.repository.interface';
+import { ISellerRepository } from '../../../sellers/domain/repositories/seller.repository.interface';
+import { SellerEntity } from '../../../sellers/domain/entities/seller.entity';
+import { ITaskRepository } from '../../../tasks/domain/repositories/task.repository.interface';
+import { TaskEntity } from '../../../tasks/domain/entities/task.entity';
+import { ActivitiesController } from '../../presentation/activities.controller';
+import { UserRole } from '../../../auth/domain/entities/user.entity';
+import { GetDailyActivitiesUseCase } from './get-daily-activities.use-case';
+import { GetSellerActivitiesUseCase } from './get-seller-activities.use-case';
+import { UpdateActivityStatusUseCase } from './update-activity-status.use-case';
 
 type MockedMethods<T> = {
   [Key in keyof T]: T[Key] extends (...args: never[]) => unknown
@@ -156,11 +165,42 @@ const makeMockClientRepo = (): MockedMethods<IClientRepository> => ({
   syncContacts: jest.fn(),
 });
 
+const makeMockSellerRepo = (): MockedMethods<ISellerRepository> => ({
+  findById: jest.fn().mockImplementation((id: string) =>
+    Promise.resolve(
+      Object.assign(new SellerEntity(), {
+        id,
+        active: true,
+        deletedAt: null,
+      }),
+    ),
+  ),
+  findAll: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  softDelete: jest.fn(),
+  findAllActive: jest.fn(),
+});
+
+const makeMockTaskRepo = (): MockedMethods<ITaskRepository> => ({
+  findById: jest.fn(),
+  findAll: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  softDelete: jest.fn(),
+  findTodayBySeller: jest.fn(),
+  findMonthAllSellers: jest.fn(),
+  findOverdueBySeller: jest.fn(),
+  findConflictingTask: jest.fn(),
+});
+
 describe('CreateActivityUseCase', () => {
   let useCase: CreateActivityUseCase;
   let repo: MockedMethods<IActivityRepository>;
   let dealRepo: MockedMethods<IDealsRepository>;
   let clientRepo: MockedMethods<IClientRepository>;
+  let sellerRepo: MockedMethods<ISellerRepository>;
+  let taskRepo: MockedMethods<ITaskRepository>;
 
   beforeEach(() => {
     repo = makeMockRepo();
@@ -177,7 +217,137 @@ describe('CreateActivityUseCase', () => {
     dealRepo.findByClientIdAndSellerId.mockResolvedValue(makeDeal());
     clientRepo = makeMockClientRepo();
     clientRepo.findById.mockResolvedValue(makeClient());
-    useCase = new CreateActivityUseCase(repo, dealRepo, clientRepo);
+    sellerRepo = makeMockSellerRepo();
+    taskRepo = makeMockTaskRepo();
+    useCase = new CreateActivityUseCase(
+      repo,
+      dealRepo,
+      clientRepo,
+      sellerRepo,
+      taskRepo,
+    );
+  });
+
+  it.each(['missing', 'inactive', 'deleted'])(
+    'rejects a %s seller before pipeline queries or writes',
+    async (state) => {
+      sellerRepo.findById.mockResolvedValue(
+        state === 'missing'
+          ? null
+          : Object.assign(new SellerEntity(), {
+              active: state !== 'inactive',
+              deletedAt: state === 'deleted' ? new Date() : null,
+            }),
+      );
+      await expect(
+        useCase.execute({
+          ...baseInput,
+          type: ActivityType.Chat,
+          stage: PipelineStage.Propuesta,
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(dealRepo.findByClientIdAndSellerId).not.toHaveBeenCalled();
+      expect(dealRepo.update).not.toHaveBeenCalled();
+      expect(repo.create).not.toHaveBeenCalled();
+      expect(repo.createWithPipelineSync).not.toHaveBeenCalled();
+      expect(repo.createAndTouchDeal).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['missing', 'deleted', 'foreign-owner', 'foreign-client'])(
+    'rejects a linked task with %s context before writes',
+    async (state) => {
+      taskRepo.findById.mockResolvedValue(
+        state === 'missing'
+          ? null
+          : Object.assign(new TaskEntity(), {
+              sellerId:
+                state === 'foreign-owner' ? 'other-owner' : baseInput.sellerId,
+              clientId:
+                state === 'foreign-client'
+                  ? 'other-client'
+                  : baseInput.clientId,
+              deletedAt: state === 'deleted' ? new Date() : null,
+            }),
+      );
+      await expect(
+        useCase.execute({
+          ...baseInput,
+          type: ActivityType.Chat,
+          taskId: 'linked-task',
+          stage: PipelineStage.Propuesta,
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(dealRepo.findByClientIdAndSellerId).not.toHaveBeenCalled();
+      expect(dealRepo.update).not.toHaveBeenCalled();
+      expect(repo.create).not.toHaveBeenCalled();
+      expect(repo.createWithPipelineSync).not.toHaveBeenCalled();
+      expect(repo.createAndTouchDeal).not.toHaveBeenCalled();
+    },
+  );
+
+  it('keeps linked task owner, client and activity points', async () => {
+    taskRepo.findById.mockResolvedValue(
+      Object.assign(new TaskEntity(), {
+        sellerId: baseInput.sellerId,
+        clientId: baseInput.clientId,
+        deletedAt: null,
+      }),
+    );
+    const result = await useCase.execute({
+      ...baseInput,
+      type: ActivityType.Chat,
+      taskId: 'linked-task',
+    });
+    expect(result).toMatchObject({
+      sellerId: baseInput.sellerId,
+      clientId: baseInput.clientId,
+      taskId: 'linked-task',
+      points: 1,
+    });
+  });
+
+  it.each([UserRole.Seller, UserRole.Admin, UserRole.Director])(
+    'uses the correct owner for %s through the create controller',
+    async (role) => {
+      const controller = new ActivitiesController(
+        useCase,
+        new GetDailyActivitiesUseCase(repo),
+        new GetSellerActivitiesUseCase(repo),
+        new UpdateActivityStatusUseCase(repo),
+        repo,
+      );
+      const result = await controller.create(
+        {
+          ...baseInput,
+          sellerId: 'selected-owner',
+          clientId: undefined,
+          type: ActivityType.Prospeccion,
+        },
+        { user: { role, sellerId: 'jwt-owner' } },
+      );
+      const owner = role === UserRole.Seller ? 'jwt-owner' : 'selected-owner';
+      expect(sellerRepo.findById).toHaveBeenCalledWith(owner);
+      expect(result.sellerId).toBe(owner);
+    },
+  );
+
+  it('rejects a Seller without JWT identity before accessing repositories', () => {
+    const controller = new ActivitiesController(
+      useCase,
+      new GetDailyActivitiesUseCase(repo),
+      new GetSellerActivitiesUseCase(repo),
+      new UpdateActivityStatusUseCase(repo),
+      repo,
+    );
+    expect(() =>
+      controller.create(
+        { ...baseInput, type: ActivityType.Chat },
+        { user: { role: UserRole.Seller, sellerId: null } },
+      ),
+    ).toThrow(ForbiddenException);
+    expect(sellerRepo.findById).not.toHaveBeenCalled();
+    expect(repo.create).not.toHaveBeenCalled();
   });
 
   it('creates one deal from the persisted client stage when the first activity has no stage', async () => {
@@ -221,10 +391,12 @@ describe('CreateActivityUseCase', () => {
     dealRepo.findByClientIdAndSellerId.mockResolvedValue(null);
     clientRepo.findById.mockResolvedValue(null);
 
-    await useCase.execute({ ...baseInput, type: ActivityType.Chat });
+    await expect(
+      useCase.execute({ ...baseInput, type: ActivityType.Chat }),
+    ).rejects.toThrow(BadRequestException);
 
     expect(repo.createWithPipelineSync).not.toHaveBeenCalled();
-    expect(repo.create).toHaveBeenCalledTimes(1);
+    expect(repo.create).not.toHaveBeenCalled();
   });
 
   it('does not duplicate a deal for a later activity or retry', async () => {
@@ -239,7 +411,7 @@ describe('CreateActivityUseCase', () => {
       expect.any(Object),
       'deal-1',
     );
-    expect(clientRepo.findById).not.toHaveBeenCalled();
+    expect(clientRepo.findById).toHaveBeenCalledTimes(1);
   });
 
   it('does not create a deal when the activity has no clientId', async () => {
@@ -262,9 +434,13 @@ describe('CreateActivityUseCase', () => {
       makeClient({ sellerId: '00000000-0000-0000-0000-000000000099' }),
     );
 
-    await useCase.execute({ ...baseInput, type: ActivityType.Chat });
+    await expect(
+      useCase.execute({ ...baseInput, type: ActivityType.Chat }),
+    ).rejects.toThrow(BadRequestException);
 
     expect(repo.createWithPipelineSync).not.toHaveBeenCalled();
+    expect(repo.create).not.toHaveBeenCalled();
+    expect(repo.createAndTouchDeal).not.toHaveBeenCalled();
   });
 
   it('assigns correct points for Chat (1)', async () => {

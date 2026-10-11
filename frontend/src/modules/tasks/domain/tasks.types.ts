@@ -20,6 +20,7 @@ export interface Task {
 }
 
 export interface CreateTaskInput {
+  sellerId?: string
   clientId?: string
   type?: string
   contactId?: string

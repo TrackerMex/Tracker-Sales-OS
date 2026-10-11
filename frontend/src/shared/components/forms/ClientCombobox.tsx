@@ -14,6 +14,7 @@ import { useClients } from "@/modules/clients/application/hooks/useClients"
 import type { Client } from "@/modules/clients/domain/clients.types"
 
 export interface ClientComboboxProps {
+  sellerId?: string
   value: string
   onSelect: (client: Client | null) => void
   onResolve?: (client: Client) => void
@@ -26,6 +27,7 @@ export interface ClientComboboxProps {
 }
 
 export function ClientCombobox({
+  sellerId,
   value,
   onSelect,
   onResolve,
@@ -55,9 +57,10 @@ export function ClientCombobox({
   }, [search])
 
   const { data, isLoading } = useClients({
+    seller: sellerId || undefined,
     q: debouncedSearch || undefined,
     limit: 20,
-  })
+  }, { enabled: !disabled })
   const results = data?.data ?? []
 
   // Silent hydration: when mounted (or when value/initialLabel go from empty to set) with a
@@ -66,8 +69,8 @@ export function ClientCombobox({
   // onResolve — a legitimate network-derived side effect, not a same-component render-state sync.
   const resolvedForValueRef = useRef<string | null>(null)
   const { data: resolveData } = useClients(
-    { q: initialLabel ?? undefined, limit: 5 },
-    { enabled: Boolean(onResolve && value && initialLabel) },
+    { seller: sellerId || undefined, q: initialLabel ?? undefined, limit: 5 },
+    { enabled: Boolean(onResolve && value && initialLabel && !disabled) },
   )
 
   useEffect(() => {

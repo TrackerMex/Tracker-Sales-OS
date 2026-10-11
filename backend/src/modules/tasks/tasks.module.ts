@@ -12,9 +12,16 @@ import { ReactivateTaskUseCase } from './application/use-cases/reactivate-task.u
 import { DeleteTaskUseCase } from './application/use-cases/delete-task.use-case';
 import { TasksController } from './presentation/tasks.controller';
 import { AuthModule } from '../auth/auth.module';
+import { SellersModule } from '../sellers/sellers.module';
+import { ClientsModule } from '../clients/clients.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TaskTypeormEntity]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([TaskTypeormEntity]),
+    AuthModule,
+    SellersModule,
+    ClientsModule,
+  ],
   controllers: [TasksController],
   providers: [
     { provide: TASK_REPOSITORY, useClass: TaskRepositoryImpl },

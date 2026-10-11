@@ -11,6 +11,8 @@ import { ActivitiesController } from './presentation/activities.controller';
 import { AuthModule } from '../auth/auth.module';
 import { PipelineModule } from '../pipeline/pipeline.module';
 import { ClientsModule } from '../clients/clients.module';
+import { SellersModule } from '../sellers/sellers.module';
+import { TasksModule } from '../tasks/tasks.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { ClientsModule } from '../clients/clients.module';
     AuthModule,
     PipelineModule,
     ClientsModule,
+    SellersModule,
+    TasksModule,
   ],
   controllers: [ActivitiesController],
   providers: [

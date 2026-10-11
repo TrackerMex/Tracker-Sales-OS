@@ -894,12 +894,12 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ## 84-admin-seller-assignment
 
-- [ ] Admin/Director eligen un vendedor activo para crear tarea o actividad; falta selección muestra error propio sin petición inválida.
-- [ ] Creación y consultas auxiliares (ocupación, pipeline, sugerencias) usan el mismo vendedor seleccionado; no se usa el id del usuario como fallback.
-- [ ] Seller usa su identidad JWT; el backend ignora identidad seller enviada por Seller o rechaza ausencia de identidad.
-- [ ] Vendedor inexistente/inactivo produce 400 claro antes de escribir; validación usa repositorios existentes y DI.
-- [ ] Actividad desde una tarea mantiene la asignación de su dueño y el contexto de cliente; no atribuye puntos al usuario admin.
-- [ ] Tests backend relevantes cubren validación/identidad y pasan; frontend typecheck/lint/build y backend tsc/lint de comprobación PASS.
+- [x] Admin/Director eligen un vendedor activo para crear tarea o actividad; falta selección muestra error propio sin petición inválida.
+- [x] Creación y consultas auxiliares (ocupación, pipeline, sugerencias) usan el mismo vendedor seleccionado; no se usa el id del usuario como fallback.
+- [x] Seller usa su identidad JWT; el backend ignora identidad seller enviada por Seller o rechaza ausencia de identidad.
+- [x] Vendedor inexistente/inactivo produce 400 claro antes de escribir; validación usa repositorios existentes y DI.
+- [x] Actividad desde una tarea mantiene la asignación de su dueño y el contexto de cliente; no atribuye puntos al usuario admin.
+- [x] Tests backend relevantes cubren validación/identidad y pasan; frontend typecheck/lint/build y backend tsc/lint de comprobación PASS.
 
 ---
 

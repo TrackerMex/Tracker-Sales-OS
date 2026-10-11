@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react"
-import { useQuery } from "@tanstack/react-query"
 import type { CreateTaskInput } from "../../domain/tasks.types"
 import type { Client } from "../../../clients/domain/clients.types"
-import { coachingApi } from "../../../coaching/infrastructure/coaching.api"
-import { tasksApi } from "../../infrastructure/tasks.api"
+import { useCoachingSuggestion } from "../../../coaching/application/hooks/useCoachingSuggestion"
+import { useTodayTasks } from "../../application/hooks/useTodayTasks"
+import { useSellers } from "../../../equipo/application/hooks/useSellers"
+import { UserRole } from "@/core/domain/types/common.types"
 import { useApiFormErrors } from "@/shared/lib/api-errors"
 import { FormErrorSummary } from "@/shared/components/forms/FormErrorSummary"
 import { FieldError } from "@/shared/components/forms/FieldError"
@@ -114,7 +115,7 @@ export function CreateTaskForm({
   } = useApiFormErrors(error)
 
   const [aiTips, setAiTips] = useState<string[]>([])
-  const [aiLoading, setAiLoading] = useState(false)
+  const { mutateAsync: getSuggestion, isPending: aiLoading } = useCoachingSuggestion()
   const [clientId, setClientId] = useState("")
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [type, setType] = useState("Llamada")
@@ -131,13 +132,14 @@ export function CreateTaskForm({
   const [time, setTime] = useState("09:00")
 
   const currentUser = useAppStore((s) => s.currentUser)
-  const sellerId = currentUser?.sellerId ?? currentUser?.id ?? ""
+  const isManager = currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Director
+  const [selectedSellerId, setSelectedSellerId] = useState("")
+  const [sellerError, setSellerError] = useState("")
+  const { data: sellers = [] } = useSellers()
+  const activeSellers = sellers.filter((seller) => seller.active)
+  const sellerId = isManager ? selectedSellerId : currentUser?.sellerId ?? ""
 
-  const { data: dayTasks } = useQuery({
-    queryKey: ["tasks-day", sellerId, date],
-    queryFn: () => tasksApi.getTodayTasks(sellerId, date),
-    enabled: !!sellerId && !!date,
-  })
+  const { data: dayTasks } = useTodayTasks(sellerId || null, date)
 
   const scheduledToday = (dayTasks ?? [])
     .filter((t) => t.status !== "Completado")
@@ -165,9 +167,10 @@ export function CreateTaskForm({
   )
 
   async function fetchAiSuggestions() {
-    setAiLoading(true)
+    if (!sellerId) return
     try {
-      const res = await coachingApi.getSuggestion({
+      const res = await getSuggestion({
+        sellerId,
         type,
         objective: objective || undefined,
         client: selectedClient?.name,
@@ -177,16 +180,21 @@ export function CreateTaskForm({
       setAiTips(res.tips)
     } catch {
       setAiTips([])
-    } finally {
-      setAiLoading(false)
     }
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!sellerId || (isManager && !activeSellers.some((seller) => seller.id === sellerId))) {
+      setSellerError("Selecciona un vendedor activo.")
+      e.currentTarget.querySelector<HTMLElement>("#task-seller")?.focus()
+      return
+    }
+    setSellerError("")
     if (!objective.trim()) return
     const scheduledAt = new Date(`${date}T${time}`).toISOString()
     onSubmit({
+      sellerId,
       clientId: clientId || undefined,
       type,
       contactId: contactId || undefined,
@@ -221,11 +229,39 @@ export function CreateTaskForm({
             <section className="bg-background p-4 md:p-6">
               <h5 className="text-base font-semibold">Tarea</h5>
               <div className="mt-6 flex flex-col gap-6">
+                {isManager && (
+                  <div>
+                    <Label htmlFor="task-seller">Vendedor *</Label>
+                    <Select
+                      value={selectedSellerId}
+                      disabled={isLoading || aiLoading}
+                      onValueChange={(owner) => {
+                        setSelectedSellerId(owner)
+                        setSellerError("")
+                        clearField("sellerId")
+                        setClientId("")
+                        setSelectedClient(null)
+                        setContactId("")
+                        setAiTips([])
+                      }}
+                    >
+                      <SelectTrigger id="task-seller" className="mt-2 w-full" {...fieldErrorProps("sellerId", sellerError || fieldErrors.sellerId)}>
+                        <SelectValue placeholder="Selecciona un vendedor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeSellers.map((seller) => <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FieldError name="sellerId" message={sellerError || fieldErrors.sellerId} />
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="task-client">Cliente</Label>
                   <div className="mt-2">
                     <ClientCombobox
                       id="task-client"
+                      sellerId={sellerId}
+                      disabled={!sellerId || isLoading}
                       value={clientId}
                       onSelect={(client) => {
                         const changed = (client?.id ?? "") !== clientId
@@ -425,7 +461,7 @@ export function CreateTaskForm({
                           variant="outline"
                           size="xs"
                           onClick={fetchAiSuggestions}
-                          disabled={aiLoading}
+                          disabled={aiLoading || !sellerId}
                         >
                           {aiLoading ? "Cargando..." : "Obtener sugerencias"}
                         </Button>

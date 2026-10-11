@@ -13,7 +13,9 @@ import type {
 } from "../../domain/activities.types"
 import type { Client } from "@/modules/clients/domain/clients.types"
 import { useAppStore } from "@/shared/store/app.store"
-import { coachingApi } from "@/modules/coaching/infrastructure/coaching.api"
+import { useCoachingSuggestion } from "@/modules/coaching/application/hooks/useCoachingSuggestion"
+import { useSellers } from "@/modules/equipo/application/hooks/useSellers"
+import { UserRole } from "@/core/domain/types/common.types"
 import { useApiFormErrors } from "@/shared/lib/api-errors"
 import { STATUS_FILL_CLASS, type StatusTone } from "@/shared/lib/status"
 import { cn } from "@/lib/utils"
@@ -80,6 +82,8 @@ interface Props {
   initialClientId?: string
   initialClientLabel?: string
   taskId?: string
+  initialSellerId?: string
+  onSellerChange?: (sellerId: string) => void
 }
 
 export function ActivityForm({
@@ -90,6 +94,8 @@ export function ActivityForm({
   initialClientId,
   initialClientLabel,
   taskId,
+  initialSellerId,
+  onSellerChange,
 }: Props) {
   const {
     summary: errorSummary,
@@ -103,11 +109,16 @@ export function ActivityForm({
     .slice(0, 16)
 
   const currentUser = useAppStore((s) => s.currentUser)
-  const sellerId = currentUser?.sellerId ?? currentUser?.id ?? ""
+  const isManager = currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Director
+  const [selectedSellerId, setSelectedSellerId] = useState(initialSellerId ?? "")
+  const [sellerError, setSellerError] = useState("")
+  const { data: sellers = [] } = useSellers()
+  const activeSellers = sellers.filter((seller) => seller.active)
+  const sellerId = isManager ? selectedSellerId : currentUser?.sellerId ?? ""
 
   // form state
   const [aiTips, setAiTips] = useState<string[]>([])
-  const [aiLoading, setAiLoading] = useState(false)
+  const { mutateAsync: getSuggestion, isPending: aiLoading } = useCoachingSuggestion()
   const [clientId, setClientId] = useState(initialClientId ?? "")
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [contactId, setContactId] = useState("")
@@ -134,7 +145,7 @@ export function ActivityForm({
   const [clientError, setClientError] = useState("")
 
   const { data: pipelineGrouped } = usePipeline(sellerId || null)
-  const { data: todayTasks } = useTodayTasks()
+  const { data: todayTasks } = useTodayTasks(sellerId || null)
   const pendingTasks = (todayTasks ?? []).filter(
     (t) => t.status === "Pendiente"
   )
@@ -197,9 +208,10 @@ export function ActivityForm({
   }
 
   async function fetchAiSuggestions() {
-    setAiLoading(true)
+    if (!sellerId) return
     try {
-      const res = await coachingApi.getSuggestion({
+      const res = await getSuggestion({
+        sellerId,
         type,
         objective: summary || undefined,
         client: selectedClient?.name,
@@ -209,19 +221,24 @@ export function ActivityForm({
       setAiTips(res.tips)
     } catch {
       setAiTips([])
-    } finally {
-      setAiLoading(false)
     }
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!sellerId || (isManager && !activeSellers.some((seller) => seller.id === sellerId))) {
+      setSellerError("Selecciona un vendedor activo.")
+      e.currentTarget.querySelector<HTMLElement>("#activity-seller")?.focus()
+      return
+    }
+    setSellerError("")
     if (!isNonCommercial && !clientId) {
       setClientError("Selecciona un cliente para actividades comerciales.")
       return
     }
     setClientError("")
     const input: CreateActivityInput = {
+      sellerId,
       ...(clientId ? { clientId } : {}),
       type,
       result,
@@ -296,11 +313,45 @@ export function ActivityForm({
         <section className="bg-background p-4 md:p-6">
           <h5 className="text-base font-semibold">Contexto</h5>
           <div className="mt-6 flex flex-col gap-6">
+            {isManager && (
+              <div>
+                <Label htmlFor="activity-seller">Vendedor *</Label>
+                <Select
+                  value={selectedSellerId}
+                  disabled={!!taskId || isLoading || aiLoading}
+                  onValueChange={(owner) => {
+                    setSelectedSellerId(owner)
+                    onSellerChange?.(owner)
+                    setSellerError("")
+                    clearField("sellerId")
+                    setClientId("")
+                    setSelectedClient(null)
+                    setContactId("")
+                    setInternalTaskId("")
+                    setSelectedOpportunityId("")
+                    setNewOpportunityName("")
+                    setStage("")
+                    setAiTips([])
+                    setClientError("")
+                  }}
+                >
+                  <SelectTrigger id="activity-seller" className="mt-2 w-full" {...fieldErrorProps("sellerId", sellerError || fieldErrors.sellerId)}>
+                    <SelectValue placeholder="Selecciona un vendedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeSellers.map((seller) => <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <FieldError name="sellerId" message={sellerError || fieldErrors.sellerId} />
+              </div>
+            )}
             <div>
               <Label htmlFor="clientId">Cliente *</Label>
               <div className="mt-2">
                 <ClientCombobox
                   id="clientId"
+                  sellerId={sellerId}
+                  disabled={!sellerId || isLoading}
                   value={clientId}
                   onSelect={(client) => {
                     const changed = (client?.id ?? "") !== clientId
@@ -808,7 +859,7 @@ export function ActivityForm({
                       variant="outline"
                       size="xs"
                       onClick={fetchAiSuggestions}
-                      disabled={aiLoading}
+                      disabled={aiLoading || !sellerId}
                     >
                       {aiLoading ? "Cargando..." : "Obtener sugerencias"}
                     </Button>

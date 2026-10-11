@@ -1,0 +1,36 @@
+# Review 84-admin-seller-assignment
+
+Fecha: 2026-10-11 UTC. Rama: `fix/bugs-pendientes`. Base: `8e48aa46961756f201009ae2664350d22dbff9e0`.
+
+**What this change does:** Admin y Director eligen un vendedor activo al crear tareas o actividades. El mismo dueño gobierna las consultas y sugerencias del formulario. Seller conserva su identidad JWT; la actividad vinculada mantiene el dueño y cliente de la tarea antes de cualquier escritura.
+
+**Veredicto: PASSED.** Los seis criterios del CHECKPOINT 84 están verificados. No hay hallazgos bloqueantes.
+
+## Source y contratos revisados
+
+Leí `AGENTS.md`, `docs/conventions.md`, el CHECKPOINT 84 y `progress/impl_84-admin-seller-assignment.md`. Revisé desde disco los 25 archivos de source/spec del lote, sus tipos y callers: use-cases, módulos DI, controllers de creación y coaching; hooks de creación/consulta, formularios, páginas Agenda/Actividades/Mi Día, ruta de actividad y `ClientCombobox`. Contrasté los repositorios existentes de Seller, Client y Task, sus entidades y exports, los DTOs, las APIs de infraestructura y el contrato de identidad de JWT.
+
+Los use-cases validan vendedor y cliente antes de conflictos, queries de pipeline o escrituras. Activity comprueba también tarea existente/no borrada y coherencia de owner/cliente; reutiliza el cliente validado. Los módulos importan los proveedores existentes sin nuevos contratos ni ciclos de DI. Los formularios usan shadcn `Select`, `FieldError` y hooks; cambiar vendedor limpia el contexto dependiente. `null` explícito deshabilita las consultas sin recuperar otra identidad. No se modifican cálculos de puntos/calidad.
+
+## CHECKPOINT
+
+| Criterio | Resultado | Evidencia concreta |
+|---|---|---|
+| Admin/Director eligen vendedor activo; falta selección muestra error propio sin petición inválida. | PASSED | `/tmp/tracker-sales-bugfix-qa/84-ui-after-admin-create/result.json` y `84-ui-after-director-create/result.json`: 13/13 checks cada rol. En ambos formularios, con objetivo/resumen ya llenos, falta owner muestra `Selecciona un vendedor activo.`, enfoca el selector y envía 0 POST. Las opciones incluyen vendedor activo y excluyen inactivo. Guardados reales responden 201 con dueño/cliente seleccionados. |
+| Creación, ocupación, pipeline y sugerencias comparten vendedor; sin fallback al id del usuario. | PASSED | Los mismos resultados UI registran paths `/tasks/seller/<owner>/today`, `/clients?seller=<owner>`, `/pipeline/seller/<owner>`, `/pipeline/client/<client>/seller/<owner>/deals` y `/activities/seller/<owner>/daily`; los payloads de tarea, actividad y coaching usan ese owner. Cambiar vendedor limpia cliente/contacto/tarea/oportunidad y permite guardar sin contexto anterior. `84-coaching-selected/result.json`: Admin/Director obtienen calidad 20% e historial de tres actividades del dueño seleccionado. `84-ui-after-director-manager-view/result.json`: 4/4, cero queries de owner sin selección; selección consulta tareas/dashboard del vendedor, sin UUID del usuario. Source de hooks/formularios confirma ausencia de fallback a `user.id`. |
+| Seller usa JWT; ignora identidad enviada o rechaza ausencia de identidad. | PASSED | `84-backend-final/result.json`: Seller envía otro sellerId en tarea/actividad y ambas respuestas 201 conservan owner JWT. Coaching conserva calidad JWT 43% pese a sellerId falsificado y excluye un summary ajeno identificable al consultar cliente extranjero. Specs de Task/Activity ejecutan los controllers y use-cases reales con repositorios mock; el spec de CoachingController ejecuta GenerateSuggestion real. Los tres rechazan Seller sin JWT sellerId antes de acceso a repositorios/contexto. Reejecución independiente: cuatro suites relevantes, 48/48 PASS. |
+| Vendedor inexistente/inactivo produce 400 claro antes de escribir, con repositorios existentes y DI. | PASSED | `84-backend-final/result.json`: Admin/Director, tareas/actividades, inexistente/inactivo → 400 `Selecciona un vendedor activo.`; conteos de tasks/activities/deals iguales antes/después. Cliente ajeno también da 400 sin writes. Specs incluyen vendedor borrado y comprueban ausencia de queries de conflicto/pipeline y de todas las rutas de persistencia. Source de `create-task.use-case.ts`, `create-activity.use-case.ts`, `tasks.module.ts` y `activities.module.ts` confirma tokens/repositorios existentes y orden de validación. |
+| Actividad desde tarea conserva dueño/cliente y no atribuye puntos al Admin. | PASSED | `84-ui-after-admin-completion/result.json`: 4/4, Agenda conserva sellerId/clientId/taskId en URL y POST; selector de dueño queda disabled con vendedor de la tarea, actividad 201 con 1 punto. `84-ui-after-seller-completion/result.json`: 3/3 para Mi Día con igual contexto. API final rechaza owner/cliente incompatible con tarea mediante 400 antes de writes; caso válido conserva contexto, SQL confirma incremento de 1 punto del dueño y 0 registros atribuidos al UUID Admin. |
+| Tests backend relevantes y gates frontend/backend PASS. | PASSED | Leí logs `/tmp/tracker-sales-bugfix-qa/84-backend-{tsc,lint,tests}.log` y `84-frontend-{tsc,typecheck,lint,build}.log`: exit 0 final en todos. Backend lint usa `pnpm exec eslint "{src,apps,libs,test}/**/*.ts"`, sin `--fix`. El retry de Jest tras ajustar formato de specs termina en 17/17 suites y 104/104 tests. Reviewer ejecutó además backend `pnpm exec tsc --noEmit` exit 0 y Jest de los cuatro specs relevantes, 48/48. `git diff --check` independiente exit 0. Source frontend no cambió tras gates; los 25 archivos de source/spec mantienen sus hashes desde la comprobación independiente. No repetí el build. |
+
+## Evidencia y alcance
+
+QA final de API: 24/24 PASS. Coaching seleccionado: 2/2 PASS. UI Admin/Director creación: 13/13 cada uno; handoff Admin/Seller: 4/4 y 3/3; lectura de Mi Día para gestión: 4/4. Todos los resultados UI finales tienen arrays `errors`, `http` y `blocked` vacíos. Leí los runners persistidos `progress/bugfix-qa/84-backend.cjs`, `84-ui.cjs`, `84-coaching-selected.cjs` y la sección Resultado QA84 de `progress/qa_82-88-bugfixes.md`.
+
+Browser real Chromium a 1440 px, claro, UTC; Vite en 127.0.0.1:3001, API en 127.0.0.1:3005 y Postgres QA aislado en 5434. El proveedor local captura el contexto y devuelve fallback sin tráfico externo; se verifica identidad, calidad e historial, no contenido generado por un proveedor remoto. Nombre visible de cliente al completar pertenece al CHECKPOINT 85 y no se declara verificado aquí.
+
+Los resultados anteriores de API se conservan: uno añadió expectativas de 400 en coaching fuera del alcance acordado (coaching no escribe y admite sugerencia genérica de Admin); otro sufrió un cambio concurrente de conteos por fixtures UI. El resultado final secuencial prueba ausencia de writes y contexto correctamente filtrado, sin asumir que aquellos runs parciales habían pasado.
+
+Diff de implementación limitado a los paths del resumen: dependencias, lockfiles, core, configuración y cálculos de scoring intactos. El build conserva la advertencia preexistente de importación dinámica inefectiva de Atlaskit. El Reviewer escribió únicamente este archivo; no modificó source, tests, configuración o metadatos, ni hizo commit/push.
+
+**Verdict: Ship.**

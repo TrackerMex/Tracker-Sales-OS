@@ -4,12 +4,12 @@ import { tasksApi } from '../../infrastructure/tasks.api'
 
 export const useMonthTasks = (year: number, month: number) => {
   const currentUser = useAppStore((s) => s.currentUser)
-  const sellerId = currentUser?.sellerId ?? currentUser?.id ?? ''
+  const sellerId = currentUser?.sellerId
   const monthStart = `${year}-${String(month).padStart(2, '0')}-01`
 
   return useQuery({
     queryKey: ['tasks', 'month', sellerId, year, month],
-    queryFn: () => tasksApi.getMonthTasks(sellerId, monthStart),
+    queryFn: () => tasksApi.getMonthTasks(sellerId!, monthStart),
     enabled: !!sellerId,
     select: (tasks) =>
       tasks.filter((t) => {

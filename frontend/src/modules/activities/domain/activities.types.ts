@@ -56,6 +56,7 @@ export interface DailyActivitiesResponse {
 }
 
 export interface CreateActivityInput {
+  sellerId?: ID
   clientId?: ID
   contactId?: ID
   taskId?: string
