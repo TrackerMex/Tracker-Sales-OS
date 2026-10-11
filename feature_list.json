@@ -832,7 +832,7 @@
     "id": "83-timepicker-calendar",
     "name": "Horas correctas y diálogo único en calendario",
     "description": "Bugs 1 y 3: entrada de horas con ceros y propagación de clic del calendario.",
-    "status": "in_progress",
+    "status": "done",
     "priority": 83,
     "backend_modules": [],
     "frontend_modules": [
@@ -845,7 +845,7 @@
     "id": "84-admin-seller-assignment",
     "name": "Asignación explícita de vendedor para Admin y Director",
     "description": "Bug 2: creación de tareas/actividades con vendedor elegido y validación backend.",
-    "status": "pending",
+    "status": "in_progress",
     "priority": 84,
     "backend_modules": [
       "tasks",

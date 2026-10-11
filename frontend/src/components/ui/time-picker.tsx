@@ -28,12 +28,14 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
     },
     ref,
   ) => {
-    const [flag, setFlag] = React.useState(false)
+    const pendingDigit = React.useRef<string | null>(null)
     const isHours12 = picker === "hours12"
     const max = picker === "minutes" ? 59 : 23
     const shown = displayValue ?? String(value).padStart(2, "0")
 
     function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+      const isDigit = e.key >= "0" && e.key <= "9"
+      if (!isDigit) pendingDigit.current = null
       if (e.key === "Tab") return
       e.preventDefault()
 
@@ -49,20 +51,20 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
         return
       }
       if (e.key === "Backspace") {
-        setFlag(false)
         if (!shown) onLeftFocus?.()
         return
       }
-      if (e.key >= "0" && e.key <= "9") {
-        const base = String(value).padStart(2, "0")
-        const next = flag ? base.slice(1) + e.key : "0" + e.key
+      if (isDigit) {
+        // Keep the first key before normalization turns a leading 0 into 1.
+        const firstDigit = pendingDigit.current
+        const next = firstDigit === null ? "0" + e.key : firstDigit + e.key
+        pendingDigit.current = firstDigit === null ? e.key : null
         onChange(
           isHours12
             ? Math.max(1, Math.min(Number(next), 12))
             : Math.min(Number(next), max),
         )
-        if (flag) onRightFocus?.()
-        setFlag((prev) => !prev)
+        if (firstDigit !== null) onRightFocus?.()
       }
     }
 
@@ -77,8 +79,11 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
         onChange={() => undefined}
         onKeyDown={handleKeyDown}
         onFocus={(e) => {
-          setFlag(false)
+          pendingDigit.current = null
           e.target.select()
+        }}
+        onBlur={() => {
+          pendingDigit.current = null
         }}
         className={cn(
           "w-7 border-0 bg-transparent p-0 text-center tabular-nums text-foreground outline-none focus:bg-transparent disabled:cursor-not-allowed",

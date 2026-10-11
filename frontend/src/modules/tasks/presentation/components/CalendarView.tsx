@@ -175,7 +175,10 @@ function TaskChip({ task, isDragging, onEdit }: TaskChipProps) {
           ref={taskRef}
           variant="ghost"
           size="xs"
-          onClick={() => onEdit?.(task)}
+          onClick={(event) => {
+            event.stopPropagation()
+            onEdit?.(task)
+          }}
           className={cn(
             "block h-auto w-full max-w-full cursor-grab truncate rounded-none border-0 border-l-2 px-1 py-0.5 text-left text-xs font-normal text-foreground hover:bg-muted",
             accent,

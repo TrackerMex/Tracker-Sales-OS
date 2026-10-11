@@ -884,11 +884,11 @@ Cada feature debe cumplir TODOS los criterios de su checkpoint antes de marcarse
 
 ## 83-timepicker-calendar
 
-- [ ] Teclear 01 a 09 conserva la hora; 08:15 AM y PM, 12 AM/PM y minutos 00/59 se convierten correctamente.
-- [ ] Flechas, Tab, reinicio al cambiar el foco, edición de tareas y actividades conservan el comportamiento esperado.
-- [ ] Clic y Enter sobre un chip abren solo Editar; clic en celda vacía abre solo Crear con fecha correcta.
-- [ ] Arrastrar tareas y navegación mes/semana/día siguen funcionando.
-- [ ] Regresión reproducible sin nuevas dependencias; typecheck, lint y build frontend PASS.
+- [x] Teclear 01 a 09 conserva la hora; 08:15 AM y PM, 12 AM/PM y minutos 00/59 se convierten correctamente.
+- [x] Flechas, Tab, reinicio al cambiar el foco, edición de tareas y actividades conservan el comportamiento esperado.
+- [x] Clic y Enter sobre un chip abren solo Editar; clic en celda vacía abre solo Crear con fecha correcta.
+- [x] Arrastrar tareas y navegación mes/semana/día siguen funcionando.
+- [x] Regresión reproducible sin nuevas dependencias; typecheck, lint y build frontend PASS.
 
 ---
 
