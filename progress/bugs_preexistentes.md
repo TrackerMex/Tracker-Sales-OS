@@ -1,6 +1,6 @@
 # Fallos preexistentes detectados durante la feature 81
 
-Registrado el 2026-10-10. Ninguno lo introdujo el rediseño: todos se comprobaron contra la base `55b22e1` y ya existían allí. Ninguno está corregido todavía; cada uno se corregirá aparte cuando el usuario lo apruebe.
+Registrado el 2026-10-10. Ninguno lo introdujo el rediseño: todos se comprobaron contra la base `55b22e1` y ya existían allí. El usuario autorizó corregirlos el 2026-10-11, incluida la lámina. El avance y las evidencias se registran en `docs/bugfix-execution.md` y `progress/qa_82-88-bugfixes.md`. Los 14 bugs quedaron corregidos y las siete reviews independientes están PASSED. Las descripciones siguientes conservan los síntomas originales.
 
 Fuentes: `progress/qa_81-write-smoke.md` (QA con escrituras reales), `progress/review_81-010-agenda-activities-sales.md`, `progress/review_81-011-remaining-pages-login.md` y `progress/impl_81-011-remaining-pages-login.md`.
 
@@ -81,8 +81,23 @@ Están ordenados por prioridad.
 
 13. **La lámina ejecutiva no se adapta a móvil.**
     - Qué pasa: a 390 px se corta y tiene fallos de contraste internos.
-    - Quedó fuera del rediseño por decisión: la lámina no se toca.
+    - Quedó fuera del rediseño de la feature 81. El usuario autorizó corregir su vista móvil y contraste en la feature 88.
 
 ## Herramientas
 
 14. **`pnpm run typecheck` no comprueba nada.** El `tsconfig.json` raíz tiene `files: []`. La comprobación de tipos real es el `tsc -b` que corre dentro de `pnpm run build`.
+
+
+## Seguimiento de correcciones — 2026-10-11
+
+| Bugs | Feature | Estado |
+|---|---|---|
+| 14 | 82-frontend-typecheck | Corregido; review PASSED |
+| 1, 3 | 83-timepicker-calendar | Corregidos; review PASSED |
+| 2 | 84-admin-seller-assignment | Corregido; review PASSED |
+| 4, 5, 8, 10 | 85-client-pipeline-integrity | Corregidos; review PASSED |
+| 6, 7 | 86-role-queries-team-feedback | Corregidos; review PASSED |
+| 9, 11, 12 | 87-dialog-mobile-copy | Corregidos; review PASSED |
+| 13 | 88-executive-slide-responsive | Corregido; review PASSED |
+
+El bug 6 se acotó contra los permisos reales: Settings permite lectura a los tres roles, Coaching permite el flujo propio y los hooks Import/Export son mutaciones sin consulta automática. Se corrigieron Users y Reportes, conservando esas operaciones autorizadas. La review de 86 también detectó y corrigió la reactivación y sincronización de cuentas mediante la asociación real `users.seller_id`, con compatibilidad legacy y protección de cuentas ajenas/borradas.

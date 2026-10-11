@@ -852,3 +852,14 @@ Batch 2:
 - QA de escrituras reales en el stack local (Postgres 5434, API 3005, Vite 3001; 0 peticiones a producción): 22/24 flujos PASS con Admin y Seller, claro 1440 y oscuro 390. Los 2 fallos (admin crea tarea o actividad, HTTP 500 por no tener `seller_id`) son preexistentes, igual en `55b22e1`. Detalle y otros 7 hallazgos preexistentes en `progress/qa_81-write-smoke.md`.
 - Capturas antes/después en `progress/redesign/` (locales, no versionadas por tamaño).
 - Sin tocar el Docker de producción. Publicada en la rama `dev` de origin para que el usuario la valide; el merge a `main` (auto-deploy por Dokploy) lo decide el usuario.
+
+## 2026-10-11 — Features 82–88: corrección de bugs pendientes
+
+- El usuario autorizó corregir los bugs 1–14, incluida la lámina ejecutiva, siguiendo implementación delegada → review independiente → regresión/QA → commits y entrega en dev.
+- 82: typecheck frontend comprueba los proyectos app/node; un probe negativo y su limpieza acreditaron que detecta errores reales. 83: entrada de horas con ceros y diálogo único al pulsar un chip del calendario.
+- 84: Admin/Director seleccionan un vendedor válido al crear tareas/actividades; backend valida dueño y contexto. 85: expediente por ID sin límite de los primeros 100 clientes, pipeline filtra clientes borrados, arrastre sobre la fase propia no muta y completar conserva el contexto del cliente.
+- 86: consultas de usuarios/reportes respetan roles y caché; Equipo conserva feedback, espera y reintento. La baja/reactivación sincroniza cuentas por users.seller_id, con compatibilidad legacy y protección de cuentas ajenas/borradas.
+- 87: retorno de foco en tareas, clientes, pipeline, ventas, historial y paleta, incluidos controles desmontados y refetch lento. Acciones de Ventas visibles a 390 px; ROLE_LABELS y terminología oportunidades. QA detectó dos fallos adicionales de foco que se corrigieron antes del cierre.
+- 88: lámina y popup responsive y con contraste AA, Montserrat local y tablas accesibles por teclado. Branding navy/verde, cálculos, datos y permisos conservados. Matriz 128/128 e impresión 33/33 PASS; ocho capturas antes/después y baseline intacto.
+- Siete reviews independientes PASSED: 82 (5/5), 83 (5/5), 84 (6/6), 85 (7/7), 86 (7/7), 87 (6/6), 88 (5/5). Backend final: 21 suites/129 tests PASS; frontend tsc/typecheck/lint/build PASS. Evidencia y comandos en progress/qa_82-88-bugfixes.md, con fallos iniciales y límites del harness documentados.
+- Rama de trabajo fix/bugs-pendientes desde origin/dev 1e77c4e; commits enfocados por lote, destino dev. Main/producción pendientes del paso de despliegue. QA exclusivo en DB5434/API3005/UI3001; archivos previos no versionados de progress/ conservados.

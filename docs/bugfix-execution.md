@@ -31,3 +31,9 @@ Los archivos previos no versionados en progress/ se conservan y no se incluyen e
 Hallazgo relacionado incluido en 86: Reactivar vendedor reutilizaba una operación que siempre guardaba active=false y Equipo sólo recibía vendedores activos. Se corrige el estado real y se agrega lectura de gestión exclusiva de Admin, conservando el listado activo para los formularios. En 87 se incluye también el foco de la paleta de búsqueda (baseline Escape devuelve BODY).
 
 La review de 86 reprodujo otro caso del mismo flujo: Crear acceso guarda users.seller_id sin sellers.user_id. Se requiere sincronizar cuentas por la relación real; el primer fixture inverso no basta para aprobarlo. El tail fallido y su corrección quedan registrados en QA/impl/review.
+
+## Cierre del ciclo — 2026-10-11
+
+Los bugs 1–14 están corregidos. Los lotes 82–88 están done, con siete reviews independientes PASSED y CHECKPOINTS completos. La suite backend final pasó 21 suites y 129 tests; frontend tsc, typecheck, lint y build también pasaron. El QA de API/UI cubre tres roles y escritorio/móvil en claro/oscuro. La lámina pasó 128/128 comprobaciones y 33/33 de impresión. Las fallas iniciales y los límites de los runners se conservan en `progress/qa_82-88-bugfixes.md`.
+
+Entrega mediante commits enfocados en dev; main y despliegue de producción quedan fuera de este ciclo. Los archivos previos no versionados de progress/ se conservan.

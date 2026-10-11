@@ -1,6 +1,6 @@
 # QA bugs 1–14 / features 82–88
 
-Estado 2026-10-11: entorno local aislado **USABLE**. Baseline conservado; implementación/validación secuencial en curso. Este informe no declara PASSED de un lote sin su review independiente.
+Estado final 2026-10-11: **QA completa y reviews independientes PASSED para los lotes 82–88**. Los bugs 1–14 quedaron corregidos, incluida la lámina. Backend final: 21 suites/129 tests PASS; frontend typecheck/lint/build PASS. Baseline y fallos iniciales conservados; los resultados finales y los límites de cada runner se distinguen en las secciones siguientes.
 
 ## Entorno y operaciones
 
@@ -11,7 +11,7 @@ Estado 2026-10-11: entorno local aislado **USABLE**. Baseline conservado; implem
 - `.env` del repo se conserva. Overrides privados en `/tmp/tracker-sales-bugfix-qa/qa.env`; credenciales DB en `db.env`, ambos modo 0600 y directorio modo 0700. Nunca se versionan.
 - `TYPEORM_SYNCHRONIZE=false`, `TYPEORM_MIGRATIONS_RUN=false`, logging SQL desactivado. El esquema QA se inicializó una vez desde entidades mediante `seed.cjs` sobre DB vacía y con assertions que obligan host/puerto/DB aislados.
 - LLM `openrouter` con ambas claves vacías; `NODE_OPTIONS` precarga `/tmp/tracker-sales-bugfix-qa/disable-external.cjs`, que rechaza `fetch` hacia hosts externos. Evita gasto externo incluso al pulsar sugerencias.
-- Scripts Playwright sólo permiten orígenes UI3001/API3005; cualquier `/api` en Vite se aborta para evitar su proxy antiguo hacia3000. Ninguna prueba escribe fuera de3005. Dependencia Playwright/Chromium existente reutilizada (`/home/claude/sites/odc/frontend/node_modules/.pnpm/playwright@1.62.0/node_modules/playwright`); se puede sobreescribir con `QA_PLAYWRIGHT_MODULE`. Sin nuevas dependencias.
+- En las pruebas de la aplicación, el guard Playwright restringe los orígenes a UI3001/API3005 y aborta cualquier `/api` en Vite para evitar su proxy antiguo hacia3000. El popup estático de QA88 usa un intervalo sin intercepción, con URLs inspeccionadas y requests auditados, documentado abajo. Ninguna prueba escribe fuera de3005. Dependencia Playwright/Chromium existente reutilizada (`/home/claude/sites/odc/frontend/node_modules/.pnpm/playwright@1.62.0/node_modules/playwright`); se puede sobreescribir con `QA_PLAYWRIGHT_MODULE`. Sin nuevas dependencias.
 - Producción `tracker-sales-api/ui/nginx` no se reinició ni modificó;3000 pertenece a Dokploy.
 
 Reinicio API QA: detener únicamente su sesión/PID anterior y ejecutar `bash progress/bugfix-qa/start-api.sh`. Compila `tsconfig.build.json` a `/tmp`, exporta overrides y arranca Node. Vite: `bash progress/bugfix-qa/start-vite.sh`. No ejecutar compose del repo para este QA.
